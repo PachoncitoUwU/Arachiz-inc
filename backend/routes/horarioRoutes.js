@@ -6,8 +6,9 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 
 router.use(authMiddleware);
 
-router.post('/', roleMiddleware(['instructor']), horarioController.createHorario);
-router.delete('/:id', roleMiddleware(['instructor']), horarioController.deleteHorario);
 router.get('/ficha/:fichaId', horarioController.getHorarioByFicha);
+router.post('/', roleMiddleware(['instructor']), horarioController.createHorario);
+router.put('/:id', roleMiddleware(['instructor']), horarioController.updateHorario);
+router.delete('/:id', roleMiddleware(['instructor']), horarioController.deleteHorario);
 
 module.exports = router;

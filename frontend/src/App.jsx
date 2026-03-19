@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import { SettingsProvider } from './context/SettingsContext';
 import MainLayout from './layouts/MainLayout';
 
 import Login from './pages/auth/Login';
@@ -19,37 +21,45 @@ import AprendizHorario    from './pages/aprendiz/Horario';
 import AprendizAsistencia from './pages/aprendiz/Asistencia';
 import AprendizExcusas    from './pages/aprendiz/Excusas';
 
+import Configuracion from './pages/Configuracion';
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login"    element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <SettingsProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login"    element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          <Route path="/instructor" element={<MainLayout allowedRoles={['instructor']} />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard"  element={<InstructorDashboard />} />
-            <Route path="fichas"     element={<InstructorFichas />} />
-            <Route path="materias"   element={<InstructorMaterias />} />
-            <Route path="horario"    element={<InstructorHorario />} />
-            <Route path="asistencia" element={<InstructorAsistencia />} />
-            <Route path="excusas"    element={<InstructorExcusas />} />
-          </Route>
+              <Route path="/instructor" element={<MainLayout allowedRoles={['instructor']} />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard"      element={<InstructorDashboard />} />
+                <Route path="fichas"         element={<InstructorFichas />} />
+                <Route path="materias"       element={<InstructorMaterias />} />
+                <Route path="horario"        element={<InstructorHorario />} />
+                <Route path="asistencia"     element={<InstructorAsistencia />} />
+                <Route path="excusas"        element={<InstructorExcusas />} />
+                <Route path="configuracion"  element={<Configuracion />} />
+              </Route>
 
-          <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard"  element={<AprendizDashboard />} />
-            <Route path="materias"   element={<AprendizMaterias />} />
-            <Route path="horario"    element={<AprendizHorario />} />
-            <Route path="asistencia" element={<AprendizAsistencia />} />
-            <Route path="excusas"    element={<AprendizExcusas />} />
-          </Route>
+              <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard"      element={<AprendizDashboard />} />
+                <Route path="materias"       element={<AprendizMaterias />} />
+                <Route path="horario"        element={<AprendizHorario />} />
+                <Route path="asistencia"     element={<AprendizAsistencia />} />
+                <Route path="excusas"        element={<AprendizExcusas />} />
+                <Route path="configuracion"  element={<Configuracion />} />
+              </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AuthProvider>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </AuthProvider>
+        </ToastProvider>
+      </SettingsProvider>
     </BrowserRouter>
   );
 }

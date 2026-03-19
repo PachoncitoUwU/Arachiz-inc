@@ -62,7 +62,7 @@ const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, fullName: true, email: true, document: true, userType: true, createdAt: true }
+      select: { id: true, fullName: true, email: true, document: true, userType: true, createdAt: true, avatarUrl: true }
     });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ user });
@@ -71,4 +71,26 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+// RF81 - Actualizar perfil (nombre + avatar)
+const updateProfile = async (req, res) => {
+  const { fullName } = req.body;
+  const avatarUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  try {
+    const data = {};
+    if (fullName && fullName.trim()) data.fullName = fullName.trim();
+    if (avatarUrl) data.avatarUrl = avatarUrl;
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'Nada que actualizar' });
+    }
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data,
+      select: { id: true, fullName: true, email: true, document: true, userType: true, avatarUrl: true }
+    });
+    res.json({ message: 'Perfil actualizado', user });
+  } catch (err) {
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile };

@@ -63,4 +63,33 @@ const getHorarioByFicha = async (req, res) => {
   }
 };
 
-module.exports = { createHorario, deleteHorario, getHorarioByFicha };
+// RF57 - Actualizar día/hora (para drag & drop)
+const updateHorario = async (req, res) => {
+  const { id } = req.params;
+  const { dia, horaInicio, horaFin } = req.body;
+  const instructorId = req.user.id;
+  try {
+    const horario = await prisma.horario.findUnique({
+      where: { id },
+      include: { ficha: { include: { instructores: true } } }
+    });
+    if (!horario) return res.status(404).json({ error: 'Clase no encontrada' });
+    if (!horario.ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'No tienes permiso' });
+    }
+    const updated = await prisma.horario.update({
+      where: { id },
+      data: {
+        ...(dia && { dia }),
+        ...(horaInicio && { horaInicio }),
+        ...(horaFin && { horaFin }),
+      },
+      include: { materia: { include: { instructor: { select: { fullName: true } } } } }
+    });
+    res.json({ message: 'Horario actualizado', horario: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { createHorario, deleteHorario, getHorarioByFicha, updateHorario };

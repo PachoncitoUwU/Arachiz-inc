@@ -50,18 +50,19 @@ export default function AprendizAsistencia() {
     e.preventDefault();
     setError('');
     try {
-      // El aprendiz ingresa el ID de sesión directamente
-      const d = await fetchApi(`/asistencias/materia/${sessionId}/active`).catch(async () => {
-        // Si no es materiaId, intentar buscar por sesión directa
-        return null;
-      });
-      if (d?.session) {
-        setActiveSession(d.session);
-        connectSocket(d.session.id);
-      } else {
-        setError('No se encontró sesión activa para ese código.');
+      // El aprendiz ingresa el ID de sesión que el instructor comparte
+      const d = await fetchApi(`/asistencias/${sessionId.trim()}`);
+      if (!d?.session) {
+        setError('No se encontró la sesión.');
+        return;
       }
-    } catch (err) { setError(err.message); }
+      if (!d.session.activa) {
+        setError('Esta sesión ya finalizó.');
+        return;
+      }
+      setActiveSession(d.session);
+      connectSocket(d.session.id);
+    } catch (err) { setError(err.message || 'Sesión no encontrada.'); }
   };
 
   const connectSocket = (sid) => {
@@ -148,7 +149,7 @@ export default function AprendizAsistencia() {
                 {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{error}</p>}
                 <form onSubmit={handleCheckSession} className="space-y-3">
                   <input required className="input-field font-mono text-sm"
-                    placeholder="ID de sesión o materia"
+                    placeholder="ID de sesión (ej: clxyz123...)"
                     value={sessionId} onChange={e => setSessionId(e.target.value)} />
                   <button type="submit" className="btn-success w-full">Buscar Sesión</button>
                 </form>

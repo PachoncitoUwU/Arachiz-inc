@@ -3,6 +3,7 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
+import { useToast } from '../../context/ToastContext';
 import { FileText, Check, X, Clock, CheckCircle, XCircle, Eye, Paperclip } from 'lucide-react';
 
 const STATUS_MAP = {
@@ -12,6 +13,7 @@ const STATUS_MAP = {
 };
 
 export default function InstructorExcusas() {
+  const { showToast } = useToast();
   const [excusas, setExcusas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Todas');
@@ -39,8 +41,9 @@ export default function InstructorExcusas() {
       });
       setSelected(null);
       setRespuesta('');
+      showToast(`Excusa ${estado.toLowerCase()} correctamente`, estado === 'Aprobada' ? 'success' : 'warning');
       load();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message, 'error'); }
     finally { setSaving(false); }
   };
 

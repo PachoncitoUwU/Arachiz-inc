@@ -10,6 +10,7 @@ router.post('/', roleMiddleware(['instructor']), asistenciaController.createSess
 router.get('/my-history', roleMiddleware(['aprendiz']), asistenciaController.getMyAttendance);
 router.get('/materia/:materiaId', asistenciaController.getSessionsByMateria);
 router.get('/materia/:materiaId/active', asistenciaController.getActiveSession);
+router.get('/:id', asistenciaController.getSessionById);
 router.post('/registrar', roleMiddleware(['aprendiz']), asistenciaController.registerAttendance);
 router.put('/:id/finalizar', roleMiddleware(['instructor']), asistenciaController.endSession);
 

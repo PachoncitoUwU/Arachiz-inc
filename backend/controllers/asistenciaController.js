@@ -190,4 +190,29 @@ const getActiveSession = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, endSession, getActiveSession };
+// Buscar sesión activa por ID de sesión directamente (para aprendices)
+const getSessionById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const session = await prisma.asistencia.findUnique({
+      where: { id },
+      include: {
+        registros: { include: { aprendiz: { select: { id: true, fullName: true, document: true } } } },
+        materia: {
+          include: {
+            ficha: {
+              include: { aprendices: { select: { id: true, fullName: true, document: true } } }
+            },
+            instructor: { select: { fullName: true } }
+          }
+        }
+      }
+    });
+    if (!session) return res.status(404).json({ error: 'Sesión no encontrada' });
+    res.json({ session });
+  } catch (err) {
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, endSession, getActiveSession, getSessionById };

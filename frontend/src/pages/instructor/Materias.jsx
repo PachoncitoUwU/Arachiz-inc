@@ -4,10 +4,12 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
+import { useToast } from '../../context/ToastContext';
 import { BookOpen, Plus, Trash2, FileText } from 'lucide-react';
 
 export default function InstructorMaterias() {
   const { user } = useContext(AuthContext);
+  const { showToast } = useToast();
   const [materias, setMaterias] = useState([]);
   const [fichas, setFichas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,7 @@ export default function InstructorMaterias() {
     try {
       await fetchApi('/materias', { method: 'POST', body: JSON.stringify(form) });
       setModal(false);
+      showToast('Materia creada exitosamente', 'success');
       load();
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
@@ -47,8 +50,9 @@ export default function InstructorMaterias() {
     if (!confirm('¿Eliminar esta materia? Se eliminarán también sus sesiones de asistencia.')) return;
     try {
       await fetchApi(`/materias/${id}`, { method: 'DELETE' });
+      showToast('Materia eliminada', 'success');
       load();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message, 'error'); }
   };
 
   // Agrupar por ficha
