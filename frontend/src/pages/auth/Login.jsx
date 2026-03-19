@@ -1,97 +1,94 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Mail, Lock } from 'lucide-react';
+import { Mail, Lock, GraduationCap } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setError(''); setLoading(true);
     try {
-      const data = await fetchApi('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      });
-
+      const data = await fetchApi('/auth/login', { method: 'POST', body: JSON.stringify(form) });
       login(data.token, data.user);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow border border-gray-100 p-8">
-        <div className="flex flex-col items-center mb-8">
-          <BookOpen size={48} className="text-google-blue mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800">Iniciar Sesión</h1>
-          <p className="text-gray-500 mt-2">Bienvenido de nuevo a Arachiz</p>
+    <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
+      {/* Decoración fondo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-100 rounded-full opacity-40"/>
+        <div className="absolute -top-16 -left-16 w-64 h-64 bg-green-100 rounded-full opacity-30"/>
+      </div>
+
+      <div className="w-full max-w-sm relative">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2.5 mb-6">
+            <div className="w-10 h-10 bg-[#4285F4] rounded-xl flex items-center justify-center shadow-md">
+              <GraduationCap size={22} className="text-white"/>
+            </div>
+            <span className="text-2xl font-bold text-gray-900">Arachiz</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Iniciar sesión</h1>
         </div>
 
-        {error && (
-          <div className="bg-google-red/10 border border-google-red/20 text-google-red px-4 py-3 rounded mb-6 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 block">Correo Electrónico</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Mail size={18} />
-              </div>
-              <input
-                type="email"
-                required
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-google-blue focus:border-google-blue outline-none transition-all"
-                placeholder="ejemplo@sena.edu.co"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+        <div className="bg-white rounded-2xl shadow-card p-8 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">
+              {error}
             </div>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 block">Contraseña</label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Lock size={18} />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Mail size={17}/>
               </div>
-              <input
-                type="password"
-                required
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-google-blue focus:border-google-blue outline-none transition-all"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
+              <input type="email" required placeholder="Correo electrónico"
+                className="input-field pl-11"
+                value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
             </div>
+
+            {/* Password */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Lock size={17}/>
+              </div>
+              <input type="password" required placeholder="Contraseña"
+                className="input-field pl-11"
+                value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+            </div>
+
+            <button type="submit" disabled={loading}
+              className="w-full bg-[#4285F4] text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50 shadow-sm">
+              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+            </button>
+          </form>
+
+          <div className="text-center">
+            <Link to="#" className="text-sm text-gray-500 hover:text-gray-700">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-google-blue text-white py-2 px-4 rounded font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50"
-          >
-            {loading ? 'Iniciando...' : 'Iniciar Sesión'}
-          </button>
-        </form>
+          <div className="relative flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-100"/>
+            <div className="w-2 h-2 rounded-full bg-gray-200"/>
+            <div className="flex-1 h-px bg-gray-100"/>
+          </div>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          ¿No tienes una cuenta?{' '}
-          <Link to="/register" className="text-google-blue hover:underline font-medium">
-            Regístrate aquí
+          <Link to="/register"
+            className="block w-full text-center bg-[#34A853] text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-600 transition-all active:scale-95 shadow-sm">
+            Registrarse
           </Link>
         </div>
       </div>

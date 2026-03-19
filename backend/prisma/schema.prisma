@@ -18,7 +18,7 @@ model User {
 
   // Relations
   fichasAdmin   Ficha[]  @relation("InstructorAdmin")
-  fichasInst    Ficha[]  @relation("Instructores")
+  fichasInst    FichaInstructor[]
   fichasApr     Ficha[]  @relation("Aprendices")
   materias      Materia[] @relation("InstructorMaterias")
   asistencias   Asistencia[] @relation("InstructorAsistencia")
@@ -32,17 +32,30 @@ model Ficha {
   nivel           String
   centro          String
   jornada         String
+  region          String   @default("")
+  duracion        Int      @default(0)
   code            String   @unique
   createdAt       DateTime @default(now())
 
-  // Relations
   instructorAdminId String
   instructorAdmin   User     @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
   
-  instructores User[] @relation("Instructores")
+  instructores FichaInstructor[]
   aprendices   User[] @relation("Aprendices")
 
   materias   Materia[]
+  horarios   Horario[]
+}
+
+model FichaInstructor {
+  id          String @id @default(cuid())
+  role        String @default("invitado") // 'admin' | 'invitado'
+  fichaId     String
+  instructorId String
+  ficha       Ficha  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  instructor  User   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([fichaId, instructorId])
 }
 
 model Materia {
@@ -57,11 +70,25 @@ model Materia {
   instructor   User    @relation("InstructorMaterias", fields: [instructorId], references: [id])
 
   asistencias Asistencia[]
+  horarios    Horario[]
+}
+
+model Horario {
+  id          String @id @default(cuid())
+  dia         String // 'Lunes', 'Martes', etc.
+  horaInicio  String // '08:00'
+  horaFin     String // '10:00'
+
+  fichaId     String
+  ficha       Ficha    @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+
+  materiaId   String
+  materia     Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
 }
 
 model Asistencia {
   id           String   @id @default(cuid())
-  fecha        String   // YYYY-MM-DD
+  fecha        String
   activa       Boolean  @default(true)
   timestamp    DateTime @default(now())
 
@@ -77,6 +104,7 @@ model Asistencia {
 model RegistroAsistencia {
   id           String   @id @default(cuid())
   presente     Boolean  @default(true)
+  metodo       String   @default("manual") // 'qr', 'codigo', 'manual', 'facial', 'huella', 'nfc'
   timestamp    DateTime @default(now())
 
   asistenciaId String
@@ -89,15 +117,16 @@ model RegistroAsistencia {
 }
 
 model Excusa {
-  id          String   @id @default(cuid())
-  tipo        String
-  descripcion String
-  fecha       String
-  estado      String   @default("Pendiente")
-  respuesta   String?
-  archivoUrl  String?  // RF33 multer
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  motivo       String
+  descripcion  String
+  fechas       String   // JSON array de fechas: '["2026-03-01","2026-03-02"]'
+  estado       String   @default("Pendiente") // 'Pendiente', 'Aprobada', 'Rechazada'
+  respuesta    String?
+  archivoUrl   String?
+  createdAt    DateTime @default(now())
+  respondedAt  DateTime?
 
-  aprendizId  String
-  aprendiz    User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  aprendizId   String
+  aprendiz     User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
 }

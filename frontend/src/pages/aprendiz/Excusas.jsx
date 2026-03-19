@@ -1,148 +1,256 @@
 import React, { useState, useEffect } from 'react';
 import fetchApi from '../../services/api';
-import { Send, Clock, CheckCircle, XCircle } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import EmptyState from '../../components/EmptyState';
+import Modal from '../../components/Modal';
+import { Send, Clock, CheckCircle, XCircle, Plus, Trash2, Paperclip, Eye } from 'lucide-react';
+
+const STATUS_MAP = {
+  Pendiente: { badge: 'badge-pending', icon: Clock },
+  Aprobada:  { badge: 'badge-success', icon: CheckCircle },
+  Rechazada: { badge: 'badge-danger',  icon: XCircle },
+};
+
+const MOTIVOS = ['Incapacidad Médica', 'Calamidad Doméstica', 'Problemas de Conectividad', 'Motivos Laborales', 'Otro'];
 
 export default function AprendizExcusas() {
   const [excusas, setExcusas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ tipo: 'Incapacidad Médica', descripcion: '', fecha: '' });
+  const [modal, setModal] = useState(false);
+  const [detalle, setDetalle] = useState(null);
+  const [form, setForm] = useState({ motivo: 'Incapacidad Médica', descripcion: '', fechas: [''] });
+  const [archivo, setArchivo] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const loadExcusas = async () => {
+  const load = async () => {
     try {
       setLoading(true);
-      const data = await fetchApi('/excusas/my-excusas');
-      setExcusas(data.excusas);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      const d = await fetchApi('/excusas/my-excusas');
+      setExcusas(d.excusas);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadExcusas();
-  }, []);
+  useEffect(() => { load(); }, []);
+
+  const addFecha = () => setForm(prev => ({ ...prev, fechas: [...prev.fechas, ''] }));
+  const removeFecha = (i) => setForm(prev => ({ ...prev, fechas: prev.fechas.filter((_, idx) => idx !== i) }));
+  const updateFecha = (i, val) => setForm(prev => {
+    const fechas = [...prev.fechas];
+    fechas[i] = val;
+    return { ...prev, fechas };
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); setSaving(true);
     try {
-      await fetchApi('/excusas', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
-      alert('Excusa enviada exitosamente.');
-      setFormData({ tipo: 'Incapacidad Médica', descripcion: '', fecha: '' });
-      loadExcusas();
-    } catch (err) {
-      alert(err.message);
-    }
+      const validFechas = form.fechas.filter(f => f.trim());
+      if (validFechas.length === 0) throw new Error('Agrega al menos una fecha');
+
+      const body = new FormData();
+      body.append('motivo', form.motivo);
+      body.append('descripcion', form.descripcion);
+      body.append('fechas', JSON.stringify(validFechas));
+      if (archivo) body.append('archivo', archivo);
+
+      await fetchApi('/excusas', { method: 'POST', body });
+      setModal(false);
+      setForm({ motivo: 'Incapacidad Médica', descripcion: '', fechas: [''] });
+      setArchivo(null);
+      load();
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
   };
 
-  const getStatusIcon = (estado) => {
-    switch(estado) {
-      case 'Pendiente': return <Clock size={16} className="text-google-yellow" />;
-      case 'Aprobada': return <CheckCircle size={16} className="text-google-green" />;
-      case 'Rechazada': return <XCircle size={16} className="text-google-red" />;
-      default: return null;
-    }
+  const parseFechas = (fechas) => {
+    try { return JSON.parse(fechas); } catch { return [fechas]; }
+  };
+
+  const counts = {
+    total: excusas.length,
+    pendientes: excusas.filter(e => e.estado === 'Pendiente').length,
+    aprobadas: excusas.filter(e => e.estado === 'Aprobada').length,
+    rechazadas: excusas.filter(e => e.estado === 'Rechazada').length,
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Enviar Excusa</h1>
-          <p className="text-gray-500 text-sm mt-1">Justifica tus inasistencias enviando el soporte requerido</p>
-        </div>
+    <div className="animate-fade-in space-y-5">
+      <PageHeader
+        title="Mis Excusas"
+        subtitle="Gestiona tus justificaciones de inasistencia"
+        action={
+          <button onClick={() => { setModal(true); setError(''); }} className="btn-primary flex items-center gap-2">
+            <Plus size={16}/> Nueva Excusa
+          </button>
+        }
+      />
 
-        <div className="card border-t-4 border-t-google-blue">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Excusa</label>
-              <select 
-                required 
-                className="input-field"
-                value={formData.tipo}
-                onChange={e => setFormData({...formData, tipo: e.target.value})}
-              >
-                <option>Incapacidad Médica</option>
-                <option>Calamidad Doméstica</option>
-                <option>Problemas de Conectividad</option>
-                <option>Motivos Laborales</option>
-                <option>Otro</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Inasistencia</label>
-              <input 
-                type="date" 
-                required 
-                className="input-field"
-                value={formData.fecha}
-                onChange={e => setFormData({...formData, fecha: e.target.value})}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción y Motivo</label>
-              <textarea 
-                required 
-                rows="4"
-                className="input-field resize-none"
-                placeholder="Explica brevemente la razón de tu inasistencia..."
-                value={formData.descripcion}
-                onChange={e => setFormData({...formData, descripcion: e.target.value})}
-              ></textarea>
-            </div>
-
-            <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2 mt-2">
-              <Send size={18} /> Enviar a Instructor
-            </button>
-          </form>
-        </div>
+      {/* Resumen */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Total', value: counts.total, cls: 'bg-gray-50 text-gray-700' },
+          { label: 'Pendientes', value: counts.pendientes, cls: 'bg-yellow-50 text-yellow-700' },
+          { label: 'Aprobadas', value: counts.aprobadas, cls: 'bg-green-50 text-[#34A853]' },
+          { label: 'Rechazadas', value: counts.rechazadas, cls: 'bg-red-50 text-[#EA4335]' },
+        ].map(s => (
+          <div key={s.label} className={`card-sm text-center ${s.cls}`}>
+            <p className="text-2xl font-bold">{s.value}</p>
+            <p className="text-xs font-medium mt-0.5">{s.label}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="space-y-6">
-        <div>
-           <h2 className="text-xl font-bold text-gray-800">Estado de Excusas</h2>
-           <p className="text-gray-500 text-sm mt-1">Historial y respuesta del instructor</p>
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin"/>
         </div>
-
-        {loading ? (
-          <div className="text-center p-8 text-gray-500">Cargando...</div>
-        ) : excusas.length === 0 ? (
-          <div className="bg-gray-50 border border-dashed rounded-lg p-8 text-center text-gray-500">
-             No has enviado ninguna excusa.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {excusas.map(excusa => (
-              <div key={excusa.id} className="bg-white border rounded shadow-sm p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-gray-800">{excusa.tipo}</h3>
-                  <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border bg-opacity-10
-                    ${excusa.estado === 'Pendiente' ? 'text-yellow-700 bg-yellow-100 border-yellow-200' : 
-                      excusa.estado === 'Aprobada' ? 'text-green-700 bg-green-100 border-green-200' : 
-                      'text-red-700 bg-red-100 border-red-200'}`}>
-                    {getStatusIcon(excusa.estado)}
-                    {excusa.estado}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mb-3">{excusa.descripcion}</p>
-                <div className="text-xs text-gray-400 mb-2">Para inasistencia el: <strong className="text-gray-500">{excusa.fecha}</strong></div>
-                
-                {excusa.respuesta && (
-                  <div className="mt-3 bg-gray-50 p-3 rounded text-sm text-gray-700 border-l-2 border-google-blue">
-                    <strong>Respuesta instructor:</strong><br/>
-                    {excusa.respuesta}
+      ) : excusas.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={<Send size={32}/>}
+            title="Sin excusas enviadas"
+            description="Envía una excusa para justificar tus inasistencias."
+            action={<button onClick={() => setModal(true)} className="btn-primary">Enviar Excusa</button>}
+          />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {excusas.map(excusa => {
+            const { badge, icon: Icon } = STATUS_MAP[excusa.estado] || STATUS_MAP.Pendiente;
+            const fechas = parseFechas(excusa.fechas);
+            return (
+              <div key={excusa.id} className="card hover:shadow-card transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-bold text-gray-900">{excusa.motivo}</span>
+                      <span className={badge}><Icon size={12}/> {excusa.estado}</span>
+                    </div>
+                    <p className="text-sm text-gray-500 line-clamp-2">{excusa.descripcion}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {fechas.map((f, i) => <span key={i} className="badge badge-gray">{f}</span>)}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Enviada: {new Date(excusa.createdAt).toLocaleDateString('es-CO')}
+                      {excusa.respondedAt && ` · Respondida: ${new Date(excusa.respondedAt).toLocaleDateString('es-CO')}`}
+                    </p>
+                    {excusa.respuesta && (
+                      <div className="mt-2 p-2.5 bg-gray-50 rounded-lg border-l-2 border-[#4285F4]">
+                        <p className="text-xs text-gray-500 font-medium mb-0.5">Respuesta del instructor:</p>
+                        <p className="text-xs text-gray-700">{excusa.respuesta}</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {excusa.archivoUrl && (
+                      <a href={`http://localhost:3000${excusa.archivoUrl}`} target="_blank" rel="noreferrer"
+                        className="btn-icon text-[#4285F4] hover:bg-blue-50" title="Ver adjunto">
+                        <Paperclip size={15}/>
+                      </a>
+                    )}
+                    <button onClick={() => setDetalle(excusa)} className="btn-icon text-gray-400 hover:bg-gray-100">
+                      <Eye size={15}/>
+                    </button>
+                  </div>
+                </div>
               </div>
-            ))}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal nueva excusa */}
+      <Modal open={modal} onClose={() => setModal(false)} title="Enviar Excusa" maxWidth="max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          <div>
+            <label className="input-label">Motivo</label>
+            <select required className="input-field" value={form.motivo}
+              onChange={e => setForm({...form, motivo: e.target.value})}>
+              {MOTIVOS.map(m => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="input-label">Descripción</label>
+            <textarea required rows={3} className="input-field resize-none"
+              placeholder="Explica brevemente la razón de tu inasistencia..."
+              value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="input-label mb-0">Fechas de Inasistencia</label>
+              <button type="button" onClick={addFecha}
+                className="text-xs text-[#4285F4] hover:underline flex items-center gap-1">
+                <Plus size={12}/> Agregar fecha
+              </button>
+            </div>
+            <div className="space-y-2">
+              {form.fechas.map((f, i) => (
+                <div key={i} className="flex gap-2">
+                  <input type="date" required className="input-field flex-1" value={f}
+                    onChange={e => updateFecha(i, e.target.value)} />
+                  {form.fechas.length > 1 && (
+                    <button type="button" onClick={() => removeFecha(i)}
+                      className="btn-icon text-red-400 hover:bg-red-50">
+                      <Trash2 size={14}/>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="input-label">Archivo Adjunto (opcional)</label>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              className="input-field text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-[#4285F4] hover:file:bg-blue-100"
+              onChange={e => setArchivo(e.target.files[0])} />
+            <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG, DOC, DOCX · Máx. 5MB</p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => setModal(false)} className="btn-secondary flex-1">Cancelar</button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">
+              <Send size={14}/> {saving ? 'Enviando...' : 'Enviar Excusa'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal detalle */}
+      <Modal open={!!detalle} onClose={() => setDetalle(null)} title="Detalle de Excusa">
+        {detalle && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-gray-900">{detalle.motivo}</span>
+              {(() => { const { badge, icon: Icon } = STATUS_MAP[detalle.estado]; return <span className={badge}><Icon size={12}/>{detalle.estado}</span>; })()}
+            </div>
+            <p className="text-sm text-gray-600">{detalle.descripcion}</p>
+            <div>
+              <p className="text-xs font-semibold text-gray-500 mb-1">Fechas justificadas:</p>
+              <div className="flex flex-wrap gap-1">
+                {parseFechas(detalle.fechas).map((f, i) => <span key={i} className="badge badge-gray">{f}</span>)}
+              </div>
+            </div>
+            {detalle.archivoUrl && (
+              <a href={`http://localhost:3000${detalle.archivoUrl}`} target="_blank" rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-[#4285F4] hover:underline">
+                <Paperclip size={14}/> Ver archivo adjunto
+              </a>
+            )}
+            <div className="text-xs text-gray-400 space-y-0.5">
+              <p>Enviada: {new Date(detalle.createdAt).toLocaleDateString('es-CO')}</p>
+              {detalle.respondedAt && <p>Respondida: {new Date(detalle.respondedAt).toLocaleDateString('es-CO')}</p>}
+            </div>
+            {detalle.respuesta && (
+              <div className="p-3 bg-gray-50 rounded-xl border-l-2 border-[#4285F4]">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Respuesta del instructor:</p>
+                <p className="text-sm text-gray-700">{detalle.respuesta}</p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </Modal>
     </div>
   );
 }

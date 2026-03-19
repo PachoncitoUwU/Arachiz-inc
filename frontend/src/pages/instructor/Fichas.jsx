@@ -1,146 +1,290 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
-import { Users, Plus, Hash, Clock, MapPin, Layers } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import Modal from '../../components/Modal';
+import EmptyState from '../../components/EmptyState';
+import {
+  Users, Plus, Hash, Clock, MapPin, Layers, Copy, RefreshCw,
+  ChevronDown, ChevronUp, Trash2, UserMinus, Edit2, Check
+} from 'lucide-react';
 
-export default function InstructorFichas() {
-  const [fichas, setFichas] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    numero: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana'
-  });
+function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const isAdmin = ficha.instructorAdminId === currentUserId;
 
-  const loadFichas = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchApi('/fichas/my-fichas');
-      setFichas(data.fichas);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadFichas();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await fetchApi('/fichas', {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      });
-      setIsModalOpen(false);
-      setFormData({ numero: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana' });
-      loadFichas();
-    } catch (err) {
-      alert(err.message);
-    }
+  const copyCode = () => {
+    navigator.clipboard.writeText(ficha.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="card hover:shadow-card transition-all duration-200">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Fichas</h1>
-          <p className="text-gray-500 text-sm mt-1">Administra tus grupos y aprendices</p>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-gray-900">Ficha {ficha.numero}</span>
+            {isAdmin && <span className="badge badge-info">Admin</span>}
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">{ficha.nivel} · {ficha.centro} · {ficha.jornada}</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus size={18} /> Nueva Ficha
-        </button>
+        {isAdmin && (
+          <button onClick={() => onEdit(ficha)} className="btn-icon text-gray-400 hover:bg-gray-100">
+            <Edit2 size={15}/>
+          </button>
+        )}
       </div>
 
-      {loading ? (
-        <div className="p-8 text-center text-gray-500">Cargando fichas...</div>
-      ) : fichas.length === 0 ? (
-        <div className="card text-center p-12">
-          <Users size={48} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-800">No tienes fichas todavía</h3>
-          <p className="text-gray-500 mt-2 mb-6">Crea tu primera ficha para empezar a gestionar asistencias.</p>
-          <button onClick={() => setIsModalOpen(true)} className="btn-primary">Crear Ficha</button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {fichas.map(ficha => (
-            <div key={ficha.id} className="card hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className="bg-blue-50 text-google-blue px-3 py-1 rounded text-lg font-bold">
-                  {ficha.numero}
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                    Código: <span className="text-google-blue font-mono">{ficha.code}</span>
-                  </span>
-                </div>
+      {/* Código */}
+      <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl mb-3">
+        <span className="text-xs text-gray-500 font-medium">Código:</span>
+        <span className="font-mono font-bold text-[#4285F4] tracking-widest text-sm flex-1">{ficha.code}</span>
+        <button onClick={copyCode} className="btn-icon text-gray-400 hover:bg-white hover:shadow-sm" title="Copiar">
+          {copied ? <Check size={15} className="text-[#34A853]"/> : <Copy size={15}/>}
+        </button>
+        {isAdmin && (
+          <button onClick={() => onRegenerate(ficha.id)} className="btn-icon text-gray-400 hover:bg-white hover:shadow-sm" title="Regenerar">
+            <RefreshCw size={15}/>
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {[
+          { label: 'Aprendices', value: ficha.aprendices?.length || 0 },
+          { label: 'Instructores', value: ficha.instructores?.length || 0 },
+          { label: 'Materias', value: ficha.materias?.length || 0 },
+        ].map(s => (
+          <div key={s.label} className="text-center p-2 bg-gray-50 rounded-lg">
+            <p className="text-lg font-bold text-gray-800">{s.value}</p>
+            <p className="text-xs text-gray-400">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Expandir aprendices */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between text-xs text-gray-500 hover:text-gray-700 py-1 transition-colors"
+      >
+        <span>Ver aprendices</span>
+        {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+          {ficha.aprendices?.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-3">Sin aprendices aún</p>
+          ) : ficha.aprendices?.map(a => (
+            <div key={a.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50">
+              <div>
+                <p className="text-xs font-medium text-gray-700">{a.fullName}</p>
+                <p className="text-xs text-gray-400">{a.document}</p>
               </div>
-              
-              <div className="space-y-2 mt-4 text-sm text-gray-600">
-                <p className="flex items-center gap-2"><Layers size={16} className="text-gray-400"/> Nivel: {ficha.nivel}</p>
-                <p className="flex items-center gap-2"><MapPin size={16} className="text-gray-400"/> Centro: {ficha.centro}</p>
-                <p className="flex items-center gap-2"><Clock size={16} className="text-gray-400"/> Jornada: {ficha.jornada}</p>
-                <div className="pt-3 mt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-google-blue font-medium"><Users size={16}/> {ficha.aprendices.length} Aprendices</span>
-                </div>
-              </div>
+              {isAdmin && (
+                <button onClick={() => onRemoveAprendiz(ficha.id, a.id)}
+                  className="btn-icon text-red-400 hover:bg-red-50 w-7 h-7">
+                  <UserMinus size={13}/>
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Modal Nueva Ficha */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Crear Nueva Ficha</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Número de Ficha</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Hash size={16}/></div>
-                  <input required type="text" className="input-field pl-9" placeholder="2345678"
-                    value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Centro de Formación</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><MapPin size={16}/></div>
-                  <input required type="text" className="input-field pl-9" placeholder="CTPI"
-                    value={formData.centro} onChange={e => setFormData({...formData, centro: e.target.value})} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nivel</label>
-                  <select className="input-field" value={formData.nivel} onChange={e => setFormData({...formData, nivel: e.target.value})}>
-                    <option>Técnico</option>
-                    <option>Tecnólogo</option>
-                    <option>Especialización</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
-                  <select className="input-field" value={formData.jornada} onChange={e => setFormData({...formData, jornada: e.target.value})}>
-                    <option>Mañana</option>
-                    <option>Tarde</option>
-                    <option>Noche</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end mt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar Ficha</button>
-              </div>
-            </form>
+export default function InstructorFichas() {
+  const { user } = useContext(AuthContext);
+  const [fichas, setFichas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalCreate, setModalCreate] = useState(false);
+  const [modalJoin, setModalJoin] = useState(false);
+  const [editFicha, setEditFicha] = useState(null);
+  const [form, setForm] = useState({ numero: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' });
+  const [joinCode, setJoinCode] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchApi('/fichas/my-fichas');
+      setFichas(data.fichas);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setError(''); setSaving(true);
+    try {
+      await fetchApi('/fichas', { method: 'POST', body: JSON.stringify(form) });
+      setModalCreate(false);
+      setForm({ numero: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' });
+      load();
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setError(''); setSaving(true);
+    try {
+      await fetchApi(`/fichas/${editFicha.id}`, { method: 'PUT', body: JSON.stringify(form) });
+      setEditFicha(null);
+      load();
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const openEdit = (ficha) => {
+    setForm({ numero: ficha.numero, nivel: ficha.nivel, centro: ficha.centro, jornada: ficha.jornada, region: ficha.region || '', duracion: ficha.duracion || '' });
+    setEditFicha(ficha);
+    setError('');
+  };
+
+  const handleJoin = async (e) => {
+    e.preventDefault();
+    setError(''); setSaving(true);
+    try {
+      await fetchApi('/fichas/join', { method: 'POST', body: JSON.stringify({ code: joinCode }) });
+      setModalJoin(false);
+      setJoinCode('');
+      load();
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const handleRegenerate = async (id) => {
+    if (!confirm('¿Regenerar el código? El anterior dejará de funcionar.')) return;
+    try {
+      await fetchApi(`/fichas/${id}/regenerate-code`, { method: 'POST' });
+      load();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleRemoveAprendiz = async (fichaId, aprendizId) => {
+    if (!confirm('¿Eliminar este aprendiz de la ficha?')) return;
+    try {
+      await fetchApi(`/fichas/${fichaId}/aprendices/${aprendizId}`, { method: 'DELETE' });
+      load();
+    } catch (err) { alert(err.message); }
+  };
+
+  const FichaForm = ({ onSubmit, submitLabel }) => (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+      <div>
+        <label className="input-label">Número de Ficha</label>
+        <input required className="input-field" placeholder="3146013"
+          value={form.numero} onChange={e => setForm({...form, numero: e.target.value})} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="input-label">Nivel</label>
+          <select className="input-field" value={form.nivel} onChange={e => setForm({...form, nivel: e.target.value})}>
+            <option>Técnico</option><option>Tecnólogo</option><option>Especialización</option>
+          </select>
+        </div>
+        <div>
+          <label className="input-label">Jornada</label>
+          <select className="input-field" value={form.jornada} onChange={e => setForm({...form, jornada: e.target.value})}>
+            <option>Mañana</option><option>Tarde</option><option>Noche</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="input-label">Centro de Formación</label>
+        <input required className="input-field" placeholder="CTPI Ibagué"
+          value={form.centro} onChange={e => setForm({...form, centro: e.target.value})} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="input-label">Región</label>
+          <input className="input-field" placeholder="Tolima"
+            value={form.region} onChange={e => setForm({...form, region: e.target.value})} />
+        </div>
+        <div>
+          <label className="input-label">Duración (meses)</label>
+          <input type="number" className="input-field" placeholder="24"
+            value={form.duracion} onChange={e => setForm({...form, duracion: e.target.value})} />
+        </div>
+      </div>
+      <div className="flex gap-3 pt-2">
+        <button type="button" onClick={() => { setModalCreate(false); setEditFicha(null); }} className="btn-secondary flex-1">Cancelar</button>
+        <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Guardando...' : submitLabel}</button>
+      </div>
+    </form>
+  );
+
+  return (
+    <div className="animate-fade-in">
+      <PageHeader
+        title="Fichas de Formación"
+        subtitle="Gestiona tus grupos académicos"
+        action={
+          <div className="flex gap-2">
+            <button onClick={() => { setModalJoin(true); setError(''); }} className="btn-secondary">Unirse</button>
+            <button onClick={() => { setModalCreate(true); setError(''); }} className="btn-primary flex items-center gap-2">
+              <Plus size={16}/> Nueva Ficha
+            </button>
           </div>
+        }
+      />
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin"/>
+        </div>
+      ) : fichas.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={<Users size={32}/>}
+            title="No tienes fichas aún"
+            description="Crea tu primera ficha o únete a una existente con un código de invitación."
+            action={<button onClick={() => setModalCreate(true)} className="btn-primary">Crear Ficha</button>}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {fichas.map(f => (
+            <FichaCard key={f.id} ficha={f} currentUserId={user?.id}
+              onRegenerate={handleRegenerate} onEdit={openEdit} onRemoveAprendiz={handleRemoveAprendiz} />
+          ))}
         </div>
       )}
+
+      {/* Modal Crear */}
+      <Modal open={modalCreate} onClose={() => setModalCreate(false)} title="Crear Nueva Ficha">
+        <FichaForm onSubmit={handleCreate} submitLabel="Crear Ficha" />
+      </Modal>
+
+      {/* Modal Editar */}
+      <Modal open={!!editFicha} onClose={() => setEditFicha(null)} title="Editar Ficha">
+        <FichaForm onSubmit={handleEdit} submitLabel="Guardar Cambios" />
+      </Modal>
+
+      {/* Modal Unirse */}
+      <Modal open={modalJoin} onClose={() => setModalJoin(false)} title="Unirse a una Ficha">
+        <form onSubmit={handleJoin} className="space-y-4">
+          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          <p className="text-sm text-gray-500">Ingresa el código de invitación proporcionado por el administrador de la ficha.</p>
+          <input required className="input-field text-center font-mono text-lg tracking-widest uppercase"
+            placeholder="X7B9K2" value={joinCode}
+            onChange={e => setJoinCode(e.target.value.toUpperCase())} />
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setModalJoin(false)} className="btn-secondary flex-1">Cancelar</button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Uniéndose...' : 'Unirse'}</button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

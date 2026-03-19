@@ -1,87 +1,71 @@
-# 🕷️ Arachiz - Sistema de Gestión de Asistencia Académica
+# Arachiz — Sistema de Gestión de Asistencia
 
-Arachiz es una plataforma profesional desarrollada para optimizar la gestión de asistencias y excusas en un entorno académico (basado en el contexto SENA). Ofrece roles separados para Instructores y Aprendices, facilitando el control en tiempo real y la evaluación de justificaciones de forma rápida e intuitiva.
+Plataforma web para gestión de asistencia académica del SENA. Permite a instructores administrar fichas, materias, horarios y sesiones de asistencia; y a los aprendices registrar su asistencia y gestionar excusas.
 
-## 🚀 Características Principales
+## Stack
 
-### 🧑‍🏫 Módulo Instructor
-- **Gestión de Fichas:** Creación de grupos académicos mediante códigos de invitación.
-- **Control de Materias:** Asignación de materias a fichas específicas.
-- **Asistencia en Tiempo Real:** Inicio y finalización de sesiones de asistencia, con monitoreo en vivo de los aprendices registrados.
-- **Evaluación de Excusas:** Revisión, aprobación o rechazo de excusas médicas y otras justificaciones enviadas por los estudiantes, incluyendo la opción de dar respuesta directa.
+- **Frontend:** React 19 + Vite + Tailwind CSS + Socket.io-client
+- **Backend:** Node.js + Express + Prisma ORM + SQLite + Socket.io
+- **Auth:** JWT + bcryptjs
 
-### 🧑‍🎓 Módulo Aprendiz
-- **Vinculación Sencilla:** Unión a una ficha a través de un código único proporcionado por el instructor.
-- **Registro Rápido de Asistencia:** Marcado de presencia utilizando el código de sesión correspondiente a la materia activa.
-- **Gestión de Excusas:** Plataforma para el envío de excusas categorizadas, adjuntando justificaciones y manteniendo un historial del estado (Pendiente, Aprobada, Rechazada).
+## Instalación
 
-### 🔒 Seguridad y Arquitectura
-- **Autenticación con JWT:** Acceso seguro mediante _JSON Web Tokens_ y encriptación de contraseñas con `bcryptjs`.
-- **RBAC (Role-Based Access Control):** Separación estricta de rutas, vistas y endpoints de API dependiendo del rol del usuario.
-- **Diseño UI/UX:** Interfaz limpia siguiendo los parámetros de Google Material Design usando Tailwind CSS.
+### Requisitos
+- Node.js 18+
+- npm
 
----
+### Backend
 
-## 🛠️ Tecnologías Usadas
-
-- **Frontend:** React.js, Vite, Tailwind CSS, React Router DOM, Lucide React (iconos).
-- **Backend:** Node.js, Express.js, JWT, Bcryptjs.
-- **Arquitectura Backend:** Patrón MVC (Model-View-Controller) modificado usando una "Base de datos en memoria" temporal lista para ser migrada a SQL/NoSQL.
-
----
-
-## 📦 Instalación y Uso (Desarrollo Local)
-
-Sigue estos pasos para ejecutar el proyecto en cualquier computadora:
-
-### 1. Clonar el repositorio
 ```bash
-git clone <url-del-repositorio>
-cd arachiz
-```
-
-### 2. Configurar y Ejecutar el Backend
-```bash
-# Navegar al directorio backend
 cd backend
-
-# Instalar dependencias
 npm install
-
-# Crear archivo de variables de entorno (Opcional, pero recomendado)
-# Crea un archivo .env en la carpeta /backend con la siguiente estructura:
-# PORT=3000
-# JWT_SECRET=supersecretarachiz
-
-# Ejecutar el servidor en modo desarrollo
-npm start
-# O si prefieres node: node server.js
+npx prisma migrate dev
+node server.js
 ```
-El backend se ejecutará en: `http://localhost:3000`
 
-### 3. Configurar y Ejecutar el Frontend
-Abre **una nueva terminal** en la raíz del proyecto.
+### Frontend
+
 ```bash
-# Navegar al directorio frontend
 cd frontend
-
-# Instalar dependencias
 npm install
-
-# Configurar variables de entorno
-# Crea un archivo .env en la carpeta /frontend con:
-# VITE_API_URL=http://localhost:3000/api
-
-# Ejecutar Vite
 npm run dev
 ```
-La aplicación web estará disponible típicamente en `http://localhost:5173` (revisa la consola de Vite).
 
----
+## Variables de entorno
 
-## 📝 Notas para Producción
-1. **Base de Datos:** El proyecto actual utiliza estructuras almacenadas en memoria (`/models/db.js`). Para paso a producción, se debe conectar a una base de datos real actualizando los controladores correspondientes.
-2. **Seguridad:** Cambiar obligatoriamente el `JWT_SECRET` en producción y mantener las variables dentro de `.env` que no se exponen al repositorio.
+### `backend/.env`
+```
+PORT=3000
+JWT_SECRET=tu_secreto_seguro
+```
 
----
-_Desarrollado para optimizar el tiempo académico mediante la eficiencia tecnológica._
+### `frontend/.env` (opcional)
+```
+VITE_API_URL=http://localhost:3000/api
+```
+
+## Scripts
+
+| Comando | Descripción |
+|---|---|
+| `node server.js` | Inicia el backend |
+| `npm run dev` | Inicia el frontend en desarrollo |
+| `npm run build` | Build de producción del frontend |
+| `npx prisma studio` | Interfaz visual de la base de datos |
+| `npx prisma migrate reset --force` | Resetea la base de datos |
+
+## Roles
+
+- **Instructor:** Crea fichas, materias, horarios, inicia sesiones de asistencia, evalúa excusas.
+- **Aprendiz:** Se une a fichas, registra asistencia, envía excusas.
+
+## Funcionalidades principales
+
+- Autenticación con JWT (8h de sesión)
+- Gestión completa de fichas con código de invitación
+- Módulo de materias con control de permisos por rol
+- Horario semanal configurable
+- Sesiones de asistencia en tiempo real (Socket.io)
+- Registro automático de ausencias al cerrar sesión
+- Excusas con múltiples fechas y adjuntos (PDF, JPG, PNG, DOC)
+- Historial completo de asistencias por aprendiz

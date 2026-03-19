@@ -10,6 +10,7 @@ const fichaRoutes = require('./routes/fichaRoutes');
 const materiaRoutes = require('./routes/materiaRoutes');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
 const excusaRoutes = require('./routes/excusaRoutes');
+const horarioRoutes = require('./routes/horarioRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,26 +22,23 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Middlewares Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/fichas', fichaRoutes);
 app.use('/api/materias', materiaRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
 app.use('/api/excusas', excusaRoutes);
+app.use('/api/horarios', horarioRoutes);
 
-// Config Socket.io accessible in controllers
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log('Socket conectado:', socket.id);
-  
   socket.on('joinSession', (sessionId) => {
     socket.join(`session_${sessionId}`);
   });
-
-  socket.on('disconnect', () => {
-    console.log('Socket desconectado:', socket.id);
+  socket.on('leaveSession', (sessionId) => {
+    socket.leave(`session_${sessionId}`);
   });
+  socket.on('disconnect', () => {});
 });
 
 app.use((req, res) => {
@@ -48,5 +46,5 @@ app.use((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Backend de Arachiz ejecutándose en http://localhost:${PORT}`);
+  console.log(`Arachiz backend corriendo en http://localhost:${PORT}`);
 });

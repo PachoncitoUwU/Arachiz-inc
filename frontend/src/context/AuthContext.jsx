@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext();
@@ -9,24 +9,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // RNF18 - Expiración de sesión por inactividad (8h via JWT, pero también chequeamos expiración)
+  const decodeToken = useCallback((t) => {
+    try {
+      const payload = JSON.parse(atob(t.split('.')[1]));
+      if (payload.exp * 1000 < Date.now()) return null;
+      return payload;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    // Si hay token en localstorage, decodificar el payload o restaurar usuario básico
     if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({
-          id: payload.id,
-          userType: payload.userType,
-          email: payload.email
-        });
-      } catch (err) {
-        console.error('Invalid token', err);
+      const payload = decodeToken(token);
+      if (payload) {
+        setUser({ id: payload.id, userType: payload.userType, email: payload.email, fullName: payload.fullName });
+      } else {
         setToken(null);
         localStorage.removeItem('token');
       }
     }
     setLoading(false);
-  }, [token]);
+  }, [token, decodeToken]);
 
   const login = (newToken, userData) => {
     setToken(newToken);
@@ -47,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token && !!user }}>
       {!loading && children}
     </AuthContext.Provider>
   );

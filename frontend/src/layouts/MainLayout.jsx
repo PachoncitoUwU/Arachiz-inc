@@ -1,105 +1,139 @@
-import React, { useContext } from 'react';
-import { Outlet, Navigate, Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut, Home, Users, BookOpen, Calendar, Clock, FileText } from 'lucide-react';
+import {
+  LayoutDashboard, Users, BookOpen, Clock, FileText,
+  LogOut, Menu, X, Calendar, ChevronRight, GraduationCap
+} from 'lucide-react';
+
+const INSTRUCTOR_LINKS = [
+  { to: '/instructor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/instructor/fichas',    icon: Users,           label: 'Fichas' },
+  { to: '/instructor/materias',  icon: BookOpen,        label: 'Materias' },
+  { to: '/instructor/horario',   icon: Calendar,        label: 'Horario' },
+  { to: '/instructor/asistencia',icon: Clock,           label: 'Asistencia' },
+  { to: '/instructor/excusas',   icon: FileText,        label: 'Excusas' },
+];
+
+const APRENDIZ_LINKS = [
+  { to: '/aprendiz/dashboard',   icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/aprendiz/materias',    icon: BookOpen,        label: 'Materias' },
+  { to: '/aprendiz/horario',     icon: Calendar,        label: 'Horario' },
+  { to: '/aprendiz/asistencia',  icon: Clock,           label: 'Asistencia' },
+  { to: '/aprendiz/excusas',     icon: FileText,        label: 'Excusas' },
+];
+
+function SidebarContent({ links, user, logout, onClose }) {
+  const initials = user?.fullName
+    ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || '?';
+
+  const roleColor = user?.userType === 'instructor' ? 'bg-[#4285F4]' : 'bg-[#34A853]';
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center justify-between px-5 py-5 border-b border-gray-100">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-[#4285F4] rounded-lg flex items-center justify-center">
+            <GraduationCap size={18} className="text-white" />
+          </div>
+          <span className="text-lg font-bold text-gray-900">Arachiz</span>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="btn-icon text-gray-400 hover:bg-gray-100 md:hidden">
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {links.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={onClose}
+            className={({ isActive }) => isActive ? 'nav-link-active' : 'nav-link'}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
+            <ChevronRight size={14} className="ml-auto opacity-30" />
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* User */}
+      <div className="px-3 py-4 border-t border-gray-100">
+        <div className="flex items-center gap-3 px-2 mb-3">
+          <div className={`w-9 h-9 rounded-xl ${roleColor} text-white flex items-center justify-center text-sm font-bold shrink-0`}>
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName || user?.email}</p>
+            <p className="text-xs text-gray-400 capitalize">{user?.userType}</p>
+          </div>
+        </div>
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors font-medium"
+        >
+          <LogOut size={16} />
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function MainLayout({ allowedRoles }) {
   const { user, isAuthenticated, logout } = useContext(AuthContext);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user?.userType)) {
+    return <Navigate to={`/${user?.userType}/dashboard`} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.userType)) {
-    // Redirect to their own dashboard if they try to access a route for another role
-    return <Navigate to={`/${user.userType}/dashboard`} replace />;
-  }
-
-  const instructorLinks = [
-    { to: '/instructor/dashboard', icon: <Home size={20} />, label: 'Dashboard' },
-    { to: '/instructor/fichas', icon: <Users size={20} />, label: 'Fichas' },
-    { to: '/instructor/asistencia', icon: <Clock size={20} />, label: 'Asistencia' },
-    { to: '/instructor/excusas', icon: <FileText size={20} />, label: 'Excusas' },
-  ];
-
-  const aprendizLinks = [
-    { to: '/aprendiz/dashboard', icon: <Home size={20} />, label: 'Dashboard' },
-    { to: '/aprendiz/asistencia', icon: <Clock size={20} />, label: 'Asistencia' },
-    { to: '/aprendiz/excusas', icon: <FileText size={20} />, label: 'Mis Excusas' },
-  ];
-
-  const navLinks = user.userType === 'instructor' ? instructorLinks : aprendizLinks;
+  const links = user?.userType === 'instructor' ? INSTRUCTOR_LINKS : APRENDIZ_LINKS;
 
   return (
-    <div className="flex h-screen bg-gray-50 flex-col md:flex-row">
-      {/* Sidebar (Desktop) / Bottom Nav (Mobile - basic fallback for now) */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
-        <div>
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-google-blue flex items-center gap-2">
-              <BookOpen className="text-google-yellow" /> Arachiz
-            </h1>
-            <p className="text-sm text-gray-500 mt-1 capitalize">{user.userType}</p>
-          </div>
-          <nav className="p-4 space-y-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-google-blue hover:text-white rounded transition-colors"
-                // active styles could be handled via NavLink in React Router
-              >
-                {link.icon}
-                <span className="font-medium">{link.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-10 h-10 rounded-full bg-google-green text-white flex justify-center items-center font-bold">
-              {user.email[0].toUpperCase()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="font-medium text-sm truncate">{user.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2 text-google-red border border-google-red rounded hover:bg-google-red hover:text-white transition-colors"
-          >
-            <LogOut size={18} />
-            Cerrar Sesión
-          </button>
-        </div>
+    <div className="flex h-screen bg-[#F5F5F5] overflow-hidden">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-60 bg-white border-r border-gray-100 flex-col shrink-0">
+        <SidebarContent links={links} user={user} logout={logout} />
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Header (Visible only on small screens) */}
-        <header className="md:hidden bg-white p-4 border-b border-gray-200 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-google-blue">Arachiz</h1>
-          <button onClick={logout} className="text-google-red"><LogOut size={20}/></button>
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl z-50">
+            <SidebarContent links={links} user={user} logout={logout} onClose={() => setSidebarOpen(false)} />
+          </aside>
+        </div>
+      )}
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile topbar */}
+        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="btn-icon text-gray-600 hover:bg-gray-100">
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#4285F4] rounded-md flex items-center justify-center">
+              <GraduationCap size={14} className="text-white" />
+            </div>
+            <span className="font-bold text-gray-900">Arachiz</span>
+          </div>
+          <div className="w-9" />
         </header>
 
-        {/* Dynamic Mobile Nav (Visible only on small screens) */}
-        <nav className="md:hidden bg-white border-b border-gray-200 flex overflow-x-auto">
-           {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex flex-col items-center justify-center p-3 text-gray-700 min-w-[80px]"
-              >
-                {link.icon}
-                <span className="text-xs mt-1">{link.label}</span>
-              </Link>
-            ))}
-        </nav>
-
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

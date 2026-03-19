@@ -1,33 +1,34 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// RF11/RF32/RF33 - Crear excusa
 const createExcusa = async (req, res) => {
-  const { tipo, descripcion, fecha } = req.body;
+  const { motivo, descripcion, fechas } = req.body;
   const aprendizId = req.user.id;
-
-  if (!tipo || !descripcion) return res.status(400).json({ error: 'Faltan datos' });
-
+  if (!motivo || !descripcion || !fechas) return res.status(400).json({ error: 'Faltan datos' });
   try {
-    // Si viene un archivo (para RF33 subida multer), se guarda la URL. (Pendiente implementación router)
     const archivoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // fechas puede venir como string JSON o array
+    const fechasStr = typeof fechas === 'string' ? fechas : JSON.stringify(fechas);
 
     const newExcusa = await prisma.excusa.create({
       data: {
-        tipo,
+        motivo,
         descripcion,
-        fecha: fecha || new Date().toISOString().split('T')[0],
+        fechas: fechasStr,
         estado: 'Pendiente',
         archivoUrl,
         aprendiz: { connect: { id: aprendizId } }
-      }
+      },
+      include: { aprendiz: { select: { fullName: true } } }
     });
-
     res.status(201).json({ message: 'Excusa enviada', excusa: newExcusa });
   } catch (err) {
     res.status(500).json({ error: 'Error al enviar excusa: ' + err.message });
   }
 };
 
+// RF36 - Excusas del aprendiz
 const getUserExcusas = async (req, res) => {
   const userId = req.user.id;
   try {
@@ -41,57 +42,45 @@ const getUserExcusas = async (req, res) => {
   }
 };
 
+// RF12/RF54 - Todas las excusas (instructor)
 const getAllExcusas = async (req, res) => {
   const instructorId = req.user.id;
   try {
-    // RF12: Obtener excusas... Para MVP, instructor ve todas las excusas de las fichas a las que pertenece o globales. 
-    // Usaremos obtener excusas de aprendices que estén en las fichas del instructor.
     const misFichas = await prisma.ficha.findMany({
-      where: { instructores: { some: { id: instructorId } } },
+      where: { instructores: { some: { instructorId } } },
       include: { aprendices: { select: { id: true } } }
     });
-
-    // Aplanar los IDs de los aprendices de estas fichas
     const aprendicesIds = [];
-    misFichas.forEach(f => {
-      f.aprendices.forEach(a => {
-        if (!aprendicesIds.includes(a.id)) aprendicesIds.push(a.id);
-      });
-    });
-
+    misFichas.forEach(f => f.aprendices.forEach(a => {
+      if (!aprendicesIds.includes(a.id)) aprendicesIds.push(a.id);
+    }));
     const excusas = await prisma.excusa.findMany({
       where: { aprendizId: { in: aprendicesIds } },
       include: { aprendiz: { select: { fullName: true, document: true } } },
       orderBy: { createdAt: 'desc' }
     });
-
     res.json({ excusas });
   } catch (err) {
     res.status(500).json({ error: 'Error del servidor: ' + err.message });
   }
 };
 
+// RF12/RF35/RF53 - Responder excusa
 const updateExcusaStatus = async (req, res) => {
   const { id } = req.params;
   const { estado, respuesta } = req.body;
-  
+  if (!['Aprobada', 'Rechazada'].includes(estado)) {
+    return res.status(400).json({ error: 'Estado inválido' });
+  }
   try {
     const excusa = await prisma.excusa.update({
       where: { id },
-      data: {
-        estado,
-        respuesta: respuesta || undefined
-      }
+      data: { estado, respuesta: respuesta || null, respondedAt: new Date() }
     });
-    res.json({ message: `Excusa marcada como ${estado}`, excusa });
+    res.json({ message: `Excusa ${estado.toLowerCase()}`, excusa });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar excusa: ' + err.message });
   }
 };
 
-module.exports = {
-  createExcusa,
-  getUserExcusas,
-  getAllExcusas,
-  updateExcusaStatus
-};
+module.exports = { createExcusa, getUserExcusas, getAllExcusas, updateExcusaStatus };

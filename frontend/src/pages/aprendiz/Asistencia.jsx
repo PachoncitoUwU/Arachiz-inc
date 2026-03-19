@@ -1,136 +1,237 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import fetchApi from '../../services/api';
-import { QrCode, LogIn, ClipboardCheck } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import EmptyState from '../../components/EmptyState';
+import { ClipboardCheck, LogIn, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
+import { io } from 'socket.io-client';
+
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
 export default function AprendizAsistencia() {
   const [fichas, setFichas] = useState([]);
+  const [historial, setHistorial] = useState([]);
   const [joinCode, setJoinCode] = useState('');
-  const [sessionCode, setSessionCode] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [error, setError] = useState('');
+  const socketRef = useRef(null);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const fichasData = await fetchApi(`/fichas/my-fichas`);
-      setFichas(fichasData.fichas);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      const [f, h] = await Promise.all([
+        fetchApi('/fichas/my-fichas'),
+        fetchApi('/asistencias/my-history'),
+      ]);
+      setFichas(f.fichas);
+      setHistorial(h.registros);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const handleJoinFicha = async (e) => {
+  const handleJoin = async (e) => {
     e.preventDefault();
+    setError(''); setJoining(true);
     try {
-      await fetchApi('/fichas/join', {
-        method: 'POST',
-        body: JSON.stringify({ code: joinCode })
-      });
-      alert('Te has unido a la ficha exitosamente.');
+      await fetchApi('/fichas/join', { method: 'POST', body: JSON.stringify({ code: joinCode }) });
+      setJoinCode('');
       loadData();
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setJoining(false); }
   };
 
-  const handleRegisterAsistencia = async (e) => {
+  const handleCheckSession = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      // Find session ID based on code/materia (For MVP we assume the code entered is the active session's materiaId for simplicity, or session ID)
-      // Usually, the instructor shows the `materiaId` or `asistenciaId`. Let's assume the sessionCode is the `asistenciaId` or `materiaId`.
-      // Getting active sessions for all my materias is complex in MVP, so let's simplify: 
-      // User types the Materia ID shared by instructor, we hit an endpoint.
-      // Wait, let's just use the Materia ID. The endpoint requires `asistenciaId`.
-      // Let's first search sessions by materiaId to find the active one.
-      
-      const materiaSessions = await fetchApi(`/asistencias/materia/${sessionCode}`);
-      const activeSession = materiaSessions.asistencias.find(a => a.activa);
-      
-      if (!activeSession) {
-        throw new Error('No hay una sesión activa para este código.');
+      // El aprendiz ingresa el ID de sesión directamente
+      const d = await fetchApi(`/asistencias/materia/${sessionId}/active`).catch(async () => {
+        // Si no es materiaId, intentar buscar por sesión directa
+        return null;
+      });
+      if (d?.session) {
+        setActiveSession(d.session);
+        connectSocket(d.session.id);
+      } else {
+        setError('No se encontró sesión activa para ese código.');
       }
+    } catch (err) { setError(err.message); }
+  };
 
+  const connectSocket = (sid) => {
+    if (socketRef.current) socketRef.current.disconnect();
+    const socket = io(API_BASE);
+    socket.emit('joinSession', sid);
+    socket.on('nuevaAsistencia', (data) => {
+      setActiveSession(prev => {
+        if (!prev) return prev;
+        const exists = prev.registros?.some(r => r.aprendizId === data.aprendizId);
+        if (exists) return prev;
+        return { ...prev, registros: [...(prev.registros || []), data] };
+      });
+    });
+    socket.on('sessionClosed', () => {
+      setActiveSession(null);
+      setRegistered(false);
+      loadData();
+    });
+    socketRef.current = socket;
+  };
+
+  useEffect(() => () => socketRef.current?.disconnect(), []);
+
+  const handleRegister = async () => {
+    if (!activeSession) return;
+    setError(''); setRegistering(true);
+    try {
       await fetchApi('/asistencias/registrar', {
         method: 'POST',
-        body: JSON.stringify({ asistenciaId: activeSession.id, presente: true })
+        body: JSON.stringify({ asistenciaId: activeSession.id, metodo: 'codigo' })
       });
-      
-      alert('Asistencia registrada correctamente.');
-      setSessionCode('');
-    } catch (err) {
-      alert(err.message || 'Error al registrar asistencia.');
-    }
+      setRegistered(true);
+      loadData();
+    } catch (err) { setError(err.message); }
+    finally { setRegistering(false); }
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Asistencia y Ficha</h1>
-        <p className="text-gray-500 text-sm mt-1">Regístrate en tu ficha académica y marca tu asistencia</p>
-      </div>
+  const hasFicha = fichas.length > 0;
+  const presentes = activeSession?.registros?.filter(r => r.presente !== false).length || 0;
+  const total = activeSession?.materia?.ficha?.aprendices?.length || 0;
 
-      {loading ? (
-        <div className="p-8">Cargando...</div>
-      ) : fichas.length === 0 ? (
-        <div className="card max-w-xl mx-auto border-t-4 border-t-google-blue">
+  if (loading) return (
+    <div className="flex justify-center py-16">
+      <div className="w-8 h-8 border-2 border-[#34A853] border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
+
+  return (
+    <div className="animate-fade-in space-y-5">
+      <PageHeader title="Asistencia" subtitle="Regístrate en sesiones activas" />
+
+      {/* Sin ficha */}
+      {!hasFicha ? (
+        <div className="card max-w-md mx-auto">
           <div className="text-center mb-6">
-            <div className="bg-blue-50 text-google-blue w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <LogIn size={32} />
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <LogIn size={28} className="text-[#4285F4]"/>
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Unirse a una Ficha</h2>
-            <p className="text-sm text-gray-500 mt-2">
-              Ingresa el código proporcionado por tu instructor. Solo puedes pertenecer a una ficha al tiempo.
-            </p>
+            <h2 className="text-lg font-bold text-gray-900">Unirse a una Ficha</h2>
+            <p className="text-sm text-gray-500 mt-1">Ingresa el código de invitación de tu instructor.</p>
           </div>
-          <form onSubmit={handleJoinFicha} className="space-y-4">
-            <div>
-              <input 
-                type="text" 
-                required 
-                className="input-field text-center font-mono text-lg tracking-widest uppercase"
-                placeholder="X7B9K2"
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase())}
-              />
-            </div>
-            <button type="submit" className="btn-primary w-full">Vincularme a esta ficha</button>
+          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{error}</p>}
+          <form onSubmit={handleJoin} className="space-y-3">
+            <input required className="input-field text-center font-mono text-xl tracking-widest uppercase"
+              placeholder="X7B9K2" value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())} />
+            <button type="submit" disabled={joining} className="btn-primary w-full">
+              {joining ? 'Uniéndose...' : 'Vincularme a esta ficha'}
+            </button>
           </form>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Registrar asistencia */}
           <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
-              <QrCode size={20} className="text-google-blue"/> Registrar Asistencia
+            <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <ClipboardCheck size={18} className="text-[#34A853]"/> Registrar Asistencia
             </h2>
-            <p className="text-sm text-gray-600 mb-4">Ingresa el código de asistencia emitido por el instructor para registrar tu presencia en la sesión actual.</p>
-            
-            <form onSubmit={handleRegisterAsistencia} className="space-y-4">
-               <div>
-                  <input 
-                    type="text" 
-                    required 
-                    className="input-field font-mono text-center tracking-wider"
-                    placeholder="Código de Sesión / Materia"
-                    value={sessionCode}
-                    onChange={e => setSessionCode(e.target.value)}
-                  />
-               </div>
-               <button type="submit" className="btn-success w-full flex justify-center items-center gap-2">
-                  <ClipboardCheck size={18}/> Marcar Asistencia
-               </button>
-            </form>
+
+            {!activeSession ? (
+              <>
+                <p className="text-sm text-gray-500 mb-4">Ingresa el ID de sesión que te compartió el instructor.</p>
+                {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{error}</p>}
+                <form onSubmit={handleCheckSession} className="space-y-3">
+                  <input required className="input-field font-mono text-sm"
+                    placeholder="ID de sesión o materia"
+                    value={sessionId} onChange={e => setSessionId(e.target.value)} />
+                  <button type="submit" className="btn-success w-full">Buscar Sesión</button>
+                </form>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34A853] opacity-75"/>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#34A853]"/>
+                    </span>
+                    <span className="text-sm font-bold text-[#34A853]">Sesión Activa</span>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">{activeSession.materia?.nombre}</p>
+                  <p className="text-xs text-gray-500">Ficha {activeSession.materia?.ficha?.numero} · {activeSession.materia?.instructor?.fullName}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    <span className="flex items-center gap-1"><Users size={12}/> {presentes}/{total} presentes</span>
+                  </div>
+                </div>
+
+                {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+
+                {registered ? (
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                    <CheckCircle size={20} className="text-[#34A853]"/>
+                    <p className="text-sm font-semibold text-[#34A853]">¡Asistencia registrada correctamente!</p>
+                  </div>
+                ) : (
+                  <button onClick={handleRegister} disabled={registering} className="btn-success w-full">
+                    {registering ? 'Registrando...' : '✓ Marcar mi Asistencia'}
+                  </button>
+                )}
+
+                <button onClick={() => { setActiveSession(null); setRegistered(false); setError(''); }}
+                  className="btn-ghost w-full text-sm">
+                  Salir de la sesión
+                </button>
+
+                {/* Lista de compañeros */}
+                {activeSession.registros?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compañeros presentes</p>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {activeSession.registros.filter(r => r.presente !== false).map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-gray-50">
+                          <CheckCircle size={13} className="text-[#34A853]"/>
+                          <span className="text-xs text-gray-700">{r.aprendiz?.fullName || r.fullName || 'Aprendiz'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          
+
+          {/* Historial */}
           <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Mi Historial</h2>
-            <div className="flex flex-col items-center justify-center p-6 text-gray-500 border border-dashed rounded bg-gray-50">
-               <p className="text-sm">El historial detallado estará disponible próximamente.</p>
-            </div>
+            <h2 className="font-bold text-gray-900 mb-4">Historial de Asistencias</h2>
+            {historial.length === 0 ? (
+              <EmptyState icon={<Clock size={28}/>} title="Sin registros" description="Aún no tienes asistencias registradas." />
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {historial.map(r => (
+                  <div key={r.id} className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50">
+                    <div className="flex items-center gap-2.5">
+                      {r.presente
+                        ? <CheckCircle size={15} className="text-[#34A853] shrink-0"/>
+                        : <XCircle size={15} className="text-[#EA4335] shrink-0"/>
+                      }
+                      <div>
+                        <p className="text-xs font-semibold text-gray-800">{r.asistencia?.materia?.nombre}</p>
+                        <p className="text-xs text-gray-400">{r.asistencia?.fecha} · {r.metodo}</p>
+                      </div>
+                    </div>
+                    <span className={`badge ${r.presente ? 'badge-success' : 'badge-danger'}`}>
+                      {r.presente ? 'Presente' : 'Ausente'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
