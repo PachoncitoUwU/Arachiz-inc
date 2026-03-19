@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  userType  String   // 'instructor' or 'aprendiz'
+  fullName  String
+  document  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  fichasAdmin   Ficha[]  @relation("InstructorAdmin")
+  fichasInst    Ficha[]  @relation("Instructores")
+  fichasApr     Ficha[]  @relation("Aprendices")
+  materias      Materia[] @relation("InstructorMaterias")
+  asistencias   Asistencia[] @relation("InstructorAsistencia")
+  registros     RegistroAsistencia[]
+  excusas       Excusa[]
+}
+
+model Ficha {
+  id              String   @id @default(cuid())
+  numero          String   @unique
+  nivel           String
+  centro          String
+  jornada         String
+  code            String   @unique
+  createdAt       DateTime @default(now())
+
+  // Relations
+  instructorAdminId String
+  instructorAdmin   User     @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
+  
+  instructores User[] @relation("Instructores")
+  aprendices   User[] @relation("Aprendices")
+
+  materias   Materia[]
+}
+
+model Materia {
+  id          String   @id @default(cuid())
+  nombre      String
+  tipo        String
+  
+  fichaId     String
+  ficha       Ficha    @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+
+  instructorId String
+  instructor   User    @relation("InstructorMaterias", fields: [instructorId], references: [id])
+
+  asistencias Asistencia[]
+}
+
+model Asistencia {
+  id           String   @id @default(cuid())
+  fecha        String   // YYYY-MM-DD
+  activa       Boolean  @default(true)
+  timestamp    DateTime @default(now())
+
+  materiaId    String
+  materia      Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+
+  instructorId String
+  instructor   User     @relation("InstructorAsistencia", fields: [instructorId], references: [id])
+
+  registros    RegistroAsistencia[]
+}
+
+model RegistroAsistencia {
+  id           String   @id @default(cuid())
+  presente     Boolean  @default(true)
+  timestamp    DateTime @default(now())
+
+  asistenciaId String
+  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
+  
+  aprendizId   String
+  aprendiz     User       @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+
+  @@unique([asistenciaId, aprendizId])
+}
+
+model Excusa {
+  id          String   @id @default(cuid())
+  tipo        String
+  descripcion String
+  fecha       String
+  estado      String   @default("Pendiente")
+  respuesta   String?
+  archivoUrl  String?  // RF33 multer
+  createdAt   DateTime @default(now())
+
+  aprendizId  String
+  aprendiz    User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+}

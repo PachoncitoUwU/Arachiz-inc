@@ -1,54 +1,87 @@
-# Arachiz Project
+# 🕷️ Arachiz - Sistema de Gestión de Asistencia Académica
 
-## Project Summary
-Arachiz is an educational system inspired by Google Classroom, focused on academic attendance management. The platform features user authentication with two roles: **Instructor** and **Aprendiz** (Learner). 
+Arachiz es una plataforma profesional desarrollada para optimizar la gestión de asistencias y excusas en un entorno académico (basado en el contexto SENA). Ofrece roles separados para Instructores y Aprendices, facilitando el control en tiempo real y la evaluación de justificaciones de forma rápida e intuitiva.
 
-Key features include:
-- **Authentication**: Custom login and registration system.
-- **Role-based Dashboards**: Different quick-actions and views based on the user's role.
-- **Fichas and Materias**: Instructors can create academic groups (Fichas) and associate subjects (Materias). Learners can join a Ficha using a unique code.
-- **Asistencias (Attendance)**: Instructors can initiate a class session, and learners can mark their attendance.
-- **Excusas (Excuses)**: Learners can submit medical or personal excuses for absences, which can then be reviewed and approved/rejected by instructors.
+## 🚀 Características Principales
 
-## Step by Step Setup Instructions
+### 🧑‍🏫 Módulo Instructor
+- **Gestión de Fichas:** Creación de grupos académicos mediante códigos de invitación.
+- **Control de Materias:** Asignación de materias a fichas específicas.
+- **Asistencia en Tiempo Real:** Inicio y finalización de sesiones de asistencia, con monitoreo en vivo de los aprendices registrados.
+- **Evaluación de Excusas:** Revisión, aprobación o rechazo de excusas médicas y otras justificaciones enviadas por los estudiantes, incluyendo la opción de dar respuesta directa.
 
-To run the full project locally, you need to start both the backend server and the frontend application.
+### 🧑‍🎓 Módulo Aprendiz
+- **Vinculación Sencilla:** Unión a una ficha a través de un código único proporcionado por el instructor.
+- **Registro Rápido de Asistencia:** Marcado de presencia utilizando el código de sesión correspondiente a la materia activa.
+- **Gestión de Excusas:** Plataforma para el envío de excusas categorizadas, adjuntando justificaciones y manteniendo un historial del estado (Pendiente, Aprobada, Rechazada).
 
-### 1. Prerequisites
-- [Node.js](https://nodejs.org/) installed on your machine.
-- Git (optional, for cloning).
-
-### 2. Start the Backend
-1. Open a terminal.
-2. Navigate to the `backend` directory:
-   ```bash
-   cd c:/Users/beatr/OneDrive/Escritorio/antigratii_arachiz/backend
-   ```
-3. Install dependencies (if not done yet):
-   ```bash
-   npm install
-   ```
-4. Start the Express server:
-   ```bash
-   node server.js
-   ```
-   > The server will start on `http://localhost:3000`. Leave this terminal running.
-
-### 3. Start the Frontend
-1. Open a **new** terminal window.
-2. Navigate to the `frontend` directory:
-   ```bash
-   cd c:/Users/beatr/OneDrive/Escritorio/antigratii_arachiz/frontend
-   ```
-3. Install React dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   > The terminal will display a local URL (usually `http://localhost:5173`). Open this link in your browser.
+### 🔒 Seguridad y Arquitectura
+- **Autenticación con JWT:** Acceso seguro mediante _JSON Web Tokens_ y encriptación de contraseñas con `bcryptjs`.
+- **RBAC (Role-Based Access Control):** Separación estricta de rutas, vistas y endpoints de API dependiendo del rol del usuario.
+- **Diseño UI/UX:** Interfaz limpia siguiendo los parámetros de Google Material Design usando Tailwind CSS.
 
 ---
-You are all set! You can now register a new instructor, create a Ficha, and invite learners.
+
+## 🛠️ Tecnologías Usadas
+
+- **Frontend:** React.js, Vite, Tailwind CSS, React Router DOM, Lucide React (iconos).
+- **Backend:** Node.js, Express.js, JWT, Bcryptjs.
+- **Arquitectura Backend:** Patrón MVC (Model-View-Controller) modificado usando una "Base de datos en memoria" temporal lista para ser migrada a SQL/NoSQL.
+
+---
+
+## 📦 Instalación y Uso (Desarrollo Local)
+
+Sigue estos pasos para ejecutar el proyecto en cualquier computadora:
+
+### 1. Clonar el repositorio
+```bash
+git clone <url-del-repositorio>
+cd arachiz
+```
+
+### 2. Configurar y Ejecutar el Backend
+```bash
+# Navegar al directorio backend
+cd backend
+
+# Instalar dependencias
+npm install
+
+# Crear archivo de variables de entorno (Opcional, pero recomendado)
+# Crea un archivo .env en la carpeta /backend con la siguiente estructura:
+# PORT=3000
+# JWT_SECRET=supersecretarachiz
+
+# Ejecutar el servidor en modo desarrollo
+npm start
+# O si prefieres node: node server.js
+```
+El backend se ejecutará en: `http://localhost:3000`
+
+### 3. Configurar y Ejecutar el Frontend
+Abre **una nueva terminal** en la raíz del proyecto.
+```bash
+# Navegar al directorio frontend
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+# Crea un archivo .env en la carpeta /frontend con:
+# VITE_API_URL=http://localhost:3000/api
+
+# Ejecutar Vite
+npm run dev
+```
+La aplicación web estará disponible típicamente en `http://localhost:5173` (revisa la consola de Vite).
+
+---
+
+## 📝 Notas para Producción
+1. **Base de Datos:** El proyecto actual utiliza estructuras almacenadas en memoria (`/models/db.js`). Para paso a producción, se debe conectar a una base de datos real actualizando los controladores correspondientes.
+2. **Seguridad:** Cambiar obligatoriamente el `JWT_SECRET` en producción y mantener las variables dentro de `.env` que no se exponen al repositorio.
+
+---
+_Desarrollado para optimizar el tiempo académico mediante la eficiencia tecnológica._

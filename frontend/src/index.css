@@ -1,133 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-secondary: #10b981;
-  --color-secondary-hover: #059669;
-  --color-surface: #f3f4f6;
-  --color-surface-hover: #e5e7eb;
-  
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-text-light: #9ca3af;
-  --color-border: #e5e7eb;
-  
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light;
-  color: var(--color-text-primary);
-  background-color: #ffffff;
+@layer base {
+  body {
+    @apply bg-background text-gray-800 font-sans antialiased;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer components {
+  /* Minimalist Cards */
+  .card {
+    @apply bg-surface rounded-xl shadow-soft p-6 border border-gray-100;
+  }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  /* Add subtle background wave pattern similar to the reference image */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23f3f4f6' fill-opacity='0.4' d='M0,256L48,261.3C96,267,192,277,288,261.3C384,245,480,203,576,192C672,181,768,203,864,224C960,245,1056,267,1152,266.7C1248,267,1344,245,1392,234.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3Cpath fill='%23f9fafb' fill-opacity='0.8' d='M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,181.3C960,171,1056,181,1152,192C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: bottom right;
-  background-size: 100% 400px;
-  background-attachment: fixed;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* Big Buttons */
+  .btn-primary {
+    @apply bg-google-blue text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-blue-600 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-#root {
-  width: 100%;
-}
+  .btn-secondary {
+    @apply bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-gray-50 hover:shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-a {
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-a:hover {
-  text-decoration: underline;
-  color: var(--color-primary);
-}
+  .btn-success {
+    @apply bg-google-green text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-green-600 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-h1 {
-  font-size: 2.2rem;
-  line-height: 1.1;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
+  .btn-danger {
+    @apply bg-google-red text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:bg-red-600 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-.auth-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-google-blue/30 focus:border-google-blue transition-all duration-200;
+  }
 
-.auth-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-title {
-  margin-bottom: 0.5rem;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--color-text-light);
-  font-size: 0.875rem;
-  margin: 1.5rem 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.divider:not(:empty)::before {
-  margin-right: .5em;
-}
-
-.divider:not(:empty)::after {
-  margin-left: .5em;
-}
-
-/* App Logo in top left */
-.app-logo-container {
-  position: absolute;
-  top: 1.5rem;
-  left: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--color-text-primary);
-  letter-spacing: -0.025em;
+  .label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+  }
 }

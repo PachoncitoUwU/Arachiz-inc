@@ -1,39 +1,54 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './views/Login';
-import Register from './views/Register';
-import Dashboard from './views/Dashboard';
-import './index.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import MainLayout from './layouts/MainLayout';
+
+// Auth Pages
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+
+// Instructor Pages
+import InstructorDashboard from './pages/instructor/Dashboard';
+import InstructorFichas from './pages/instructor/Fichas';
+import InstructorAsistencia from './pages/instructor/Asistencia';
+import InstructorExcusas from './pages/instructor/Excusas';
+
+// Aprendiz Pages
+import AprendizDashboard from './pages/aprendiz/Dashboard';
+import AprendizAsistencia from './pages/aprendiz/Asistencia';
+import AprendizExcusas from './pages/aprendiz/Excusas';
 
 function App() {
-  const [user, setUser] = React.useState(null);
-
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-  };
-
   return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={!user ? <Login onLoginSuccess={handleLoginSuccess} /> : <Navigate to="/dashboard" />} 
-        />
-        <Route 
-          path="/register" 
-          element={!user ? <Register onRegisterSuccess={handleLoginSuccess} /> : <Navigate to="/dashboard" />} 
-        />
-        <Route 
-          path="/dashboard/*" 
-          element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} 
-        />
-        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-      </Routes>
-    </Router>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Instructor Routes */}
+          <Route path="/instructor" element={<MainLayout allowedRoles={['instructor']} />}>
+            <Route path="dashboard" element={<InstructorDashboard />} />
+            <Route path="fichas" element={<InstructorFichas />} />
+            <Route path="asistencia" element={<InstructorAsistencia />} />
+            <Route path="excusas" element={<InstructorExcusas />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* Aprendiz Routes */}
+          <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>
+            <Route path="dashboard" element={<AprendizDashboard />} />
+            <Route path="asistencia" element={<AprendizAsistencia />} />
+            <Route path="excusas" element={<AprendizExcusas />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* Fallback 404 */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
