@@ -20,6 +20,8 @@ export default function Login() {
     finally { setLoading(false); }
   };
 
+  const setField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
       {/* Decoración fondo */}
@@ -55,7 +57,7 @@ export default function Login() {
               </div>
               <input type="email" required placeholder="Correo electrónico"
                 className="input-field pl-11"
-                value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                value={form.email} onChange={setField('email')} />
             </div>
 
             {/* Password */}
@@ -65,7 +67,7 @@ export default function Login() {
               </div>
               <input type="password" required placeholder="Contraseña"
                 className="input-field pl-11"
-                value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+                value={form.password} onChange={setField('password')} />
             </div>
 
             <button type="submit" disabled={loading}

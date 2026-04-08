@@ -5,7 +5,7 @@ import EmptyState from '../../components/EmptyState';
 import { ClipboardCheck, LogIn, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 export default function AprendizAsistencia() {
   const [fichas, setFichas] = useState([]);

@@ -5,29 +5,35 @@ import fetchApi from '../../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    userType: 'aprendiz', fullName: '', document: '', email: '', password: '', confirmPassword: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [userType, setUserType]               = useState('aprendiz');
+  const [fullName, setFullName]               = useState('');
+  const [document, setDocument]               = useState('');
+  const [email, setEmail]                     = useState('');
+  const [password, setPassword]               = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError]                     = useState('');
+  const [loading, setLoading]                 = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (form.password !== form.confirmPassword) return setError('Las contraseñas no coinciden');
-    if (form.password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres');
+    if (password !== confirmPassword) return setError('Las contraseñas no coinciden');
+    if (password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres');
     setLoading(true);
     try {
       await fetchApi('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ userType: form.userType, fullName: form.fullName, document: form.document, email: form.email, password: form.password })
+        body: JSON.stringify({ userType, fullName, document, email, password })
       });
       navigate('/login');
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const accentColor = form.userType === 'instructor' ? '#4285F4' : '#34A853';
+  const accentColor = userType === 'instructor' ? '#4285F4' : '#34A853';
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
@@ -39,7 +45,8 @@ export default function Register() {
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-6">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md" style={{ backgroundColor: accentColor }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+              style={{ backgroundColor: accentColor }}>
               <GraduationCap size={22} className="text-white"/>
             </div>
             <span className="text-2xl font-bold text-gray-900">Arachiz</span>
@@ -51,10 +58,9 @@ export default function Register() {
           {/* Tipo de usuario */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
             {['aprendiz', 'instructor'].map(type => (
-              <button key={type} type="button"
-                onClick={() => setForm({...form, userType: type})}
+              <button key={type} type="button" onClick={() => setUserType(type)}
                 className={`py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
-                  form.userType === type
+                  userType === type
                     ? 'bg-white shadow-sm text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}>
@@ -74,40 +80,45 @@ export default function Register() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <User size={16}/>
               </div>
-              <input type="text" required placeholder="Nombre completo" className="input-field pl-11"
-                value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} />
+              <input type="text" required placeholder="Nombre completo"
+                className="input-field pl-11"
+                value={fullName} onChange={e => setFullName(e.target.value)} />
             </div>
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <IdCard size={16}/>
               </div>
-              <input type="text" required placeholder="Número de documento" className="input-field pl-11"
-                value={form.document} onChange={e => setForm({...form, document: e.target.value})} />
+              <input type="text" required placeholder="Número de documento"
+                className="input-field pl-11"
+                value={document} onChange={e => setDocument(e.target.value)} />
             </div>
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Mail size={16}/>
               </div>
-              <input type="email" required placeholder="Correo electrónico" className="input-field pl-11"
-                value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+              <input type="email" required placeholder="Correo electrónico"
+                className="input-field pl-11"
+                value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Lock size={16}/>
               </div>
-              <input type="password" required placeholder="Contraseña" className="input-field pl-11"
-                value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+              <input type="password" required placeholder="Contraseña"
+                className="input-field pl-11"
+                value={password} onChange={e => setPassword(e.target.value)} />
             </div>
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Lock size={16}/>
               </div>
-              <input type="password" required placeholder="Confirmar contraseña" className="input-field pl-11"
-                value={form.confirmPassword} onChange={e => setForm({...form, confirmPassword: e.target.value})} />
+              <input type="password" required placeholder="Confirmar contraseña"
+                className="input-field pl-11"
+                value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
 
             <button type="submit" disabled={loading}

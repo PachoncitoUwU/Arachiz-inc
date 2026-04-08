@@ -33,7 +33,7 @@ function SidebarContent({ links, user, logout, onClose, configPath }) {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   const roleColor = user?.userType === 'instructor' ? 'bg-[#4285F4]' : 'bg-[#34A853]';
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+  const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
   const avatarSrc = user?.avatarUrl ? `${API_BASE}${user.avatarUrl}` : null;
 
   return (

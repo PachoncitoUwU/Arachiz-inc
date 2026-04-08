@@ -7,8 +7,10 @@ import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import {
   Users, Plus, Copy, RefreshCw, ChevronDown, ChevronUp,
-  UserMinus, Edit2, Check
+  UserMinus, Edit2, Check, Download, Loader
 } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 // ─── FichaForm extraído FUERA del componente padre para evitar re-mount ───────
 function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }) {
@@ -94,12 +96,38 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
 function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const isAdmin = ficha.instructorAdminId === currentUserId;
 
   const copyCode = () => {
     navigator.clipboard.writeText(ficha.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/export/ficha/${ficha.id}/asistencia`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al exportar');
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `Arachiz_Ficha${ficha.numero}_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -118,6 +146,14 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
             <Edit2 size={15} />
           </button>
         )}
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="btn-icon text-[#34A853] hover:bg-green-50"
+          title="Exportar asistencia CSV"
+        >
+          {exporting ? <Loader size={15} className="animate-spin"/> : <Download size={15}/>}
+        </button>
       </div>
 
       {/* Código */}
