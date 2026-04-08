@@ -11,6 +11,7 @@ const materiaRoutes = require('./routes/materiaRoutes');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
 const excusaRoutes = require('./routes/excusaRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
+const exportRoutes = require('./routes/exportRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,6 +29,7 @@ app.use('/api/materias', materiaRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
 app.use('/api/excusas', excusaRoutes);
 app.use('/api/horarios', horarioRoutes);
+app.use('/api/export', exportRoutes);
 
 app.set('io', io);
 

@@ -9,7 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 // ─── Timer ────────────────────────────────────────────────────────────────────
 function Timer({ startTime }) {
