@@ -29,7 +29,7 @@ const createFicha = async (req, res) => {
       },
       include: {
         aprendices: true,
-        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true } } } }
+        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } }
       }
     });
     res.status(201).json({ message: 'Ficha creada con éxito', ficha: newFicha });
@@ -54,7 +54,7 @@ const updateFicha = async (req, res) => {
       data: { nivel, centro, jornada, region, duracion: duracion ? parseInt(duracion) : undefined },
       include: {
         aprendices: true,
-        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true } } } },
+        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
         materias: true
       }
     });
@@ -92,8 +92,8 @@ const getUserFichas = async (req, res) => {
         ? { instructores: { some: { instructorId: userId } } }
         : { aprendices: { some: { id: userId } } },
       include: {
-        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true } } } },
-        aprendices: { select: { id: true, fullName: true, document: true, email: true } },
+        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
+        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true } },
         materias: { include: { instructor: { select: { fullName: true } } } }
       }
     });
@@ -110,8 +110,8 @@ const getFichaById = async (req, res) => {
     const ficha = await prisma.ficha.findUnique({
       where: { id },
       include: {
-        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true } } } },
-        aprendices: { select: { id: true, fullName: true, document: true, email: true } },
+        instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
+        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true } },
         materias: { include: { instructor: { select: { id: true, fullName: true } } } },
         horarios: { include: { materia: { select: { nombre: true } } } }
       }

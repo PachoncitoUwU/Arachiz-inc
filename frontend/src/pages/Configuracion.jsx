@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
+import SerialConnect from '../components/SerialConnect';
 import { Moon, Sun, Globe, Bell, User, Shield, Palette, Save, Camera, Loader, Lock, Eye, EyeOff } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -32,6 +33,165 @@ function Section({ icon: Icon, title, children, onTitleClick }) {
         <h2 className="font-bold text-gray-900 cursor-default select-none" onClick={onTitleClick}>{title}</h2>
       </div>
       {children}
+    </div>
+  );
+}
+
+// ─── JUEGO SECRETO 2: Breakout / Arkanoid ─────────────────────────────────────
+function BreakoutGame({ onClose }) {
+  const canvasRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [dead, setDead] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let x = canvas.width / 2;
+    let y = canvas.height - 30;
+    let dx = 2;
+    let dy = -2;
+    const ballRadius = 6;
+    const paddleHeight = 10;
+    const paddleWidth = 75;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let rightPressed = false;
+    let leftPressed = false;
+
+    const brickRowCount = 5;
+    const brickColumnCount = 6;
+    const brickWidth = 47;
+    const brickHeight = 15;
+    const brickPadding = 6;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 15;
+    let currentScore = 0;
+
+    const bricks = [];
+    for(let c=0; c<brickColumnCount; c++) {
+      bricks[c] = [];
+      for(let r=0; r<brickRowCount; r++) {
+        bricks[c][r] = { x: 0, y: 0, status: 1, c: `hsl(${Math.random()*360}, 70%, 50%)` };
+      }
+    }
+
+    const keyDownHandler = (e) => {
+      if(e.key === 'Right' || e.key === 'ArrowRight') rightPressed = true;
+      else if(e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = true;
+      if(e.key === 'Escape') onClose();
+    };
+    const keyUpHandler = (e) => {
+      if(e.key === 'Right' || e.key === 'ArrowRight') rightPressed = false;
+      else if(e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = false;
+    };
+    const mouseMoveHandler = (e) => {
+      const relativeX = e.clientX - canvas.getBoundingClientRect().left;
+      if(relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth/2;
+    };
+    const touchMoveHandler = (e) => {
+      if (e.touches.length > 0) {
+        const relativeX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+        if(relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth/2;
+      }
+    }
+
+    document.addEventListener("keydown", keyDownHandler);
+    document.addEventListener("keyup", keyUpHandler);
+    canvas.addEventListener("mousemove", mouseMoveHandler);
+    canvas.addEventListener("touchmove", touchMoveHandler);
+
+    function collisionDetection() {
+      for(let c=0; c<brickColumnCount; c++) {
+        for(let r=0; r<brickRowCount; r++) {
+          let b = bricks[c][r];
+          if(b.status === 1) {
+            if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+              dy = -dy; b.status = 0;
+              currentScore++; setScore(currentScore);
+              if(currentScore === brickRowCount*brickColumnCount) {
+                // Restart
+                for(let c2=0; c2<brickColumnCount; c2++) {
+                  for(let r2=0; r2<brickRowCount; r2++) bricks[c2][r2].status = 1;
+                }
+                currentScore = 0; setScore(0); dy = -Math.abs(dy) - 0.5;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    let req;
+    function draw() {
+      if (dead) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw Bricks
+      for(let c=0; c<brickColumnCount; c++) {
+        for(let r=0; r<brickRowCount; r++) {
+          if(bricks[c][r].status === 1) {
+            let bX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+            let bY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+            bricks[c][r].x = bX; bricks[c][r].y = bY;
+            ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bX, bY, brickWidth, brickHeight, 4) : ctx.rect(bX, bY, brickWidth, brickHeight);
+            ctx.fillStyle = bricks[c][r].c; ctx.fill(); ctx.closePath();
+          }
+        }
+      }
+      // Draw Ball
+      ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2); ctx.fillStyle = "#EA4335"; ctx.fill(); ctx.closePath();
+      // Draw Paddle
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight, 4) : ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = "#4285F4"; ctx.fill(); ctx.closePath();
+
+      collisionDetection();
+
+      if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
+      if(y + dy < ballRadius) dy = -dy;
+      else if(y + dy > canvas.height-ballRadius) {
+        if(x > paddleX && x < paddleX + paddleWidth) {
+          dy = -dy; dx = dx + (x - (paddleX + paddleWidth/2)) * 0.1;
+        } else {
+          setDead(true);
+        }
+      }
+      if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 5;
+      else if(leftPressed && paddleX > 0) paddleX -= 5;
+      x += dx; y += dy;
+      req = requestAnimationFrame(draw);
+    }
+    draw();
+
+    return () => {
+      document.removeEventListener("keydown", keyDownHandler);
+      document.removeEventListener("keyup", keyUpHandler);
+      canvas.removeEventListener("mousemove", mouseMoveHandler);
+      canvas.removeEventListener("touchmove", touchMoveHandler);
+      cancelAnimationFrame(req);
+    };
+  }, [onClose, dead]);
+
+  const reset = () => {
+    setScore(0);
+    setDead(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[200]" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-4" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between w-full">
+          <h3 className="font-bold text-gray-900">🧱 Breakout — {score} pts</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">✕ Cerrar</button>
+        </div>
+        <div style={{ background:'#f8fafc', border:'2px solid #e2e8f0', borderRadius:12, position:'relative', overflow:'hidden', touchAction: 'none' }}>
+           <canvas ref={canvasRef} width={340} height={260} />
+           {dead && (
+             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, borderRadius:10 }}>
+               <p style={{ color:'white', fontWeight:700, fontSize:18 }}>Game Over — {score} pts</p>
+               <button onClick={reset} style={{ background:'#4285F4', color:'white', border:'none', borderRadius:10, padding:'8px 20px', fontWeight:600, cursor:'pointer' }}>Reintentar</button>
+             </div>
+           )}
+        </div>
+        <p className="text-xs text-gray-400">Desliza tu dedo o usa el ratón/teclado</p>
+      </div>
     </div>
   );
 }
@@ -137,10 +297,20 @@ export default function Configuracion() {
   const [avatarFile, setAvatarFile]       = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Cambio de contraseña
-  const [passForm, setPassForm]   = useState({ current: '', newPass: '', confirm: '' });
-  const [showPass, setShowPass]   = useState(false);
-  const [savingPass, setSavingPass] = useState(false);
+  // Juego secreto 2 — Arkanoid
+  const [arkClicks, setArkClicks] = useState(0);
+  const [showArk, setShowArk]   = useState(false);
+  const arkTimer = useRef(null);
+
+  const handleArkClick = () => {
+    setArkClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowArk(true); return 0; }
+      clearTimeout(arkTimer.current);
+      arkTimer.current = setTimeout(() => setArkClicks(0), 2000);
+      return next;
+    });
+  };
 
   // Juego secreto — se activa con 7 clicks en "Seguridad"
   const [secClicks, setSecClicks] = useState(0);
@@ -211,6 +381,7 @@ export default function Configuracion() {
   return (
     <div className="animate-fade-in space-y-5 max-w-2xl">
       {showGame && <SnakeGame onClose={() => setShowGame(false)} />}
+      {showArk && <BreakoutGame onClose={() => setShowArk(false)} />}
 
       <PageHeader title="Configuración" subtitle="Personaliza tu experiencia en Arachiz" />
 
@@ -221,7 +392,7 @@ export default function Configuracion() {
             <div className="relative group">
               {avatarPreview
                 ? <img src={avatarPreview} alt="Avatar" className="w-20 h-20 rounded-2xl object-cover shadow-md"/>
-                : <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-md ${roleColor}`}>{initials}</div>
+                : <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-white shadow-md ${roleColor}`}><User size={36}/></div>
               }
               <button type="button" onClick={() => fileInputRef.current?.click()}
                 className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
@@ -255,7 +426,7 @@ export default function Configuracion() {
       </Section>
 
       {/* Apariencia */}
-      <Section icon={Palette} title="Apariencia">
+      <Section icon={Palette} title="Apariencia" onTitleClick={handleArkClick}>
         <p className="text-sm font-medium text-gray-700 mb-3">Tema</p>
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[{id:'light',label:'Claro',icon:Sun},{id:'dark',label:'Oscuro',icon:Moon}].map(({id,label,icon:Icon}) => {
@@ -298,33 +469,10 @@ export default function Configuracion() {
         </div>
       </Section>
 
-      {/* Cambio de contraseña — función útil nueva */}
-      <Section icon={Lock} title="Cambiar Contraseña">
-        <form onSubmit={handleChangePass} className="space-y-3">
-          <div className="relative">
-            <label className="input-label">Contraseña actual</label>
-            <input type={showPass?'text':'password'} required className="input-field pr-10"
-              value={passForm.current} onChange={e=>setPassForm(p=>({...p,current:e.target.value}))} placeholder="••••••••"/>
-            <button type="button" onClick={()=>setShowPass(v=>!v)} className="absolute right-3 top-8 text-gray-400 hover:text-gray-600">
-              {showPass?<EyeOff size={16}/>:<Eye size={16}/>}
-            </button>
-          </div>
-          <div>
-            <label className="input-label">Nueva contraseña</label>
-            <input type={showPass?'text':'password'} required className="input-field"
-              value={passForm.newPass} onChange={e=>setPassForm(p=>({...p,newPass:e.target.value}))} placeholder="Mínimo 6 caracteres"/>
-          </div>
-          <div>
-            <label className="input-label">Confirmar nueva contraseña</label>
-            <input type={showPass?'text':'password'} required className="input-field"
-              value={passForm.confirm} onChange={e=>setPassForm(p=>({...p,confirm:e.target.value}))} placeholder="Repite la contraseña"/>
-          </div>
-          <button type="submit" disabled={savingPass} className="btn-primary flex items-center gap-2">
-            {savingPass?<Loader size={15} className="animate-spin"/>:<Lock size={15}/>}
-            {savingPass?'Guardando...':'Actualizar contraseña'}
-          </button>
-        </form>
-      </Section>
+      {/* Hardware / Biometría (Sólo Instructor) */}
+      {user?.userType === 'instructor' && (
+        <SerialConnect />
+      )}
 
       {/* Seguridad — clic 7 veces para el juego */}
       <Section icon={Shield} title="Seguridad" onTitleClick={handleSecClick}>

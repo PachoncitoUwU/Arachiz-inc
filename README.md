@@ -10,8 +10,14 @@ Plataforma web para gestión de asistencia académica del SENA. Permite a instru
 
 ## Instalación
 
-debes instalar otras dependencias crack
+El proyecto incluye comunicación Serial a Arduino para el uso de biometría en el aula.
 
+### Límites de Lector de Huella
+La placa backend (Supabase) aguanta miles de usuarios sin problemas, **sin embargo**, el esclavo Arduino usando el sensor de huella (usualmente AS608) tiene un límite físico incorporado según su fabricante (usualmente 162 huellas dactilares o hasta 300 modelos). Si necesitas más capacidad para una misma ficha o sede, recomendamos múltiples módulos, o escalar solamente con tecnología **NFC** (La lectura NFC con tarjetas Mifare no tiene límite de registros en Arachiz).
+Adicionalmente, por cuestiones físicas del módulo biométrico económico (AS608), el láser se mantendrá encendido aunque detengamos el flujo de comprobación lógica; eso es normal del hardware, pero la placa principal (Arduino) ya no gasta memoria.
+
+### Migración a otro PC
+Si deseas correr este proyecto en otro computador, **no es necesario descargar configuraciones raras**. Simplemente debes arrastrar esta misma carpeta al nuevo PC y ejecutar las instrucciones de instalación `npm install` en el `backend` y `frontend`. Adicional, te sugiero que re-ejecutes `npx prisma db push` en el `backend` para que Prisma reconecte la base de datos central en la nube y construya la carpeta de clientes localmente.
 ### Requisitos
 - Node.js 18+
 - npm

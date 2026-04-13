@@ -12,6 +12,8 @@ const asistenciaRoutes = require('./routes/asistenciaRoutes');
 const excusaRoutes = require('./routes/excusaRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
 const exportRoutes = require('./routes/exportRoutes');
+const serialRoutes = require('./routes/serialRoutes');
+const SerialService = require('./utils/serialService');
 
 const app = express();
 const server = http.createServer(app);
@@ -30,7 +32,10 @@ app.use('/api/asistencias', asistenciaRoutes);
 app.use('/api/excusas', excusaRoutes);
 app.use('/api/horarios', horarioRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/serial', serialRoutes);
 
+const serialService = new SerialService(io);
+app.set('serialService', serialService);
 app.set('io', io);
 
 io.on('connection', (socket) => {

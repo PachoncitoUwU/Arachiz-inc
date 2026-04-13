@@ -21,16 +21,27 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      const payload = decodeToken(token);
-      if (payload) {
-        setUser({ id: payload.id, userType: payload.userType, email: payload.email, fullName: payload.fullName });
-      } else {
-        setToken(null);
-        localStorage.removeItem('token');
+    const initAuth = async () => {
+      if (token) {
+        const payload = decodeToken(token);
+        if (payload) {
+          setUser({ id: payload.id, userType: payload.userType, email: payload.email, fullName: payload.fullName });
+          try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            const res = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+            if (res.ok) {
+              const data = await res.json();
+              setUser(data.user);
+            }
+          } catch (e) { console.error(e); }
+        } else {
+          setToken(null);
+          localStorage.removeItem('token');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    initAuth();
   }, [token, decodeToken]);
 
   const login = (newToken, userData) => {

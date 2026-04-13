@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, FileText, AlertTriangle, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import { BookOpen, Clock, FileText, AlertTriangle, ArrowRight, CheckCircle, XCircle, User } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import fetchApi from '../../services/api';
 import StatCard from '../../components/StatCard';
@@ -20,6 +21,7 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function AprendizDashboard() {
   const { user } = useContext(AuthContext);
+  const { showToast } = useToast();
   const [fichas, setFichas] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [historial, setHistorial] = useState([]);
@@ -37,6 +39,16 @@ export default function AprendizDashboard() {
       setMaterias(m.materias);
       setHistorial(h.registros);
       setExcusas(e.excusas);
+
+      // Check for active sessions to notify the Learner
+      m.materias.forEach(async (materia) => {
+        try {
+          const res = await fetchApi(`/asistencias/materia/${materia.id}/active`);
+          if (res.session) {
+            showToast(`La clase de ${materia.nombre} ha iniciado. ¡Asegúrate de registrar tu asistencia!`, 'info');
+          }
+        } catch {}
+      });
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -98,20 +110,40 @@ export default function AprendizDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Mi ficha */}
-            <div className="card dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4">Mi Ficha</h2>
-              <div className="space-y-2">
-                {[
-                  { label: 'Número', value: ficha.numero },
-                  { label: 'Nivel', value: ficha.nivel },
-                  { label: 'Centro', value: ficha.centro },
-                  { label: 'Jornada', value: ficha.jornada },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{value}</span>
+            <div className="card relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#4285F4]/10 to-[#34A853]/10 opacity-50"></div>
+              <div className="relative z-10">
+                <h2 className="font-bold text-gray-900 dark:text-white mb-4">Mi Ficha</h2>
+                
+                {ficha.instructores?.[0]?.instructor && (
+                  <div className="flex items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    {ficha.instructores[0].instructor.avatarUrl ? (
+                      <img src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${ficha.instructores[0].instructor.avatarUrl}`} alt="Instructor" className="w-12 h-12 rounded-xl object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                        <User size={20} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Instructor Lider</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.instructores[0].instructor.fullName}</p>
+                    </div>
                   </div>
-                ))}
+                )}
+
+                <div className="space-y-2">
+                  {[
+                    { label: 'Número', value: ficha.numero },
+                    { label: 'Nivel', value: ficha.nivel },
+                    { label: 'Centro', value: ficha.centro },
+                    { label: 'Jornada', value: ficha.jornada },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-800/50 last:border-0">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -120,7 +152,7 @@ export default function AprendizDashboard() {
               <h2 className="font-bold text-gray-900 dark:text-white mb-4">Acciones rápidas</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { to: '/aprendiz/asistencia', icon: Clock,    label: 'Registrar Asistencia', color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
+                  { to: '/aprendiz/asistencia', icon: Clock,    label: 'Ver mis Asistencias',  color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
                   { to: '/aprendiz/horario',    icon: Clock,    label: 'Ver Horario',          color: 'bg-blue-50 dark:bg-blue-900/20 text-[#4285F4]' },
                   { to: '/aprendiz/excusas',    icon: FileText, label: 'Enviar Excusa',        color: 'bg-yellow-50 dark:bg-yellow-900/20 text-[#FBBC05]' },
                   { to: '/aprendiz/materias',   icon: BookOpen, label: 'Mis Materias',         color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-500' },

@@ -25,6 +25,10 @@ const createSession = async (req, res) => {
         materia: { include: { ficha: { select: { numero: true, aprendices: { select: { id: true } } } } } }
       }
     });
+    const io = req.app.get('io');
+    const serialService = req.app.get('serialService');
+    if (serialService) serialService.sendCommand('SESSION ON');
+
     res.status(201).json({ message: 'Sesión creada', asistencia: newAsistencia });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear la sesión: ' + err.message });
@@ -120,6 +124,69 @@ const registerAttendance = async (req, res) => {
   }
 };
 
+// RFXX - Registrar asistencia con Hardware (Instructor)
+const registerHardwareAttendance = async (req, res) => {
+  const { asistenciaId, nfcUid, huellaId } = req.body;
+  if (!asistenciaId) return res.status(400).json({ error: 'Falta asistenciaId' });
+
+  try {
+    const whereClauses = [];
+    if (nfcUid) whereClauses.push({ nfcUid });
+    if (huellaId !== undefined) whereClauses.push({ huellaId: parseInt(huellaId, 10) });
+
+    if (whereClauses.length === 0) {
+      return res.status(400).json({ error: 'Se requiere nfcUid o huellaId' });
+    }
+
+    const aprendiz = await prisma.user.findFirst({ where: { OR: whereClauses } });
+    if (!aprendiz) return res.status(404).json({ error: 'Usuario no encontrado para este hardware' });
+
+    const asistencia = await prisma.asistencia.findUnique({
+      where: { id: asistenciaId },
+      include: { materia: { include: { ficha: { include: { aprendices: true } } } } }
+    });
+    if (!asistencia || !asistencia.activa) return res.status(400).json({ error: 'Sesión inactiva o no encontrada' });
+
+    const perteneceAFicha = asistencia.materia.ficha.aprendices.some(a => a.id === aprendiz.id);
+    if (!perteneceAFicha) return res.status(403).json({ error: 'Aprendiz no pertenece a esta ficha' });
+
+    const existing = await prisma.registroAsistencia.findUnique({
+      where: { asistenciaId_aprendizId: { asistenciaId, aprendizId: aprendiz.id } }
+    });
+
+    if (existing) {
+       // Si ya existía pero era false, no lo pisamos aquí. Si solo queríamos mostrar un check, retornamos.
+       return res.status(400).json({ error: 'Ya registró su asistencia previamente' });
+    }
+
+    const registro = await prisma.registroAsistencia.create({
+      data: {
+        presente: true,
+        metodo: nfcUid ? 'nfc' : 'huella',
+        asistencia: { connect: { id: asistenciaId } },
+        aprendiz: { connect: { id: aprendiz.id } }
+      },
+      include: { aprendiz: { select: { fullName: true, document: true } } }
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+        aprendizId: aprendiz.id,
+        fullName: registro.aprendiz.fullName,
+        presente: true,
+        metodo: registro.metodo,
+        timestamp: registro.timestamp
+      });
+    }
+
+    res.json({ message: 'Asistencia de hardware registrada', registro });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al procesar hardware: ' + err.message });
+  }
+};
+
+
 // RF28/RF42 - Finalizar sesión
 const endSession = async (req, res) => {
   const { id } = req.params;
@@ -158,6 +225,8 @@ const endSession = async (req, res) => {
     });
 
     const io = req.app.get('io');
+    const serialService = req.app.get('serialService');
+    if (serialService) serialService.sendCommand('SESSION OFF');
     if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
 
     res.json({ message: 'Sesión finalizada. Ausencias marcadas automáticamente.', asistencia: updatedAsistencia });
@@ -215,4 +284,4 @@ const getSessionById = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, endSession, getActiveSession, getSessionById };
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById };

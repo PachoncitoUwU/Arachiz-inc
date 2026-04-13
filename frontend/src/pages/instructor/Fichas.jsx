@@ -3,11 +3,12 @@ import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import EnrollModal from '../../components/EnrollModal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import {
   Users, Plus, Copy, RefreshCw, ChevronDown, ChevronUp,
-  UserMinus, Edit2, Check, Download, Loader
+  UserMinus, Edit2, Check, Download, Loader, Fingerprint, User
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -93,7 +94,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
 }
 
 // ─── FichaCard ────────────────────────────────────────────────────────────────
-function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz }) {
+function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz, onEnroll }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -124,7 +125,7 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setExporting(false);
     }
@@ -198,15 +199,31 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
             <p className="text-xs text-gray-400 text-center py-3">Sin aprendices aún</p>
           ) : ficha.aprendices?.map(a => (
             <div key={a.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50">
-              <div>
-                <p className="text-xs font-medium text-gray-700">{a.fullName}</p>
-                <p className="text-xs text-gray-400">{a.document}</p>
+              <div className="flex items-center gap-2">
+                {a.avatarUrl ? (
+                  <img src={`${API_BASE}${a.avatarUrl}`} alt="avatar" className="w-8 h-8 rounded-xl object-cover border border-gray-100" />
+                ) : (
+                  <div className="w-8 h-8 rounded-xl bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">
+                    <User size={16} />
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-medium text-gray-700">{a.fullName}</p>
+                  <p className="text-xs text-gray-400">{a.document}</p>
+                </div>
               </div>
               {isAdmin && (
-                <button onClick={() => onRemoveAprendiz(ficha.id, a.id)}
-                  className="btn-icon text-red-400 hover:bg-red-50 w-7 h-7">
-                  <UserMinus size={13} />
-                </button>
+                <div className="flex gap-1">
+                  <button onClick={() => onEnroll(a)}
+                    title="Vincular Lector NFC/Huella"
+                    className="btn-icon text-[#4285F4] hover:bg-blue-50 w-7 h-7">
+                    <Fingerprint size={13} />
+                  </button>
+                  <button onClick={() => onRemoveAprendiz(ficha.id, a.id)}
+                    className="btn-icon text-red-400 hover:bg-red-50 w-7 h-7">
+                    <UserMinus size={13} />
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -231,6 +248,7 @@ export default function InstructorFichas() {
   const [joinCode, setJoinCode] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [enrollAprendiz, setEnrollAprendiz] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -350,7 +368,7 @@ export default function InstructorFichas() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {fichas.map(f => (
             <FichaCard key={f.id} ficha={f} currentUserId={user?.id}
-              onRegenerate={handleRegenerate} onEdit={openEdit} onRemoveAprendiz={handleRemoveAprendiz} />
+              onRegenerate={handleRegenerate} onEdit={openEdit} onRemoveAprendiz={handleRemoveAprendiz} onEnroll={(a) => setEnrollAprendiz(a)} />
           ))}
         </div>
       )}
@@ -385,6 +403,13 @@ export default function InstructorFichas() {
           </div>
         </form>
       </Modal>
+
+      {/* Modal Vincular Hardware */}
+      <EnrollModal 
+        open={!!enrollAprendiz} 
+        onClose={() => setEnrollAprendiz(null)} 
+        aprendiz={enrollAprendiz} 
+      />
     </div>
   );
 }

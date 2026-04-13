@@ -12,6 +12,7 @@ router.get('/materia/:materiaId', asistenciaController.getSessionsByMateria);
 router.get('/materia/:materiaId/active', asistenciaController.getActiveSession);
 router.get('/:id', asistenciaController.getSessionById);
 router.post('/registrar', roleMiddleware(['aprendiz']), asistenciaController.registerAttendance);
+router.post('/hardware-register', roleMiddleware(['instructor']), asistenciaController.registerHardwareAttendance);
 router.put('/:id/finalizar', roleMiddleware(['instructor']), asistenciaController.endSession);
 
 module.exports = router;

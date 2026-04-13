@@ -6,7 +6,7 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2 } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -88,6 +88,32 @@ export default function InstructorAsistencia() {
         return { ...prev, registros: [...(prev.registros || []), { ...data, id: Date.now() }] };
       });
     });
+
+    socket.on('arduino_read_nfc', async (data) => {
+      if (!sessionId) return;
+      try {
+        await fetchApi('/asistencias/hardware-register', {
+          method: 'POST',
+          body: JSON.stringify({ asistenciaId: sessionId, nfcUid: data.uid })
+        });
+      } catch (err) {
+        // Mostramos el tooltip si falla algo (ej. "usuario no encontrado", "ya registró")
+        showToast(err.message, 'error');
+      }
+    });
+
+    socket.on('arduino_read_finger', async (data) => {
+      if (!sessionId) return;
+      try {
+        await fetchApi('/asistencias/hardware-register', {
+          method: 'POST',
+          body: JSON.stringify({ asistenciaId: sessionId, huellaId: data.id })
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
     socket.on('sessionClosed', () => { setActiveSession(null); loadSessions(); });
     socketRef.current = socket;
   };
@@ -117,6 +143,28 @@ export default function InstructorAsistencia() {
       loadSessions();
       showToast('Sesión finalizada. Ausencias marcadas automáticamente.', 'success');
     } catch (err) { showToast(err.message, 'error'); }
+  };
+
+  const exportSession = async (sessionId, fecha) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/export/session/${sessionId}/asistencia`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al exportar');
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `Arachiz_Asistencia_${fecha}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
 
   // ─── Datos para gráficas ───────────────────────────────────────────────────
@@ -206,6 +254,9 @@ export default function InstructorAsistencia() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-xl">
+                  <button onClick={() => exportSession(activeSession.id, activeSession.fecha)} className="btn-icon text-[#34A853] hover:bg-green-50 mr-2" title="Exportar Sesión">
+                    <Download size={15}/>
+                  </button>
                   <Clock size={14}/> <Timer startTime={activeSession.timestamp} />
                 </div>
               </div>
@@ -221,20 +272,6 @@ export default function InstructorAsistencia() {
                     <p className="text-xs font-medium mt-0.5">{s.label}</p>
                   </div>
                 ))}
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 mb-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">ID de sesión (comparte con aprendices):</p>
-                <div className="flex items-center gap-2">
-                  <p className="font-mono text-sm font-bold text-[#4285F4] select-all break-all flex-1">{activeSession.id}</p>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(activeSession.id); showToast('ID copiado', 'success'); }}
-                    className="btn-icon w-7 h-7 text-[#4285F4] hover:bg-blue-100 shrink-0"
-                    title="Copiar ID"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  </button>
-                </div>
               </div>
 
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Aprendices registrados</h3>
@@ -277,6 +314,9 @@ export default function InstructorAsistencia() {
                         <p className="text-xs text-gray-400">{s.instructor?.fullName}</p>
                       </div>
                       <div className="flex items-center gap-3">
+                        <button onClick={() => exportSession(s.id, s.fecha)} className="btn-icon text-[#34A853] hover:bg-green-50" title="Exportar Sesión">
+                          <Download size={15}/>
+                        </button>
                         <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div className="h-full bg-[#34A853] rounded-full transition-all" style={{ width: `${pct}%` }}/>
                         </div>
