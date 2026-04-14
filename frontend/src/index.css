@@ -158,3 +158,47 @@ html.dark select option { background-color: #1f2937; color: #f1f5f9; }
 html.dark ::-webkit-scrollbar       { width: 6px; }
 html.dark ::-webkit-scrollbar-track { background: #1f2937; }
 html.dark ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+
+/* Adicionales genéricos de Tailwind en Dark Mode */
+html.dark .bg-white,
+html.dark .bg-slate-50,
+html.dark .bg-slate-100 {
+  background-color: #1f2937 !important;
+}
+html.dark .border-gray-200,
+html.dark .border-slate-200,
+html.dark .border-gray-300 {
+  border-color: #374151 !important;
+}
+html.dark .bg-gray-200,
+html.dark .bg-slate-200 {
+  background-color: #374151 !important;
+}
+html.dark .text-gray-900,
+html.dark .text-slate-900,
+html.dark .text-black {
+  color: #f8fafc !important;
+}
+html.dark .text-gray-800,
+html.dark .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+html.dark .text-gray-700,
+html.dark .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+html.dark .text-gray-600,
+html.dark .text-slate-600 {
+  color: #94a3b8 !important;
+}
+html.dark .bg-gray-50 {
+  background-color: #111827 !important;
+}
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+}
+html.dark .backdrop-blur-sm {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}

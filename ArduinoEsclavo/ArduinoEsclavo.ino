@@ -44,6 +44,10 @@ void loop() {
     } else if (comando == "SESSION OFF") {
       isStandby = true;
       Serial.println("DEBUG: Sesion finalizada - Sensores en STANDBY");
+    } else if (comando == "CLEAR_DB") {
+      finger.emptyDatabase();
+      Serial.println("DEBUG: Base de datos borrada con exito");
+      sonidoExito();
     } else if (comando.startsWith("ENROLL ")) {
       int idx = comando.substring(7).toInt();
       if (idx > 0 && idx < 128) {

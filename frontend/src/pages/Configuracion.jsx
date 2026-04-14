@@ -107,6 +107,10 @@ function BreakoutGame({ onClose }) {
             if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
               dy = -dy; b.status = 0;
               currentScore++; setScore(currentScore);
+              
+              if (Math.abs(dy) < 6) dy *= 1.03;
+              if (Math.abs(dx) < 6) dx *= 1.03;
+
               if(currentScore === brickRowCount*brickColumnCount) {
                 // Restart
                 for(let c2=0; c2<brickColumnCount; c2++) {
@@ -148,7 +152,9 @@ function BreakoutGame({ onClose }) {
       if(y + dy < ballRadius) dy = -dy;
       else if(y + dy > canvas.height-ballRadius) {
         if(x > paddleX && x < paddleX + paddleWidth) {
-          dy = -dy; dx = dx + (x - (paddleX + paddleWidth/2)) * 0.1;
+          dy = -dy; dx = dx + (x - (paddleX + paddleWidth/2)) * 0.15;
+          if (Math.abs(dy) < 6) dy *= 1.05;
+          if (Math.abs(dx) < 6) dx *= 1.05;
         } else {
           setDead(true);
         }
@@ -207,6 +213,7 @@ function SnakeGame({ onClose }) {
   const [score, setScore]   = useState(0);
   const [dead, setDead]     = useState(false);
   const dirRef              = useRef([1,0]);
+  const lastMovedDirRef     = useRef([1,0]);
 
   const randFood = (s) => {
     let f;
@@ -217,7 +224,14 @@ function SnakeGame({ onClose }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (DIR[e.key]) { e.preventDefault(); dirRef.current = DIR[e.key]; }
+      if (DIR[e.key]) { 
+        e.preventDefault(); 
+        const nextDir = DIR[e.key];
+        const currDir = lastMovedDirRef.current;
+        if (currDir[0] !== 0 && nextDir[0] === -currDir[0]) return;
+        if (currDir[1] !== 0 && nextDir[1] === -currDir[1]) return;
+        dirRef.current = nextDir; 
+      }
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
@@ -229,6 +243,7 @@ function SnakeGame({ onClose }) {
     const iv = setInterval(() => {
       setSnake(prev => {
         const [dx,dy] = dirRef.current;
+        lastMovedDirRef.current = [dx,dy];
         const head = [prev[0][0]+dx, prev[0][1]+dy];
         if (head[0]<0||head[0]>=COLS||head[1]<0||head[1]>=ROWS||prev.some(c=>c[0]===head[0]&&c[1]===head[1])) {
           setDead(true); return prev;
@@ -244,7 +259,7 @@ function SnakeGame({ onClose }) {
 
   const reset = () => {
     const s = [[7,6],[6,6],[5,6]];
-    setSnake(s); setFood(randFood(s)); dirRef.current=[1,0]; setDir([1,0]); setScore(0); setDead(false);
+    setSnake(s); setFood(randFood(s)); dirRef.current=[1,0]; lastMovedDirRef.current=[1,0]; setDir([1,0]); setScore(0); setDead(false);
   };
 
   return (
@@ -325,6 +340,39 @@ export default function Configuracion() {
       secTimer.current = setTimeout(() => setSecClicks(0), 2000);
       return next;
     });
+  };
+
+  // Botón oculto del instructor para borrar sensor
+  const [instClickCount, setInstClickCount] = useState(0);
+  const [showDevOptions, setShowDevOptions] = useState(false);
+  const instTimer = useRef(null);
+
+  const handleInstClick = () => {
+    if (user?.userType !== 'instructor') return;
+    setInstClickCount(n => {
+      const next = n + 1;
+      if (next >= 10) { setShowDevOptions(true); return 0; }
+      clearTimeout(instTimer.current);
+      instTimer.current = setTimeout(() => setInstClickCount(0), 2000);
+      return next;
+    });
+  };
+
+  const handleClearFingerprints = async () => {
+    const confirmDelete = window.confirm('¿Deseas borrar TODA la base de datos local de tu sensor de huellas?');
+    if (!confirmDelete) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/serial/clear-fingerprints`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showToast(data.message || 'Comando de borrado enviado', 'success');
+      setShowDevOptions(false);
+    } catch (err) {
+      showToast(err.message || 'Error al enviar el comando', 'error');
+    }
   };
 
   const initials  = user?.fullName ? user.fullName.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : '?';
@@ -481,8 +529,22 @@ export default function Configuracion() {
           <div className="p-3 bg-gray-50 rounded-xl">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Sesión actual</p>
             <p className="text-sm text-gray-700">{user?.email}</p>
-            <p className="text-xs text-gray-400 capitalize">{user?.userType}</p>
+            <p className="text-xs text-gray-400 capitalize cursor-pointer select-none inline-block" onClick={handleInstClick}>{user?.userType}</p>
           </div>
+          {instClickCount > 0 && instClickCount < 10 && (
+            <p className="text-xs text-gray-300 text-center">{10 - instClickCount} clics más para opciones ocultas</p>
+          )}
+          {showDevOptions && (
+             <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-2 mt-2">
+               <p className="text-xs font-bold text-red-600">Opciones de Instructor (Avanzado)</p>
+               <button 
+                 onClick={handleClearFingerprints}
+                 className="w-full text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg py-2 transition-colors"
+               >
+                 Borrar Base de Datos del Sensor
+               </button>
+             </div>
+          )}
           {secClicks > 0 && secClicks < 7 && (
             <p className="text-xs text-gray-300 text-center">{7-secClicks} más...</p>
           )}

@@ -52,6 +52,12 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Express Error:', err);
+  res.status(500).json({ error: err.message || 'Error interno del servidor' });
+});
+
 server.listen(PORT, () => {
   console.log(`Arachiz backend corriendo en http://localhost:${PORT}`);
 });

@@ -41,7 +41,7 @@ function SidebarContent({ links, user, logout, onClose, configPath }) {
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center">
-          <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-8 object-contain" />
+          <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-8 object-contain dark:invert transition-all duration-300" />
         </div>
         <div className="flex items-center gap-1">
           <button onClick={toggleDark} className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -151,12 +151,12 @@ export default function MainLayout({ allowedRoles }) {
         {/* Main */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Mobile topbar */}
-          <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0">
-            <button onClick={() => setSidebarOpen(true)} className="btn-icon text-gray-600 hover:bg-gray-100">
+          <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0 shadow-sm transition-all duration-300">
+            <button onClick={() => setSidebarOpen(true)} className="btn-icon text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <Menu size={20} />
             </button>
             <div className="flex items-center">
-              <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain" />
+              <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain dark:invert transition-all duration-300" />
             </div>
             <div className="w-9" />
           </header>

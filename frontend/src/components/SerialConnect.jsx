@@ -58,7 +58,7 @@ export default function SerialConnect() {
   };
 
   return (
-    <div className="card bg-gray-50 border border-gray-200 shadow-sm mt-4">
+    <div className="card bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm mt-4 transition-all duration-300">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-bold text-gray-800 flex items-center gap-2">
           <Usb size={20} className="text-[#4285F4]" />
@@ -79,7 +79,7 @@ export default function SerialConnect() {
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <div className="flex-1 w-full flex items-center gap-2">
           <select 
-            className="input flex-1 py-2" 
+            className="input flex-1 py-2 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4285F4]/30" 
             value={selectedPort} 
              onChange={(e) => setSelectedPort(e.target.value)}
             disabled={status === 'connected' || status === 'loading'}
@@ -94,7 +94,7 @@ export default function SerialConnect() {
           
           <button 
              onClick={loadPorts} 
-            className="p-2 text-gray-500 hover:text-[#4285F4] hover:bg-blue-50 rounded-lg transition-colors border border-gray-200 bg-white"
+            className="p-2 text-gray-500 dark:text-gray-300 hover:text-[#4285F4] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
              title="Refrescar Puertos"
              disabled={status === 'connected'}
           >

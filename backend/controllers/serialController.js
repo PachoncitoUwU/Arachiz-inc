@@ -49,6 +49,20 @@ exports.startEnrollFinger = async (req, res) => {
   }
 };
 
+exports.clearFingerprints = async (req, res) => {
+  try {
+    const serialService = req.app.get('serialService');
+    const sent = serialService.sendCommand('CLEAR_DB');
+    if (sent) {
+      res.json({ success: true, message: 'Base de datos del sensor borrada correctamente' });
+    } else {
+      res.status(400).json({ error: 'No hay dispositivo conectado' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error al procesar petición' });
+  }
+};
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -73,4 +87,20 @@ exports.bindHardware = async (req, res) => {
       res.status(500).json({ error: 'Error al actualizar usuario' });
     }
   }
+};
+
+exports.simulateEvent = (req, res) => {
+  const { type, payload } = req.body;
+  const io = req.app.get('io');
+  if (!io) return res.status(500).json({ error: 'Socket no inicializado' });
+
+  if (type === 'nfc') {
+    io.emit('arduino_read_nfc', { uid: payload }); // simula pasar tarjeta
+  } else if (type === 'finger') {
+    io.emit('arduino_read_finger', { id: parseInt(payload, 10) }); // simula poner huella
+  } else if (type === 'enroll_success') {
+    io.emit('arduino_enroll_success', { id: parseInt(payload, 10) }); // simula crear huella
+  }
+
+  res.json({ success: true, message: `Simulación enviada exitosamente: ${type}` });
 };
