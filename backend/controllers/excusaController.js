@@ -2,6 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const { uploadToSupabase, isSupabaseConfigured } = require('../utils/supabaseStorage');
 const prisma = new PrismaClient();
 
+//mira
+
+//holaaaa
 // RF11/RF32/RF33 - Crear excusa
 const createExcusa = async (req, res) => {
   const { motivo, descripcion, fechas } = req.body;
