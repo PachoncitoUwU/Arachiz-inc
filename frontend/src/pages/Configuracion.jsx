@@ -308,7 +308,8 @@ export default function Configuracion() {
   const fileInputRef = useRef(null);
 
   const [fullName, setFullName]           = useState(user?.fullName || '');
-  const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl ? `${API_BASE}${user.avatarUrl}` : null);
+  const formatAvatarUrl = (url) => url ? (url.startsWith('http') ? url : `${API_BASE}${url}`) : null;
+  const [avatarPreview, setAvatarPreview] = useState(formatAvatarUrl(user?.avatarUrl));
   const [avatarFile, setAvatarFile]       = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
 

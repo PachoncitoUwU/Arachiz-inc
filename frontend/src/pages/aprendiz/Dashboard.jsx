@@ -118,7 +118,7 @@ export default function AprendizDashboard() {
                 {ficha.instructores?.[0]?.instructor && (
                   <div className="flex items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     {ficha.instructores[0].instructor.avatarUrl ? (
-                      <img src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${ficha.instructores[0].instructor.avatarUrl}`} alt="Instructor" className="w-12 h-12 rounded-xl object-cover" />
+                      <img src={ficha.instructores[0].instructor.avatarUrl.startsWith('http') ? ficha.instructores[0].instructor.avatarUrl : `${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${ficha.instructores[0].instructor.avatarUrl}`} alt="Instructor" className="w-12 h-12 rounded-xl object-cover" />
                     ) : (
                       <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
                         <User size={20} />

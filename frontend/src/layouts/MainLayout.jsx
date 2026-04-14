@@ -34,7 +34,7 @@ function SidebarContent({ links, user, logout, onClose, configPath }) {
 
   const roleColor = user?.userType === 'instructor' ? 'bg-[#4285F4]' : 'bg-[#34A853]';
   const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-  const avatarSrc = user?.avatarUrl ? `${API_BASE}${user.avatarUrl}` : null;
+  const avatarSrc = user?.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : `${API_BASE}${user.avatarUrl}`) : null;
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">

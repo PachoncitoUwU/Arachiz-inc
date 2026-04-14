@@ -194,18 +194,21 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
       </button>
 
       {expanded && (
-        <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+              <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
           {ficha.aprendices?.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-3">Sin aprendices aún</p>
-          ) : ficha.aprendices?.map(a => (
+          ) : ficha.aprendices?.map(a => {
+            const avatarSrc = a.avatarUrl ? (a.avatarUrl.startsWith('http') ? a.avatarUrl : `${API_BASE}${a.avatarUrl}`) : null;
+            return (
             <div key={a.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50">
               <div className="flex items-center gap-2">
-                {a.avatarUrl ? (
-                  <img src={`${API_BASE}${a.avatarUrl}`} alt="avatar" className="w-8 h-8 rounded-xl object-cover border border-gray-100" />
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="avatar" className="w-8 h-8 rounded-xl object-cover border border-gray-100" />
                 ) : (
                   <div className="w-8 h-8 rounded-xl bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">
                     <User size={16} />
                   </div>
+                )}
                 )}
                 <div>
                   <p className="text-xs font-medium text-gray-700">{a.fullName}</p>
