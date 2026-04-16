@@ -367,7 +367,7 @@ export default function Configuracion() {
   const fileInputRef = useRef(null);
 
   const [fullName, setFullName]           = useState(user?.fullName || '');
-  const formatAvatarUrl = (url) => url ? (url.startsWith('http') ? url : `${API_BASE}${url}`) : null;
+  const formatAvatarUrl = (url) => url ? (url.startsWith('http') || url.startsWith('data:') ? url : `${API_BASE}${url}`) : null;
   const [avatarPreview, setAvatarPreview] = useState(formatAvatarUrl(user?.avatarUrl));
   const [avatarFile, setAvatarFile]       = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -449,9 +449,32 @@ export default function Configuracion() {
   const handleSaveProfile = async (e) => {
     e.preventDefault(); setSavingProfile(true);
     try {
+      const resizeImage = (file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_SIZE = 256;
+            let { width, height } = img;
+            if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
+            else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
       const body = new FormData();
       if (fullName.trim() && fullName !== user?.fullName) body.append('fullName', fullName.trim());
-      if (avatarFile) body.append('avatar', avatarFile);
+      if (avatarFile) {
+        const base64 = await resizeImage(avatarFile);
+        body.append('avatarBase64', base64);
+      }
+      
       const d    = await fetch(`${API_BASE}/api/auth/profile`, { method:'PUT', headers:{ Authorization:`Bearer ${localStorage.getItem('token')}` }, body });
       const json = await d.json();
       if (!d.ok) throw new Error(json.error || 'Error al guardar');

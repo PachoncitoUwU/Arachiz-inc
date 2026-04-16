@@ -74,20 +74,25 @@ const getMe = async (req, res) => {
 
 // RF81 - Actualizar perfil (nombre + avatar)
 const updateProfile = async (req, res) => {
-  const { fullName } = req.body;
+  const { fullName, avatarBase64 } = req.body;
   
   try {
-    let avatarUrl = undefined;
+    const data = {};
+    if (fullName && fullName.trim()) data.fullName = fullName.trim();
+    
+    // Si envían la imagen en base64 (ya redimensionada desde el frontend)
+    if (avatarBase64) {
+      data.avatarUrl = avatarBase64;
+    }
+    
+    // Si usan archivo local/Supabase tradicional (multer)
     if (req.file) {
       if (!isSupabaseConfigured) {
         return res.status(500).json({ error: 'Faltan las variables SUPABASE_URL y SUPABASE_ANON_KEY en backend/.env' });
       }
-      avatarUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, 'avatars');
+      data.avatarUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, 'avatars');
     }
 
-    const data = {};
-    if (fullName && fullName.trim()) data.fullName = fullName.trim();
-    if (avatarUrl) data.avatarUrl = avatarUrl;
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ error: 'Nada que actualizar' });
     }
@@ -119,28 +124,6 @@ const changePassword = async (req, res) => {
   }
 };
 
-const updateUserAvatar = async (req, res) => {
-  const { id } = req.params;
-  try {
-    if (req.user.userType !== 'instructor') {
-      return res.status(403).json({ error: 'Solo los instructores pueden editar avatares de otros usuarios' });
-    }
-    if (!req.file) return res.status(400).json({ error: 'No se envió ninguna imagen' });
-    
-    if (!isSupabaseConfigured) {
-      return res.status(500).json({ error: 'Faltan las variables SUPABASE_URL y SUPABASE_ANON_KEY' });
-    }
-    const avatarUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, 'avatars');
+// Se eliminó updateUserAvatar por solicitud del usuario
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: { avatarUrl },
-      select: { id: true, fullName: true, avatarUrl: true }
-    });
-    res.json({ message: 'Avatar del aprendiz actualizado', user });
-  } catch (err) {
-    res.status(500).json({ error: 'Error: ' + err.message });
-  }
-};
-
-module.exports = { register, login, getMe, updateProfile, changePassword, updateUserAvatar };
+module.exports = { register, login, getMe, updateProfile, changePassword };
