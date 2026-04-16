@@ -9,6 +9,7 @@ import TowerStack   from '../games/TowerStack';
 import MemoryFlash  from '../games/MemoryFlash';
 import ReactionTime from '../games/ReactionTime';
 import WordleGame   from '../games/WordleGame';
+import SnakeShop    from '../components/SnakeShop';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -781,12 +782,39 @@ function SnakeGame({ onClose, currentUser }) {
   const [foodEmoji, setFoodEmoji] = useState('🍎');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [equippedSkin, setEquippedSkin] = useState(null);
   const W = COLS*CELL, H = ROWS*CELL;
 
   // Cargar leaderboard desde el servidor al abrir
   useEffect(()=>{
     fetchLeaderboard().then(data=>setLb(data));
+    loadEquippedSkin();
   },[]);
+
+  // Cargar la skin equipada del usuario
+  const loadEquippedSkin = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/skins/my-skins`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const equipped = data.userSkins?.find(us => us.equipped);
+      if (equipped) {
+        setEquippedSkin(equipped.skin);
+        setSnakeColor(equipped.skin.headColor);
+      }
+    } catch (error) {
+      console.error('Error loading equipped skin:', error);
+    }
+  };
+
+  const handleEquipSkin = (skin) => {
+    setEquippedSkin(skin);
+    setSnakeColor(skin.headColor);
+  };
 
   const randFood=(snake)=>{let f;do{f=[Math.floor(Math.random()*COLS),Math.floor(Math.random()*ROWS)];}while(snake.some(c=>c[0]===f[0]&&c[1]===f[1]));return f;};
 
@@ -798,12 +826,89 @@ function SnakeGame({ onClose, currentUser }) {
     bg.addColorStop(0,'#f8fafc');
     bg.addColorStop(1,'#e2e8f0');
     ctx.fillStyle=bg;
-    ctx.fillRect(0,0,W,H); // Usar fillRect en lugar de roundRect para mejor rendimiento
+    ctx.fillRect(0,0,W,H);
     
-    // Serpiente como una línea continua y fluida (optimizada)
+    // Aplicar efectos de skin si hay una equipada
+    const skin = equippedSkin;
+    let bodyColor = snakeColor;
+    let headColor = snakeColor;
+    
+    if (skin) {
+      bodyColor = skin.bodyColor;
+      headColor = skin.headColor;
+      
+      // Efectos de rastro
+      if (skin.trailEffect && skin.trailEffect !== 'none' && g.snake.length > 1) {
+        for (let i = 1; i < Math.min(g.snake.length, 10); i++) {
+          const [x, y] = g.snake[i];
+          const alpha = 1 - (i / 10);
+          
+          if (skin.trailEffect === 'sparkles') {
+            ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 3, 0, Math.PI*2);
+            ctx.fill();
+          } else if (skin.trailEffect === 'fire') {
+            ctx.fillStyle = `rgba(255, 107, 53, ${alpha * 0.7})`;
+            ctx.beginPath();
+            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 4, 0, Math.PI*2);
+            ctx.fill();
+          } else if (skin.trailEffect === 'ice') {
+            ctx.fillStyle = `rgba(160, 216, 241, ${alpha * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 3, 0, Math.PI*2);
+            ctx.fill();
+          } else if (skin.trailEffect === 'lightning') {
+            ctx.strokeStyle = `rgba(255, 235, 59, ${alpha * 0.8})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x*CELL+CELL/2, y*CELL+CELL/2);
+            if (i < g.snake.length - 1) {
+              const [nx, ny] = g.snake[i+1];
+              ctx.lineTo(nx*CELL+CELL/2, ny*CELL+CELL/2);
+            }
+            ctx.stroke();
+          } else if (skin.trailEffect === 'stars') {
+            ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.7})`;
+            ctx.font = `${CELL/2}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⭐', x*CELL+CELL/2, y*CELL+CELL/2);
+          }
+        }
+      }
+    }
+    
+    // Serpiente como una línea continua y fluida
     if(g.snake.length > 0) {
-      // Dibujar cuerpo de la serpiente de forma más simple
-      ctx.strokeStyle = snakeColor;
+      // Aplicar patrón de skin
+      if (skin && skin.pattern === 'gradient') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, headColor);
+        grad.addColorStop(1, bodyColor);
+        ctx.strokeStyle = grad;
+      } else if (skin && skin.pattern === 'rainbow') {
+        const grad = ctx.createLinearGradient(0, 0, W, 0);
+        grad.addColorStop(0, '#ff0080');
+        grad.addColorStop(0.25, '#ff8000');
+        grad.addColorStop(0.5, '#ffff00');
+        grad.addColorStop(0.75, '#00ff80');
+        grad.addColorStop(1, '#0080ff');
+        ctx.strokeStyle = grad;
+      } else if (skin && skin.pattern === 'galaxy') {
+        const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W);
+        grad.addColorStop(0, '#4a148c');
+        grad.addColorStop(0.5, '#1a237e');
+        grad.addColorStop(1, '#000000');
+        ctx.strokeStyle = grad;
+      } else if (skin && skin.pattern === 'neon') {
+        ctx.strokeStyle = bodyColor;
+        ctx.shadowColor = bodyColor;
+        ctx.shadowBlur = 15;
+      } else {
+        ctx.strokeStyle = bodyColor;
+      }
+      
       ctx.lineWidth = CELL - 6;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -816,17 +921,28 @@ function SnakeGame({ onClose, currentUser }) {
       }
       ctx.stroke();
       
-      // Cabeza de la serpiente (simplificada)
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      
+      // Cabeza de la serpiente
       const [headX, headY] = g.snake[0];
-      ctx.fillStyle = snakeColor;
+      ctx.fillStyle = headColor;
       ctx.beginPath();
       ctx.arc(headX*CELL+CELL/2, headY*CELL+CELL/2, CELL/2-1, 0, Math.PI*2);
       ctx.fill();
       
-      // Ojos de la serpiente (simplificados)
+      // Ojos según el estilo de la skin
+      const eyeStyle = skin?.eyeStyle || 'normal';
       ctx.fillStyle = '#ffffff';
-      const eyeSize = 4;
+      const eyeSize = eyeStyle === 'cute' ? 5 : 4;
       const eyeOffset = 7;
+      
+      if (eyeStyle === 'laser') {
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 10;
+      }
+      
       ctx.beginPath();
       ctx.arc(headX*CELL+eyeOffset, headY*CELL+eyeOffset, eyeSize, 0, Math.PI*2);
       ctx.fill();
@@ -834,14 +950,19 @@ function SnakeGame({ onClose, currentUser }) {
       ctx.arc(headX*CELL+CELL-eyeOffset, headY*CELL+eyeOffset, eyeSize, 0, Math.PI*2);
       ctx.fill();
       
+      ctx.shadowBlur = 0;
+      
       // Pupilas
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.arc(headX*CELL+eyeOffset, headY*CELL+eyeOffset, 2, 0, Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(headX*CELL+CELL-eyeOffset, headY*CELL+eyeOffset, 2, 0, Math.PI*2);
-      ctx.fill();
+      if (eyeStyle !== 'laser') {
+        ctx.fillStyle = eyeStyle === 'angry' ? '#ff0000' : '#000000';
+        const pupilSize = eyeStyle === 'cute' ? 3 : 2;
+        ctx.beginPath();
+        ctx.arc(headX*CELL+eyeOffset, headY*CELL+eyeOffset, pupilSize, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(headX*CELL+CELL-eyeOffset, headY*CELL+eyeOffset, pupilSize, 0, Math.PI*2);
+        ctx.fill();
+      }
     }
     
     // Comida personalizable
@@ -1064,6 +1185,11 @@ function SnakeGame({ onClose, currentUser }) {
               <span style={{fontSize:13,fontWeight:700,color:'#007aff',background:'rgba(0,122,255,0.1)',padding:'2px 8px',borderRadius:20}}>{score} pts</span>
             </div>
             <div style={{display:'flex',gap:6}}>
+              {/* Botón de Tienda */}
+              <button onClick={e=>{e.stopPropagation();setShowShop(true);}}
+                style={{background:'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',border:'none',borderRadius:14,color:'#ffffff',padding:'5px 12px',cursor:'pointer',fontSize:11,fontWeight:700,boxShadow:'0 2px 8px rgba(245,87,108,0.3)'}}>
+                🛍️ Tienda
+              </button>
               {/* Botón Top solo en móvil */}
               {isMobile && (
                 <button onClick={e=>{e.stopPropagation();setShowLBSnake(v=>!v);}}
@@ -1156,6 +1282,15 @@ function SnakeGame({ onClose, currentUser }) {
           <p style={{color:'rgba(0,0,0,0.3)',fontSize:10,margin:0}}>Deslizar para mover · Espacio reinicia · ESC cierra</p>
         </div>
       </div>
+      
+      {/* Modal de la Tienda */}
+      {showShop && (
+        <SnakeShop
+          onClose={() => setShowShop(false)}
+          onEquipSkin={handleEquipSkin}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 }

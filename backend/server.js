@@ -15,6 +15,7 @@ const exportRoutes = require('./routes/exportRoutes');
 const serialRoutes = require('./routes/serialRoutes');
 const snakeRoutes  = require('./routes/snakeRoutes');
 const gamesRoutes  = require('./routes/gamesRoutes');
+const skinRoutes   = require('./routes/skinRoutes');
 const SerialService = require('./utils/serialService');
 
 const app = express();
@@ -37,6 +38,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/serial', serialRoutes);
 app.use('/api/snake',  snakeRoutes);
 app.use('/api/games',  gamesRoutes);
+app.use('/api/skins',  skinRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);

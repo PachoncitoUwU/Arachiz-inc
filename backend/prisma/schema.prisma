@@ -36,6 +36,7 @@ model User {
   reactionScore ReactionScore?
   memoryScore   MemoryScore?
   wordleScore   WordleScore?
+  userSkins     UserSkin[]
 }
 
 model Ficha {
@@ -203,4 +204,55 @@ model WordleScore {
   updatedAt DateTime @default(now()) @updatedAt
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Sistema de Skins para Snake
+model SnakeSkin {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  price       Float    // Precio en pesos colombianos (COP)
+  rarity      String   // 'common', 'rare', 'epic', 'legendary', 'mythic'
+  headColor   String
+  bodyColor   String
+  pattern     String   // 'solid', 'gradient', 'neon', 'metallic', 'rainbow', 'galaxy', 'fire', 'ice'
+  trailEffect String?  // 'none', 'sparkles', 'fire', 'ice', 'lightning', 'stars'
+  eyeStyle    String   @default("normal") // 'normal', 'laser', 'cute', 'angry'
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  userSkins   UserSkin[]
+  orders      SkinOrder[]
+}
+
+model UserSkin {
+  id         String   @id @default(cuid())
+  userId     String
+  skinId     String
+  equipped   Boolean  @default(false)
+  unlockedAt DateTime @default(now())
+  
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skin       SnakeSkin @relation(fields: [skinId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, skinId])
+}
+
+model SkinOrder {
+  id              String   @id @default(cuid())
+  userId          String
+  skinId          String
+  amount          Float    // Monto pagado
+  currency        String   @default("COP")
+  status          String   // 'pending', 'approved', 'rejected', 'cancelled'
+  paymentMethod   String?  // 'mercadopago', 'epayco', etc.
+  externalId      String?  // ID de la transacción en la pasarela
+  preferenceId    String?  // ID de preferencia de Mercado Pago
+  createdAt       DateTime @default(now())
+  approvedAt      DateTime?
+  
+  skin            SnakeSkin @relation(fields: [skinId], references: [id])
+  
+  @@index([userId])
+  @@index([externalId])
 }
