@@ -37,65 +37,236 @@ function Section({ icon: Icon, title, children, onTitleClick }) {
   );
 }
 
-// ─── Breakout ─────────────────────────────────────────────────────────────────
-function BreakoutGame({ onClose }) {
-  const canvasRef = useRef(null);
-  const [score, setScore] = useState(0);
-  const [dead, setDead]   = useState(false);
+// ─── Breakout (más difícil + leaderboard) ────────────────────────────────────
+const LS_BREAKOUT = 'arachiz_breakout_lb_cache';
+const getLBBreakout = () => { try { return JSON.parse(localStorage.getItem(LS_BREAKOUT)) || []; } catch { return []; } };
+const saveBreakoutScore = async (score, token) => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    await fetch(`${API_URL}/snake/score`, { // reutilizamos el mismo endpoint por ahora
+      method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({ score, game:'breakout' }),
+    });
+  } catch {}
+};
+
+function BreakoutGame({ onClose, currentUser }) {
+  const canvasRef  = useRef(null);
+  const [score, setScore]   = useState(0);
+  const [dead,  setDead]    = useState(false);
+  const [showLB, setShowLB] = useState(false);
+  const [lb, setLb]         = useState(getLBBreakout());
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
+  const savedRef  = useRef(false);
+  const deadRef   = useRef(false); // para reiniciar con espacio
+  const restartFn = useRef(null);
+
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<700);
+    window.addEventListener('resize',onResize);return()=>window.removeEventListener('resize',onResize);
+  },[]);
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    let x = canvas.width/2, y = canvas.height-30, dx = 2.5, dy = -2.5;
-    const ballR=6, padH=10, padW=80; let padX=(canvas.width-padW)/2;
+    // ── Parámetros de dificultad alta ──
+    let x = canvas.width/2, y = canvas.height-50;
+    let dx = 4.5, dy = -4.5;          // bola rápida desde el inicio
+    const ballR=6, padH=9, padW=60;   // paleta más pequeña
+    let padX=(canvas.width-padW)/2;
     let right=false, left=false;
-    const COLS=6, ROWS=5, BW=47, BH=15, BP=6; let sc=0;
-    const bricks=Array.from({length:COLS},(_,c)=>Array.from({length:ROWS},(_,r)=>({x:0,y:0,on:1,color:`hsl(${(c*60+r*30)%360},70%,55%)`})));
-    const kd=(e)=>{if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=true;if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=true;if(e.key==='Escape')onClose();};
+    const COLS=8, ROWS=7, BW=37, BH=13, BP=4; let sc=0;
+    let level=1;
+    const makeBricks=()=>Array.from({length:COLS},(_,c)=>Array.from({length:ROWS},(_,r)=>({
+      x:0,y:0,on:1,
+      hp: r===0?3 : r<3?2 : 1,        // fila 0 = 3 golpes, filas 1-2 = 2 golpes
+      color:`hsl(${(c*45+r*20)%360},75%,${r===0?35:r<3?45:58}%)`
+    })));
+    let bricks=makeBricks();
+
+    const restart=()=>{
+      x=canvas.width/2;y=canvas.height-50;
+      dx=4.5;dy=-4.5;level=1;sc=0;
+      bricks=makeBricks();
+      deadRef.current=false;
+      savedRef.current=false;
+      setScore(0);setDead(false);
+      req=requestAnimationFrame(draw);
+    };
+    restartFn.current=restart;
+
+    const kd=(e)=>{
+      if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=true;
+      if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=true;
+      if(e.key==='Escape')onClose();
+      if((e.key===' '||e.key==='Enter')&&deadRef.current){e.preventDefault();restart();}
+    };
     const ku=(e)=>{if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=false;if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=false;};
     const mm=(e)=>{const rx=e.clientX-canvas.getBoundingClientRect().left;if(rx>0&&rx<canvas.width)padX=rx-padW/2;};
     const tm=(e)=>{if(e.touches[0]){const rx=e.touches[0].clientX-canvas.getBoundingClientRect().left;if(rx>0&&rx<canvas.width)padX=rx-padW/2;}};
     document.addEventListener('keydown',kd);document.addEventListener('keyup',ku);
     canvas.addEventListener('mousemove',mm);canvas.addEventListener('touchmove',tm,{passive:true});
+
     let req;
     const draw=()=>{
+      if(deadRef.current)return;
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){if(!bricks[c][r].on)continue;const bx=(c*(BW+BP))+15,by=(r*(BH+BP))+30;bricks[c][r].x=bx;bricks[c][r].y=by;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,BW,BH,4):ctx.rect(bx,by,BW,BH);ctx.fillStyle=bricks[c][r].color;ctx.fill();}
-      ctx.beginPath();ctx.arc(x,y,ballR,0,Math.PI*2);ctx.fillStyle='#EA4335';ctx.fill();
-      ctx.beginPath();ctx.roundRect?ctx.roundRect(padX,canvas.height-padH,padW,padH,4):ctx.rect(padX,canvas.height-padH,padW,padH);ctx.fillStyle='#4285F4';ctx.fill();
-      for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){const b=bricks[c][r];if(b.on&&x>b.x&&x<b.x+BW&&y>b.y&&y<b.y+BH){dy=-dy;b.on=0;sc++;setScore(sc);if(sc===COLS*ROWS){for(let c2=0;c2<COLS;c2++)for(let r2=0;r2<ROWS;r2++)bricks[c2][r2].on=1;sc=0;setScore(0);}}}
+      // Fondo
+      const bg=ctx.createLinearGradient(0,0,0,canvas.height);
+      bg.addColorStop(0,'#0a0f1e');bg.addColorStop(1,'#0d1a2e');
+      ctx.fillStyle=bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+      // Info
+      ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='bold 10px system-ui';ctx.textAlign='left';
+      ctx.fillText(`Nivel ${level}  ·  ${sc} pts`,8,14);
+      // Ladrillos
+      for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+        if(!bricks[c][r].on)continue;
+        const bx=(c*(BW+BP))+6,by=(r*(BH+BP))+22;
+        bricks[c][r].x=bx;bricks[c][r].y=by;
+        ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,BW,BH,3):ctx.rect(bx,by,BW,BH);
+        ctx.fillStyle=bricks[c][r].color;ctx.fill();
+        if(bricks[c][r].hp>1){
+          ctx.strokeStyle=bricks[c][r].hp>2?'rgba(255,255,100,0.7)':'rgba(255,255,255,0.4)';
+          ctx.lineWidth=1.5;ctx.stroke();
+        }
+      }
+      // Bola
+      ctx.shadowColor='#ff6b6b';ctx.shadowBlur=14;
+      ctx.beginPath();ctx.arc(x,y,ballR,0,Math.PI*2);ctx.fillStyle='#ff4444';ctx.fill();
+      ctx.shadowBlur=0;
+      // Paleta con glow
+      ctx.shadowColor='#4285F4';ctx.shadowBlur=8;
+      ctx.beginPath();ctx.roundRect?ctx.roundRect(padX,canvas.height-padH-3,padW,padH,4):ctx.rect(padX,canvas.height-padH-3,padW,padH);
+      ctx.fillStyle='#4285F4';ctx.fill();ctx.shadowBlur=0;
+      // Colisión ladrillos
+      for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+        const b=bricks[c][r];
+        if(!b.on)continue;
+        if(x+ballR>b.x&&x-ballR<b.x+BW&&y+ballR>b.y&&y-ballR<b.y+BH){
+          dy=-dy;b.hp--;
+          if(b.hp<=0){b.on=0;sc+=level*2;setScore(sc);}
+          // Acelerar cada 4 ladrillos destruidos
+          const destroyed=bricks.flat().filter(b=>!b.on).length;
+          if(destroyed%4===0){const spd=Math.min(9,Math.abs(dx)+0.3);dx=dx>0?spd:-spd;dy=dy>0?spd:-spd;}
+        }
+      }
+      // Siguiente nivel
+      if(bricks.every(col=>col.every(b=>!b.on))){
+        level++;bricks=makeBricks();
+        const spd=Math.min(10,4.5+level*0.6);
+        dx=dx>0?spd:-spd;dy=-Math.abs(spd);
+      }
       if(x+dx>canvas.width-ballR||x+dx<ballR)dx=-dx;
       if(y+dy<ballR)dy=-dy;
-      else if(y+dy>canvas.height-ballR){if(x>padX&&x<padX+padW){dy=-Math.abs(dy);dx+=((x-(padX+padW/2))*0.1);}else{setDead(true);return;}}
-      if(right&&padX<canvas.width-padW)padX+=5;if(left&&padX>0)padX-=5;
-      x+=dx;y+=dy;req=requestAnimationFrame(draw);
+      else if(y+dy>canvas.height-ballR){
+        if(x>padX&&x<padX+padW){
+          dy=-Math.abs(dy);
+          dx=dx+(x-(padX+padW/2))*0.15; // ángulo según donde golpea
+        } else {
+          deadRef.current=true;setDead(true);return;
+        }
+      }
+      if(right&&padX<canvas.width-padW)padX+=7;
+      if(left&&padX>0)padX-=7;
+      x+=dx;y+=dy;
+      req=requestAnimationFrame(draw);
     };
     draw();
     return()=>{document.removeEventListener('keydown',kd);document.removeEventListener('keyup',ku);canvas.removeEventListener('mousemove',mm);canvas.removeEventListener('touchmove',tm);cancelAnimationFrame(req);};
   },[onClose,dead]);
 
-  const glass={background:'rgba(255,255,255,0.18)',backdropFilter:'blur(40px) saturate(200%)',WebkitBackdropFilter:'blur(40px) saturate(200%)',border:'1px solid rgba(255,255,255,0.5)',borderRadius:28,boxShadow:'0 20px 60px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.6)',padding:24,display:'flex',flexDirection:'column',alignItems:'center',gap:16};
+  useEffect(()=>{
+    if(dead&&!savedRef.current&&score>0){
+      savedRef.current=true;
+      const lb=getLBBreakout();
+      const existing=lb.findIndex(e=>e.name===(currentUser?.fullName||'Jugador'));
+      const entry={name:currentUser?.fullName||'Jugador',avatar:currentUser?.avatarUrl||null,score,date:new Date().toLocaleDateString('es-CO')};
+      if(existing>=0){if(score>lb[existing].score)lb[existing]=entry;}else lb.push(entry);
+      lb.sort((a,b)=>b.score-a.score);
+      localStorage.setItem(LS_BREAKOUT,JSON.stringify(lb.slice(0,10)));
+      setLb(lb.slice(0,10));
+    }
+  },[dead,score,currentUser]);
+
+  const LBContent=()=>(
+    <div style={{display:'flex',flexDirection:'column',gap:6,overflowY:'auto',maxHeight:280}}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+        <span style={{fontSize:14,fontWeight:800,color:'white',letterSpacing:'-0.3px'}}>Ranking</span>
+        <span style={{fontSize:14}}>🏆</span>
+      </div>
+      {lb.length===0
+        ?<p style={{color:'rgba(255,255,255,0.4)',textAlign:'center',padding:'16px 0',fontSize:12}}>¡Sé el primero!</p>
+        :lb.map((e,i)=>{
+          const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
+          return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:12,background:isTop?col.bg:'rgba(255,255,255,0.08)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.12)'}}>
+            <span style={{fontSize:isTop?15:11,fontWeight:700,minWidth:20,color:isTop?col.text:'rgba(255,255,255,0.4)'}}>{isTop?MEDAL[i]:i+1}</span>
+            {e.avatar?<img src={e.avatar} style={{width:26,height:26,borderRadius:7,objectFit:'cover'}} alt=""/>
+              :<div style={{width:26,height:26,borderRadius:7,background:isTop?col.text:'#4285F4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white'}}>{e.name?.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()||'?'}</div>}
+            <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontWeight:700,fontSize:10,color:isTop?col.text:'white',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{e.name}</p></div>
+            <span style={{fontWeight:800,fontSize:12,color:isTop?col.text:'white'}}>{e.score}</span>
+          </div>);
+        })
+      }
+    </div>
+  );
+
+  const glassPanel={background:'rgba(255,255,255,0.08)',backdropFilter:'blur(40px) saturate(200%)',WebkitBackdropFilter:'blur(40px) saturate(200%)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:24,boxShadow:'0 20px 60px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.15)',padding:'16px 14px'};
+
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',backdropFilter:'blur(16px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200}} onClick={onClose}>
-      <div style={glass} onClick={e=>e.stopPropagation()}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%'}}>
-          <span style={{fontWeight:700,color:'white',fontSize:15,textShadow:'0 1px 6px rgba(0,0,0,0.3)'}}>🧱 Breakout — {score} pts</span>
-          <button onClick={onClose} style={{background:'rgba(255,255,255,0.25)',border:'1px solid rgba(255,255,255,0.4)',borderRadius:20,color:'white',padding:'4px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>✕</button>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',backdropFilter:'blur(16px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:12,overflowY:'auto'}} onClick={onClose}>
+      <div style={{display:'flex',flexDirection:isMobile?'column':'row',gap:12,alignItems:'flex-start',maxWidth:'98vw'}} onClick={e=>e.stopPropagation()}>
+
+        {/* LB — solo en desktop a la izquierda */}
+        {!isMobile && (
+          <div style={{...glassPanel,width:180}}>
+            <LBContent/>
+          </div>
+        )}
+
+        {/* Juego */}
+        <div style={{...glassPanel,display:'flex',flexDirection:'column',alignItems:'center',gap:12,padding:'14px 14px 10px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%'}}>
+            <span style={{fontWeight:800,color:'white',fontSize:14,letterSpacing:'-0.3px'}}>🧱 Breakout — {score} pts</span>
+            <div style={{display:'flex',gap:6}}>
+              {/* Botón Top solo en móvil */}
+              {isMobile && (
+                <button onClick={e=>{e.stopPropagation();setShowLB(v=>!v);}}
+                  style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:14,color:'white',padding:'4px 10px',cursor:'pointer',fontSize:11,fontWeight:600}}>
+                  🏆 Top
+                </button>
+              )}
+              <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:14,color:'white',padding:'4px 10px',cursor:'pointer',fontSize:11,fontWeight:600}}>✕</button>
+            </div>
+          </div>
+
+          {/* LB en móvil cuando se abre con botón */}
+          {isMobile && showLB ? (
+            <div style={{width:300,maxHeight:240,overflowY:'auto'}}>
+              <LBContent/>
+            </div>
+          ) : (
+            <div style={{position:'relative',borderRadius:12,overflow:'hidden',border:'1px solid rgba(255,255,255,0.15)',touchAction:'none'}}>
+              <canvas ref={canvasRef} width={340} height={290} style={{display:'block'}}/>
+              {dead&&(
+                <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10}}>
+                  <p style={{color:'white',fontWeight:800,fontSize:20,margin:0}}>Game Over</p>
+                  <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>{score} pts</p>
+                  <button onClick={()=>restartFn.current&&restartFn.current()}
+                    style={{background:'#4285F4',color:'white',border:'none',borderRadius:18,padding:'9px 24px',fontWeight:700,cursor:'pointer',fontSize:13,marginTop:4}}>
+                    Reintentar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <p style={{color:'rgba(255,255,255,0.3)',fontSize:9,margin:0}}>Ratón / A-D / táctil · Espacio reinicia · ESC cierra</p>
         </div>
-        <div style={{position:'relative',borderRadius:14,overflow:'hidden',border:'1px solid rgba(255,255,255,0.3)',touchAction:'none'}}>
-          <canvas ref={canvasRef} width={340} height={260} style={{display:'block',background:'rgba(0,0,0,0.25)'}}/>
-          {dead&&(<div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14}}>
-            <p style={{color:'white',fontWeight:700,fontSize:20}}>Game Over — {score} pts</p>
-            <button onClick={()=>setDead(false)} style={{background:'rgba(66,133,244,0.85)',color:'white',border:'1px solid rgba(255,255,255,0.3)',borderRadius:20,padding:'10px 24px',fontWeight:700,cursor:'pointer',fontSize:14}}>Reintentar</button>
-          </div>)}
-        </div>
-        <p style={{color:'rgba(255,255,255,0.6)',fontSize:11}}>Ratón / teclado / táctil · ESC para cerrar</p>
       </div>
     </div>
   );
 }
 
-// ─── Snake ────────────────────────────────────────────────────────────────────
+// ─── El Gusanito ──────────────────────────────────────────────────────────────
 const COLS=16,ROWS=13,CELL=24;
 const DIR={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
 
@@ -243,20 +414,23 @@ function SnakeGame({ onClose, currentUser }) {
     const g=gRef.current;const ctx=canvasRef.current?.getContext('2d');
     if(!g||!ctx||g.dead)return;
     if(ts-g.lastTick>=g.speed){
-      g.lastTick=ts;g.dir=g.nextDir;
+      g.lastTick=ts;
+      // Procesar cola de inputs — tomar el siguiente de la cola
+      if(g.dirQueue.length>0) g.nextDir=g.dirQueue.shift();
+      g.dir=g.nextDir;
       const[dx,dy]=g.dir;const head=[g.snake[0][0]+dx,g.snake[0][1]+dy];
       if(head[0]<0||head[0]>=COLS||head[1]<0||head[1]>=ROWS||g.snake.some(c=>c[0]===head[0]&&c[1]===head[1])){
         g.dead=true;setDead(true);setScore(g.score);drawGame(g,ctx);return;
       }
       const ate=head[0]===g.food[0]&&head[1]===g.food[1];
       g.snake=[head,...g.snake.slice(0,ate?undefined:-1)];
-      if(ate){g.score+=10;g.food=randFood(g.snake);g.speed=Math.max(60,g.speed-4);setScore(g.score);}
+      if(ate){g.score+=10;g.food=randFood(g.snake);g.speed=Math.max(80,g.speed-2);setScore(g.score);}
     }
     drawGame(g,ctx);rafRef.current=requestAnimationFrame(loop);
   };
 
   const startGame=()=>{
-    gRef.current={snake:[[8,6],[7,6],[6,6],[5,6]],food:[12,4],dir:[1,0],nextDir:[1,0],score:0,speed:130,lastTick:0,dead:false};
+    gRef.current={snake:[[8,6],[7,6],[6,6],[5,6]],food:[12,4],dir:[1,0],nextDir:[1,0],dirQueue:[],score:0,speed:140,lastTick:0,dead:false};
     savedRef.current=false;setScore(0);setDead(false);
     cancelAnimationFrame(rafRef.current);rafRef.current=requestAnimationFrame(loop);
   };
@@ -274,20 +448,25 @@ function SnakeGame({ onClose, currentUser }) {
     const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],W:[0,-1],s:[0,1],S:[0,1],a:[-1,0],A:[-1,0],d:[1,0],D:[1,0]};
     const onKey=(e)=>{
       if(e.key==='Escape'){onClose();return;}
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();if(gRef.current?.dead)startGame();return;}
       const next=KEYS[e.key];if(!next)return;e.preventDefault();
       const g=gRef.current;if(!g||g.dead)return;
-      if(g.dir[0]!==0&&next[0]===-g.dir[0])return;
-      if(g.dir[1]!==0&&next[1]===-g.dir[1])return;
-      g.nextDir=next; // sin setState — respuesta instantánea
+      const last=g.dirQueue.length>0?g.dirQueue[g.dirQueue.length-1]:g.dir;
+      if(last[0]!==0&&next[0]===-last[0])return;
+      if(last[1]!==0&&next[1]===-last[1])return;
+      if(last[0]===next[0]&&last[1]===next[1])return;
+      if(g.dirQueue.length<3)g.dirQueue.push(next);
     };
     window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
   },[onClose]);
 
   const tryDir=(next)=>{
     const g=gRef.current;if(!g||g.dead)return;
-    if(g.dir[0]!==0&&next[0]===-g.dir[0])return;
-    if(g.dir[1]!==0&&next[1]===-g.dir[1])return;
-    g.nextDir=next;
+    const last=g.dirQueue.length>0?g.dirQueue[g.dirQueue.length-1]:g.dir;
+    if(last[0]!==0&&next[0]===-last[0])return;
+    if(last[1]!==0&&next[1]===-last[1])return;
+    if(last[0]===next[0]&&last[1]===next[1])return;
+    if(g.dirQueue.length<3)g.dirQueue.push(next);
   };
 
   const btn={width:56,height:56,background:'rgba(255,255,255,0.6)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:16,color:'#1d1d1f',fontSize:20,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.8)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',transition:'transform 0.1s',display:'flex',alignItems:'center',justifyContent:'center'};
@@ -319,47 +498,89 @@ function SnakeGame({ onClose, currentUser }) {
     </div>
   );
 
+  const [showLBSnake, setShowLBSnake] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
+  useEffect(()=>{const f=()=>setIsMobile(window.innerWidth<700);window.addEventListener('resize',f);return()=>window.removeEventListener('resize',f);},[]);
+
+  const glassPanel = {
+    background:'rgba(255,255,255,0.5)',
+    backdropFilter:'blur(60px) saturate(220%)',
+    WebkitBackdropFilter:'blur(60px) saturate(220%)',
+    border:'1.5px solid rgba(255,255,255,0.9)',
+    borderRadius:28,
+    boxShadow:'0 30px 80px rgba(0,0,0,0.12),inset 0 2px 0 rgba(255,255,255,1)',
+  };
+
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(180,200,220,0.25)',backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16,overflowY:'auto'}} onClick={onClose}>
-      <div style={{display:'flex',gap:14,alignItems:'flex-start',maxWidth:'95vw'}} onClick={e=>e.stopPropagation()}>
-        <div style={{background:'rgba(255,255,255,0.45)',backdropFilter:'blur(60px) saturate(220%)',WebkitBackdropFilter:'blur(60px) saturate(220%)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:26,boxShadow:'0 20px 60px rgba(0,0,0,0.1),inset 0 2px 0 rgba(255,255,255,1)',padding:'18px 14px'}}>
-          <LBPanel/>
-        </div>
-        <div style={{background:'rgba(255,255,255,0.5)',backdropFilter:'blur(60px) saturate(220%)',WebkitBackdropFilter:'blur(60px) saturate(220%)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:34,boxShadow:'0 40px 100px rgba(0,0,0,0.15),inset 0 2px 0 rgba(255,255,255,1)',padding:'18px 18px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(180,200,220,0.25)',backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:12,overflowY:'auto'}} onClick={onClose}>
+      <div style={{display:'flex',flexDirection:isMobile?'column':'row',gap:12,alignItems:'flex-start',maxWidth:'98vw'}} onClick={e=>e.stopPropagation()}>
+
+        {/* LB — siempre visible a la izquierda en desktop */}
+        {!isMobile && (
+          <div style={{...glassPanel,padding:'18px 14px',minWidth:190}}>
+            <LBPanel/>
+          </div>
+        )}
+
+        {/* Panel juego */}
+        <div style={{...glassPanel,padding:'14px 14px 10px',display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+          {/* Header */}
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%'}}>
             <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-              <span style={{fontSize:17,fontWeight:800,color:'#1d1d1f',letterSpacing:'-0.5px'}}>Snake</span>
-              <span style={{fontSize:12,fontWeight:600,color:'#007aff'}}>{score} pts</span>
+              <span style={{fontSize:16,fontWeight:800,color:'#1d1d1f',letterSpacing:'-0.5px'}}>🐍 El Gusanito</span>
+              <span style={{fontSize:13,fontWeight:700,color:'#007aff',background:'rgba(0,122,255,0.1)',padding:'2px 8px',borderRadius:20}}>{score} pts</span>
             </div>
-            <button onClick={onClose} style={{background:'rgba(0,0,0,0.07)',border:'none',borderRadius:20,color:'#1d1d1f',padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>Done</button>
-          </div>
-          <div style={{position:'relative',borderRadius:20,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.95)',boxShadow:'inset 0 2px 16px rgba(0,0,0,0.06)'}}>
-            <canvas ref={canvasRef} width={W} height={H} style={{display:'block'}}/>
-            {dead&&(
-              <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.85)',backdropFilter:'blur(16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,borderRadius:18}}>
-                <span style={{fontSize:38}}>😵</span>
-                <p style={{color:'#1d1d1f',fontWeight:800,fontSize:20,letterSpacing:'-0.6px',margin:0}}>Game Over</p>
-                <p style={{color:'#6e6e73',fontSize:13,margin:0}}>{score} pts guardados</p>
-                <button onClick={startGame} style={{background:'#007aff',color:'white',border:'none',borderRadius:22,padding:'10px 28px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(0,122,255,0.4)',marginTop:4}}>Try Again</button>
-              </div>
-            )}
-          </div>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
-            <button style={btn} onClick={()=>tryDir([0,-1])} onMouseDown={e=>e.currentTarget.style.transform='scale(0.93)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>↑</button>
             <div style={{display:'flex',gap:6}}>
-              {[[[-1,0],'←'],[[0,1],'↓'],[[1,0],'→']].map(([d,label],i)=>(
-                <button key={i} style={btn} onClick={()=>tryDir(d)} onMouseDown={e=>e.currentTarget.style.transform='scale(0.93)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
-                  {label}
+              {/* Botón Top solo en móvil */}
+              {isMobile && (
+                <button onClick={e=>{e.stopPropagation();setShowLBSnake(v=>!v);}}
+                  style={{background:'rgba(0,0,0,0.07)',border:'none',borderRadius:14,color:'#1d1d1f',padding:'5px 10px',cursor:'pointer',fontSize:11,fontWeight:600}}>
+                  🏆 Top
                 </button>
-              ))}
+              )}
+              <button onClick={onClose} style={{background:'rgba(0,0,0,0.07)',border:'none',borderRadius:14,color:'#1d1d1f',padding:'5px 12px',cursor:'pointer',fontSize:12,fontWeight:600}}>Done</button>
             </div>
           </div>
-          <p style={{color:'rgba(0,0,0,0.3)',fontSize:10,margin:0}}>Flechas / WASD · ESC para cerrar</p>
+
+          {/* LB en móvil cuando se abre con botón */}
+          {isMobile && showLBSnake ? (
+            <div style={{width:Math.min(W,300),maxHeight:220,overflowY:'auto',display:'flex',flexDirection:'column',gap:5}}>
+              <LBPanel/>
+            </div>
+          ) : (
+            <>
+              <div style={{position:'relative',borderRadius:18,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.95)',boxShadow:'inset 0 2px 16px rgba(0,0,0,0.06)'}}>
+                <canvas ref={canvasRef} width={W} height={H} style={{display:'block',maxWidth:'100%'}}/>
+                {dead&&(
+                  <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.88)',backdropFilter:'blur(16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,borderRadius:16}}>
+                    <span style={{fontSize:40}}>😵</span>
+                    <p style={{color:'#1d1d1f',fontWeight:800,fontSize:20,letterSpacing:'-0.6px',margin:0}}>Game Over</p>
+                    <p style={{color:'#6e6e73',fontSize:13,margin:0}}>{score} pts guardados 🏆</p>
+                    <button onClick={startGame} style={{background:'#007aff',color:'white',border:'none',borderRadius:22,padding:'10px 28px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(0,122,255,0.4)',marginTop:4}}>Try Again</button>
+                  </div>
+                )}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                <button style={btn} onClick={()=>tryDir([0,-1])} onMouseDown={e=>e.currentTarget.style.transform='scale(0.93)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>↑</button>
+                <div style={{display:'flex',gap:6}}>
+                  {[[[-1,0],'←'],[[0,1],'↓'],[[1,0],'→']].map(([d,label],i)=>(
+                    <button key={i} style={btn} onClick={()=>tryDir(d)} onMouseDown={e=>e.currentTarget.style.transform='scale(0.93)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          <p style={{color:'rgba(0,0,0,0.3)',fontSize:10,margin:0}}>Flechas / WASD · Espacio reinicia · ESC cierra</p>
         </div>
       </div>
     </div>
   );
 }
+
+// ─── Página principal ─────────────────────────────────────────────────────────
+export default function Configuracion() {
   const { user, updateUser } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
   const { showToast } = useToast();
@@ -466,7 +687,7 @@ function SnakeGame({ onClose, currentUser }) {
   return (
     <div className="animate-fade-in space-y-5 max-w-2xl">
       {showSnake && <SnakeGame onClose={() => setShowSnake(false)} currentUser={user}/>}
-      {showArk   && <BreakoutGame onClose={() => setShowArk(false)} />}
+      {showArk   && <BreakoutGame onClose={() => setShowArk(false)} currentUser={user}/>}
 
       <PageHeader title="Configuración" subtitle="Personaliza tu experiencia en Arachiz" />
 
