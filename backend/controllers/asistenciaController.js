@@ -22,7 +22,7 @@ const createSession = async (req, res) => {
       },
       include: {
         registros: { include: { aprendiz: { select: { fullName: true, document: true } } } },
-        materia: { include: { ficha: { select: { numero: true, aprendices: { select: { id: true } } } } } }
+        materia: { include: { ficha: { select: { numero: true, aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true } } } } } }
       }
     });
     const io = req.app.get('io');
@@ -132,7 +132,7 @@ const registerHardwareAttendance = async (req, res) => {
   try {
     const whereClauses = [];
     if (nfcUid) whereClauses.push({ nfcUid });
-    if (huellaId !== undefined) whereClauses.push({ huellaId: parseInt(huellaId, 10) });
+    if (huellaId !== undefined) whereClauses.push({ huellas: { has: parseInt(huellaId, 10) } });
 
     if (whereClauses.length === 0) {
       return res.status(400).json({ error: 'Se requiere nfcUid o huellaId' });
@@ -246,7 +246,7 @@ const getActiveSession = async (req, res) => {
         materia: {
           include: {
             ficha: {
-              include: { aprendices: { select: { id: true, fullName: true, document: true } } }
+              include: { aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true } } }
             },
             instructor: { select: { fullName: true } }
           }
@@ -270,7 +270,7 @@ const getSessionById = async (req, res) => {
         materia: {
           include: {
             ficha: {
-              include: { aprendices: { select: { id: true, fullName: true, document: true } } }
+              include: { aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true } } }
             },
             instructor: { select: { fullName: true } }
           }

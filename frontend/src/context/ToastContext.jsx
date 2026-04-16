@@ -34,10 +34,14 @@ function Toast({ id, message, type, onRemove }) {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = useCallback((message, type = 'info', duration = 3500) => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
+  const showToast = useCallback((message, type = 'info', duration = 2000) => {
+    setToasts(prev => {
+      // Evitar duplicados exactos si ya están en pantalla
+      if (prev.some(t => t.message === message)) return prev;
+      const id = Date.now();
+      setTimeout(() => setToasts(current => current.filter(t => t.id !== id)), duration);
+      return [...prev, { id, message, type }];
+    });
   }, []);
 
   const removeToast = useCallback((id) => {

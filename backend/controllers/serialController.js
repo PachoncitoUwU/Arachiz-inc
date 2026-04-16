@@ -73,12 +73,24 @@ exports.bindHardware = async (req, res) => {
   try {
     const data = {};
     if (nfcUid) data.nfcUid = nfcUid;
-    if (huellaId !== undefined) data.huellaId = parseInt(huellaId, 10);
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data
-    });
+    let user;
+    if (huellaId !== undefined) {
+      const pId = parseInt(huellaId, 10);
+      user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...data,
+          huellas: { push: pId }
+        }
+      });
+    } else {
+      user = await prisma.user.update({
+        where: { id: userId },
+        data
+      });
+    }
+
     res.json({ success: true, user });
   } catch (error) {
     if (error.code === 'P2002') {
@@ -86,6 +98,48 @@ exports.bindHardware = async (req, res) => {
     } else {
       res.status(500).json({ error: 'Error al actualizar usuario' });
     }
+  }
+};
+
+exports.deleteFinger = async (req, res) => {
+  const { userId, huellaId } = req.body;
+  if (!userId || huellaId === undefined) return res.status(400).json({ error: 'userId y huellaId son requeridos' });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const updatedHuellas = user.huellas.filter(id => id !== parseInt(huellaId, 10));
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { huellas: { set: updatedHuellas } }
+    });
+
+    const serialService = req.app.get('serialService');
+    if (serialService) serialService.sendCommand(`DELETE_FINGER ${huellaId}`);
+
+    res.json({ success: true, message: `Huella ${huellaId} eliminada` });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar huella' });
+  }
+};
+
+exports.nextFingerId = async (req, res) => {
+  try {
+    const usersWithFingers = await prisma.user.findMany({ select: { huellas: true } });
+    const usedIds = new Set();
+    usersWithFingers.forEach(u => u.huellas.forEach(id => usedIds.add(id)));
+    
+    let nextId = 1;
+    while(usedIds.has(nextId) && nextId <= 127) {
+      nextId++;
+    }
+    
+    if (nextId > 127) return res.status(400).json({ error: 'No hay capacidad para más huellas.' });
+    res.json({ success: true, nextId });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al buscar siguiente ID' });
   }
 };
 

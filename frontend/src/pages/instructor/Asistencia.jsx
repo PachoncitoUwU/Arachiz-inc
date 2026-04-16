@@ -46,6 +46,7 @@ export default function InstructorAsistencia() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [selectedFecha, setSelectedFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [tab, setTab] = useState('sesion'); // 'sesion' | 'estadisticas'
   const socketRef = useRef(null);
 
@@ -91,19 +92,61 @@ export default function InstructorAsistencia() {
 
     socket.on('arduino_read_nfc', async (data) => {
       if (!sessionId) return;
+      setActiveSession(prev => {
+        if (!prev) return prev;
+        const student = prev.materia?.ficha?.aprendices?.find(a => a.nfcUid === data.uid);
+        if (student) {
+          if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
+          showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
+          return {
+            ...prev,
+            registros: [...(prev.registros || []), {
+              id: 'temp-' + Date.now(),
+              aprendizId: student.id,
+              aprendiz: student,
+              presente: true,
+              metodo: 'nfc',
+              timestamp: new Date().toISOString()
+            }]
+          };
+        }
+        return prev;
+      });
+
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
           body: JSON.stringify({ asistenciaId: sessionId, nfcUid: data.uid })
         });
       } catch (err) {
-        // Mostramos el tooltip si falla algo (ej. "usuario no encontrado", "ya registró")
         showToast(err.message, 'error');
+        // Opcional: Podríamos revertir la UI si falla en BD. Por simplicidad, se deja.
       }
     });
 
     socket.on('arduino_read_finger', async (data) => {
       if (!sessionId) return;
+      setActiveSession(prev => {
+        if (!prev) return prev;
+        const student = prev.materia?.ficha?.aprendices?.find(a => a.huellas?.includes(data.id));
+        if (student) {
+          if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
+          showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
+          return {
+            ...prev,
+            registros: [...(prev.registros || []), {
+              id: 'temp-' + Date.now(),
+              aprendizId: student.id,
+              aprendiz: student,
+              presente: true,
+              metodo: 'huella',
+              timestamp: new Date().toISOString()
+            }]
+          };
+        }
+        return prev;
+      });
+
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
@@ -125,7 +168,7 @@ export default function InstructorAsistencia() {
     try {
       const d = await fetchApi('/asistencias', {
         method: 'POST',
-        body: JSON.stringify({ materiaId: selectedMateria, fecha: new Date().toISOString().split('T')[0] })
+        body: JSON.stringify({ materiaId: selectedMateria, fecha: selectedFecha })
       });
       setActiveSession({ ...d.asistencia, registros: [] });
       connectSocket(d.asistencia.id);
@@ -224,6 +267,11 @@ export default function InstructorAsistencia() {
                     : materias.map(m => <option key={m.id} value={m.id}>{m.nombre} – Ficha {m.ficha?.numero}</option>)
                   }
                 </select>
+              </div>
+              <div className="w-full sm:w-40">
+                <label className="input-label">Fecha</label>
+                <input type="date" className="input-field dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                  value={selectedFecha} onChange={e => setSelectedFecha(e.target.value)} disabled={!!activeSession} />
               </div>
               <div>
                 {!activeSession ? (

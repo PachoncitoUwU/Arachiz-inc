@@ -94,7 +94,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
 }
 
 // ─── FichaCard ────────────────────────────────────────────────────────────────
-function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz, onEnroll }) {
+function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz, onEnroll, onUploadAvatar }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -215,14 +215,21 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
                 </div>
               </div>
               {isAdmin && (
-                <div className="flex gap-1">
+                <div className="flex gap-1 items-center">
+                  <label title="Subir Foto" className="btn-icon text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 w-7 h-7 cursor-pointer flex justify-center items-center">
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                      if (e.target.files?.[0]) onUploadAvatar(a.id, e.target.files[0]);
+                    }} />
+                    <User size={13} />
+                  </label>
                   <button onClick={() => onEnroll(a)}
                     title="Vincular Lector NFC/Huella"
-                    className="btn-icon text-[#4285F4] hover:bg-blue-50 w-7 h-7">
+                    className="btn-icon text-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20 w-7 h-7 flex relative">
                     <Fingerprint size={13} />
+                    {a.huellas?.length > 0 && <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500 ring-1 ring-white"></span>}
                   </button>
                   <button onClick={() => onRemoveAprendiz(ficha.id, a.id)}
-                    className="btn-icon text-red-400 hover:bg-red-50 w-7 h-7">
+                    className="btn-icon text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-7 h-7 flex">
                     <UserMinus size={13} />
                   </button>
                 </div>
@@ -252,6 +259,7 @@ export default function InstructorFichas() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [enrollAprendiz, setEnrollAprendiz] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -331,6 +339,32 @@ export default function InstructorFichas() {
     } catch (err) { showToast(err.message, 'error'); }
   };
 
+  const handleUploadAvatar = async (aprendizId, file) => {
+    setUploadingAvatar(true);
+    showToast('Subiendo foto...', 'info');
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/auth/update-user-avatar/${aprendizId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error subiendo foto');
+      }
+      showToast('Foto actualizada correctamente', 'success');
+      load();
+    } catch(err) {
+      showToast(err.message, 'error');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <PageHeader
@@ -371,7 +405,7 @@ export default function InstructorFichas() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {fichas.map(f => (
             <FichaCard key={f.id} ficha={f} currentUserId={user?.id}
-              onRegenerate={handleRegenerate} onEdit={openEdit} onRemoveAprendiz={handleRemoveAprendiz} onEnroll={(a) => setEnrollAprendiz(a)} />
+              onRegenerate={handleRegenerate} onEdit={openEdit} onRemoveAprendiz={handleRemoveAprendiz} onEnroll={(a) => setEnrollAprendiz(a)} onUploadAvatar={handleUploadAvatar} />
           ))}
         </div>
       )}

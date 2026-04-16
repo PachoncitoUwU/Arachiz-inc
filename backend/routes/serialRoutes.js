@@ -7,6 +7,8 @@ router.post('/connect', serialController.connectPort);
 router.post('/disconnect', serialController.disconnectPort);
 router.post('/enroll/finger', serialController.startEnrollFinger);
 router.put('/bind', serialController.bindHardware);
+router.delete('/finger', serialController.deleteFinger);
+router.get('/next-finger-id', serialController.nextFingerId);
 router.post('/simulate', serialController.simulateEvent);
 router.post('/clear-fingerprints', serialController.clearFingerprints);
 

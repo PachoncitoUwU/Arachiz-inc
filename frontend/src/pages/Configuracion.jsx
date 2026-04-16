@@ -181,29 +181,39 @@ function BreakoutGame({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[200]" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-4" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between w-full">
-          <h3 className="font-bold text-gray-900">🧱 Breakout — {score} pts</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">✕ Cerrar</button>
+    <div className="fixed inset-0 flex items-center justify-center z-[200]" onClick={onClose}
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)' }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background: 'rgba(255,255,255,0.15)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        border: '1px solid rgba(255,255,255,0.35)',
+        borderRadius: 24,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4)',
+        padding: 24,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+      }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
+          <h3 style={{ fontWeight:700, color:'white', fontSize:16, textShadow:'0 1px 4px rgba(0,0,0,0.3)' }}>🧱 Breakout — {score} pts</h3>
+          <button onClick={onClose} style={{ color:'rgba(255,255,255,0.7)', background:'none', border:'none', cursor:'pointer', fontSize:14 }}>✕ Cerrar</button>
         </div>
-        <div style={{ background:'#f8fafc', border:'2px solid #e2e8f0', borderRadius:12, position:'relative', overflow:'hidden', touchAction: 'none' }}>
+        <div style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:12, position:'relative', overflow:'hidden', touchAction:'none' }}>
            <canvas ref={canvasRef} width={340} height={260} />
            {dead && (
-             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, borderRadius:10 }}>
-               <p style={{ color:'white', fontWeight:700, fontSize:18 }}>Game Over — {score} pts</p>
-               <button onClick={reset} style={{ background:'#4285F4', color:'white', border:'none', borderRadius:10, padding:'8px 20px', fontWeight:600, cursor:'pointer' }}>Reintentar</button>
+             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(8px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, borderRadius:10 }}>
+               <p style={{ color:'white', fontWeight:700, fontSize:18, textShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>Game Over — {score} pts</p>
+               <button onClick={reset} style={{ background:'rgba(66,133,244,0.9)', color:'white', border:'1px solid rgba(255,255,255,0.3)', borderRadius:10, padding:'8px 20px', fontWeight:600, cursor:'pointer', backdropFilter:'blur(10px)' }}>Reintentar</button>
              </div>
            )}
         </div>
-        <p className="text-xs text-gray-400">Desliza tu dedo o usa el ratón/teclado</p>
+        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:12 }}>Desliza tu dedo o usa el ratón/teclado</p>
       </div>
     </div>
   );
 }
 
-// ─── JUEGO SECRETO: Snake ─────────────────────────────────────────────────────
-const COLS = 15, ROWS = 12, CELL = 24;
+// ─── JUEGO SECRETO: Snake (Liquid Glass Edition) ──────────────────────────────
+const COLS = 15, ROWS = 12, CELL = 22;
 const DIR = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0] };
 
 function SnakeGame({ onClose }) {
@@ -263,36 +273,85 @@ function SnakeGame({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[200]" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-4" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between w-full">
-          <h3 className="font-bold text-gray-900">🐍 Snake — Puntos: {score}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">✕ Cerrar</button>
+    <div className="fixed inset-0 flex items-center justify-center z-[200]" onClick={onClose}
+      style={{ background: 'var(--color-overlay, rgba(15, 23, 42, 0.4))', backdropFilter: 'blur(8px)' }}>
+      {/* Contenedor Liquid Glass */}
+      <div onClick={e=>e.stopPropagation()} style={{
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%)',
+        backdropFilter: 'blur(30px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(30px) saturate(200%)',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+        borderRadius: '30px',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.2), inset 0 2px 2px rgba(255,255,255,0.7)',
+        padding: '24px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
+        maxWidth: '100%',
+      }}>
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
+          <h3 style={{ fontWeight:800, color:'#0F172A', fontSize:'1.2rem', margin:0, textShadow:'0 2px 10px rgba(255,255,255,0.7)', letterSpacing:'-0.5px' }}>
+            🐍 Snake <span style={{ color:'#4285F4' }}>Liquid</span> — {score} pts
+          </h3>
+          <button onClick={onClose} style={{ color:'#64748b', background:'rgba(255,255,255,0.3)', border:'1px solid rgba(255,255,255,0.5)', cursor:'pointer', fontSize:'0.9rem', padding:'6px 14px', borderRadius:'100px', fontWeight:600, boxShadow:'0 2px 8px rgba(0,0,0,0.05)' }}>✕</button>
         </div>
-        <div style={{ width: COLS*CELL, height: ROWS*CELL, background:'#f8fafc', border:'2px solid #e2e8f0', borderRadius:12, position:'relative', overflow:'hidden' }}>
+        
+        {/* Board */}
+        <div style={{ 
+            width: COLS*CELL, height: ROWS*CELL, 
+            background:'rgba(255,255,255,0.2)', 
+            border:'1px solid rgba(255,255,255,0.6)', 
+            borderRadius:'20px', position:'relative', overflow:'hidden',
+            boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.1)'
+        }}>
+          {/* Trazado de celdas sutil */}
+          <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize:`${CELL}px ${CELL}px` }} />
+          
+          {/* Snake */}
           {snake.map(([x,y],i) => (
-            <div key={i} style={{ position:'absolute', left:x*CELL, top:y*CELL, width:CELL-2, height:CELL-2, background: i===0?'#4285F4':'#34A853', borderRadius:i===0?6:4, transition:'all 0.1s' }}/>
+            <div key={i} style={{ 
+              position:'absolute', left:x*CELL + 1, top:y*CELL + 1, width:CELL-2, height:CELL-2, 
+              background: i===0 ? 'linear-gradient(135deg, #4285F4, #2b5db0)' : 'linear-gradient(135deg, #34A853, #1e7033)', 
+              borderRadius: i===0 ? '8px' : '4px', 
+              transition:'left 0.13s linear, top 0.13s linear', 
+              boxShadow: i===0 ? '0 4px 12px rgba(66,133,244,0.6), inset 0 2px 4px rgba(255,255,255,0.5)' : 'inset 0 1px 2px rgba(255,255,255,0.4)',
+              zIndex: i===0 ? 10 : 5
+            }}/>
           ))}
-          <div style={{ position:'absolute', left:food[0]*CELL+2, top:food[1]*CELL+2, width:CELL-6, height:CELL-6, background:'#EA4335', borderRadius:'50%' }}/>
+          {/* Food */}
+          <div style={{ 
+            position:'absolute', left:food[0]*CELL+3, top:food[1]*CELL+3, width:CELL-6, height:CELL-6, 
+            background:'linear-gradient(135deg, #FF6B6B, #EA4335)', borderRadius:'50%', 
+            boxShadow:'0 4px 12px rgba(234,67,53,0.6), inset 0 2px 4px rgba(255,255,255,0.6)' 
+          }}/>
+          
+          {/* Game Over Overlay */}
           {dead && (
-            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, borderRadius:10 }}>
-              <p style={{ color:'white', fontWeight:700, fontSize:18 }}>Game Over — {score} pts</p>
-              <button onClick={reset} style={{ background:'#4285F4', color:'white', border:'none', borderRadius:10, padding:'8px 20px', fontWeight:600, cursor:'pointer' }}>Reintentar</button>
+            <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.4)', backdropFilter:'blur(6px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, borderRadius:'18px', zIndex:20 }}>
+              <p style={{ color:'#1e293b', fontWeight:900, fontSize:'1.5rem', textShadow:'0 4px 12px rgba(255,255,255,0.8)' }}>¡Game Over!</p>
+              <button onClick={reset} style={{ 
+                background:'linear-gradient(135deg, #4285F4, #3367d6)', color:'white', 
+                border:'1px solid rgba(255,255,255,0.5)', borderRadius:'14px', 
+                padding:'12px 28px', fontSize:'1.1rem', fontWeight:700, cursor:'pointer', 
+                boxShadow:'0 8px 24px rgba(66,133,244,0.4), inset 0 2px 4px rgba(255,255,255,0.3)',
+                transition:'transform 0.2s',
+              }}
+              onMouseOver={e=>e.currentTarget.style.transform='scale(1.05)'}
+              onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}>Reintentar</button>
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400">Usa las flechas del teclado · ESC para cerrar</p>
-        {/* Controles táctiles */}
-        <div className="flex flex-col items-center gap-1">
+        
+        {/* Controles táctiles gigantes para móvil */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', marginTop:'10px' }}>
           <button onClick={() => { dirRef.current = DIR['ArrowUp']; }}
-            className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold text-gray-700 flex items-center justify-center">↑</button>
-          <div className="flex gap-1">
-            <button onClick={() => { dirRef.current = DIR['ArrowLeft']; }}
-              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold text-gray-700 flex items-center justify-center">←</button>
-            <button onClick={() => { dirRef.current = DIR['ArrowDown']; }}
-              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold text-gray-700 flex items-center justify-center">↓</button>
-            <button onClick={() => { dirRef.current = DIR['ArrowRight']; }}
-              className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold text-gray-700 flex items-center justify-center">→</button>
+            style={{ width:'70px', height:'70px', background:'rgba(255,255,255,0.4)', border:'2px solid rgba(255,255,255,0.6)', borderRadius:'20px', color:'#1e293b', fontSize:'2rem', fontWeight:800, cursor:'pointer', boxShadow:'0 8px 16px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.8)' }}>↑</button>
+          <div style={{ display:'flex', gap:'10px' }}>
+            {['ArrowLeft','ArrowDown','ArrowRight'].map((k,i) => (
+              <button key={k} onClick={() => { dirRef.current = DIR[k]; }}
+                style={{ width:'70px', height:'70px', background:'rgba(255,255,255,0.4)', border:'2px solid rgba(255,255,255,0.6)', borderRadius:'20px', color:'#1e293b', fontSize:'2rem', fontWeight:800, cursor:'pointer', boxShadow:'0 8px 16px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.8)' }}>
+                {['←','↓','→'][i]}
+              </button>
+            ))}
           </div>
         </div>
       </div>

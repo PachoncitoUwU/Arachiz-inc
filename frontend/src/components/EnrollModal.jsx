@@ -46,6 +46,8 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
         });
         setStatus('success');
         setMessage(`Huella ID ${data.id} vinculada exitosamente`);
+        if (!aprendiz.huellas) aprendiz.huellas = [];
+        aprendiz.huellas.push(data.id);
       } catch (err) {
         setStatus('error');
         setMessage(err.message || 'Error al guardar huella en la BD');
@@ -79,17 +81,30 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
     setMode('fingerprint');
     setStatus('waiting');
     setMessage('Sigue las instrucciones del lector de huella...');
-    // Pedir al backend que enrole en el ID correspondiente.
-    // Usaremos un número aleatorio entre 1 y 127 por sencillez o lo pedimos al backend.
-    const ranId = Math.floor(Math.random() * 127) + 1;
     try {
+      const { nextId } = await fetchApi('/serial/next-finger-id');
       await fetchApi('/serial/enroll/finger', {
         method: 'POST',
-        body: JSON.stringify({ id: ranId })
+        body: JSON.stringify({ id: nextId })
       });
     } catch (err) {
       setStatus('error');
       setMessage(err.message || 'Error al iniciar enrolamiento');
+    }
+  };
+
+  const removeFingerprint = async (id) => {
+    if (!confirm(`¿Estás seguro de eliminar la huella ${id}? Se borrará de la BD y del sensor.`)) return;
+    try {
+      await fetchApi('/serial/finger', {
+        method: 'DELETE',
+        body: JSON.stringify({ userId: aprendiz.id, huellaId: id })
+      });
+      aprendiz.huellas = aprendiz.huellas.filter(h => h !== id);
+      setStatus('idle'); // forzar re-render
+      setMessage('');
+    } catch(err) {
+      alert(err.message);
     }
   };
 
@@ -104,25 +119,44 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
         )}
 
         {status === 'idle' && (
+          <div className="text-left mb-4 px-2">
+             <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm mb-2">
+                <span className="text-gray-600 dark:text-gray-300">NFC: <strong>{aprendiz?.nfcUid || 'Ninguno'}</strong></span>
+             </div>
+             {aprendiz?.huellas?.length > 0 && (
+                <div className="flex flex-col gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm">
+                   <span className="text-gray-600 dark:text-gray-300">Huellas guardadas:</span>
+                   {aprendiz.huellas.map(hId => (
+                     <div key={hId} className="flex justify-between items-center bg-white dark:bg-gray-700 px-3 py-1 border border-gray-200 dark:border-gray-600 rounded">
+                        <span className="font-mono text-purple-600 dark:text-purple-400">ID: {hId}</span>
+                        <button onClick={() => removeFingerprint(hId)} className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded">Eliminar</button>
+                     </div>
+                   ))}
+                </div>
+             )}
+          </div>
+        )}
+
+        {status === 'idle' && (
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={startNfc}
-              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-gray-100 hover:border-[#4285F4] hover:bg-blue-50/50 transition-all group"
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-[#4285F4] dark:hover:border-[#4285F4] hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all group"
             >
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-[#4285F4] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 text-[#4285F4] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <CreditCard size={24} />
               </div>
-              <span className="font-semibold text-gray-700">Tarjeta NFC</span>
+              <span className="font-semibold text-gray-700 dark:text-gray-200">Tarjeta NFC</span>
             </button>
 
             <button 
               onClick={startFingerprint}
-              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/50 transition-all group"
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all group"
             >
-              <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Fingerprint size={24} />
               </div>
-              <span className="font-semibold text-gray-700">Huella Dactilar</span>
+              <span className="font-semibold text-gray-700 dark:text-gray-200">Añadir Huella</span>
             </button>
           </div>
         )}

@@ -93,7 +93,7 @@ const getUserFichas = async (req, res) => {
         : { aprendices: { some: { id: userId } } },
       include: {
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
-        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true } },
+        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true, nfcUid: true, huellas: true } },
         materias: { include: { instructor: { select: { fullName: true } } } }
       }
     });
@@ -111,7 +111,7 @@ const getFichaById = async (req, res) => {
       where: { id },
       include: {
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
-        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true } },
+        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true, nfcUid: true, huellas: true } },
         materias: { include: { instructor: { select: { id: true, fullName: true } } } },
         horarios: { include: { materia: { select: { nombre: true } } } }
       }

@@ -24,11 +24,7 @@ const uploadToSupabase = async (fileBuffer, originalName, folder = '') => {
     throw new Error('Las claves SUPABASE_URL o SUPABASE_ANON_KEY no están configuradas en el archivo .env de tu backend.');
   }
 
-  // Pre-check / create bucket if it doesn't exist
-  const { data: buckets } = await supabase.storage.listBuckets();
-  if (buckets && !buckets.find(b => b.name === 'foto-aprendices')) {
-    await supabase.storage.createBucket('foto-aprendices', { public: true });
-  }
+  // Se asume que el bucket 'foto-aprendices' está creado y es público en Supabase.
 
   const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
   const ext = path.extname(originalName);

@@ -119,4 +119,28 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updateProfile, changePassword };
+const updateUserAvatar = async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (req.user.userType !== 'instructor') {
+      return res.status(403).json({ error: 'Solo los instructores pueden editar avatares de otros usuarios' });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No se envió ninguna imagen' });
+    
+    if (!isSupabaseConfigured) {
+      return res.status(500).json({ error: 'Faltan las variables SUPABASE_URL y SUPABASE_ANON_KEY' });
+    }
+    const avatarUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, 'avatars');
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { avatarUrl },
+      select: { id: true, fullName: true, avatarUrl: true }
+    });
+    res.json({ message: 'Avatar del aprendiz actualizado', user });
+  } catch (err) {
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword, updateUserAvatar };
