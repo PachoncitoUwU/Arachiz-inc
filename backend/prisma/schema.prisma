@@ -31,6 +31,11 @@ model User {
   excusas       Excusa[]
   snakeScore    SnakeScore?
   breakoutScore BreakoutScore?
+  flappyScore   FlappyScore?
+  towerScore    TowerScore?
+  reactionScore ReactionScore?
+  memoryScore   MemoryScore?
+  wordleScore   WordleScore?
 }
 
 model Ficha {
@@ -154,6 +159,48 @@ model BreakoutScore {
   score     Int
   updatedAt DateTime @default(now()) @updatedAt
 
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Leaderboard global del juego El Maní (Flappy Bird)
+model FlappyScore {
+  id        String   @id @default(cuid())
+  score     Int
+  updatedAt DateTime @default(now()) @updatedAt
+
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TowerScore {
+  id        String   @id @default(cuid())
+  score     Int
+  updatedAt DateTime @default(now()) @updatedAt
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReactionScore {
+  id        String   @id @default(cuid())
+  score     Int      // milisegundos — menor es mejor
+  updatedAt DateTime @default(now()) @updatedAt
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MemoryScore {
+  id        String   @id @default(cuid())
+  score     Int
+  updatedAt DateTime @default(now()) @updatedAt
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WordleScore {
+  id        String   @id @default(cuid())
+  score     Int      // intentos usados — menor es mejor
+  updatedAt DateTime @default(now()) @updatedAt
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

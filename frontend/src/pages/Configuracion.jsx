@@ -5,6 +5,10 @@ import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import SerialConnect from '../components/SerialConnect';
 import { Moon, Sun, Globe, Bell, User, Shield, Palette, Save, Camera, Loader, Usb } from 'lucide-react';
+import TowerStack   from '../games/TowerStack';
+import MemoryFlash  from '../games/MemoryFlash';
+import ReactionTime from '../games/ReactionTime';
+import WordleGame   from '../games/WordleGame';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -277,6 +281,376 @@ function BreakoutGame({ onClose, currentUser }) {
             </div>
           )}
           <p style={{color:'rgba(255,255,255,0.3)',fontSize:9,margin:0}}>Ratón / A-D / táctil · Espacio reinicia · ESC cierra</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── El Maní (Flappy Bird) ────────────────────────────────────────────────────
+const LS_FLAPPY = 'arachiz_flappy_lb_cache';
+const getLBFlappy = () => { try { return JSON.parse(localStorage.getItem(LS_FLAPPY)) || []; } catch { return []; } };
+const saveFlappyScore = async (score, token) => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    await fetch(`${API_URL}/snake/flappy/score`, {
+      method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({ score }),
+    });
+  } catch {}
+};
+const fetchFlappyLB = async () => {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const res = await fetch(`${API_URL}/snake/flappy/leaderboard`);
+    const data = await res.json();
+    if (data.scores) { localStorage.setItem(LS_FLAPPY, JSON.stringify(data.scores)); return data.scores; }
+  } catch {}
+  return getLBFlappy();
+};
+
+function FlappyGame({ onClose, currentUser }) {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+  const savedRef  = useRef(false);
+  const [score,    setScore]    = useState(0);
+  const [dead,     setDead]     = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
+  const [showLB,   setShowLB]   = useState(false);
+  const [lb,       setLb]       = useState(getLBFlappy());
+
+  // Constantes del juego
+  const W=320, H=480, PW=54, GAP=148;
+
+  useEffect(()=>{
+    fetchFlappyLB().then(d=>setLb(d));
+    const f=()=>setIsMobile(window.innerWidth<700);
+    window.addEventListener('resize',f);
+    return()=>window.removeEventListener('resize',f);
+  },[]);
+
+  useEffect(()=>{
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Estado del juego — todo en variables locales del closure
+    let bird = {x:80, y:H/2, vy:0};
+    let pipes = [];
+    let sc = 0;
+    let frame = 0;
+    let speed = 2.5;
+    let started = false;
+    let isDead = false;
+    let req;
+
+    const randTop = () => 55 + Math.random() * (H - GAP - 95);
+
+    const draw = () => {
+      ctx.clearRect(0,0,W,H);
+
+      // Fondo Glass App
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'rgba(230,240,250,0.95)'); 
+      bg.addColorStop(1,'rgba(215,230,245,0.85)');
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(0,0,W,H,18) : ctx.rect(0,0,W,H);
+      ctx.fill();
+
+      // Nubes decorativas sutiles
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      [[60,80,32],[190,50,22],[280,110,28]].forEach(([cx,cy,r]) => {
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(cx+r*0.7,cy+5,r*0.65,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(cx-r*0.6,cy+5,r*0.55,0,Math.PI*2);ctx.fill();
+      });
+
+      // Tuberías de cristal (Glassmorphism)
+      pipes.forEach(p => {
+        ctx.save();
+        // Sombra suave para la tubería
+        ctx.shadowColor = 'rgba(0,122,255,0.25)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetY = 4;
+
+        // Borde exterior
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 1.5;
+
+        // Gradiente principal de la tubería (Apple Glass Azul-Verdoso)
+        const grd = ctx.createLinearGradient(p.x,0,p.x+PW,0);
+        grd.addColorStop(0,'rgba(255,255,255,0.4)');
+        grd.addColorStop(0.5,'rgba(230,245,255,0.5)');
+        grd.addColorStop(1,'rgba(255,255,255,0.3)');
+
+        ctx.fillStyle = grd;
+
+        // Tubería Superior
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(p.x, 0, PW, p.top, 8) : ctx.rect(p.x, 0, PW, p.top);
+        ctx.fill(); ctx.stroke();
+        
+        // Gorro Tubo Superior
+        ctx.beginPath();
+        const capTopY = p.top - 18;
+        ctx.roundRect ? ctx.roundRect(p.x - 4, capTopY, PW + 8, 18, 6) : ctx.rect(p.x - 4, capTopY, PW + 8, 18);
+        ctx.fillStyle = 'rgba(250,250,255,0.7)';
+        ctx.fill(); ctx.stroke();
+
+        // Tubería Inferior
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        const currentGap = p.gap || GAP;
+        ctx.roundRect ? ctx.roundRect(p.x, p.top + currentGap, PW, H - p.top - currentGap - 38, 8) : ctx.rect(p.x, p.top + currentGap, PW, H - p.top - currentGap - 38);
+        ctx.fill(); ctx.stroke();
+
+        // Gorro Tubo Inferior
+        ctx.beginPath();
+        const capBotY = p.top + currentGap;
+        ctx.roundRect ? ctx.roundRect(p.x - 4, capBotY, PW + 8, 18, 6) : ctx.rect(p.x - 4, capBotY, PW + 8, 18);
+        ctx.fillStyle = 'rgba(250,250,255,0.7)';
+        ctx.fill(); ctx.stroke();
+
+        ctx.restore();
+      });
+
+      // Suelo tipo franja minimalista
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillRect(0, H - 38, W, 38);
+      ctx.fillStyle = 'rgba(0,122,255,0.15)'; // Línea de borde del suelo
+      ctx.fillRect(0, H - 38, W, 2);
+
+      // Maní con alas 🥜 - Mejorado
+      ctx.save();
+      ctx.translate(bird.x, bird.y);
+      const angle = Math.min(Math.max(bird.vy * 0.05,-0.6),1.4);
+      ctx.rotate(angle);
+      
+      // Sombra del maní
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 4;
+
+      // Alas
+      const wingFlap = Math.sin(frame*0.4)*10;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.ellipse(-14, -6+wingFlap, 11, 7, -0.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(14, -6+wingFlap, 11, 7, 0.5, 0, Math.PI*2); ctx.fill();
+      
+      // Maní
+      ctx.font = '32px serif'; 
+      ctx.textAlign = 'center'; 
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🥜', 0, 1);
+      ctx.restore();
+
+      // Score premium
+      ctx.font = '800 36px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,122,255,0.85)';
+      ctx.shadowColor = 'rgba(255,255,255,1)';
+      ctx.shadowBlur = 12;
+      ctx.fillText(sc, W/2, 60);
+      ctx.shadowBlur = 0;
+
+      // Pantalla de inicio
+      if(!started && !isDead){
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath();
+        const rw = 200, rh = 56;
+        ctx.roundRect ? ctx.roundRect(W/2 - rw/2, H/2 - rh/2 + 20, rw, rh, 20) : ctx.rect(W/2 - rw/2, H/2 - rh/2 + 20, rw, rh);
+        ctx.shadowColor = 'rgba(0,0,0,0.08)';
+        ctx.shadowBlur = 20;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#007aff';
+        ctx.font = '800 16px system-ui';
+        ctx.fillText('🥜 Toca para volar', W/2, H/2 + 25);
+      }
+    };
+
+    const tick = () => {
+      if(isDead) return;
+
+      if(started){
+        bird.vy += 0.5;
+        bird.y  += bird.vy;
+        frame++;
+
+        // Generar tuberías — intervalo se reduce más rápido con el score (más difícil)
+        const interval = Math.max(50, 90 - sc * 3.5);
+        if(frame % Math.floor(interval) === 0){
+          // GAP (espacio para pasar) se va reduciendo según el score, base 150 hasta bajar a 110
+          const currentGap = Math.max(110, GAP - Math.floor(sc * 1.5));
+          const topH = 40 + Math.random() * (H - currentGap - 80);
+          pipes.push({x: W+10, top: topH, gap: currentGap, scored: false});
+        }
+
+        // Mover tuberías
+        pipes.forEach(p => { p.x -= speed; });
+        pipes = pipes.filter(p => p.x > -PW-10);
+
+        // Puntaje + acelerar
+        pipes.forEach(p => {
+          if(!p.scored && p.x+PW < bird.x){
+            p.scored=true; sc++;
+            setScore(sc);
+            speed = Math.min(6.5, 2.8 + sc*0.12);
+          }
+        });
+
+        // Colisión suelo/techo
+        if(bird.y+16 > H-38 || bird.y-16 < 0){
+          isDead=true; setDead(true); draw(); return;
+        }
+
+        // Colisión tuberías (hitbox justa)
+        const hr=13;
+        for(const p of pipes){
+          const currentGap = p.gap || GAP;
+          if(bird.x+hr > p.x && bird.x-hr < p.x+PW){
+            if(bird.y-hr < p.top || bird.y+hr > p.top+currentGap){
+              isDead=true; setDead(true); draw(); return;
+            }
+          }
+        }
+      }
+
+      draw();
+      req = requestAnimationFrame(tick);
+    };
+
+    const doJump = () => {
+      if(isDead) return; // reinicio lo maneja el botón/tecla
+      if(!started) started=true;
+      bird.vy = -9;
+    };
+
+    // Exponer jump al exterior via ref
+    rafRef.current = { jump: doJump };
+
+    req = requestAnimationFrame(tick);
+
+    const onKey=(e)=>{
+      if(e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){
+        e.preventDefault();
+        if(isDead){ setDead(true); return; } // trigger restart via React
+        doJump();
+      }
+      if(e.key==='Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+
+    return()=>{
+      cancelAnimationFrame(req);
+      window.removeEventListener('keydown', onKey);
+    };
+  },[onClose]); // solo onClose — el juego vive en el closure
+
+  // Reiniciar cuando dead cambia a false (después de pulsar Try Again)
+  const [restartKey, setRestartKey] = useState(0);
+  const restart = () => {
+    savedRef.current = false;
+    setScore(0);
+    setDead(false);
+    setRestartKey(k=>k+1); // fuerza re-mount del useEffect
+  };
+
+  // Guardar score al morir
+  useEffect(()=>{
+    if(dead && !savedRef.current){
+      savedRef.current=true;
+      if(score>0){
+        saveFlappyScore(score, localStorage.getItem('token'))
+          .then(()=>fetchFlappyLB().then(d=>setLb(d)));
+      }
+    }
+  },[dead,score]);
+
+  const jump = () => {
+    if(dead){ restart(); return; }
+    rafRef.current?.jump?.();
+  };
+
+  const btn={width:60,height:60,background:'rgba(255,255,255,0.6)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:16,color:'#1d1d1f',fontSize:26,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.08)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',transition:'transform 0.1s',display:'flex',alignItems:'center',justifyContent:'center'};
+  const glass={background:'rgba(255,255,255,0.5)',backdropFilter:'blur(60px) saturate(220%)',WebkitBackdropFilter:'blur(60px) saturate(220%)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:28,boxShadow:'0 30px 80px rgba(0,0,0,0.12),inset 0 2px 0 rgba(255,255,255,1)'};
+
+  const LBPanel=()=>(
+    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+      <div style={{display:'flex',alignItems:'center',gap:6}}>
+        <span style={{fontSize:14,fontWeight:800,color:'#1d1d1f',letterSpacing:'-0.4px'}}>Ranking</span>
+        <span style={{fontSize:14}}>🏆</span>
+      </div>
+      {lb.length===0
+        ?<div style={{textAlign:'center',padding:'16px 0',color:'#6e6e73',fontSize:12}}><div style={{fontSize:28,marginBottom:6}}>🥜</div>¡Sé el primero!</div>
+        :<div style={{display:'flex',flexDirection:'column',gap:5,overflowY:'auto',maxHeight:H-60}}>
+          {lb.map((entry,i)=>{
+            const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
+            return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:13,background:isTop?col.bg:'rgba(255,255,255,0.35)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.5)'}}>
+              <span style={{fontSize:isTop?15:11,fontWeight:700,minWidth:18,textAlign:'center',color:isTop?col.text:'#6e6e73'}}>{isTop?MEDAL[i]:i+1}</span>
+              {entry.avatar?<img src={entry.avatar} style={{width:26,height:26,borderRadius:7,objectFit:'cover',flexShrink:0}} alt=""/>
+                :<div style={{width:26,height:26,borderRadius:7,background:isTop?col.text:'#007aff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>{entry.name?.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()||'?'}</div>}
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{margin:0,fontWeight:700,fontSize:10,color:isTop?col.text:'#1d1d1f',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{entry.name}</p>
+                <p style={{margin:0,fontSize:9,color:'#6e6e73'}}>{entry.score} pts</p>
+              </div>
+            </div>);
+          })}
+        </div>
+      }
+    </div>
+  );
+
+  return (
+    <div key={restartKey} style={{position:'fixed',inset:0,background:'rgba(180,200,220,0.25)',backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:12,overflowY:'auto'}} onClick={jump}>
+      <div style={{display:'flex',flexDirection:isMobile?'column':'row',gap:12,alignItems:'flex-start',maxWidth:'98vw'}} onClick={e=>e.stopPropagation()}>
+
+        {!isMobile&&(
+          <div style={{...glass,padding:'18px 14px',minWidth:190}}><LBPanel/></div>
+        )}
+
+        <div style={{...glass,padding:'14px 14px 10px',display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%'}}>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:16,fontWeight:800,color:'#1d1d1f',letterSpacing:'-0.5px'}}>🥜 El Maní</span>
+              <span style={{fontSize:13,fontWeight:700,color:'#007aff',background:'rgba(0,122,255,0.1)',padding:'2px 8px',borderRadius:20}}>{score} pts</span>
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              {isMobile&&(
+                <button onClick={e=>{e.stopPropagation();setShowLB(v=>!v);}}
+                  style={{background:'rgba(0,0,0,0.07)',border:'none',borderRadius:14,color:'#1d1d1f',padding:'5px 10px',cursor:'pointer',fontSize:11,fontWeight:600}}>🏆 Top</button>
+              )}
+              <button onClick={e=>{e.stopPropagation();onClose();}} style={{background:'rgba(0,0,0,0.07)',border:'none',borderRadius:14,color:'#1d1d1f',padding:'5px 12px',cursor:'pointer',fontSize:12,fontWeight:600}}>Done</button>
+            </div>
+          </div>
+
+          {isMobile&&showLB?(
+            <div style={{width:280,maxHeight:220,overflowY:'auto'}}><LBPanel/></div>
+          ):(
+            <>
+              <div style={{position:'relative',borderRadius:16,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.95)',cursor:'pointer'}}
+                onClick={e=>{e.stopPropagation();jump();}}>
+                <canvas ref={canvasRef} width={W} height={H} style={{display:'block',maxWidth:'100%'}}/>
+                {dead&&(
+                  <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.88)',backdropFilter:'blur(16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,borderRadius:14}}>
+                    <span style={{fontSize:44}}>💥</span>
+                    <p style={{color:'#1d1d1f',fontWeight:800,fontSize:20,letterSpacing:'-0.6px',margin:0}}>Game Over</p>
+                    <p style={{color:'#6e6e73',fontSize:13,margin:0}}>{score} tuberías 🏆</p>
+                    <button onClick={e=>{e.stopPropagation();restart();}}
+                      style={{background:'#007aff',color:'white',border:'none',borderRadius:22,padding:'10px 28px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(0,122,255,0.4)',marginTop:4}}>
+                      Try Again
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button style={btn} onClick={e=>{e.stopPropagation();jump();}}
+                onMouseDown={e=>e.currentTarget.style.transform='scale(0.93)'}
+                onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>🥜</button>
+            </>
+          )}
+          <p style={{color:'rgba(0,0,0,0.3)',fontSize:10,margin:0}}>Espacio / W / ↑ / Toca · ESC cierra</p>
         </div>
       </div>
     </div>
@@ -646,6 +1020,76 @@ export default function Configuracion() {
     });
   };
 
+  // El Maní — 7 clicks en "Idioma"
+  const [idiomaClicks, setIdiomaClicks] = useState(0);
+  const [showFlappy, setShowFlappy]     = useState(false);
+  const idiomaTimer = useRef(null);
+  const handleIdiomaClick = () => {
+    setIdiomaClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowFlappy(true); return 0; }
+      clearTimeout(idiomaTimer.current);
+      idiomaTimer.current = setTimeout(() => setIdiomaClicks(0), 2000);
+      return next;
+    });
+  };
+
+  // Tower Stack — 7 clicks en "Notificaciones"
+  const [notiClicks, setNotiClicks] = useState(0);
+  const [showTower,  setShowTower]  = useState(false);
+  const notiTimer = useRef(null);
+  const handleNotiClick = () => {
+    setNotiClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowTower(true); return 0; }
+      clearTimeout(notiTimer.current);
+      notiTimer.current = setTimeout(() => setNotiClicks(0), 2000);
+      return next;
+    });
+  };
+
+  // Memory Flash — 7 clicks en "Hardware"
+  const [hwClicks,    setHwClicks]    = useState(0);
+  const [showMemory,  setShowMemory]  = useState(false);
+  const hwTimer = useRef(null);
+  const handleHwClick = () => {
+    setHwClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowMemory(true); return 0; }
+      clearTimeout(hwTimer.current);
+      hwTimer.current = setTimeout(() => setHwClicks(0), 2000);
+      return next;
+    });
+  };
+
+  // Reaction Time — 7 clicks en "Perfil"
+  const [perfilClicks, setPerfilClicks] = useState(0);
+  const [showReaction, setShowReaction] = useState(false);
+  const perfilTimer = useRef(null);
+  const handlePerfilClick = () => {
+    setPerfilClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowReaction(true); return 0; }
+      clearTimeout(perfilTimer.current);
+      perfilTimer.current = setTimeout(() => setPerfilClicks(0), 2000);
+      return next;
+    });
+  };
+
+  // Wordle — 7 clicks en "Cambiar Contraseña" (si existe) o en el email
+  const [wordleClicks, setWordleClicks] = useState(0);
+  const [showWordle,   setShowWordle]   = useState(false);
+  const wordleTimer = useRef(null);
+  const handleWordleClick = () => {
+    setWordleClicks(n => {
+      const next = n + 1;
+      if (next >= 7) { setShowWordle(true); return 0; }
+      clearTimeout(wordleTimer.current);
+      wordleTimer.current = setTimeout(() => setWordleClicks(0), 2000);
+      return next;
+    });
+  };
+
   // Botón oculto instructor — 10 clicks en el rol para borrar huellas
   const [instClicks, setInstClicks] = useState(0);
   const [showClear, setShowClear]   = useState(false);
@@ -703,13 +1147,18 @@ export default function Configuracion() {
 
   return (
     <div className="animate-fade-in space-y-5 max-w-2xl">
-      {showSnake && <SnakeGame onClose={() => setShowSnake(false)} currentUser={user}/>}
-      {showArk   && <BreakoutGame onClose={() => setShowArk(false)} currentUser={user}/>}
+      {showSnake  && <SnakeGame    onClose={() => setShowSnake(false)}  currentUser={user}/>}
+      {showArk    && <BreakoutGame onClose={() => setShowArk(false)}    currentUser={user}/>}
+      {showFlappy && <FlappyGame   onClose={() => setShowFlappy(false)}  currentUser={user}/>}
+      {showTower  && <TowerStack   onClose={() => setShowTower(false)}   currentUser={user}/>}
+      {showMemory && <MemoryFlash  onClose={() => setShowMemory(false)}  currentUser={user}/>}
+      {showReaction && <ReactionTime onClose={() => setShowReaction(false)} currentUser={user}/>}
+      {showWordle && <WordleGame   onClose={() => setShowWordle(false)}  currentUser={user}/>}
 
       <PageHeader title="Configuración" subtitle="Personaliza tu experiencia en Arachiz" />
 
       {/* Perfil */}
-      <Section icon={User} title="Perfil">
+      <Section icon={User} title="Perfil" onTitleClick={handlePerfilClick}>
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div className="flex items-center gap-5 mb-2">
             <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -740,7 +1189,7 @@ export default function Configuracion() {
           <div>
             <label className="input-label">Correo electrónico</label>
             <input type="email" className="input-field opacity-60 cursor-not-allowed" value={user?.email||''} disabled/>
-            <p className="text-xs text-gray-400 mt-1">El correo no puede modificarse</p>
+            <p className="text-xs text-gray-400 mt-1 cursor-default select-none" onClick={handleWordleClick}>El correo no puede modificarse</p>
           </div>
           <button type="submit" disabled={savingProfile} className="btn-primary flex items-center gap-2">
             {savingProfile ? <Loader size={15} className="animate-spin"/> : <Save size={15}/>}
@@ -769,7 +1218,7 @@ export default function Configuracion() {
       </Section>
 
       {/* Idioma */}
-      <Section icon={Globe} title="Idioma">
+      <Section icon={Globe} title="Idioma" onTitleClick={handleIdiomaClick}>
         <div className="grid grid-cols-2 gap-3">
           {LANGUAGES.map(({code,label,flag}) => (
             <button key={code} type="button"
@@ -784,10 +1233,11 @@ export default function Configuracion() {
           ))}
         </div>
         <p className="text-xs text-gray-400 mt-3">Traducción completa al inglés próximamente.</p>
+        {idiomaClicks > 0 && idiomaClicks < 7 && <p className="text-xs text-gray-300 text-center mt-1">{7-idiomaClicks} más...</p>}
       </Section>
 
       {/* Notificaciones */}
-      <Section icon={Bell} title="Notificaciones">
+      <Section icon={Bell} title="Notificaciones" onTitleClick={handleNotiClick}>
         <div className="divide-y divide-gray-100">
           <ToggleSwitch checked={settings.notifications} onChange={v=>updateSetting('notifications',v)}
             label="Notificaciones del sistema" description="Alertas de sesiones, excusas y actividad"/>
@@ -796,7 +1246,7 @@ export default function Configuracion() {
 
       {/* Hardware — solo instructores */}
       {user?.userType === 'instructor' && (
-        <Section icon={Usb} title="Hardware / Arduino">
+        <Section icon={Usb} title="Hardware / Arduino" onTitleClick={handleHwClick}>
           <SerialConnect />
         </Section>
       )}

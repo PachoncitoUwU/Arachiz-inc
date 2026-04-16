@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS "FlappyScore" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  score INTEGER NOT NULL,
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "userId" TEXT NOT NULL UNIQUE,
+  FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE
+);
