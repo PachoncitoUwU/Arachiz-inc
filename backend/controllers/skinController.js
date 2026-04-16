@@ -1,13 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Mercado Pago SDK
-const mercadopago = require('mercadopago');
+// Mercado Pago SDK v2
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
-// Configurar Mercado Pago con el access token
-mercadopago.configure({
-  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN
-});
+// Configurar cliente de Mercado Pago solo si hay access token
+let client = null;
+if (process.env.MERCADOPAGO_ACCESS_TOKEN && process.env.MERCADOPAGO_ACCESS_TOKEN !== 'your_mercadopago_access_token_here') {
+  client = new MercadoPagoConfig({
+    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN
+  });
+  console.log('✅ Mercado Pago configurado correctamente');
+} else {
+  console.warn('⚠️  Mercado Pago no configurado. Configura MERCADOPAGO_ACCESS_TOKEN en .env');
+}
 
 // Obtener todas las skins disponibles
 exports.getAllSkins = async (req, res) => {
@@ -85,6 +91,13 @@ exports.equipSkin = async (req, res) => {
 // Crear orden de compra (Mercado Pago)
 exports.createOrder = async (req, res) => {
   try {
+    // Verificar que Mercado Pago esté configurado
+    if (!client) {
+      return res.status(503).json({ 
+        error: 'Sistema de pagos no configurado. Contacta al administrador.' 
+      });
+    }
+    
     const userId = req.user.id;
     const { skinId } = req.body;
     
@@ -121,7 +134,9 @@ exports.createOrder = async (req, res) => {
     });
     
     // Crear preferencia de pago en Mercado Pago
-    const preference = {
+    const preference = new Preference(client);
+    
+    const preferenceData = {
       items: [
         {
           title: `Snake Skin: ${skin.name}`,
@@ -148,19 +163,19 @@ exports.createOrder = async (req, res) => {
       statement_descriptor: 'ARACHIZ SNAKE SKIN'
     };
     
-    const response = await mercadopago.preferences.create(preference);
+    const response = await preference.create({ body: preferenceData });
     
     // Actualizar la orden con el preferenceId
     await prisma.skinOrder.update({
       where: { id: order.id },
-      data: { preferenceId: response.body.id }
+      data: { preferenceId: response.id }
     });
     
     res.json({
       orderId: order.id,
-      preferenceId: response.body.id,
-      initPoint: response.body.init_point,
-      sandboxInitPoint: response.body.sandbox_init_point
+      preferenceId: response.id,
+      initPoint: response.init_point,
+      sandboxInitPoint: response.sandbox_init_point
     });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -178,10 +193,11 @@ exports.handleWebhook = async (req, res) => {
       const paymentId = data.id;
       
       // Obtener información del pago desde Mercado Pago
-      const payment = await mercadopago.payment.findById(paymentId);
+      const paymentClient = new Payment(client);
+      const payment = await paymentClient.get({ id: paymentId });
       
-      const externalReference = payment.body.external_reference;
-      const status = payment.body.status;
+      const externalReference = payment.external_reference;
+      const status = payment.status;
       
       // Buscar la orden en nuestra base de datos
       const order = await prisma.skinOrder.findUnique({

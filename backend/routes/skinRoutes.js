@@ -1,16 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const skinController = require('../controllers/skinController');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
+
+// Importar controlador
+let skinController;
+try {
+  skinController = require('../controllers/skinController');
+  console.log('✅ Skin controller loaded');
+} catch (error) {
+  console.error('❌ Error loading skin controller:', error.message);
+  skinController = {
+    getAllSkins: (req, res) => res.status(503).json({ error: 'Skin system not available' }),
+    getUserSkins: (req, res) => res.status(503).json({ error: 'Skin system not available' }),
+    equipSkin: (req, res) => res.status(503).json({ error: 'Skin system not available' }),
+    createOrder: (req, res) => res.status(503).json({ error: 'Skin system not available' }),
+    checkOrderStatus: (req, res) => res.status(503).json({ error: 'Skin system not available' }),
+    handleWebhook: (req, res) => res.status(503).json({ error: 'Skin system not available' })
+  };
+}
 
 // Rutas públicas
 router.get('/all', skinController.getAllSkins);
 
 // Rutas protegidas (requieren autenticación)
-router.get('/my-skins', verifyToken, skinController.getUserSkins);
-router.post('/equip', verifyToken, skinController.equipSkin);
-router.post('/create-order', verifyToken, skinController.createOrder);
-router.get('/order/:orderId', verifyToken, skinController.checkOrderStatus);
+router.get('/my-skins', authMiddleware, skinController.getUserSkins);
+router.post('/equip', authMiddleware, skinController.equipSkin);
+router.post('/create-order', authMiddleware, skinController.createOrder);
+router.get('/order/:orderId', authMiddleware, skinController.checkOrderStatus);
 
 // Webhook de Mercado Pago (no requiere autenticación)
 router.post('/webhook', skinController.handleWebhook);
