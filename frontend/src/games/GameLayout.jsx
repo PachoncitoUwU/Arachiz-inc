@@ -26,8 +26,7 @@ export default function GameLayout({
   }, []);
 
   const formatScore = (s) => {
-    if (game === 'reaction') return `${s} ms`;
-    if (game === 'wordle')   return `${s} int.`;
+    if (game === 'wordle') return `${s} int.`;
     return `${s} pts`;
   };
 

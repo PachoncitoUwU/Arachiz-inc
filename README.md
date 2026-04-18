@@ -27,13 +27,13 @@ Si deseas correr este proyecto en otro computador, **no es necesario descargar c
 ```bash
 cd backend
 npm install
-npx prisma migrate dev
 node server.js
 ```
 
 ### Frontend
 
 ```bash
+
 cd frontend
 npm install
 npm run dev

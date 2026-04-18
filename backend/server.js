@@ -15,6 +15,7 @@ const exportRoutes = require('./routes/exportRoutes');
 const serialRoutes = require('./routes/serialRoutes');
 const snakeRoutes  = require('./routes/snakeRoutes');
 const gamesRoutes  = require('./routes/gamesRoutes');
+const skinRoutes   = require('./routes/skinRoutes');
 const SerialService = require('./utils/serialService');
 
 const app = express();
@@ -24,7 +25,8 @@ const io = new Server(server, { cors: { origin: '*' } });
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
@@ -37,6 +39,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/serial', serialRoutes);
 app.use('/api/snake',  snakeRoutes);
 app.use('/api/games',  gamesRoutes);
+app.use('/api/skins',  skinRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);

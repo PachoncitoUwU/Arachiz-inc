@@ -1,132 +1,214 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import GameRanking from './GameRanking';
-import { fetchLB, saveGameScore, getCachedLB, glassLight, overlayStyle } from './gameUtils';
+import { glassLight, overlayStyle, MEDAL, TOP_COLORS } from './gameUtils';
 
+const GAME_DURATION = 10;
+const LS_KEY = 'arachiz_reaction_lb_v3'; // v3 = limpio tras borrar BD
+
+const getLocalLB = () => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+};
+
+const saveLocalScore = (score, userName, avatarUrl) => {
+  const lb = getLocalLB();
+  const idx = lb.findIndex(e => e.name === userName);
+  const entry = { name: userName, avatar: avatarUrl || null, score, date: new Date().toLocaleDateString('es-CO') };
+  if (idx >= 0) {
+    if (score > lb[idx].score) lb[idx] = entry;
+  } else {
+    lb.push(entry);
+  }
+  lb.sort((a, b) => b.score - a.score);
+  const top10 = lb.slice(0, 10);
+  localStorage.setItem(LS_KEY, JSON.stringify(top10));
+  return top10;
+};
+
+// Guardar en backend sin bloquear (best-effort)
+const trySaveBackend = (score) => {
+  try {
+    const token = localStorage.getItem('token');
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    fetch(`${API}/games/reaction/score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ score }),
+    }).catch(() => {});
+  } catch {}
+};
+
+// Traer ranking del backend y actualizar localStorage
+const fetchBackendLB = async () => {
+  try {
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const res  = await fetch(`${API}/games/reaction/leaderboard`);
+    const data = await res.json();
+    if (data.scores?.length) {
+      // Ordenar desc por si acaso
+      const sorted = [...data.scores].sort((a, b) => b.score - a.score);
+      localStorage.setItem(LS_KEY, JSON.stringify(sorted));
+      return sorted;
+    }
+  } catch {}
+  return getLocalLB();
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const randPos  = (w, h, r) => ({ x: r + Math.random() * (w - r * 2), y: r + Math.random() * (h - r * 2) });
+const randR    = () => 22 + Math.floor(Math.random() * 22);
+const COLORS   = ['#EA4335','#4285F4','#34A853','#FBBC05','#9C27B0','#FF5722','#00BCD4','#E91E63','#FF9800','#8BC34A'];
+const randCol  = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+
+// ── Ranking panel ─────────────────────────────────────────────────────────────
+function RankingPanel({ lb, maxHeight = 380 }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+        <span style={{ fontSize:15, fontWeight:800, color:'#1d1d1f' }}>Ranking</span>
+        <span>🏆</span>
+      </div>
+      {lb.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'20px 0', color:'#6e6e73', fontSize:12 }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>💥</div>¡Sé el primero!
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY:'auto', maxHeight }}>
+          {lb.map((e, i) => {
+            const top = i < 3;
+            const c   = top ? TOP_COLORS[i] : null;
+            return (
+              <div key={i} style={{
+                display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:14,
+                background: top ? c.bg : 'rgba(255,255,255,0.35)',
+                border: top ? `1px solid ${c.glow}` : '1px solid rgba(255,255,255,0.5)',
+                boxShadow: top ? `0 3px 12px ${c.glow}` : 'none',
+              }}>
+                <span style={{ fontSize: top?16:12, fontWeight:700, minWidth:22, textAlign:'center', color: top?c.text:'#6e6e73' }}>
+                  {top ? MEDAL[i] : i+1}
+                </span>
+                {e.avatar
+                  ? <img src={e.avatar} style={{ width:28, height:28, borderRadius:8, objectFit:'cover', flexShrink:0 }} alt=""/>
+                  : <div style={{ width:28, height:28, borderRadius:8, background: top?c.text:'#007aff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'white', flexShrink:0 }}>
+                      {e.name?.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()||'?'}
+                    </div>
+                }
+                <div style={{ flex:1, minWidth:0 }}>
+                  <p style={{ margin:0, fontWeight:700, fontSize:11, color: top?c.text:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name}</p>
+                  <p style={{ margin:0, fontSize:9, color:'#6e6e73' }}>{e.date}</p>
+                </div>
+                <span style={{ fontWeight:800, fontSize: top?14:12, color: top?c.text:'#1d1d1f', whiteSpace:'nowrap' }}>{e.score} pts</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Juego ─────────────────────────────────────────────────────────────────────
 export default function ReactionTime({ onClose, currentUser }) {
   const [phase,    setPhase]    = useState('idle');
-  const [ms,       setMs]       = useState(null);
-  const [best,     setBest]     = useState(null);
-  const [pos,      setPos]      = useState({ x:50, y:50 });
-  const [lb,       setLb]       = useState(getCachedLB('reaction'));
+  const [score,    setScore]    = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [circle,   setCircle]   = useState(null);
+  const [lb,       setLb]       = useState(getLocalLB);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
   const [showLB,   setShowLB]   = useState(false);
+
   const timerRef = useRef(null);
-  const startRef = useRef(null);
-  const savedRef = useRef(false);
-  const phaseRef = useRef('idle'); // ref para acceder en callbacks sin stale closure
+  const scoreRef = useRef(0);
+  const circleId = useRef(0);
+
+  const AREA_W = isMobile ? Math.min(window.innerWidth - 48, 340) : 420;
+  const AREA_H = isMobile ? 300 : 380;
 
   useEffect(() => {
-    fetchLB('reaction').then(d => setLb(d));
+    // Al abrir, traer ranking del backend (ya limpio y ordenado)
+    fetchBackendLB().then(lb => setLb(lb));
     const f = () => setIsMobile(window.innerWidth < 700);
     window.addEventListener('resize', f);
     return () => window.removeEventListener('resize', f);
   }, []);
 
-  // Sincronizar phaseRef con phase
-  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  const spawnCircle = useCallback(() => {
+    const r = randR();
+    circleId.current += 1;
+    setCircle({ ...randPos(AREA_W, AREA_H, r), r, color: randCol(), id: circleId.current });
+  }, [AREA_W, AREA_H]);
 
-  const startRound = useCallback(() => {
-    clearTimeout(timerRef.current);
-    setPhase('waiting'); setMs(null);
-    phaseRef.current = 'waiting';
-    const delay = 800 + Math.random() * 1500;
-    timerRef.current = setTimeout(() => {
-      setPos({ x: 15 + Math.random() * 70, y: 15 + Math.random() * 70 }); // Más margen para evitar bordes
-      setPhase('ready');
-      phaseRef.current = 'ready';
-      startRef.current = performance.now();
-    }, delay);
-  }, []);
+  const startGame = useCallback(() => {
+    scoreRef.current = 0;
+    setScore(0);
+    setTimeLeft(GAME_DURATION);
+    setPhase('playing');
+    spawnCircle();
+    let t = GAME_DURATION;
+    timerRef.current = setInterval(() => {
+      t -= 1;
+      setTimeLeft(t);
+      if (t <= 0) { clearInterval(timerRef.current); setPhase('done'); setCircle(null); }
+    }, 1000);
+  }, [spawnCircle]);
 
-  const handleTap = useCallback((e) => {
-    const p = phaseRef.current;
-    if (p === 'idle' || p === 'result' || p === 'dead') {
-      startRound(); return;
-    }
-    if (p === 'waiting') {
-      clearTimeout(timerRef.current);
-      setPhase('dead'); phaseRef.current = 'dead'; return;
-    }
-    if (p === 'ready') {
-      // Verificar si el click fue en el círculo verde
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      
-      // Calcular posición del círculo en píxeles
-      const circleX = (pos.x / 100) * 360;
-      const circleY = (pos.y / 100) * 360;
-      
-      // Verificar si el click está dentro del círculo (radio 32px)
-      const distance = Math.sqrt((clickX - circleX) ** 2 + (clickY - circleY) ** 2);
-      if (distance > 32) {
-        // Click fuera del círculo - fallo
-        setPhase('dead'); phaseRef.current = 'dead'; return;
+  useEffect(() => {
+    if (phase === 'done' && scoreRef.current > 0) {
+      const name   = currentUser?.fullName || 'Jugador';
+      const avatar = currentUser?.avatarUrl || null;
+      // Guardar local inmediatamente (solo si es mejor)
+      const updated = saveLocalScore(scoreRef.current, name, avatar);
+      setLb(updated);
+      // Solo enviar al backend si este score es el mejor local del usuario
+      const localBest = updated.find(e => e.name === name);
+      if (localBest && localBest.score === scoreRef.current) {
+        // Es el mejor — enviar al backend
+        trySaveBackend(scoreRef.current);
+        setTimeout(() => fetchBackendLB().then(lb => setLb(lb)), 1500);
+      } else {
+        // No es el mejor — solo refrescar el ranking sin enviar
+        setTimeout(() => fetchBackendLB().then(lb => setLb(lb)), 500);
       }
-      
-      const elapsed = Math.round(performance.now() - startRef.current);
-      setMs(elapsed);
-      setBest(prev => {
-        const newBest = prev === null ? elapsed : Math.min(prev, elapsed);
-        // Guardar si es mejor
-        if (prev === null || elapsed < prev) {
-          saveGameScore('reaction', elapsed)
-            .then(() => fetchLB('reaction').then(d => setLb(d)));
-        }
-        return newBest;
-      });
-      setPhase('result'); phaseRef.current = 'result';
     }
-  }, [startRound, pos]);
+  }, [phase, currentUser]);
+
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  const handleCircleClick = useCallback((e) => {
+    e.stopPropagation();
+    if (phase !== 'playing') return;
+    scoreRef.current += 1;
+    setScore(scoreRef.current);
+    spawnCircle();
+  }, [phase, spawnCircle]);
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); handleTap(); }
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') { clearInterval(timerRef.current); onClose(); }
+      if ((e.key === ' ' || e.key === 'Enter') && phase !== 'playing') { e.preventDefault(); startGame(); }
     };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timerRef.current); };
-  }, [handleTap, onClose]);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, phase, startGame]);
 
-  const BG = {
-    idle:    'linear-gradient(135deg,#1e293b,#0f172a)',
-    waiting: 'linear-gradient(135deg,#1e293b,#0f172a)',
-    ready:   'linear-gradient(135deg,#14532d,#166534)',
-    result:  'linear-gradient(135deg,#1e3a5f,#1e40af)',
-    dead:    'linear-gradient(135deg,#7f1d1d,#991b1b)',
-  };
-
-  const MSG = {
-    idle:    { emoji:'⚡', text:'Toca para empezar', sub:'Reacciona cuando aparezca el objetivo' },
-    waiting: { emoji:'👀', text:'Espera...', sub:'No toques todavía — ¡viene pronto!' },
-    ready:   { emoji:'🎯', text:'¡AHORA!', sub:'Toca lo más rápido que puedas' },
-    result:  { emoji:'✅', text:`${ms} ms`, sub: ms < 200 ? '🏎️ Reflejos de F1!' : ms < 300 ? '⚡ Muy rápido' : ms < 500 ? '👍 Bien' : '🐢 Puedes mejorar' },
-    dead:    { emoji:'❌', text:'¡Demasiado pronto!', sub:'Toca de nuevo para reintentar' },
-  };
-
-  const info = MSG[phase] || MSG.idle;
+  const barColor = timeLeft > 5 ? '#34A853' : timeLeft > 2 ? '#FBBC05' : '#EA4335';
+  const barPct   = (timeLeft / GAME_DURATION) * 100;
 
   return (
     <div style={{ ...overlayStyle }} onClick={e => e.stopPropagation()}>
       <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:12, alignItems:'flex-start', maxWidth:'98vw' }}>
 
-        {/* Ranking desktop */}
         {!isMobile && (
           <div style={{ ...glassLight, padding:'18px 14px', minWidth:200 }}>
-            <GameRanking lb={lb} game="reaction" maxHeight={380} />
+            <RankingPanel lb={lb} maxHeight={380} />
           </div>
         )}
 
-        {/* Panel juego */}
-        <div style={{ ...glassLight, padding:'14px 14px 10px', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+        <div style={{ ...glassLight, padding: isMobile ? '14px 14px 10px' : '20px 20px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile ? 10 : 14 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
             <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
-              <span style={{ fontSize:16, fontWeight:800, color:'#1d1d1f', letterSpacing:'-0.5px' }}>⚡ Reacción</span>
-              {best !== null && (
-                <span style={{ fontSize:13, fontWeight:700, color:'#007aff', background:'rgba(0,122,255,0.1)', padding:'2px 8px', borderRadius:20 }}>
-                  Mejor: {best} ms
-                </span>
-              )}
+              <span style={{ fontSize: isMobile?16:20, fontWeight:800, color:'#1d1d1f', letterSpacing:'-0.5px' }}>💥 Revienta</span>
+              <span style={{ fontSize: isMobile?13:15, fontWeight:700, color:'#007aff', background:'rgba(0,122,255,0.1)', padding:'2px 8px', borderRadius:20 }}>
+                {score} pts
+              </span>
             </div>
             <div style={{ display:'flex', gap:6 }}>
               {isMobile && (
@@ -135,53 +217,84 @@ export default function ReactionTime({ onClose, currentUser }) {
                   🏆 Top
                 </button>
               )}
-              <button onClick={onClose}
-                style={{ background:'rgba(0,0,0,0.07)', border:'none', borderRadius:14, color:'#1d1d1f', padding:'5px 12px', cursor:'pointer', fontSize:12, fontWeight:600 }}>
+              <button onClick={() => { clearInterval(timerRef.current); onClose(); }}
+                style={{ background:'rgba(0,0,0,0.07)', border:'none', borderRadius:14, color:'#1d1d1f', padding: isMobile?'5px 12px':'6px 14px', cursor:'pointer', fontSize: isMobile?12:13, fontWeight:600 }}>
                 Done
               </button>
             </div>
           </div>
 
           {isMobile && showLB ? (
-            <div style={{ width:300, maxHeight:260, overflowY:'auto' }}>
-              <GameRanking lb={lb} game="reaction" maxHeight={240} />
+            <div style={{ width:'100%', maxWidth:360, maxHeight:260, overflowY:'auto' }}>
+              <RankingPanel lb={lb} maxHeight={240} />
             </div>
           ) : (
             <>
-              {/* Área de juego — click aquí activa handleTap */}
-              <div
-                onClick={handleTap}
-                style={{
-                  width:360, height:360, borderRadius:20, cursor:'pointer',
-                  background: BG[phase], position:'relative', overflow:'hidden',
-                  border:'1.5px solid rgba(255,255,255,0.15)',
-                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                  gap:8, transition:'background 0.4s', userSelect:'none',
-                }}
-              >
-                {phase === 'ready' && (
-                  <div style={{
+              {phase === 'playing' && (
+                <div style={{ width:AREA_W, height:8, background:'rgba(0,0,0,0.1)', borderRadius:4, overflow:'hidden' }}>
+                  <div style={{ height:'100%', borderRadius:4, width:`${barPct}%`, background:barColor, transition:'width 1s linear, background 0.3s' }}/>
+                </div>
+              )}
+
+              <div style={{
+                width:AREA_W, height:AREA_H,
+                background:'linear-gradient(135deg,#1e293b,#0f172a)',
+                borderRadius:20, position:'relative', overflow:'hidden',
+                border:'1.5px solid rgba(255,255,255,0.12)',
+                cursor: phase==='playing' ? 'crosshair' : 'default', userSelect:'none',
+              }}>
+                {phase === 'idle' && (
+                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+                    <span style={{ fontSize:52 }}>💥</span>
+                    <p style={{ color:'white', fontWeight:800, fontSize:20, margin:0 }}>Revienta círculos</p>
+                    <p style={{ color:'rgba(255,255,255,0.5)', fontSize:13, margin:0, textAlign:'center', padding:'0 24px' }}>
+                      Toca todos los círculos en {GAME_DURATION} segundos
+                    </p>
+                    <button onClick={startGame}
+                      style={{ background:'#007aff', color:'white', border:'none', borderRadius:22, padding:'12px 32px', fontSize:15, fontWeight:700, cursor:'pointer', boxShadow:'0 6px 20px rgba(0,122,255,0.4)', marginTop:4 }}>
+                      Iniciar
+                    </button>
+                  </div>
+                )}
+
+                {phase === 'done' && (
+                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
+                    <span style={{ fontSize:48 }}>🎯</span>
+                    <p style={{ color:'white', fontWeight:800, fontSize:22, margin:0 }}>{score} círculos</p>
+                    <p style={{ color:'rgba(255,255,255,0.5)', fontSize:13, margin:0 }}>
+                      {score>=20?'🔥 ¡Increíble!':score>=12?'⚡ Muy rápido':score>=7?'👍 Bien':'🐢 Sigue practicando'}
+                    </p>
+                    <button onClick={startGame}
+                      style={{ background:'#007aff', color:'white', border:'none', borderRadius:22, padding:'10px 28px', fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 6px 20px rgba(0,122,255,0.4)', marginTop:4 }}>
+                      ↻ Otra vez
+                    </button>
+                  </div>
+                )}
+
+                {phase === 'playing' && circle && (
+                  <div key={circle.id} onClick={handleCircleClick} style={{
                     position:'absolute',
-                    left:`${pos.x}%`, top:`${pos.y}%`,
-                    transform:'translate(-50%,-50%)',
-                    width:64, height:64, borderRadius:'50%',
-                    background:'#22c55e',
-                    boxShadow:'0 0 30px #22c55e, 0 0 60px #22c55e55',
-                    animation:'reactionPulse 0.3s ease-in-out infinite alternate',
-                    cursor:'pointer',
+                    left: circle.x - circle.r, top: circle.y - circle.r,
+                    width: circle.r*2, height: circle.r*2,
+                    borderRadius:'50%', background: circle.color,
+                    boxShadow:`0 0 20px ${circle.color}99, 0 0 40px ${circle.color}44`,
+                    cursor:'pointer', animation:'popIn 0.12s ease-out',
                   }}/>
                 )}
-                <style>{`@keyframes reactionPulse{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.18)}}`}</style>
 
-                <span style={{ fontSize:52, zIndex:1 }}>{info.emoji}</span>
-                <p style={{ color:'white', fontWeight:800, fontSize:22, margin:0, zIndex:1, letterSpacing:'-0.5px', textAlign:'center' }}>
-                  {info.text}
-                </p>
-                <p style={{ color:'rgba(255,255,255,0.65)', fontSize:13, margin:0, zIndex:1, textAlign:'center', padding:'0 16px' }}>
-                  {phase === 'ready' ? 'Toca solo el círculo verde' : info.sub}
-                </p>
+                {phase === 'playing' && (
+                  <div style={{
+                    position:'absolute', top:10, left:'50%', transform:'translateX(-50%)',
+                    background:'rgba(0,0,0,0.45)', borderRadius:20, padding:'3px 14px',
+                    color:barColor, fontWeight:800, fontSize:18, backdropFilter:'blur(8px)',
+                  }}>
+                    {timeLeft}s
+                  </div>
+                )}
               </div>
-              <p style={{ color:'rgba(0,0,0,0.3)', fontSize:10, margin:0 }}>Espacio / Toca · ESC cierra</p>
+
+              <style>{`@keyframes popIn{from{transform:scale(0.3);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
+              <p style={{ color:'rgba(0,0,0,0.3)', fontSize: isMobile?10:11, margin:0 }}>Toca los círculos · ESC cierra</p>
             </>
           )}
         </div>
