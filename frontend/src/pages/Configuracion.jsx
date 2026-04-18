@@ -43,6 +43,12 @@ function Section({ icon: Icon, title, children, onTitleClick }) {
 }
 
 // ─── La Bolita (Breakout) ─────────────────────────────────────────────────────
+const MEDAL = ['🥇','🥈','🥉'];
+const TOP_COLORS = [
+  { text:'#7A5500', glow:'rgba(255,200,0,0.5)',   bg:'rgba(255,215,0,0.30)' },
+  { text:'#3D4450', glow:'rgba(160,170,180,0.5)', bg:'rgba(180,190,200,0.35)' },
+  { text:'#6B3000', glow:'rgba(180,100,30,0.5)',  bg:'rgba(205,127,50,0.30)' },
+];
 const LS_BREAKOUT = 'arachiz_breakout_lb_cache';
 const getLBBreakout = () => { try { return JSON.parse(localStorage.getItem(LS_BREAKOUT)) || []; } catch { return []; } };
 
@@ -117,10 +123,10 @@ function BreakoutGame({ onClose, currentUser }) {
     restartFn.current=restart;
 
     const kd=(e)=>{
-      if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=true;
-      if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=true;
+      if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){if(deadRef.current){e.preventDefault();restart();}else{right=true;}}
+      if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){if(deadRef.current){e.preventDefault();restart();}else{left=true;}}
+      if(e.key===' '||e.key==='Enter'||e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='w'||e.key==='W'||e.key==='s'||e.key==='S'){if(deadRef.current){e.preventDefault();restart();}}
       if(e.key==='Escape')onClose();
-      if((e.key===' '||e.key==='Enter')&&deadRef.current){e.preventDefault();restart();}
     };
     const ku=(e)=>{if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=false;if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=false;};
     const mm=(e)=>{const rx=e.clientX-canvas.getBoundingClientRect().left;if(rx>0&&rx<canvas.width)padX=rx-padW/2;};
@@ -218,7 +224,7 @@ function BreakoutGame({ onClose, currentUser }) {
       </div>
       {lb.length===0
         ?<p style={{color:'rgba(255,255,255,0.4)',textAlign:'center',padding:'16px 0',fontSize:12}}>¡Sé el primero!</p>
-        :lb.map((e,i)=>{
+        :[...lb].sort((a,b)=>b.score-a.score).map((e,i)=>{
           const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
           return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:12,background:isTop?col.bg:'rgba(255,255,255,0.08)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.12)'}}>
             <span style={{fontSize:isTop?15:11,fontWeight:700,minWidth:20,color:isTop?col.text:'rgba(255,255,255,0.4)'}}>{isTop?MEDAL[i]:i+1}</span>
@@ -270,14 +276,38 @@ function BreakoutGame({ onClose, currentUser }) {
             <div style={{position:'relative',borderRadius:12,overflow:'hidden',border:'1px solid rgba(255,255,255,0.15)',touchAction:'none'}}>
               <canvas ref={canvasRef} width={340} height={290} style={{display:'block'}}/>
               {dead&&(
-                <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10}}>
-                  <p style={{color:'white',fontWeight:800,fontSize:20,margin:0}}>Game Over</p>
-                  <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>{score} pts</p>
-                  <button onClick={()=>restartFn.current&&restartFn.current()}
-                    style={{background:'#4285F4',color:'white',border:'none',borderRadius:18,padding:'9px 24px',fontWeight:700,cursor:'pointer',fontSize:13,marginTop:4}}>
-                    Reintentar
-                  </button>
-                </div>
+                <button onClick={()=>restartFn.current&&restartFn.current()}
+                  style={{
+                    position:'absolute',
+                    top:'50%',
+                    left:'50%',
+                    transform:'translate(-50%,-50%)',
+                    background:'rgba(255,255,255,0.22)',
+                    backdropFilter:'blur(8px)',
+                    border:'1.5px solid rgba(255,255,255,0.5)',
+                    borderRadius:16,
+                    width:56,
+                    height:56,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center',
+                    cursor:'pointer',
+                    fontSize:26,
+                    color:'white',
+                    transition:'all 0.2s',
+                    boxShadow:'0 4px 20px rgba(0,0,0,0.25)'
+                  }}
+                  onMouseEnter={e=>{
+                    e.currentTarget.style.background='rgba(255,255,255,0.35)';
+                    e.currentTarget.style.transform='translate(-50%,-50%) scale(1.1)';
+                  }}
+                  onMouseLeave={e=>{
+                    e.currentTarget.style.background='rgba(255,255,255,0.22)';
+                    e.currentTarget.style.transform='translate(-50%,-50%) scale(1)';
+                  }}
+                >
+                  ↻
+                </button>
               )}
             </div>
           )}
@@ -347,134 +377,104 @@ function FlappyGame({ onClose, currentUser }) {
     let isDead = false;
     let req;
 
-    // SVG-style cloud helper
-    const drawCloud = (cx, cy, r) => {
-      ctx.save();
-      ctx.shadowColor = 'rgba(200,220,255,0.4)';
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = 'rgba(255,255,255,0.82)';
-      // Main body
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx + r*0.7, cy + r*0.2, r*0.65, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx - r*0.6, cy + r*0.2, r*0.55, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx + r*0.3, cy - r*0.5, r*0.55, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx - r*0.2, cy - r*0.4, r*0.45, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    };
-
+    // Detectar si es móvil para optimizar rendimiento
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     const draw = () => {
       ctx.clearRect(0,0,W,H);
 
-      // Fondo Glass App
-      const bg = ctx.createLinearGradient(0,0,0,H);
-      bg.addColorStop(0,'rgba(220,235,255,0.97)');
-      bg.addColorStop(1,'rgba(200,220,245,0.90)');
-      ctx.fillStyle = bg;
-      ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(0,0,W,H,18) : ctx.rect(0,0,W,H);
-      ctx.fill();
+      // Fondo degradado más bonito
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, '#87CEEB');  // Sky blue
+      gradient.addColorStop(0.7, '#B0E0E6'); // Light blue
+      gradient.addColorStop(1, '#E0F6FF');   // Very light blue
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
 
-      // Nubes SVG-style
-      drawCloud(60, 75, 22);
-      drawCloud(200, 45, 18);
-      drawCloud(295, 105, 20);
-
-      // Tuberías de cristal (Glassmorphism)
+      // Tuberías con mejor diseño
       pipes.forEach(p => {
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,122,255,0.25)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetY = 4;
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.lineWidth = 1.5;
-        const grd = ctx.createLinearGradient(p.x,0,p.x+PW,0);
-        grd.addColorStop(0,'rgba(255,255,255,0.4)');
-        grd.addColorStop(0.5,'rgba(230,245,255,0.5)');
-        grd.addColorStop(1,'rgba(255,255,255,0.3)');
-        ctx.fillStyle = grd;
+        // Sombra de las tuberías
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(p.x + 2, 2, PW, p.top);
+        ctx.fillRect(p.x + 2, p.top + (p.gap || GAP) + 2, PW, H - p.top - (p.gap || GAP) - 38);
+        
         // Tubería Superior
-        ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(p.x, 0, PW, p.top, 8) : ctx.rect(p.x, 0, PW, p.top);
-        ctx.fill(); ctx.stroke();
-        // Gorro Superior
-        ctx.beginPath();
-        const capTopY = p.top - 18;
-        ctx.roundRect ? ctx.roundRect(p.x - 4, capTopY, PW + 8, 18, 6) : ctx.rect(p.x - 4, capTopY, PW + 8, 18);
-        ctx.fillStyle = 'rgba(250,250,255,0.7)';
-        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(p.x, 0, PW, p.top);
+        
+        // Gorro Superior con gradiente
+        const topGradient = ctx.createLinearGradient(0, p.top - 18, 0, p.top);
+        topGradient.addColorStop(0, '#66BB6A');
+        topGradient.addColorStop(1, '#4CAF50');
+        ctx.fillStyle = topGradient;
+        ctx.fillRect(p.x - 4, p.top - 18, PW + 8, 18);
+        
         // Tubería Inferior
-        ctx.fillStyle = grd;
-        ctx.beginPath();
         const currentGap = p.gap || GAP;
-        ctx.roundRect ? ctx.roundRect(p.x, p.top + currentGap, PW, H - p.top - currentGap - 38, 8) : ctx.rect(p.x, p.top + currentGap, PW, H - p.top - currentGap - 38);
-        ctx.fill(); ctx.stroke();
-        // Gorro Inferior
-        ctx.beginPath();
-        const capBotY = p.top + currentGap;
-        ctx.roundRect ? ctx.roundRect(p.x - 4, capBotY, PW + 8, 18, 6) : ctx.rect(p.x - 4, capBotY, PW + 8, 18);
-        ctx.fillStyle = 'rgba(250,250,255,0.7)';
-        ctx.fill(); ctx.stroke();
-        ctx.restore();
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(p.x, p.top + currentGap, PW, H - p.top - currentGap - 38);
+        
+        // Gorro Inferior con gradiente
+        const bottomGradient = ctx.createLinearGradient(0, p.top + currentGap, 0, p.top + currentGap + 18);
+        bottomGradient.addColorStop(0, '#66BB6A');
+        bottomGradient.addColorStop(1, '#4CAF50');
+        ctx.fillStyle = bottomGradient;
+        ctx.fillRect(p.x - 4, p.top + currentGap, PW + 8, 18);
+        
+        // Brillo en las tuberías
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(p.x + 2, 0, 4, p.top);
+        ctx.fillRect(p.x + 2, p.top + currentGap, 4, H - p.top - currentGap - 38);
       });
 
-      // Suelo — línea sutil sin rectángulo visible
-      ctx.fillStyle = 'rgba(0,122,255,0.12)';
-      ctx.fillRect(0, H - 38, W, 2);
+      // Suelo con gradiente
+      const groundGradient = ctx.createLinearGradient(0, H - 38, 0, H);
+      groundGradient.addColorStop(0, '#8BC34A');
+      groundGradient.addColorStop(1, '#689F38');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, H - 38, W, 38);
 
-      // Maní con alas animadas (arcos simples)
+      // Maní mejorado con sombra
       ctx.save();
       ctx.translate(bird.x, bird.y);
-      const angle = Math.min(Math.max(bird.vy * 0.05,-0.6),1.4);
+      const angle = Math.min(Math.max(bird.vy * 0.03, -0.3), 0.6);
       ctx.rotate(angle);
-
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetY = 4;
-
-      // Alas: dos arcos simples que se animan con Math.sin(frame)
-      const wingY = Math.sin(frame * 0.35) * 8;
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.strokeStyle = 'rgba(180,200,255,0.7)';
-      ctx.lineWidth = 1;
-      // Ala izquierda
-      ctx.beginPath();
-      ctx.arc(-16, -4 + wingY, 10, Math.PI * 0.8, Math.PI * 2.2);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-      // Ala derecha
-      ctx.beginPath();
-      ctx.arc(16, -4 + wingY, 10, Math.PI * -0.2, Math.PI * 1.2);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-
-      ctx.shadowBlur = 0;
-      // Maní
+      
+      // Sombra del maní
+      ctx.save();
+      ctx.translate(1, 1);
+      ctx.globalAlpha = 0.3;
       ctx.font = '32px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('🥜', 0, 1);
+      ctx.fillStyle = '#000';
+      ctx.fillText('🥜', 0, 0);
+      ctx.restore();
+      
+      // Maní principal
+      ctx.font = '32px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🥜', 0, 0);
       ctx.restore();
 
-      // Score
-      ctx.font = '800 36px system-ui';
+      // Score con sombra y mejor estilo
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      ctx.font = 'bold 32px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(0,122,255,0.85)';
-      ctx.shadowColor = 'rgba(255,255,255,1)';
-      ctx.shadowBlur = 12;
-      ctx.fillText(sc, W/2, 60);
-      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#007aff';
+      ctx.lineWidth = 2;
+      ctx.strokeText(sc, W/2, 50);
+      ctx.fillText(sc, W/2, 50);
+      ctx.restore();
 
-      // Pantalla de inicio
+      // Pantalla de inicio — sin texto, solo espera el primer toque
       if(!started && !isDead){
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.beginPath();
-        const rw = 200, rh = 56;
-        ctx.roundRect ? ctx.roundRect(W/2 - rw/2, H/2 - rh/2 + 20, rw, rh, 20) : ctx.rect(W/2 - rw/2, H/2 - rh/2 + 20, rw, rh);
-        ctx.shadowColor = 'rgba(0,0,0,0.08)';
-        ctx.shadowBlur = 20;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#007aff';
-        ctx.font = '800 16px system-ui';
-        ctx.fillText('🥜 Toca para volar', W/2, H/2 + 25);
+        // nada — el juego inicia al primer toque/tecla
       }
     };
 
@@ -486,8 +486,12 @@ function FlappyGame({ onClose, currentUser }) {
         frame++;
         const interval = Math.max(50, 90 - sc * 3.5);
         if(frame % Math.floor(interval) === 0){
-          const currentGap = Math.max(110, GAP - Math.floor(sc * 1.5));
-          const topH = 40 + Math.random() * (H - currentGap - 80);
+          // Ajustar el GAP de manera más gradual y jugable
+          const currentGap = sc <= 7 ? Math.max(80, GAP - Math.floor(sc * 4)) : Math.max(80, GAP - 28);
+          // Asegurar que siempre haya al menos 60px arriba y 60px abajo
+          const minTop = 60;
+          const maxTop = H - currentGap - 60 - 38; // 38 es el suelo
+          const topH = Math.max(minTop, Math.min(maxTop, minTop + Math.random() * (maxTop - minTop)));
           pipes.push({x: W+10, top: topH, gap: currentGap, scored: false});
         }
         pipes.forEach(p => { p.x -= speed; });
@@ -526,7 +530,7 @@ function FlappyGame({ onClose, currentUser }) {
     req = requestAnimationFrame(tick);
 
     const onKey=(e)=>{
-      if(e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){
+      if(e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'||e.key==='ArrowDown'||e.key==='s'||e.key==='S'||e.key==='ArrowLeft'||e.key==='a'||e.key==='A'||e.key==='ArrowRight'||e.key==='d'||e.key==='D'||e.key==='Enter'){
         e.preventDefault();
         if(isDead){ restartRef.current?.(); return; }
         doJump();
@@ -535,21 +539,24 @@ function FlappyGame({ onClose, currentUser }) {
     };
     window.addEventListener('keydown', onKey);
 
-    // Swipe up detection
-    let touchStartY = 0;
-    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
-    const onTouchEnd = (e) => {
-      const deltaY = e.changedTouches[0].clientY - touchStartY;
-      if(deltaY < -30) { if(!isDead) doJump(); }
+    // Tap/Click detection - TODA LA PANTALLA
+    const onTap = (e) => {
+      // No prevenir si es un botón o elemento interactivo
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+      e.preventDefault();
+      if(isDead){ restartRef.current?.(); return; }
+      doJump();
     };
-    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-    canvas.addEventListener('touchend', onTouchEnd, { passive: true });
+    
+    // Agregar eventos a todo el documento para que funcione en toda la pantalla
+    document.addEventListener('click', onTap);
+    document.addEventListener('touchend', onTap, { passive: false });
 
     return()=>{
       cancelAnimationFrame(req);
       window.removeEventListener('keydown', onKey);
-      canvas.removeEventListener('touchstart', onTouchStart);
-      canvas.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('click', onTap);
+      document.removeEventListener('touchend', onTap);
     };
   },[restartKey, onClose]);
 
@@ -590,7 +597,7 @@ function FlappyGame({ onClose, currentUser }) {
       {lb.length===0
         ?<div style={{textAlign:'center',padding:'16px 0',color:'#6e6e73',fontSize:12}}><div style={{fontSize:28,marginBottom:6}}>🥜</div>¡Sé el primero!</div>
         :<div style={{display:'flex',flexDirection:'column',gap:5,overflowY:'auto',maxHeight:H-60}}>
-          {lb.map((entry,i)=>{
+          {[...lb].sort((a,b)=>b.score-a.score).map((entry,i)=>{
             const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
             return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:13,background:isTop?col.bg:'rgba(255,255,255,0.35)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.5)'}}>
               <span style={{fontSize:isTop?15:11,fontWeight:700,minWidth:18,textAlign:'center',color:isTop?col.text:'#6e6e73'}}>{isTop?MEDAL[i]:i+1}</span>
@@ -638,15 +645,38 @@ function FlappyGame({ onClose, currentUser }) {
                 onClick={e=>{e.stopPropagation();jump();}}>
                 <canvas ref={canvasRef} width={W} height={H} style={{display:'block',maxWidth:'100%'}}/>
                 {dead&&(
-                  <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.88)',backdropFilter:'blur(16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,borderRadius:14}}>
-                    <span style={{fontSize:44}}>💥</span>
-                    <p style={{color:'#1d1d1f',fontWeight:800,fontSize:20,letterSpacing:'-0.6px',margin:0}}>Game Over</p>
-                    <p style={{color:'#6e6e73',fontSize:13,margin:0}}>{score} tuberías 🏆</p>
-                    <button onClick={e=>{e.stopPropagation();restart();}}
-                      style={{background:'#007aff',color:'white',border:'none',borderRadius:22,padding:'10px 28px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(0,122,255,0.4)',marginTop:4}}>
-                      Try Again
-                    </button>
-                  </div>
+                  <button onClick={e=>{e.stopPropagation();restart();}}
+                    style={{
+                      position:'absolute',
+                      top:'50%',
+                      left:'50%',
+                      transform:'translate(-50%,-50%)',
+                      background:'rgba(255,255,255,0.22)',
+                      backdropFilter:'blur(8px)',
+                      border:'1.5px solid rgba(255,255,255,0.5)',
+                      borderRadius:16,
+                      width:56,
+                      height:56,
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center',
+                      cursor:'pointer',
+                      fontSize:26,
+                      color:'white',
+                      transition:'all 0.2s',
+                      boxShadow:'0 4px 20px rgba(0,0,0,0.25)'
+                    }}
+                    onMouseEnter={e=>{
+                      e.currentTarget.style.background='rgba(255,255,255,0.35)';
+                      e.currentTarget.style.transform='translate(-50%,-50%) scale(1.1)';
+                    }}
+                    onMouseLeave={e=>{
+                      e.currentTarget.style.background='rgba(255,255,255,0.22)';
+                      e.currentTarget.style.transform='translate(-50%,-50%) scale(1)';
+                    }}
+                  >
+                    ↻
+                  </button>
                 )}
               </div>
               <button style={btn} onClick={e=>{e.stopPropagation();jump();}}
@@ -701,13 +731,6 @@ const fetchLeaderboard = async () => {
   } catch (e) { console.error('Error cargando leaderboard:', e); }
   return getLeaderboard();
 };
-
-const MEDAL = ['🥇','🥈','🥉'];
-const TOP_COLORS = [
-  { text:'#FFD700', glow:'rgba(255,215,0,0.4)', bg:'rgba(255,215,0,0.12)' },
-  { text:'#C0C0C0', glow:'rgba(192,192,192,0.4)', bg:'rgba(192,192,192,0.1)' },
-  { text:'#CD7F32', glow:'rgba(205,127,50,0.4)',  bg:'rgba(205,127,50,0.1)' },
-];
 
 function Leaderboard({ onClose, currentUser }) {
   const lb = getLeaderboard();
@@ -784,7 +807,16 @@ function SnakeGame({ onClose, currentUser }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [equippedSkin, setEquippedSkin] = useState(null);
+  // Refs para que drawGame (closure estático) siempre lea el valor actual
+  const snakeColorRef   = useRef('#00ff88');
+  const foodEmojiRef    = useRef('🍎');
+  const equippedSkinRef = useRef(null);
   const W = COLS*CELL, H = ROWS*CELL;
+
+  // Sincronizar refs con estado para que drawGame siempre lea el valor actual
+  useEffect(() => { snakeColorRef.current = snakeColor; }, [snakeColor]);
+  useEffect(() => { foodEmojiRef.current = foodEmoji; }, [foodEmoji]);
+  useEffect(() => { equippedSkinRef.current = equippedSkin; }, [equippedSkin]);
 
   // Cargar leaderboard desde el servidor al abrir
   useEffect(()=>{
@@ -804,7 +836,9 @@ function SnakeGame({ onClose, currentUser }) {
       const equipped = data.userSkins?.find(us => us.equipped);
       if (equipped) {
         setEquippedSkin(equipped.skin);
+        equippedSkinRef.current = equipped.skin;
         setSnakeColor(equipped.skin.headColor);
+        snakeColorRef.current = equipped.skin.headColor;
       }
     } catch (error) {
       console.error('Error loading equipped skin:', error);
@@ -813,7 +847,9 @@ function SnakeGame({ onClose, currentUser }) {
 
   const handleEquipSkin = (skin) => {
     setEquippedSkin(skin);
+    equippedSkinRef.current = skin;
     setSnakeColor(skin.headColor);
+    snakeColorRef.current = skin.headColor;
   };
 
   const randFood=(snake)=>{let f;do{f=[Math.floor(Math.random()*COLS),Math.floor(Math.random()*ROWS)];}while(snake.some(c=>c[0]===f[0]&&c[1]===f[1]));return f;};
@@ -829,9 +865,9 @@ function SnakeGame({ onClose, currentUser }) {
     ctx.fillRect(0,0,W,H);
     
     // Aplicar efectos de skin si hay una equipada
-    const skin = equippedSkin;
-    let bodyColor = snakeColor;
-    let headColor = snakeColor;
+    const skin = equippedSkinRef.current;
+    let bodyColor = snakeColorRef.current;
+    let headColor = snakeColorRef.current;
     
     if (skin) {
       bodyColor = skin.bodyColor;
@@ -970,7 +1006,7 @@ function SnakeGame({ onClose, currentUser }) {
     ctx.font = `${CELL-2}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(foodEmoji, fx*CELL+CELL/2, fy*CELL+CELL/2);
+    ctx.fillText(foodEmojiRef.current, fx*CELL+CELL/2, fy*CELL+CELL/2);
   };
 
   const loop=(ts)=>{
@@ -1005,7 +1041,7 @@ function SnakeGame({ onClose, currentUser }) {
       nextDir:[1,0],
       dirQueue:[],
       score:0,
-      speed:120, // Velocidad inicial más lenta para móvil
+      speed:120,
       lastTick:0,
       dead:false
     };
@@ -1026,7 +1062,12 @@ function SnakeGame({ onClose, currentUser }) {
     const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],W:[0,-1],s:[0,1],S:[0,1],a:[-1,0],A:[-1,0],d:[1,0],D:[1,0]};
     const onKey=(e)=>{
       if(e.key==='Escape'){onClose();return;}
-      if(e.key===' '||e.key==='Enter'){e.preventDefault();if(gRef.current?.dead)startGame();return;}
+      // Reiniciar con cualquier tecla de control cuando está muerto
+      if(gRef.current?.dead && (e.key===' '||e.key==='Enter'||e.key.startsWith('Arrow')||['w','a','s','d','W','A','S','D'].includes(e.key))){
+        e.preventDefault();
+        startGame();
+        return;
+      }
       const next=KEYS[e.key];if(!next)return;e.preventDefault();
       const g=gRef.current;if(!g||g.dead)return;
       const last=g.dirQueue.length>0?g.dirQueue[g.dirQueue.length-1]:g.dir;
@@ -1036,7 +1077,7 @@ function SnakeGame({ onClose, currentUser }) {
       if(g.dirQueue.length<1)g.dirQueue.push(next); // Solo 1 input en cola para máxima respuesta
     };
     
-    // Controles táctiles optimizados para móvil
+    // Controles táctiles optimizados para móvil - TODA LA PANTALLA
     let touchStartX = null;
     let touchStartY = null;
     let touchStartTime = null;
@@ -1044,6 +1085,8 @@ function SnakeGame({ onClose, currentUser }) {
     const maxSwipeTime = 300; // Tiempo máximo para considerar un swipe rápido
     
     const onTouchStart = (e) => {
+      // No prevenir si es un botón o elemento interactivo
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
       e.preventDefault();
       const touch = e.touches[0];
       touchStartX = touch.clientX;
@@ -1052,6 +1095,8 @@ function SnakeGame({ onClose, currentUser }) {
     };
     
     const onTouchMove = (e) => {
+      // No prevenir si es un botón o elemento interactivo
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
       e.preventDefault(); // Prevenir scroll
       
       // Detección en tiempo real para mejor respuesta
@@ -1090,27 +1135,25 @@ function SnakeGame({ onClose, currentUser }) {
     };
     
     const onTouchEnd = (e) => {
+      // No prevenir si es un botón o elemento interactivo
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
       e.preventDefault();
       touchStartX = null;
       touchStartY = null;
       touchStartTime = null;
     };
     
-    const canvas = canvasRef.current;
     window.addEventListener('keydown',onKey);
-    if (canvas) {
-      canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-      canvas.addEventListener('touchend', onTouchEnd, { passive: false });
-    }
+    // Agregar eventos táctiles a TODO el documento para que funcione en toda la pantalla
+    document.addEventListener('touchstart', onTouchStart, { passive: false });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd, { passive: false });
     
     return () => {
       window.removeEventListener('keydown',onKey);
-      if (canvas) {
-        canvas.removeEventListener('touchstart', onTouchStart);
-        canvas.removeEventListener('touchmove', onTouchMove);
-        canvas.removeEventListener('touchend', onTouchEnd);
-      }
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
     };
   },[onClose]);
 
@@ -1135,7 +1178,7 @@ function SnakeGame({ onClose, currentUser }) {
         <div style={{textAlign:'center',padding:'20px 0',color:'#6e6e73',fontSize:12}}><div style={{fontSize:28,marginBottom:6}}>🎮</div>¡Sé el primero!</div>
       ):(
         <div style={{display:'flex',flexDirection:'column',gap:5,overflowY:'auto',maxHeight:H}}>
-          {lb.map((entry,i)=>{
+          {[...lb].sort((a,b)=>b.score-a.score).map((entry,i)=>{
             const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
             return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:13,background:isTop?col.bg:'rgba(255,255,255,0.35)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.5)',boxShadow:isTop?`0 3px 10px ${col.glow}`:'none'}}>
               <span style={{fontSize:isTop?15:11,fontWeight:700,minWidth:18,textAlign:'center',color:isTop?col.text:'#6e6e73'}}>{isTop?MEDAL[i]:i+1}</span>
@@ -1211,12 +1254,38 @@ function SnakeGame({ onClose, currentUser }) {
               <div style={{position:'relative',borderRadius:18,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.95)',boxShadow:'inset 0 2px 16px rgba(0,0,0,0.06)'}}>
                 <canvas ref={canvasRef} width={W} height={H} style={{display:'block',maxWidth:'100%'}}/>
                 {dead&&(
-                  <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.88)',backdropFilter:'blur(16px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,borderRadius:16}}>
-                    <span style={{fontSize:40}}>😵</span>
-                    <p style={{color:'#1d1d1f',fontWeight:800,fontSize:20,letterSpacing:'-0.6px',margin:0}}>Game Over</p>
-                    <p style={{color:'#6e6e73',fontSize:13,margin:0}}>{score} pts guardados 🏆</p>
-                    <button onClick={startGame} style={{background:'#007aff',color:'white',border:'none',borderRadius:22,padding:'10px 28px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 6px 20px rgba(0,122,255,0.4)',marginTop:4}}>Try Again</button>
-                  </div>
+                  <button onClick={startGame}
+                    style={{
+                      position:'absolute',
+                      top:'50%',
+                      left:'50%',
+                      transform:'translate(-50%,-50%)',
+                      background:'rgba(255,255,255,0.22)',
+                      backdropFilter:'blur(8px)',
+                      border:'1.5px solid rgba(255,255,255,0.5)',
+                      borderRadius:16,
+                      width:56,
+                      height:56,
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center',
+                      cursor:'pointer',
+                      fontSize:26,
+                      color:'#1d1d1f',
+                      transition:'all 0.2s',
+                      boxShadow:'0 4px 20px rgba(0,0,0,0.15)'
+                    }}
+                    onMouseEnter={e=>{
+                      e.currentTarget.style.background='rgba(255,255,255,0.4)';
+                      e.currentTarget.style.transform='translate(-50%,-50%) scale(1.1)';
+                    }}
+                    onMouseLeave={e=>{
+                      e.currentTarget.style.background='rgba(255,255,255,0.22)';
+                      e.currentTarget.style.transform='translate(-50%,-50%) scale(1)';
+                    }}
+                  >
+                    ↻
+                  </button>
                 )}
               </div>
               
@@ -1225,7 +1294,7 @@ function SnakeGame({ onClose, currentUser }) {
                 <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
                   <span style={{fontSize:12,fontWeight:600,color:'#6e6e73'}}>Color:</span>
                   {['#00ff88','#ff4757','#3742fa','#ffa502','#7bed9f','#ff6b6b'].map(color=>(
-                    <button key={color} onClick={()=>setSnakeColor(color)}
+                    <button key={color} onClick={()=>{ setSnakeColor(color); snakeColorRef.current=color; equippedSkinRef.current=null; setEquippedSkin(null); }}
                       style={{width:24,height:24,borderRadius:12,background:color,border:snakeColor===color?'2px solid #1d1d1f':'1px solid rgba(255,255,255,0.3)',cursor:'pointer'}}/>
                   ))}
                   <button onClick={()=>setShowColorPicker(true)}
@@ -1234,7 +1303,7 @@ function SnakeGame({ onClose, currentUser }) {
                 <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
                   <span style={{fontSize:12,fontWeight:600,color:'#6e6e73'}}>Comida:</span>
                   {['🍎','🍊','🍌','🍇','🍓','🥕','🍒','🥝'].map(emoji=>(
-                    <button key={emoji} onClick={()=>setFoodEmoji(emoji)}
+                    <button key={emoji} onClick={()=>{ setFoodEmoji(emoji); foodEmojiRef.current=emoji; }}
                       style={{fontSize:16,background:foodEmoji===emoji?'rgba(0,122,255,0.2)':'transparent',border:foodEmoji===emoji?'1px solid #007aff':'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'4px 6px',cursor:'pointer'}}>{emoji}</button>
                   ))}
                   <button onClick={()=>setShowEmojiPicker(true)}
@@ -1247,7 +1316,7 @@ function SnakeGame({ onClose, currentUser }) {
                 <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={()=>setShowColorPicker(false)}>
                   <div style={{background:'white',borderRadius:16,padding:20,maxWidth:300}} onClick={e=>e.stopPropagation()}>
                     <h3 style={{margin:'0 0 15px',fontSize:16,fontWeight:700}}>Elige un color</h3>
-                    <input type="color" value={snakeColor} onChange={e=>setSnakeColor(e.target.value)}
+                    <input type="color" value={snakeColor} onChange={e=>{ setSnakeColor(e.target.value); snakeColorRef.current=e.target.value; equippedSkinRef.current=null; setEquippedSkin(null); }}
                       style={{width:'100%',height:40,border:'none',borderRadius:8,cursor:'pointer'}}/>
                     <div style={{display:'flex',gap:8,marginTop:15,justifyContent:'flex-end'}}>
                       <button onClick={()=>setShowColorPicker(false)}
@@ -1266,7 +1335,7 @@ function SnakeGame({ onClose, currentUser }) {
                     <h3 style={{margin:'0 0 15px',fontSize:16,fontWeight:700}}>Elige un emoji</h3>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(8, 1fr)',gap:8}}>
                       {['🍎','🍊','🍌','🍇','🍓','🥕','🍒','🥝','🍑','🥭','🍍','🥥','🫐','🍈','🍉','🍋','🥑','🍅','🌶️','🥒','🥬','🥦','🧄','🧅','🌽','🥖','🍞','🥨','🧀','🥚','🍳','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🥪','🌮','🌯','🥙','🧆','🥘','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🎂','🍰','🍪','🍫','🍬','🍭'].map(emoji=>(
-                        <button key={emoji} onClick={()=>{setFoodEmoji(emoji);setShowEmojiPicker(false);}}
+                        <button key={emoji} onClick={()=>{ setFoodEmoji(emoji); foodEmojiRef.current=emoji; setShowEmojiPicker(false); }}
                           style={{fontSize:20,padding:8,border:'1px solid #ddd',borderRadius:8,background:'white',cursor:'pointer',transition:'background 0.2s'}}
                           onMouseEnter={e=>e.target.style.background='#f0f0f0'}
                           onMouseLeave={e=>e.target.style.background='white'}>{emoji}</button>
@@ -1449,17 +1518,36 @@ export default function Configuracion() {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 5*1024*1024) { showToast('Máx. 5MB','error'); return; }
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    // Comprimir a máx 400x400 y calidad 0.75 antes de base64
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 400;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+      else        { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const b64 = canvas.toDataURL('image/jpeg', 0.75);
+      URL.revokeObjectURL(url);
+      setAvatarPreview(b64);
+      setAvatarFile(b64);
+    };
+    img.src = url;
   };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault(); setSavingProfile(true);
     try {
-      const body = new FormData();
-      if (fullName.trim() && fullName !== user?.fullName) body.append('fullName', fullName.trim());
-      if (avatarFile) body.append('avatar', avatarFile);
-      const d    = await fetch(`${API_BASE}/api/auth/profile`, { method:'PUT', headers:{ Authorization:`Bearer ${localStorage.getItem('token')}` }, body });
+      const body = {};
+      if (fullName.trim() && fullName !== user?.fullName) body.fullName = fullName.trim();
+      if (avatarFile) body.avatarBase64 = avatarFile; // base64 string
+      const d    = await fetch(`${API_BASE}/api/auth/profile`, {
+        method:'PUT',
+        headers:{ Authorization:`Bearer ${localStorage.getItem('token')}`, 'Content-Type':'application/json' },
+        body: JSON.stringify(body),
+      });
       const json = await d.json();
       if (!d.ok) throw new Error(json.error || 'Error');
       if (updateUser) updateUser(json.user);

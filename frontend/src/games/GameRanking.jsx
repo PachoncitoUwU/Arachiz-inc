@@ -8,9 +8,13 @@ import { MEDAL, TOP_COLORS, LOWER_IS_BETTER } from './gameUtils';
 export default function GameRanking({ lb = [], game = '', maxHeight = 400 }) {
   const lowerBetter = LOWER_IS_BETTER.includes(game);
 
+  // Ordenar en el cliente también — por si el backend devuelve orden incorrecto
+  const sorted = [...lb].sort((a, b) =>
+    lowerBetter ? a.score - b.score : b.score - a.score
+  );
+
   const formatScore = (score) => {
-    if (game === 'reaction') return `${score} ms`;
-    if (game === 'wordle')   return `${score} intentos`;
+    if (game === 'wordle') return `${score} intentos`;
     return `${score} pts`;
   };
 
@@ -33,7 +37,7 @@ export default function GameRanking({ lb = [], game = '', maxHeight = 400 }) {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY:'auto', maxHeight }}>
-          {lb.map((entry, i) => {
+          {sorted.map((entry, i) => {
             const isTop = i < 3;
             const col   = isTop ? TOP_COLORS[i] : null;
             return (

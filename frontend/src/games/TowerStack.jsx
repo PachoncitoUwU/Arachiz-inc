@@ -146,7 +146,12 @@ export default function TowerStack({ onClose, currentUser }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { e.preventDefault(); handleAction(); }
+      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || 
+          e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+          e.key === 'a' || e.key === 'A' || e.key === 's' || e.key === 'S' || e.key === 'd' || e.key === 'D') { 
+        e.preventDefault(); 
+        handleAction(); 
+      }
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
@@ -161,15 +166,38 @@ export default function TowerStack({ onClose, currentUser }) {
         onClick={e => { e.stopPropagation(); handleAction(); }}>
         <canvas ref={canvasRef} width={W} height={H} style={{ display:'block' }}/>
         {dead && (
-          <div style={{ position:'absolute', inset:0, background:'rgba(15,23,42,0.85)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, borderRadius:14 }}>
-            <span style={{ fontSize:44 }}>💥</span>
-            <p style={{ color:'white', fontWeight:800, fontSize:20, margin:0 }}>Game Over</p>
-            <p style={{ color:'rgba(255,255,255,0.6)', fontSize:13, margin:0 }}>{score} bloques 🏆</p>
-            <button onClick={e => { e.stopPropagation(); handleAction(); }}
-              style={{ background:'#007aff', color:'white', border:'none', borderRadius:22, padding:'10px 28px', fontSize:14, fontWeight:700, cursor:'pointer', marginTop:4 }}>
-              Try Again
-            </button>
-          </div>
+          <button onClick={e => { e.stopPropagation(); handleAction(); }}
+            style={{
+              position:'absolute',
+              top:'50%',
+              left:'50%',
+              transform:'translate(-50%,-50%)',
+              background:'rgba(255,255,255,0.22)',
+              backdropFilter:'blur(8px)',
+              border:'1.5px solid rgba(255,255,255,0.5)',
+              borderRadius:16,
+              width:56,
+              height:56,
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              cursor:'pointer',
+              fontSize:26,
+              color:'white',
+              transition:'all 0.2s',
+              boxShadow:'0 4px 20px rgba(0,0,0,0.25)'
+            }}
+            onMouseEnter={e=>{
+              e.currentTarget.style.background='rgba(255,255,255,0.35)';
+              e.currentTarget.style.transform='translate(-50%,-50%) scale(1.1)';
+            }}
+            onMouseLeave={e=>{
+              e.currentTarget.style.background='rgba(255,255,255,0.22)';
+              e.currentTarget.style.transform='translate(-50%,-50%) scale(1)';
+            }}
+          >
+            ↻
+          </button>
         )}
       </div>
       <button style={btn} onClick={e => { e.stopPropagation(); handleAction(); }}

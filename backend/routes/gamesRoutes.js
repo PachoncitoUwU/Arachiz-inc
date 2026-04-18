@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-// Usar DIRECT_URL para evitar el error del pooler pgbouncer con Prisma
 const prisma = new PrismaClient({
   datasources: { db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL } }
 });
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// Mapa de modelos por juego
 const MODELS = {
   snake:    'snakeScore',
   breakout: 'breakoutScore',
@@ -18,8 +16,8 @@ const MODELS = {
   wordle:   'wordleScore',
 };
 
-// Para reaction y wordle, menor score = mejor
-const LOWER_IS_BETTER = ['reaction', 'wordle'];
+// wordle: menor = mejor. Todo lo demás: mayor = mejor
+const LOWER_IS_BETTER = ['wordle'];
 
 // GET /api/games/:game/leaderboard
 router.get('/:game/leaderboard', async (req, res) => {
@@ -28,9 +26,8 @@ router.get('/:game/leaderboard', async (req, res) => {
   if (!model) return res.status(400).json({ error: 'Juego no válido' });
 
   try {
-    const orderBy = LOWER_IS_BETTER.includes(game)
-      ? { score: 'asc' }
-      : { score: 'desc' };
+    // SIEMPRE desc excepto wordle
+    const orderBy = game === 'wordle' ? { score: 'asc' } : { score: 'desc' };
 
     const scores = await prisma[model].findMany({
       orderBy,
@@ -51,7 +48,7 @@ router.get('/:game/leaderboard', async (req, res) => {
   }
 });
 
-// POST /api/games/:game/score  — upsert, solo guarda si es mejor
+// POST /api/games/:game/score
 router.post('/:game/score', authMiddleware, async (req, res) => {
   const { game } = req.params;
   const { score } = req.body;
@@ -62,17 +59,19 @@ router.post('/:game/score', authMiddleware, async (req, res) => {
 
   try {
     const existing = await prisma[model].findUnique({ where: { userId: req.user.id } });
+
+    // Para wordle: guardar si es menor. Para todo lo demás: guardar si es mayor
     const isBetter = !existing || (
-      LOWER_IS_BETTER.includes(game)
-        ? score < existing.score
-        : score > existing.score
+      game === 'wordle'
+        ? Number(score) < Number(existing.score)
+        : Number(score) > Number(existing.score)
     );
 
     if (isBetter) {
       await prisma[model].upsert({
         where:  { userId: req.user.id },
-        update: { score },
-        create: { userId: req.user.id, score },
+        update: { score: Number(score) },
+        create: { userId: req.user.id, score: Number(score) },
       });
     }
 

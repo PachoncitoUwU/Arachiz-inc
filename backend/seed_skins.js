@@ -1,211 +1,175 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const EPIC_SKINS = [
-  // SKIN POR DEFECTO (GRATIS)
+const SKINS = [
+  // ── GRATIS ──────────────────────────────────────────────────────────────────
   {
-    name: 'Clásica Verde',
-    description: 'La serpiente clásica de toda la vida. Simple pero efectiva.',
-    price: 0,
-    rarity: 'common',
-    headColor: '#00ff88',
-    bodyColor: '#00ff88',
-    pattern: 'solid',
-    trailEffect: 'none',
-    eyeStyle: 'normal',
-    isDefault: true
+    name: 'Clásica',
+    description: 'La serpiente de toda la vida. Simple, limpia, efectiva.',
+    price: 0, rarity: 'common',
+    headColor: '#00ff88', bodyColor: '#00cc6a',
+    pattern: 'solid', trailEffect: 'none', eyeStyle: 'normal', isDefault: true,
   },
-  
-  // SKINS COMUNES (Baratas)
+
+  // ── COMUNES ($1.500 – $2.500) ────────────────────────────────────────────────
   {
-    name: 'Serpiente Azul',
-    description: 'Un toque de frescura con este azul vibrante.',
-    price: 2000,
-    rarity: 'common',
-    headColor: '#3742fa',
-    bodyColor: '#3742fa',
-    pattern: 'solid',
-    trailEffect: 'none',
-    eyeStyle: 'normal',
-    isDefault: false
+    name: 'Océano',
+    description: 'Azul profundo como el mar. Fresca y elegante.',
+    price: 1500, rarity: 'common',
+    headColor: '#0ea5e9', bodyColor: '#0284c7',
+    pattern: 'solid', trailEffect: 'none', eyeStyle: 'normal', isDefault: false,
   },
   {
-    name: 'Serpiente Roja',
-    description: 'Peligro y pasión en cada movimiento.',
-    price: 2000,
-    rarity: 'common',
-    headColor: '#ff4757',
-    bodyColor: '#ff4757',
-    pattern: 'solid',
-    trailEffect: 'none',
-    eyeStyle: 'normal',
-    isDefault: false
+    name: 'Lava',
+    description: 'Rojo ardiente. Peligrosa y apasionada.',
+    price: 1500, rarity: 'common',
+    headColor: '#ef4444', bodyColor: '#dc2626',
+    pattern: 'solid', trailEffect: 'none', eyeStyle: 'normal', isDefault: false,
   },
   {
-    name: 'Serpiente Dorada',
-    description: 'Brilla como el oro mientras devoras manzanas.',
-    price: 3000,
-    rarity: 'common',
-    headColor: '#ffa502',
-    bodyColor: '#ffa502',
-    pattern: 'solid',
-    trailEffect: 'none',
-    eyeStyle: 'normal',
-    isDefault: false
-  },
-  
-  // SKINS RARAS (Precio medio)
-  {
-    name: 'Neón Cibernético',
-    description: 'Directa del futuro. Líneas neón que brillan en la oscuridad.',
-    price: 5000,
-    rarity: 'rare',
-    headColor: '#00ffff',
-    bodyColor: '#ff00ff',
-    pattern: 'neon',
-    trailEffect: 'sparkles',
-    eyeStyle: 'laser',
-    isDefault: false
+    name: 'Amatista',
+    description: 'Morado profundo con brillo cristalino.',
+    price: 2000, rarity: 'common',
+    headColor: '#a855f7', bodyColor: '#7c3aed',
+    pattern: 'solid', trailEffect: 'none', eyeStyle: 'normal', isDefault: false,
   },
   {
-    name: 'Camuflaje Militar',
-    description: 'Sigilosa y táctica. Perfecta para operaciones encubiertas.',
-    price: 5500,
-    rarity: 'rare',
-    headColor: '#4a5568',
-    bodyColor: '#2d3748',
-    pattern: 'gradient',
-    trailEffect: 'none',
-    eyeStyle: 'angry',
-    isDefault: false
+    name: 'Naranja Neón',
+    description: 'Vibrante y llamativa. Imposible de ignorar.',
+    price: 2000, rarity: 'common',
+    headColor: '#fb923c', bodyColor: '#ea580c',
+    pattern: 'solid', trailEffect: 'none', eyeStyle: 'normal', isDefault: false,
+  },
+
+  // ── RARAS ($3.500 – $5.000) ──────────────────────────────────────────────────
+  {
+    name: 'Hielo Ártico',
+    description: 'Cristales de hielo que dejan un rastro helado a su paso.',
+    price: 3500, rarity: 'rare',
+    headColor: '#e0f7ff', bodyColor: '#7dd3fc',
+    pattern: 'ice', trailEffect: 'ice', eyeStyle: 'normal', isDefault: false,
   },
   {
-    name: 'Serpiente de Hielo',
-    description: 'Fría como el invierno. Deja un rastro congelado a tu paso.',
-    price: 6000,
-    rarity: 'rare',
-    headColor: '#a0d8f1',
-    bodyColor: '#e0f4ff',
-    pattern: 'ice',
-    trailEffect: 'ice',
-    eyeStyle: 'cute',
-    isDefault: false
+    name: 'Degradado Solar',
+    description: 'Transición de colores cálidos del amanecer al atardecer.',
+    price: 4000, rarity: 'rare',
+    headColor: '#fbbf24', bodyColor: '#f97316',
+    pattern: 'gradient', trailEffect: 'sparkles', eyeStyle: 'normal', isDefault: false,
   },
-  
-  // SKINS ÉPICAS (Caras)
+  {
+    name: 'Neón Verde',
+    description: 'Brilla en la oscuridad. Efecto neón puro.',
+    price: 4500, rarity: 'rare',
+    headColor: '#00ff88', bodyColor: '#00cc6a',
+    pattern: 'neon', trailEffect: 'sparkles', eyeStyle: 'normal', isDefault: false,
+  },
+  {
+    name: 'Neón Rosa',
+    description: 'Rosa eléctrico con aura brillante. Estilo cyberpunk.',
+    price: 4500, rarity: 'rare',
+    headColor: '#f472b6', bodyColor: '#ec4899',
+    pattern: 'neon', trailEffect: 'hearts', eyeStyle: 'cute', isDefault: false,
+  },
+  {
+    name: 'Estrellas',
+    description: 'Deja un rastro de estrellas doradas a su paso.',
+    price: 5000, rarity: 'rare',
+    headColor: '#fbbf24', bodyColor: '#d97706',
+    pattern: 'solid', trailEffect: 'stars', eyeStyle: 'normal', isDefault: false,
+  },
+
+  // ── ÉPICAS ($7.000 – $12.000) ────────────────────────────────────────────────
   {
     name: 'Dragón de Fuego',
-    description: '🔥 No es una serpiente, es un DRAGÓN. Escupe fuego y domina el tablero.',
-    price: 10000,
-    rarity: 'epic',
-    headColor: '#ff6b35',
-    bodyColor: '#ff9a3c',
-    pattern: 'fire',
-    trailEffect: 'fire',
-    eyeStyle: 'angry',
-    isDefault: false
+    description: 'Llamas que consumen todo a su paso. Poder puro.',
+    price: 7000, rarity: 'epic',
+    headColor: '#ffd700', bodyColor: '#ff4500',
+    pattern: 'fire', trailEffect: 'fire', eyeStyle: 'angry', isDefault: false,
   },
   {
-    name: 'Serpiente Metálica',
-    description: '⚙️ Forjada en acero. Indestructible y reluciente.',
-    price: 10000,
-    rarity: 'epic',
-    headColor: '#718096',
-    bodyColor: '#a0aec0',
-    pattern: 'metallic',
-    trailEffect: 'sparkles',
-    eyeStyle: 'laser',
-    isDefault: false
+    name: 'Arcoíris',
+    description: 'Todos los colores del espectro en una sola serpiente.',
+    price: 8000, rarity: 'epic',
+    headColor: '#ff0080', bodyColor: '#0080ff',
+    pattern: 'rainbow', trailEffect: 'sparkles', eyeStyle: 'cute', isDefault: false,
   },
   {
-    name: 'Arcoíris Místico',
-    description: '🌈 Todos los colores del universo en una sola serpiente.',
-    price: 12000,
-    rarity: 'epic',
-    headColor: '#ff0080',
-    bodyColor: '#00ff80',
-    pattern: 'rainbow',
-    trailEffect: 'stars',
-    eyeStyle: 'cute',
-    isDefault: false
-  },
-  
-  // SKINS LEGENDARIAS (Muy caras)
-  {
-    name: 'Galaxia Infinita',
-    description: '🌌 El cosmos entero fluye por tu cuerpo. Estrellas, nebulosas y agujeros negros.',
-    price: 20000,
-    rarity: 'legendary',
-    headColor: '#1a1a2e',
-    bodyColor: '#16213e',
-    pattern: 'galaxy',
-    trailEffect: 'stars',
-    eyeStyle: 'laser',
-    isDefault: false
+    name: 'Galaxia',
+    description: 'El cosmos en tu serpiente. Morado profundo con estrellas.',
+    price: 9000, rarity: 'epic',
+    headColor: '#c084fc', bodyColor: '#4a148c',
+    pattern: 'galaxy', trailEffect: 'stars', eyeStyle: 'normal', isDefault: false,
   },
   {
-    name: 'Relámpago Divino',
-    description: '⚡ La velocidad de un rayo. Electricidad pura recorriendo cada segmento.',
-    price: 22000,
-    rarity: 'legendary',
-    headColor: '#ffeb3b',
-    bodyColor: '#ffc107',
-    pattern: 'neon',
-    trailEffect: 'lightning',
-    eyeStyle: 'laser',
-    isDefault: false
+    name: 'Rayo',
+    description: 'Velocidad eléctrica. Deja rayos a su paso.',
+    price: 10000, rarity: 'epic',
+    headColor: '#fde047', bodyColor: '#ca8a04',
+    pattern: 'neon', trailEffect: 'lightning', eyeStyle: 'laser', isDefault: false,
   },
   {
-    name: 'Sombra Espectral',
-    description: '👻 Ni viva ni muerta. Una entidad de otro plano que devora almas... y manzanas.',
-    price: 25000,
-    rarity: 'legendary',
-    headColor: '#2d3436',
-    bodyColor: '#636e72',
-    pattern: 'gradient',
-    trailEffect: 'sparkles',
-    eyeStyle: 'laser',
-    isDefault: false
+    name: 'Neón Azul Eléctrico',
+    description: 'Azul eléctrico que ilumina la oscuridad.',
+    price: 10000, rarity: 'epic',
+    headColor: '#60a5fa', bodyColor: '#2563eb',
+    pattern: 'neon', trailEffect: 'lightning', eyeStyle: 'laser', isDefault: false,
   },
-  
-  // SKIN MÍTICA (La más cara y épica)
+
+  // ── LEGENDARIAS ($15.000 – $25.000) ─────────────────────────────────────────
   {
-    name: 'Dios Serpiente Azteca',
-    description: '🐍👑 QUETZALCÓATL. La serpiente emplumada de las leyendas. Poder absoluto.',
-    price: 50000,
-    rarity: 'mythic',
-    headColor: '#00d2d3',
-    bodyColor: '#1e3799',
-    pattern: 'rainbow',
-    trailEffect: 'stars',
-    eyeStyle: 'laser',
-    isDefault: false
-  }
+    name: 'Serpiente Dorada',
+    description: 'Oro puro. Solo los mejores merecen esta skin.',
+    price: 15000, rarity: 'legendary',
+    headColor: '#ffd700', bodyColor: '#ffb300',
+    pattern: 'gold', trailEffect: 'sparkles', eyeStyle: 'normal', isDefault: false,
+  },
+  {
+    name: 'Fénix',
+    description: 'Renace de las llamas. Degradado épico de fuego y oro.',
+    price: 20000, rarity: 'legendary',
+    headColor: '#ffd700', bodyColor: '#ff4500',
+    pattern: 'fire', trailEffect: 'fire', eyeStyle: 'laser', isDefault: false,
+  },
+  {
+    name: 'Cosmos Infinito',
+    description: 'Galaxia + arcoíris. La skin más hermosa del universo.',
+    price: 22000, rarity: 'legendary',
+    headColor: '#c084fc', bodyColor: '#1a0030',
+    pattern: 'galaxy', trailEffect: 'void', eyeStyle: 'laser', isDefault: false,
+  },
+
+  // ── MÍTICAS ($35.000+) ───────────────────────────────────────────────────────
+  {
+    name: '☠️ El Vacío',
+    description: 'Oscuridad absoluta. Solo los más valientes se atreven.',
+    price: 35000, rarity: 'mythic',
+    headColor: '#c084fc', bodyColor: '#0d0020',
+    pattern: 'void', trailEffect: 'void', eyeStyle: 'laser', isDefault: false,
+  },
+  {
+    name: '👑 Serpiente Suprema',
+    description: 'La skin definitiva. Arcoíris + fuego + rayos. Eres una leyenda.',
+    price: 50000, rarity: 'mythic',
+    headColor: '#ffd700', bodyColor: '#ff0080',
+    pattern: 'rainbow', trailEffect: 'lightning', eyeStyle: 'laser', isDefault: false,
+  },
 ];
 
-async function seedSkins() {
-  console.log('🐍 Seeding epic Snake skins...');
-  
-  try {
-    // Eliminar skins existentes (opcional, comentar si no quieres borrar)
-    // await prisma.snakeSkin.deleteMany({});
-    
-    for (const skinData of EPIC_SKINS) {
-      const skin = await prisma.snakeSkin.upsert({
-        where: { name: skinData.name },
-        update: skinData,
-        create: skinData
-      });
-      console.log(`✅ Created/Updated: ${skin.name} (${skin.rarity}) - $${skin.price} COP`);
-    }
-    
-    console.log('\n🎉 All skins seeded successfully!');
-    console.log(`📊 Total skins: ${EPIC_SKINS.length}`);
-  } catch (error) {
-    console.error('❌ Error seeding skins:', error);
-  } finally {
-    await prisma.$disconnect();
+async function main() {
+  console.log('🌱 Seeding skins...');
+
+  // Limpiar skins existentes (opcional — comenta si no quieres borrar)
+  await prisma.userSkin.deleteMany({});
+  await prisma.snakeSkin.deleteMany({});
+
+  for (const skin of SKINS) {
+    await prisma.snakeSkin.create({ data: skin });
+    console.log(`  ✅ ${skin.name} (${skin.rarity}) — $${skin.price}`);
   }
+
+  console.log(`\n✨ ${SKINS.length} skins creadas exitosamente`);
 }
 
-seedSkins();
+main()
+  .catch(e => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());

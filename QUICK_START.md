@@ -28,7 +28,6 @@ setup_skins.bat
 O manualmente:
 ```bash
 cd backend
-npx prisma migrate dev --name add_snake_skins
 npx prisma generate
 node seed_skins.js
 ```

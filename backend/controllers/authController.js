@@ -24,6 +24,31 @@ const register = async (req, res) => {
     const newUser = await prisma.user.create({
       data: { userType, fullName, document, email, password: hashedPassword }
     });
+    
+    // Si es instructor, desbloquear todas las skins automáticamente
+    if (userType === 'instructor') {
+      try {
+        const allSkins = await prisma.snakeSkin.findMany();
+        
+        // Crear UserSkin para cada skin disponible
+        const userSkinsData = allSkins.map(skin => ({
+          userId: newUser.id,
+          skinId: skin.id,
+          equipped: skin.isDefault // Equipar la skin por defecto
+        }));
+        
+        await prisma.userSkin.createMany({
+          data: userSkinsData,
+          skipDuplicates: true
+        });
+        
+        console.log(`✅ Todas las skins desbloqueadas para el instructor: ${newUser.fullName}`);
+      } catch (skinError) {
+        console.error('Error desbloqueando skins para instructor:', skinError);
+        // No fallar el registro si hay error con las skins
+      }
+    }
+    
     const { password: _, ...userWithoutPassword } = newUser;
     res.status(201).json({ message: 'Usuario registrado con éxito', user: userWithoutPassword });
   } catch (err) {

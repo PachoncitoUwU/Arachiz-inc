@@ -4,13 +4,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const MEDAL = ['🥇','🥈','🥉'];
 export const TOP_COLORS = [
-  { text:'#FFD700', glow:'rgba(255,215,0,0.4)',   bg:'rgba(255,215,0,0.12)' },
-  { text:'#C0C0C0', glow:'rgba(192,192,192,0.4)', bg:'rgba(192,192,192,0.1)' },
-  { text:'#CD7F32', glow:'rgba(205,127,50,0.4)',  bg:'rgba(205,127,50,0.1)' },
+  { text:'#7A5500', glow:'rgba(255,200,0,0.5)',   bg:'rgba(255,215,0,0.30)' }, // Oro — fondo sólido, texto oscuro
+  { text:'#3D4450', glow:'rgba(160,170,180,0.5)', bg:'rgba(180,190,200,0.35)' }, // Plata — fondo sólido, texto oscuro
+  { text:'#6B3000', glow:'rgba(180,100,30,0.5)',  bg:'rgba(205,127,50,0.30)' }, // Bronce — fondo sólido, texto oscuro
 ];
 
-// Juegos donde menor score = mejor (tiempo de reacción, intentos wordle)
-export const LOWER_IS_BETTER = ['reaction', 'wordle'];
+// Juegos donde menor score = mejor (intentos wordle)
+export const LOWER_IS_BETTER = ['wordle'];
 
 const LS = (game) => `arachiz_${game}_lb`;
 

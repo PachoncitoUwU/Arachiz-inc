@@ -24,26 +24,44 @@ const uploadToSupabase = async (fileBuffer, originalName, folder = '') => {
     throw new Error('Las claves SUPABASE_URL o SUPABASE_ANON_KEY no están configuradas en el archivo .env de tu backend.');
   }
 
-  // Se asume que el bucket 'foto-aprendices' está creado y es público en Supabase.
+  try {
+    // Se asume que el bucket 'foto-aprendices' está creado y es público en Supabase.
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(originalName);
+    const fileName = folder ? `${folder}/${uniqueSuffix}${ext}` : `${uniqueSuffix}${ext}`;
 
-  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-  const ext = path.extname(originalName);
-  const fileName = folder ? `${folder}/${uniqueSuffix}${ext}` : `${uniqueSuffix}${ext}`;
+    console.log('📤 Subiendo archivo a Supabase:', fileName);
 
-  const { data, error } = await supabase.storage
-    .from('foto-aprendices')
-    .upload(fileName, fileBuffer, {
-      contentType: getContentType(ext),
-      upsert: false
-    });
+    const { data, error } = await supabase.storage
+      .from('foto-aprendices')
+      .upload(fileName, fileBuffer, {
+        contentType: getContentType(ext),
+        upsert: false,
+        cacheControl: '3600'
+      });
 
-  if (error) throw new Error('Error subiendo archivo a Supabase Storage: ' + error.message);
+    if (error) {
+      console.error('❌ Error de Supabase:', error);
+      throw new Error('Error subiendo archivo a Supabase Storage: ' + error.message);
+    }
 
-  const { data: publicUrlData } = supabase.storage
-    .from('foto-aprendices')
-    .getPublicUrl(fileName);
+    console.log('✅ Archivo subido exitosamente');
 
-  return publicUrlData.publicUrl;
+    const { data: publicUrlData } = supabase.storage
+      .from('foto-aprendices')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('❌ Error en uploadToSupabase:', error);
+    // Si falla Supabase, devolver la imagen en base64 como fallback
+    if (fileBuffer) {
+      const base64 = fileBuffer.toString('base64');
+      const mimeType = getContentType(path.extname(originalName));
+      return `data:${mimeType};base64,${base64}`;
+    }
+    throw error;
+  }
 };
 
 module.exports = { uploadToSupabase, isSupabaseConfigured: !!supabase };

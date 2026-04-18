@@ -95,10 +95,21 @@ export default function MemoryFlash({ onClose, currentUser }) {
   }, [phase, userSeq, sequence, showSequence]);
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e) => { 
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (phase === 'dead' || phase === 'idle') {
+        // Cualquier tecla reinicia el juego cuando está muerto o idle
+        if (e.key === ' ' || e.key === 'Enter' || e.key.startsWith('Arrow') || 
+            ['w','a','s','d','W','A','S','D'].includes(e.key)) {
+          e.preventDefault();
+          startGame();
+        }
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, phase, startGame]);
 
   const btnStyle = (color, isActive) => {
     const isMobile = window.innerWidth < 700;
@@ -130,14 +141,10 @@ export default function MemoryFlash({ onClose, currentUser }) {
         )}
 
         {phase === 'dead' && (
-          <div style={{ textAlign:'center' }}>
-            <p style={{ color:'#EA4335', fontWeight:800, fontSize:18, margin:'0 0 8px' }}>¡Fallaste!</p>
-            <p style={{ color:'#6e6e73', fontSize:13, margin:'0 0 12px' }}>{score} rondas completadas</p>
-            <button onClick={startGame}
-              style={{ background:'#007aff', color:'white', border:'none', borderRadius:20, padding:'10px 24px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-              Try Again
-            </button>
-          </div>
+          <button onClick={startGame}
+            style={{ background:'#007aff', color:'white', border:'none', borderRadius:22, padding:'12px 32px', fontSize:15, fontWeight:700, cursor:'pointer', boxShadow:'0 6px 20px rgba(0,122,255,0.4)' }}>
+            ↻ Reiniciar
+          </button>
         )}
 
         {(phase === 'showing' || phase === 'input') && (

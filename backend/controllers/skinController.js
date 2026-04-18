@@ -1,18 +1,22 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Mercado Pago SDK v2
-const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+// ePayco SDK para pagos en Colombia (PSE, Nequi, Tarjetas)
+const epayco = require('epayco-sdk-node');
 
-// Configurar cliente de Mercado Pago solo si hay access token
-let client = null;
-if (process.env.MERCADOPAGO_ACCESS_TOKEN && process.env.MERCADOPAGO_ACCESS_TOKEN !== 'your_mercadopago_access_token_here') {
-  client = new MercadoPagoConfig({
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN
+// Configurar cliente de ePayco
+let epaycoClient = null;
+if (process.env.EPAYCO_PUBLIC_KEY && process.env.EPAYCO_PRIVATE_KEY && 
+    process.env.EPAYCO_PUBLIC_KEY !== 'your_epayco_public_key_here') {
+  epaycoClient = epayco({
+    apiKey: process.env.EPAYCO_PUBLIC_KEY,
+    privateKey: process.env.EPAYCO_PRIVATE_KEY,
+    lang: 'ES',
+    test: process.env.EPAYCO_TEST === 'true'
   });
-  console.log('✅ Mercado Pago configurado correctamente');
+  console.log('✅ ePayco configurado correctamente');
 } else {
-  console.warn('⚠️  Mercado Pago no configurado. Configura MERCADOPAGO_ACCESS_TOKEN en .env');
+  console.warn('⚠️  ePayco no configurado. Configura EPAYCO_PUBLIC_KEY y EPAYCO_PRIVATE_KEY en .env');
 }
 
 // Obtener todas las skins disponibles
@@ -35,6 +39,36 @@ exports.getAllSkins = async (req, res) => {
 exports.getUserSkins = async (req, res) => {
   try {
     const userId = req.user.id;
+    const userType = req.user.userType;
+    
+    // Si es instructor, desbloquear todas las skins automáticamente si no las tiene
+    if (userType === 'instructor') {
+      const allSkins = await prisma.snakeSkin.findMany();
+      const existingSkins = await prisma.userSkin.findMany({
+        where: { userId }
+      });
+      
+      // Si el instructor no tiene todas las skins, desbloquearlas
+      if (existingSkins.length < allSkins.length) {
+        const existingSkinIds = new Set(existingSkins.map(us => us.skinId));
+        const skinsToUnlock = allSkins.filter(skin => !existingSkinIds.has(skin.id));
+        
+        if (skinsToUnlock.length > 0) {
+          const userSkinsData = skinsToUnlock.map(skin => ({
+            userId,
+            skinId: skin.id,
+            equipped: false
+          }));
+          
+          await prisma.userSkin.createMany({
+            data: userSkinsData,
+            skipDuplicates: true
+          });
+          
+          console.log(`✅ ${skinsToUnlock.length} skins desbloqueadas para instructor: ${req.user.fullName}`);
+        }
+      }
+    }
     
     const userSkins = await prisma.userSkin.findMany({
       where: { userId },
@@ -88,11 +122,33 @@ exports.equipSkin = async (req, res) => {
   }
 };
 
-// Crear orden de compra (Mercado Pago)
+// Desbloquear skin gratis (modo demo — sin pasarela de pago)
+exports.unlockSkin = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { skinId } = req.body;
+
+    const skin = await prisma.snakeSkin.findUnique({ where: { id: skinId } });
+    if (!skin) return res.status(404).json({ error: 'Skin no encontrada' });
+
+    await prisma.userSkin.upsert({
+      where:  { userId_skinId: { userId, skinId } },
+      update: {},
+      create: { userId, skinId, equipped: false },
+    });
+
+    res.json({ success: true, message: `${skin.name} desbloqueada` });
+  } catch (error) {
+    console.error('Error unlocking skin:', error);
+    res.status(500).json({ error: 'Error al desbloquear la skin' });
+  }
+};
+
+// Crear orden de compra (ePayco)
 exports.createOrder = async (req, res) => {
   try {
-    // Verificar que Mercado Pago esté configurado
-    if (!client) {
+    // Verificar que ePayco esté configurado
+    if (!epaycoClient) {
       return res.status(503).json({ 
         error: 'Sistema de pagos no configurado. Contacta al administrador.' 
       });
@@ -129,53 +185,49 @@ exports.createOrder = async (req, res) => {
         amount: skin.price,
         currency: 'COP',
         status: 'pending',
-        paymentMethod: 'mercadopago'
+        paymentMethod: 'epayco'
       }
     });
     
-    // Crear preferencia de pago en Mercado Pago
-    const preference = new Preference(client);
-    
-    const preferenceData = {
-      items: [
-        {
-          title: `Snake Skin: ${skin.name}`,
-          description: skin.description,
-          picture_url: `${process.env.FRONTEND_URL}/snake-skin-${skin.rarity}.png`,
-          category_id: 'game_items',
-          quantity: 1,
-          currency_id: 'COP',
-          unit_price: skin.price
-        }
-      ],
-      payer: {
-        email: req.user.email,
-        name: req.user.fullName
-      },
-      back_urls: {
-        success: `${process.env.FRONTEND_URL}/configuracion?payment=success`,
-        failure: `${process.env.FRONTEND_URL}/configuracion?payment=failure`,
-        pending: `${process.env.FRONTEND_URL}/configuracion?payment=pending`
-      },
-      auto_return: 'approved',
-      external_reference: order.id,
-      notification_url: `${process.env.BACKEND_URL}/api/skins/webhook`,
-      statement_descriptor: 'ARACHIZ SNAKE SKIN'
+    // Crear página de pago en ePayco
+    const paymentData = {
+      name: `Snake Skin: ${skin.name}`,
+      description: skin.description,
+      invoice: order.id,
+      currency: 'cop',
+      amount: skin.price.toString(),
+      tax_base: '0',
+      tax: '0',
+      country: 'co',
+      lang: 'es',
+      external: 'false',
+      extra1: userId,
+      extra2: skinId,
+      extra3: order.id,
+      confirmation: `${process.env.BACKEND_URL}/api/skins/webhook-epayco`,
+      response: `${process.env.FRONTEND_URL}/configuracion`,
+      name_billing: req.user.fullName,
+      email_billing: req.user.email,
+      type_doc_billing: 'cc',
+      mobilephone_billing: '',
+      number_doc_billing: req.user.document || ''
     };
     
-    const response = await preference.create({ body: preferenceData });
+    const payment = await epaycoClient.pagos.create(paymentData);
     
-    // Actualizar la orden con el preferenceId
+    // Actualizar la orden con el ID de ePayco
     await prisma.skinOrder.update({
       where: { id: order.id },
-      data: { preferenceId: response.id }
+      data: { 
+        externalId: payment.data?.ref_payco || payment.ref_payco,
+        preferenceId: payment.data?.ref_payco || payment.ref_payco
+      }
     });
     
     res.json({
       orderId: order.id,
-      preferenceId: response.id,
-      initPoint: response.init_point,
-      sandboxInitPoint: response.sandbox_init_point
+      paymentUrl: payment.data?.urlbanco || payment.urlbanco,
+      reference: payment.data?.ref_payco || payment.ref_payco
     });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -244,6 +296,104 @@ exports.handleWebhook = async (req, res) => {
     res.status(200).json({ received: true });
   } catch (error) {
     console.error('Error handling webhook:', error);
+    res.status(500).json({ error: 'Error procesando webhook' });
+  }
+};
+
+// Webhook de ePayco (Confirmación de pago)
+exports.handleWebhookEpayco = async (req, res) => {
+  try {
+    const {
+      x_ref_payco,
+      x_transaction_id,
+      x_amount,
+      x_currency_code,
+      x_signature,
+      x_approval_code,
+      x_transaction_state,
+      x_response,
+      x_extra1, // userId
+      x_extra2, // skinId
+      x_extra3  // orderId
+    } = req.body;
+    
+    console.log('📥 Webhook ePayco recibido:', req.body);
+    
+    // Verificar firma de seguridad
+    const crypto = require('crypto');
+    const signature = crypto
+      .createHash('sha256')
+      .update(
+        `${process.env.EPAYCO_P_CUST_ID_CLIENTE}^${process.env.EPAYCO_PRIVATE_KEY}^${x_ref_payco}^${x_transaction_id}^${x_amount}^${x_currency_code}`
+      )
+      .digest('hex');
+    
+    if (signature !== x_signature) {
+      console.error('❌ Firma inválida');
+      return res.status(400).json({ error: 'Firma inválida' });
+    }
+    
+    const orderId = x_extra3;
+    
+    // Buscar la orden
+    const order = await prisma.skinOrder.findUnique({
+      where: { id: orderId }
+    });
+    
+    if (!order) {
+      console.error('❌ Orden no encontrada:', orderId);
+      return res.status(404).json({ error: 'Orden no encontrada' });
+    }
+    
+    // Procesar según el estado
+    if (x_response === 'Aceptada' && x_transaction_state === 'Aceptada') {
+      // Pago aprobado
+      await prisma.skinOrder.update({
+        where: { id: order.id },
+        data: {
+          status: 'approved',
+          externalId: x_transaction_id,
+          approvedAt: new Date()
+        }
+      });
+      
+      // Desbloquear la skin
+      await prisma.userSkin.create({
+        data: {
+          userId: order.userId,
+          skinId: order.skinId,
+          equipped: false
+        }
+      });
+      
+      console.log(`✅ Skin desbloqueada para usuario ${order.userId}`);
+    } else if (x_response === 'Rechazada' || x_response === 'Fallida') {
+      // Pago rechazado
+      await prisma.skinOrder.update({
+        where: { id: order.id },
+        data: {
+          status: 'rejected',
+          externalId: x_transaction_id
+        }
+      });
+      
+      console.log(`❌ Pago rechazado para orden ${order.id}`);
+    } else if (x_response === 'Pendiente') {
+      // Pago pendiente
+      await prisma.skinOrder.update({
+        where: { id: order.id },
+        data: {
+          status: 'pending',
+          externalId: x_transaction_id
+        }
+      });
+      
+      console.log(`⏳ Pago pendiente para orden ${order.id}`);
+    }
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error handling ePayco webhook:', error);
     res.status(500).json({ error: 'Error procesando webhook' });
   }
 };

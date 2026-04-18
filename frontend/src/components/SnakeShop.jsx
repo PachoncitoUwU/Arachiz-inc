@@ -1,430 +1,406 @@
 import { useState, useEffect } from 'react';
 
-const RARITY_COLORS = {
-  common: { bg: '#94a3b8', glow: '#cbd5e1', text: 'Común' },
-  rare: { bg: '#3b82f6', glow: '#60a5fa', text: 'Rara' },
-  epic: { bg: '#a855f7', glow: '#c084fc', text: 'Épica' },
-  legendary: { bg: '#f59e0b', glow: '#fbbf24', text: 'Legendaria' },
-  mythic: { bg: '#ef4444', glow: '#f87171', text: 'Mítica' }
+const RARITY = {
+  common:    { label:'Común',     color:'#64748b', glow:'rgba(100,116,139,0.5)', bg:'rgba(100,116,139,0.15)' },
+  rare:      { label:'Rara',      color:'#3b82f6', glow:'rgba(59,130,246,0.5)',  bg:'rgba(59,130,246,0.15)'  },
+  epic:      { label:'Épica',     color:'#a855f7', glow:'rgba(168,85,247,0.5)',  bg:'rgba(168,85,247,0.15)'  },
+  legendary: { label:'Legendaria',color:'#f59e0b', glow:'rgba(245,158,11,0.6)',  bg:'rgba(245,158,11,0.15)'  },
+  mythic:    { label:'Mítica',    color:'#ef4444', glow:'rgba(239,68,68,0.6)',   bg:'rgba(239,68,68,0.15)'   },
 };
 
-export default function SnakeShop({ onClose, onEquipSkin, currentUser }) {
-  const [allSkins, setAllSkins] = useState([]);
+// Skins locales — se usan si el backend no responde
+const LOCAL_SKINS = [
+  { id:'local-1',  name:'Clásica',            description:'La serpiente de toda la vida.',                                    price:0,     rarity:'common',    headColor:'#00ff88', bodyColor:'#00cc6a', pattern:'solid',    trailEffect:'none',      eyeStyle:'normal', isDefault:true  },
+  { id:'local-2',  name:'Océano',             description:'Azul profundo como el mar.',                                       price:1500,  rarity:'common',    headColor:'#0ea5e9', bodyColor:'#0284c7', pattern:'solid',    trailEffect:'none',      eyeStyle:'normal', isDefault:false },
+  { id:'local-3',  name:'Lava',               description:'Rojo ardiente. Peligrosa y apasionada.',                           price:1500,  rarity:'common',    headColor:'#ef4444', bodyColor:'#dc2626', pattern:'solid',    trailEffect:'none',      eyeStyle:'normal', isDefault:false },
+  { id:'local-4',  name:'Amatista',           description:'Morado profundo con brillo cristalino.',                           price:2000,  rarity:'common',    headColor:'#a855f7', bodyColor:'#7c3aed', pattern:'solid',    trailEffect:'none',      eyeStyle:'normal', isDefault:false },
+  { id:'local-5',  name:'Naranja Neón',       description:'Vibrante y llamativa.',                                            price:2000,  rarity:'common',    headColor:'#fb923c', bodyColor:'#ea580c', pattern:'solid',    trailEffect:'none',      eyeStyle:'normal', isDefault:false },
+  { id:'local-6',  name:'Hielo Ártico',       description:'Cristales de hielo que dejan un rastro helado.',                   price:3500,  rarity:'rare',      headColor:'#e0f7ff', bodyColor:'#7dd3fc', pattern:'ice',      trailEffect:'ice',       eyeStyle:'normal', isDefault:false },
+  { id:'local-7',  name:'Degradado Solar',    description:'Transición de colores cálidos del amanecer al atardecer.',         price:4000,  rarity:'rare',      headColor:'#fbbf24', bodyColor:'#f97316', pattern:'gradient', trailEffect:'sparkles',  eyeStyle:'normal', isDefault:false },
+  { id:'local-8',  name:'Neón Verde',         description:'Brilla en la oscuridad. Efecto neón puro.',                        price:4500,  rarity:'rare',      headColor:'#00ff88', bodyColor:'#00cc6a', pattern:'neon',     trailEffect:'sparkles',  eyeStyle:'normal', isDefault:false },
+  { id:'local-9',  name:'Neón Rosa',          description:'Rosa eléctrico con aura brillante. Estilo cyberpunk.',             price:4500,  rarity:'rare',      headColor:'#f472b6', bodyColor:'#ec4899', pattern:'neon',     trailEffect:'hearts',    eyeStyle:'cute',   isDefault:false },
+  { id:'local-10', name:'Estrellas',          description:'Deja un rastro de estrellas doradas a su paso.',                   price:5000,  rarity:'rare',      headColor:'#fbbf24', bodyColor:'#d97706', pattern:'solid',    trailEffect:'stars',     eyeStyle:'normal', isDefault:false },
+  { id:'local-11', name:'Dragón de Fuego',    description:'Llamas que consumen todo a su paso. Poder puro.',                  price:7000,  rarity:'epic',      headColor:'#ffd700', bodyColor:'#ff4500', pattern:'fire',     trailEffect:'fire',      eyeStyle:'angry',  isDefault:false },
+  { id:'local-12', name:'Arcoíris',           description:'Todos los colores del espectro en una sola serpiente.',            price:8000,  rarity:'epic',      headColor:'#ff0080', bodyColor:'#0080ff', pattern:'rainbow',  trailEffect:'sparkles',  eyeStyle:'cute',   isDefault:false },
+  { id:'local-13', name:'Galaxia',            description:'El cosmos en tu serpiente. Morado profundo con estrellas.',        price:9000,  rarity:'epic',      headColor:'#c084fc', bodyColor:'#4a148c', pattern:'galaxy',   trailEffect:'stars',     eyeStyle:'normal', isDefault:false },
+  { id:'local-14', name:'Rayo',               description:'Velocidad eléctrica. Deja rayos a su paso.',                       price:10000, rarity:'epic',      headColor:'#fde047', bodyColor:'#ca8a04', pattern:'neon',     trailEffect:'lightning', eyeStyle:'laser',  isDefault:false },
+  { id:'local-15', name:'Neón Azul Eléctrico',description:'Azul eléctrico que ilumina la oscuridad.',                         price:10000, rarity:'epic',      headColor:'#60a5fa', bodyColor:'#2563eb', pattern:'neon',     trailEffect:'lightning', eyeStyle:'laser',  isDefault:false },
+  { id:'local-16', name:'Serpiente Dorada',   description:'Oro puro. Solo los mejores merecen esta skin.',                    price:15000, rarity:'legendary', headColor:'#ffd700', bodyColor:'#ffb300', pattern:'gold',     trailEffect:'sparkles',  eyeStyle:'normal', isDefault:false },
+  { id:'local-17', name:'Fénix',              description:'Renace de las llamas. Degradado épico de fuego y oro.',            price:20000, rarity:'legendary', headColor:'#ffd700', bodyColor:'#ff4500', pattern:'fire',     trailEffect:'fire',      eyeStyle:'laser',  isDefault:false },
+  { id:'local-18', name:'Cosmos Infinito',    description:'Galaxia + arcoíris. La skin más hermosa del universo.',            price:22000, rarity:'legendary', headColor:'#c084fc', bodyColor:'#1a0030', pattern:'galaxy',   trailEffect:'void',      eyeStyle:'laser',  isDefault:false },
+  { id:'local-19', name:'☠️ El Vacío',        description:'Oscuridad absoluta. Solo los más valientes se atreven.',           price:35000, rarity:'mythic',    headColor:'#c084fc', bodyColor:'#0d0020', pattern:'void',     trailEffect:'void',      eyeStyle:'laser',  isDefault:false },
+  { id:'local-20', name:'👑 Serpiente Suprema',description:'La skin definitiva. Arcoíris + fuego + rayos. Eres una leyenda.',price:50000, rarity:'mythic',    headColor:'#ffd700', bodyColor:'#ff0080', pattern:'rainbow',  trailEffect:'lightning', eyeStyle:'laser',  isDefault:false },
+];
+// Preview SVG de la serpiente para cada skin
+function SkinPreview({ skin }) {
+  const id = `s${skin.id || skin.name.replace(/\s/g,'')}`;
+
+  // Puntos del cuerpo en forma de S
+  const pts = [
+    [100,30],[100,50],[100,70],[85,85],[70,90],[55,85],[45,70],[45,55],[55,42],[70,38],[85,42],
+  ];
+
+  let fillBody = skin.bodyColor;
+  let fillHead = skin.headColor;
+  let filter = '';
+
+  const defs = [];
+
+  if (skin.pattern === 'gradient') {
+    defs.push(
+      <linearGradient key="g" id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={skin.headColor}/>
+        <stop offset="100%" stopColor={skin.bodyColor}/>
+      </linearGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'rainbow') {
+    defs.push(
+      <linearGradient key="g" id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stopColor="#ff0080"/>
+        <stop offset="20%"  stopColor="#ff8000"/>
+        <stop offset="40%"  stopColor="#ffff00"/>
+        <stop offset="60%"  stopColor="#00ff80"/>
+        <stop offset="80%"  stopColor="#0080ff"/>
+        <stop offset="100%" stopColor="#8000ff"/>
+      </linearGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'galaxy') {
+    defs.push(
+      <radialGradient key="g" id={`${id}g`} cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stopColor="#c084fc"/>
+        <stop offset="40%"  stopColor="#4a148c"/>
+        <stop offset="100%" stopColor="#0d0d1a"/>
+      </radialGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'fire') {
+    defs.push(
+      <linearGradient key="g" id={`${id}g`} x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%"   stopColor="#ff0000"/>
+        <stop offset="50%"  stopColor="#ff6b00"/>
+        <stop offset="100%" stopColor="#ffd700"/>
+      </linearGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'ice') {
+    defs.push(
+      <linearGradient key="g" id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stopColor="#e0f7ff"/>
+        <stop offset="50%"  stopColor="#7dd3fc"/>
+        <stop offset="100%" stopColor="#0ea5e9"/>
+      </linearGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'neon') {
+    defs.push(
+      <filter key="f" id={`${id}f`}>
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    );
+    filter = `url(#${id}f)`;
+  } else if (skin.pattern === 'gold') {
+    defs.push(
+      <linearGradient key="g" id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stopColor="#ffd700"/>
+        <stop offset="40%"  stopColor="#ffb300"/>
+        <stop offset="100%" stopColor="#ff8c00"/>
+      </linearGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  } else if (skin.pattern === 'void') {
+    defs.push(
+      <radialGradient key="g" id={`${id}g`} cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stopColor="#1a0030"/>
+        <stop offset="60%"  stopColor="#0d0020"/>
+        <stop offset="100%" stopColor="#000000"/>
+      </radialGradient>
+    );
+    fillBody = `url(#${id}g)`;
+    fillHead = `url(#${id}g)`;
+  }
+
+  const eyeColor = skin.eyeStyle === 'laser' ? '#ff0000' : skin.eyeStyle === 'angry' ? '#ff4444' : '#000';
+
+  return (
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <defs>{defs}</defs>
+      {/* Cuerpo */}
+      {pts.slice(1).map(([x,y], i) => (
+        <circle key={i} cx={x} cy={y} r={9} fill={fillBody} filter={filter}
+          opacity={1 - i * 0.06}
+          stroke={skin.pattern === 'neon' ? skin.bodyColor : 'none'}
+          strokeWidth={skin.pattern === 'neon' ? 1 : 0}
+        />
+      ))}
+      {/* Cabeza */}
+      <circle cx={pts[0][0]} cy={pts[0][1]} r={13} fill={fillHead} filter={filter}
+        stroke={skin.pattern === 'neon' ? skin.headColor : 'none'}
+        strokeWidth={skin.pattern === 'neon' ? 2 : 0}
+      />
+      {/* Ojos */}
+      <circle cx={94} cy={25} r={4} fill="white"/>
+      <circle cx={106} cy={25} r={4} fill="white"/>
+      <circle cx={94} cy={25} r={2.5} fill={eyeColor}/>
+      <circle cx={106} cy={25} r={2.5} fill={eyeColor}/>
+      {skin.eyeStyle === 'laser' && <>
+        <line x1={94} y1={25} x2={80} y2={15} stroke="#ff0000" strokeWidth={1.5} opacity={0.7}/>
+        <line x1={106} y1={25} x2={120} y2={15} stroke="#ff0000" strokeWidth={1.5} opacity={0.7}/>
+      </>}
+      {/* Trail effects */}
+      {skin.trailEffect === 'sparkles' && <>
+        <circle cx={42} cy={55} r={2.5} fill="#ffe000" opacity={0.8}/>
+        <circle cx={38} cy={70} r={2} fill="#ffe000" opacity={0.6}/>
+        <circle cx={50} cy={80} r={1.5} fill="#fff" opacity={0.7}/>
+      </>}
+      {skin.trailEffect === 'fire' && <>
+        <ellipse cx={45} cy={72} rx={5} ry={8} fill="#ff6b00" opacity={0.7}/>
+        <ellipse cx={45} cy={70} rx={3} ry={5} fill="#ffd700" opacity={0.6}/>
+      </>}
+      {skin.trailEffect === 'ice' && <>
+        <circle cx={42} cy={68} r={3} fill="#a5f3fc" opacity={0.7}/>
+        <circle cx={48} cy={78} r={2} fill="#e0f7ff" opacity={0.6}/>
+      </>}
+      {skin.trailEffect === 'lightning' && <>
+        <polyline points="45,55 50,65 43,68 50,80" fill="none" stroke="#ffe000" strokeWidth={2} opacity={0.8}/>
+      </>}
+      {skin.trailEffect === 'stars' && <>
+        <text x={36} y={62} fontSize={10} fill="#ffe000" opacity={0.8}>★</text>
+        <text x={44} y={76} fontSize={8} fill="#fff" opacity={0.6}>✦</text>
+      </>}
+      {skin.trailEffect === 'hearts' && <>
+        <text x={36} y={62} fontSize={10} fill="#ff69b4" opacity={0.9}>♥</text>
+        <text x={44} y={76} fontSize={8} fill="#ff69b4" opacity={0.6}>♥</text>
+      </>}
+      {skin.trailEffect === 'void' && <>
+        <circle cx={44} cy={68} r={4} fill="#1a0030" opacity={0.8}/>
+        <circle cx={44} cy={68} r={2} fill="#c084fc" opacity={0.5}/>
+      </>}
+    </svg>
+  );
+}
+
+export default function SnakeShop({ onClose, onEquipSkin }) {
+  const [allSkins,  setAllSkins]  = useState([]);
   const [userSkins, setUserSkins] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSkin, setSelectedSkin] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
+  const [loading,   setLoading]   = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [filter, setFilter] = useState('all'); // all | owned | free
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  const token = localStorage.getItem('token');
+  const token   = localStorage.getItem('token');
 
-  useEffect(() => {
-    loadSkins();
-  }, []);
+  useEffect(() => { loadSkins(); }, []);
 
   const loadSkins = async () => {
     try {
       setLoading(true);
-      
-      // Cargar todas las skins disponibles
-      const skinsRes = await fetch(`${API_URL}/skins/all`);
+      const [skinsRes, userRes] = await Promise.all([
+        fetch(`${API_URL}/skins/all`),
+        fetch(`${API_URL}/skins/my-skins`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
       const skinsData = await skinsRes.json();
-      
-      // Cargar las skins del usuario
-      const userSkinsRes = await fetch(`${API_URL}/skins/my-skins`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const userSkinsData = await userSkinsRes.json();
-      
-      setAllSkins(skinsData.skins || []);
-      setUserSkins(userSkinsData.userSkins || []);
-    } catch (error) {
-      console.error('Error loading skins:', error);
-    } finally {
-      setLoading(false);
+      const userData  = await userRes.json();
+      // Si el backend devuelve skins, usarlas; si no, usar las locales
+      setAllSkins(skinsData.skins?.length ? skinsData.skins : LOCAL_SKINS);
+      setUserSkins(userData.userSkins || []);
+    } catch (e) {
+      console.error(e);
+      setAllSkins(LOCAL_SKINS); // fallback local
     }
+    finally { setLoading(false); }
   };
 
-  const hasSkin = (skinId) => {
-    return userSkins.some(us => us.skinId === skinId);
+  // localStorage fallback para skins desbloqueadas sin backend
+  const LS_KEY = 'arachiz_unlocked_skins';
+  const getLocalUnlocked = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
+  const addLocalUnlocked = (skinId) => {
+    const list = getLocalUnlocked();
+    if (!list.includes(skinId)) { list.push(skinId); localStorage.setItem(LS_KEY, JSON.stringify(list)); }
   };
 
-  const isEquipped = (skinId) => {
-    return userSkins.some(us => us.skinId === skinId && us.equipped);
-  };
+  const owned    = (id) => userSkins.some(us => us.skinId === id) || getLocalUnlocked().includes(id);
+  const equipped = (id) => userSkins.some(us => us.skinId === id && us.equipped);
 
   const handleEquip = async (skinId) => {
     try {
-      const res = await fetch(`${API_URL}/skins/equip`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ skinId })
-      });
-
-      if (res.ok) {
-        await loadSkins();
+      // Si es skin local (backend no disponible), solo actualizar UI
+      if (skinId.startsWith('local-')) {
         const skin = allSkins.find(s => s.id === skinId);
-        if (skin && onEquipSkin) {
-          onEquipSkin(skin);
-        }
+        if (skin && onEquipSkin) onEquipSkin(skin);
+        // Marcar como equipada localmente
+        setUserSkins(prev => prev.map(us => ({ ...us, equipped: false })));
+        return;
       }
-    } catch (error) {
-      console.error('Error equipping skin:', error);
-    }
+      await fetch(`${API_URL}/skins/equip`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ skinId }),
+      });
+      await loadSkins();
+      const skin = allSkins.find(s => s.id === skinId);
+      if (skin && onEquipSkin) onEquipSkin(skin);
+    } catch (e) { console.error(e); }
   };
 
   const handleBuy = async (skin) => {
-    if (processingPayment) return;
-    
-    setProcessingPayment(true);
+    if (processing) return;
+    setProcessing(true);
     try {
-      const res = await fetch(`${API_URL}/skins/create-order`, {
+      // Intentar desbloquear en el backend
+      const res = await fetch(`${API_URL}/skins/unlock`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ skinId: skin.id })
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ skinId: skin.id }),
       });
-
-      const data = await res.json();
-      
       if (res.ok) {
-        // Abrir Mercado Pago en una nueva ventana
-        const paymentWindow = window.open(
-          data.initPoint,
-          '_blank',
-          'width=800,height=600'
-        );
-        
-        // Opcional: Polling para verificar el estado del pago
-        const checkInterval = setInterval(async () => {
-          if (paymentWindow.closed) {
-            clearInterval(checkInterval);
-            setProcessingPayment(false);
-            await loadSkins();
-          }
-        }, 1000);
+        // Si el backend respondió bien, recargar skins del servidor
+        await loadSkins();
       } else {
-        alert(data.error || 'Error al procesar el pago');
-        setProcessingPayment(false);
+        // Fallback: guardar en localStorage y refrescar UI
+        addLocalUnlocked(skin.id);
+        await loadSkins();
       }
-    } catch (error) {
-      console.error('Error buying skin:', error);
-      alert('Error al procesar el pago');
-      setProcessingPayment(false);
+    } catch (e) {
+      // Sin conexión al backend — guardar local
+      addLocalUnlocked(skin.id);
+      await loadSkins();
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const renderSkinPreview = (skin) => {
-    const size = 200;
-    const segments = 8;
-    const segmentSize = 20;
-    
-    return (
-      <svg width={size} height={size} viewBox="0 0 200 200">
-        <defs>
-          {skin.pattern === 'gradient' && (
-            <linearGradient id={`grad-${skin.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={skin.headColor} />
-              <stop offset="100%" stopColor={skin.bodyColor} />
-            </linearGradient>
-          )}
-          {skin.pattern === 'rainbow' && (
-            <linearGradient id={`grad-${skin.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#ff0080" />
-              <stop offset="25%" stopColor="#ff8000" />
-              <stop offset="50%" stopColor="#ffff00" />
-              <stop offset="75%" stopColor="#00ff80" />
-              <stop offset="100%" stopColor="#0080ff" />
-            </linearGradient>
-          )}
-          {skin.pattern === 'galaxy' && (
-            <radialGradient id={`grad-${skin.id}`}>
-              <stop offset="0%" stopColor="#4a148c" />
-              <stop offset="50%" stopColor="#1a237e" />
-              <stop offset="100%" stopColor="#000000" />
-            </radialGradient>
-          )}
-        </defs>
-        
-        {/* Cuerpo de la serpiente */}
-        {Array.from({ length: segments }).map((_, i) => {
-          const x = 100 + Math.cos((i / segments) * Math.PI * 2) * 60;
-          const y = 100 + Math.sin((i / segments) * Math.PI * 2) * 60;
-          
-          let fill = skin.bodyColor;
-          if (skin.pattern === 'gradient' || skin.pattern === 'rainbow' || skin.pattern === 'galaxy') {
-            fill = `url(#grad-${skin.id})`;
-          } else if (skin.pattern === 'neon') {
-            fill = skin.bodyColor;
-          }
-          
-          return (
-            <circle
-              key={i}
-              cx={x}
-              cy={y}
-              r={segmentSize / 2}
-              fill={fill}
-              stroke={skin.pattern === 'neon' ? '#ffffff' : 'none'}
-              strokeWidth={skin.pattern === 'neon' ? 2 : 0}
-              opacity={0.9}
-            />
-          );
-        })}
-        
-        {/* Cabeza */}
-        <circle
-          cx={100}
-          cy={40}
-          r={segmentSize}
-          fill={skin.headColor}
-          stroke={skin.pattern === 'neon' ? '#ffffff' : 'none'}
-          strokeWidth={skin.pattern === 'neon' ? 2 : 0}
-        />
-        
-        {/* Ojos */}
-        <circle cx={95} cy={35} r={4} fill="#ffffff" />
-        <circle cx={105} cy={35} r={4} fill="#ffffff" />
-        <circle cx={95} cy={35} r={2} fill="#000000" />
-        <circle cx={105} cy={35} r={2} fill="#000000" />
-        
-        {/* Efecto de rastro */}
-        {skin.trailEffect === 'sparkles' && (
-          <>
-            <circle cx={80} cy={120} r={3} fill="#ffff00" opacity={0.6} />
-            <circle cx={120} cy={130} r={2} fill="#ffff00" opacity={0.4} />
-            <circle cx={90} cy={150} r={2.5} fill="#ffff00" opacity={0.5} />
-          </>
-        )}
-        {skin.trailEffect === 'fire' && (
-          <>
-            <circle cx={100} cy={160} r={5} fill="#ff6b35" opacity={0.7} />
-            <circle cx={95} cy={165} r={4} fill="#ff9a3c" opacity={0.6} />
-            <circle cx={105} cy={165} r={3} fill="#ffd700" opacity={0.5} />
-          </>
-        )}
-        {skin.trailEffect === 'stars' && (
-          <>
-            <text x={75} y={145} fontSize={16} fill="#ffff00" opacity={0.7}>⭐</text>
-            <text x={115} y={155} fontSize={12} fill="#ffff00" opacity={0.5}>✨</text>
-          </>
-        )}
-      </svg>
-    );
-  };
+  const visible = allSkins.filter(s => {
+    if (filter === 'owned') return owned(s.id);
+    if (filter === 'free')  return s.price === 0;
+    return true;
+  });
 
-  if (loading) {
-    return (
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', zIndex: 9999
-      }}>
-        <div style={{ color: 'white', fontSize: 24 }}>Cargando tienda...</div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
+      <div style={{ color:'white', fontSize:18, fontWeight:700 }}>Cargando tienda...</div>
+    </div>
+  );
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', zIndex: 9999, padding: 20, overflow: 'auto'
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          borderRadius: 24, padding: 30, maxWidth: 1200, width: '100%',
-          maxHeight: '90vh', overflow: 'auto', position: 'relative',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
-        }}
-      >
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(5,5,20,0.92)', backdropFilter:'blur(20px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:16, overflowY:'auto' }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:'linear-gradient(160deg,#0f0f23 0%,#1a0a2e 50%,#0a1628 100%)',
+        borderRadius:28, padding:'28px 24px', maxWidth:900, width:'100%',
+        maxHeight:'92vh', overflowY:'auto',
+        border:'1px solid rgba(168,85,247,0.3)',
+        boxShadow:'0 0 80px rgba(168,85,247,0.2), 0 40px 80px rgba(0,0,0,0.6)',
+      }}>
+
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#ffffff', textShadow: '0 0 20px rgba(0,255,136,0.5)' }}>
+            <h2 style={{ margin:0, fontSize:28, fontWeight:900, background:'linear-gradient(90deg,#a855f7,#3b82f6,#00ff88)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
               🐍 Tienda de Skins
             </h2>
-            <p style={{ margin: '5px 0 0', color: '#94a3b8', fontSize: 14 }}>
-              Desbloquea skins épicas y personaliza tu serpiente
+            <p style={{ margin:'6px 0 0', color:'rgba(255,255,255,0.45)', fontSize:13 }}>
+              Personaliza tu serpiente con skins únicas
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 12,
-              color: '#ffffff', padding: '10px 20px', cursor: 'pointer',
-              fontSize: 16, fontWeight: 600, transition: 'all 0.2s'
-            }}
-          >
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:12, color:'white', padding:'8px 18px', cursor:'pointer', fontSize:13, fontWeight:600 }}>
             ✕ Cerrar
           </button>
         </div>
 
-        {/* Grid de skins */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 20
-        }}>
-          {allSkins.map(skin => {
-            const owned = hasSkin(skin.id);
-            const equipped = isEquipped(skin.id);
-            const rarity = RARITY_COLORS[skin.rarity] || RARITY_COLORS.common;
-
-            return (
-              <div
-                key={skin.id}
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: 16,
-                  padding: 20,
-                  border: `2px solid ${equipped ? '#00ff88' : rarity.bg}`,
-                  boxShadow: equipped ? '0 0 30px rgba(0,255,136,0.4)' : `0 0 20px ${rarity.glow}40`,
-                  transition: 'all 0.3s',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = `0 10px 40px ${rarity.glow}60`;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = equipped ? '0 0 30px rgba(0,255,136,0.4)' : `0 0 20px ${rarity.glow}40`;
-                }}
-              >
-                {/* Badge de rareza */}
-                <div style={{
-                  position: 'absolute',
-                  top: 10,
-                  right: 10,
-                  background: rarity.bg,
-                  color: '#ffffff',
-                  padding: '4px 12px',
-                  borderRadius: 12,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  boxShadow: `0 0 15px ${rarity.glow}`
-                }}>
-                  {rarity.text}
-                </div>
-
-                {equipped && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 10,
-                    left: 10,
-                    background: '#00ff88',
-                    color: '#000000',
-                    padding: '4px 12px',
-                    borderRadius: 12,
-                    fontSize: 11,
-                    fontWeight: 700
-                  }}>
-                    ✓ EQUIPADA
-                  </div>
-                )}
-
-                {/* Preview de la skin */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 15 }}>
-                  {renderSkinPreview(skin)}
-                </div>
-
-                {/* Info */}
-                <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
-                  {skin.name}
-                </h3>
-                <p style={{ margin: '0 0 15px', fontSize: 13, color: '#94a3b8', lineHeight: 1.4 }}>
-                  {skin.description}
-                </p>
-
-                {/* Precio y botón */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fbbf24' }}>
-                    {skin.price === 0 ? 'GRATIS' : `$${skin.price.toLocaleString()} COP`}
-                  </div>
-                  
-                  {owned ? (
-                    equipped ? (
-                      <button
-                        style={{
-                          background: '#00ff88',
-                          border: 'none',
-                          borderRadius: 12,
-                          color: '#000000',
-                          padding: '10px 20px',
-                          cursor: 'default',
-                          fontSize: 14,
-                          fontWeight: 700
-                        }}
-                      >
-                        ✓ En uso
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleEquip(skin.id)}
-                        style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          border: 'none',
-                          borderRadius: 12,
-                          color: '#ffffff',
-                          padding: '10px 20px',
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          fontWeight: 700,
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        Equipar
-                      </button>
-                    )
-                  ) : (
-                    <button
-                      onClick={() => handleBuy(skin)}
-                      disabled={processingPayment || skin.price === 0}
-                      style={{
-                        background: skin.price === 0 ? '#94a3b8' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                        border: 'none',
-                        borderRadius: 12,
-                        color: '#ffffff',
-                        padding: '10px 20px',
-                        cursor: skin.price === 0 ? 'default' : 'pointer',
-                        fontSize: 14,
-                        fontWeight: 700,
-                        transition: 'all 0.2s',
-                        opacity: processingPayment ? 0.6 : 1
-                      }}
-                      onMouseEnter={e => {
-                        if (skin.price > 0 && !processingPayment) {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                        }
-                      }}
-                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      {processingPayment ? 'Procesando...' : '💳 Comprar'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        {/* Filtros */}
+        <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+          {[['all','Todas'],['owned','Mis skins'],['free','Gratis']].map(([val,label]) => (
+            <button key={val} onClick={() => setFilter(val)}
+              style={{ background: filter===val ? 'rgba(168,85,247,0.4)' : 'rgba(255,255,255,0.06)', border: filter===val ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.1)', borderRadius:20, color:'white', padding:'6px 16px', cursor:'pointer', fontSize:12, fontWeight:600, transition:'all 0.2s' }}>
+              {label}
+            </button>
+          ))}
+          <span style={{ marginLeft:'auto', color:'rgba(255,255,255,0.3)', fontSize:12, alignSelf:'center' }}>
+            {visible.length} skins
+          </span>
         </div>
+
+        {/* Grid */}
+        {visible.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'40px 0', color:'rgba(255,255,255,0.3)', fontSize:15 }}>
+            {filter === 'owned' ? 'Aún no tienes skins. ¡Compra una!' : 'No hay skins disponibles'}
+          </div>
+        ) : (
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16 }}>
+            {visible.map(skin => {
+              const r   = RARITY[skin.rarity] || RARITY.common;
+              const own = owned(skin.id);
+              const eq  = equipped(skin.id);
+
+              return (
+                <div key={skin.id} style={{
+                  background: eq ? 'rgba(0,255,136,0.07)' : 'rgba(255,255,255,0.04)',
+                  borderRadius:20, padding:18,
+                  border: eq ? '1.5px solid #00ff88' : `1.5px solid ${r.color}44`,
+                  boxShadow: eq ? '0 0 30px rgba(0,255,136,0.25)' : `0 0 20px ${r.glow}`,
+                  transition:'all 0.25s', cursor:'default', position:'relative',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow = eq ? '0 8px 40px rgba(0,255,136,0.35)' : `0 8px 40px ${r.glow}`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow = eq ? '0 0 30px rgba(0,255,136,0.25)' : `0 0 20px ${r.glow}`; }}
+                >
+                  {/* Badges */}
+                  <div style={{ position:'absolute', top:12, right:12, display:'flex', flexDirection:'column', gap:4, alignItems:'flex-end' }}>
+                    <span style={{ background:r.color, color:'white', padding:'3px 10px', borderRadius:10, fontSize:10, fontWeight:800, textTransform:'uppercase', boxShadow:`0 0 12px ${r.glow}` }}>
+                      {r.label}
+                    </span>
+                    {eq && <span style={{ background:'#00ff88', color:'#000', padding:'3px 10px', borderRadius:10, fontSize:10, fontWeight:800 }}>✓ EQUIPADA</span>}
+                    {own && !eq && <span style={{ background:'rgba(255,255,255,0.15)', color:'white', padding:'3px 10px', borderRadius:10, fontSize:10, fontWeight:700 }}>Desbloqueada</span>}
+                  </div>
+
+                  {/* Preview */}
+                  <div style={{ display:'flex', justifyContent:'center', marginBottom:12, marginTop:8 }}>
+                    <SkinPreview skin={skin}/>
+                  </div>
+
+                  {/* Info */}
+                  <h3 style={{ margin:'0 0 5px', fontSize:16, fontWeight:800, color:'white' }}>{skin.name}</h3>
+                  <p style={{ margin:'0 0 14px', fontSize:12, color:'rgba(255,255,255,0.45)', lineHeight:1.4 }}>{skin.description}</p>
+
+                  {/* Precio + botón */}
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ fontSize:17, fontWeight:900, color: skin.price === 0 ? '#00ff88' : '#fbbf24' }}>
+                      {skin.price === 0 ? 'GRATIS' : `$${skin.price.toLocaleString()}`}
+                    </span>
+
+                    {own ? (
+                      eq ? (
+                        <span style={{ background:'rgba(0,255,136,0.15)', color:'#00ff88', padding:'8px 16px', borderRadius:12, fontSize:13, fontWeight:700 }}>✓ En uso</span>
+                      ) : (
+                        <button onClick={() => handleEquip(skin.id)}
+                          style={{ background:'linear-gradient(135deg,#a855f7,#6366f1)', border:'none', borderRadius:12, color:'white', padding:'8px 18px', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.opacity='0.85'}
+                          onMouseLeave={e => e.currentTarget.style.opacity='1'}>
+                          Equipar
+                        </button>
+                      )
+                    ) : (
+                      <button onClick={() => skin.price === 0 ? handleEquip(skin.id) : handleBuy(skin)}
+                        disabled={processing}
+                        style={{ background: skin.price === 0 ? 'linear-gradient(135deg,#00ff88,#00cc6a)' : 'linear-gradient(135deg,#f093fb,#f5576c)', border:'none', borderRadius:12, color: skin.price === 0 ? '#000' : 'white', padding:'8px 18px', cursor:'pointer', fontSize:13, fontWeight:700, opacity: processing ? 0.6 : 1, transition:'all 0.2s' }}
+                        onMouseEnter={e => { if (!processing) e.currentTarget.style.transform='scale(1.05)'; }}
+                        onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+                        {skin.price === 0 ? 'Obtener' : processing ? 'Desbloqueando...' : '🔓 Obtener'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
