@@ -10,20 +10,22 @@
  * @param {number} e2x - Posición X ojo derecho
  * @param {number} e2y - Posición Y ojo derecho
  * @param {string} eyeStyle - Estilo: 'normal', 'cute', 'laser', 'angry'
+ * @param {number} dx - Dirección X del movimiento (opcional)
+ * @param {number} dy - Dirección Y del movimiento (opcional)
  */
-export function drawPremiumEyes(ctx, e1x, e1y, e2x, e2y, eyeStyle) {
+export function drawPremiumEyes(ctx, e1x, e1y, e2x, e2y, eyeStyle, dx = 0, dy = 0) {
   if (eyeStyle === 'cute') {
-    drawCuteEyes(ctx, e1x, e1y, e2x, e2y);
+    drawCuteEyes(ctx, e1x, e1y, e2x, e2y, dx, dy);
   } else if (eyeStyle === 'laser') {
     drawLaserEyes(ctx, e1x, e1y, e2x, e2y);
   } else if (eyeStyle === 'angry') {
-    drawAngryEyes(ctx, e1x, e1y, e2x, e2y);
+    drawAngryEyes(ctx, e1x, e1y, e2x, e2y, dx, dy);
   } else {
-    drawNormalEyes(ctx, e1x, e1y, e2x, e2y);
+    drawNormalEyes(ctx, e1x, e1y, e2x, e2y, dx, dy);
   }
 }
 
-function drawCuteEyes(ctx, e1x, e1y, e2x, e2y) {
+function drawCuteEyes(ctx, e1x, e1y, e2x, e2y, dx = 0, dy = 0) {
   // Sombra sutil para profundidad
   ctx.shadowColor = 'rgba(0,0,0,0.15)';
   ctx.shadowBlur = 2;
@@ -51,39 +53,43 @@ function drawCuteEyes(ctx, e1x, e1y, e2x, e2y) {
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
   
+  // Movimiento de pupila según dirección
+  const pupilOffsetX = dx * 0.8;
+  const pupilOffsetY = dy * 0.8;
+  
   // Pupila con gradiente
-  const grad1 = ctx.createRadialGradient(e1x - 0.5, e1y - 0.5, 0, e1x, e1y, 2.2);
+  const grad1 = ctx.createRadialGradient(e1x - 0.5 + pupilOffsetX, e1y - 0.5 + pupilOffsetY, 0, e1x + pupilOffsetX, e1y + pupilOffsetY, 2.2);
   grad1.addColorStop(0, '#1a1a1a');
   grad1.addColorStop(1, '#000000');
   ctx.fillStyle = grad1;
   ctx.beginPath();
-  ctx.arc(e1x, e1y, 2.2, 0, Math.PI * 2);
+  ctx.arc(e1x + pupilOffsetX, e1y + pupilOffsetY, 2.2, 0, Math.PI * 2);
   ctx.fill();
   
-  const grad2 = ctx.createRadialGradient(e2x - 0.5, e2y - 0.5, 0, e2x, e2y, 2.2);
+  const grad2 = ctx.createRadialGradient(e2x - 0.5 + pupilOffsetX, e2y - 0.5 + pupilOffsetY, 0, e2x + pupilOffsetX, e2y + pupilOffsetY, 2.2);
   grad2.addColorStop(0, '#1a1a1a');
   grad2.addColorStop(1, '#000000');
   ctx.fillStyle = grad2;
   ctx.beginPath();
-  ctx.arc(e2x, e2y, 2.2, 0, Math.PI * 2);
+  ctx.arc(e2x + pupilOffsetX, e2y + pupilOffsetY, 2.2, 0, Math.PI * 2);
   ctx.fill();
   
   // ⭐ BRILLO ESPECULAR - El toque premium
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   ctx.beginPath();
-  ctx.arc(e1x + 1.2, e1y - 1.2, 1, 0, Math.PI * 2);
+  ctx.arc(e1x + 1.2 + pupilOffsetX, e1y - 1.2 + pupilOffsetY, 1, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(e2x + 1.2, e2y - 1.2, 1, 0, Math.PI * 2);
+  ctx.arc(e2x + 1.2 + pupilOffsetX, e2y - 1.2 + pupilOffsetY, 1, 0, Math.PI * 2);
   ctx.fill();
   
   // Brillo secundario
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.beginPath();
-  ctx.arc(e1x - 0.8, e1y + 0.8, 0.5, 0, Math.PI * 2);
+  ctx.arc(e1x - 0.8 + pupilOffsetX, e1y + 0.8 + pupilOffsetY, 0.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(e2x - 0.8, e2y + 0.8, 0.5, 0, Math.PI * 2);
+  ctx.arc(e2x - 0.8 + pupilOffsetX, e2y + 0.8 + pupilOffsetY, 0.5, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -123,7 +129,7 @@ function drawLaserEyes(ctx, e1x, e1y, e2x, e2y) {
   ctx.shadowBlur = 0;
 }
 
-function drawAngryEyes(ctx, e1x, e1y, e2x, e2y) {
+function drawAngryEyes(ctx, e1x, e1y, e2x, e2y, dx = 0, dy = 0) {
   // Esclerótica
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
@@ -133,63 +139,65 @@ function drawAngryEyes(ctx, e1x, e1y, e2x, e2y) {
   ctx.arc(e2x, e2y, 3.5, 0, Math.PI * 2);
   ctx.fill();
   
+  // Movimiento de pupila según dirección
+  const pupilOffsetX = dx * 0.6;
+  const pupilOffsetY = dy * 0.6;
+  
   // Pupila roja
   ctx.fillStyle = '#cc0000';
   ctx.beginPath();
-  ctx.arc(e1x, e1y, 2, 0, Math.PI * 2);
+  ctx.arc(e1x + pupilOffsetX, e1y + pupilOffsetY, 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(e2x, e2y, 2, 0, Math.PI * 2);
+  ctx.arc(e2x + pupilOffsetX, e2y + pupilOffsetY, 2, 0, Math.PI * 2);
   ctx.fill();
   
   // Brillo
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.beginPath();
-  ctx.arc(e1x + 0.8, e1y - 0.8, 0.8, 0, Math.PI * 2);
+  ctx.arc(e1x + 0.8 + pupilOffsetX, e1y - 0.8 + pupilOffsetY, 0.8, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(e2x + 0.8, e2y - 0.8, 0.8, 0, Math.PI * 2);
+  ctx.arc(e2x + 0.8 + pupilOffsetX, e2y - 0.8 + pupilOffsetY, 0.8, 0, Math.PI * 2);
   ctx.fill();
 }
 
-function drawNormalEyes(ctx, e1x, e1y, e2x, e2y) {
+function drawNormalEyes(ctx, e1x, e1y, e2x, e2y, dx = 0, dy = 0) {
   // Esclerótica con sombra
   ctx.shadowColor = 'rgba(0,0,0,0.1)';
   ctx.shadowBlur = 1;
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(e1x, e1y, 3.2, 0, Math.PI * 2);
+  ctx.arc(e1x, e1y, 4.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(e2x, e2y, 3.2, 0, Math.PI * 2);
+  ctx.arc(e2x, e2y, 4.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
   
+  // Movimiento de pupila según dirección
+  const pupilOffsetX = dx * 2;
+  const pupilOffsetY = dy * 2;
+  
   // Pupila con gradiente
-  const gradNorm1 = ctx.createRadialGradient(e1x, e1y, 0, e1x, e1y, 1.8);
+  const gradNorm1 = ctx.createRadialGradient(e1x + pupilOffsetX, e1y + pupilOffsetY, 0, e1x + pupilOffsetX, e1y + pupilOffsetY, 1.8);
   gradNorm1.addColorStop(0, '#2a2a2a');
   gradNorm1.addColorStop(1, '#000000');
   ctx.fillStyle = gradNorm1;
   ctx.beginPath();
-  ctx.arc(e1x, e1y, 1.8, 0, Math.PI * 2);
+  ctx.arc(e1x + pupilOffsetX, e1y + pupilOffsetY, 2.2, 0, Math.PI * 2);
   ctx.fill();
   
-  const gradNorm2 = ctx.createRadialGradient(e2x, e2y, 0, e2x, e2y, 1.8);
+  const gradNorm2 = ctx.createRadialGradient(e2x + pupilOffsetX, e2y + pupilOffsetY, 0, e2x + pupilOffsetX, e2y + pupilOffsetY, 1.8);
   gradNorm2.addColorStop(0, '#2a2a2a');
   gradNorm2.addColorStop(1, '#000000');
   ctx.fillStyle = gradNorm2;
   ctx.beginPath();
-  ctx.arc(e2x, e2y, 1.8, 0, Math.PI * 2);
+  ctx.arc(e2x + pupilOffsetX, e2y + pupilOffsetY, 2.2, 0, Math.PI * 2);
   ctx.fill();
   
   // Brillo especular
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.beginPath();
-  ctx.arc(e1x + 0.8, e1y - 0.8, 0.6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(e2x + 0.8, e2y - 0.8, 0.6, 0, Math.PI * 2);
-  ctx.fill();
+
 }
 
 /**

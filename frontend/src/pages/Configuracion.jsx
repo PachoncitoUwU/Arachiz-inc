@@ -692,7 +692,7 @@ function FlappyGame({ onClose, currentUser }) {
 }
 
 // ─── El Gusanito ──────────────────────────────────────────────────────────────
-const COLS=16,ROWS=13,CELL=24;
+const COLS=20,ROWS=16,CELL=26; // Juego más grande para mostrar top 10 sin scroll
 const DIR={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
 
 function Apple({ x, y }) {
@@ -801,14 +801,14 @@ function SnakeGame({ onClose, currentUser }) {
   const [score, setScore] = useState(0);
   const [dead,  setDead]  = useState(false);
   const [lb,    setLb]    = useState(getLeaderboard());
-  const [snakeColor, setSnakeColor] = useState('#00ff88');
+  const [snakeColor, setSnakeColor] = useState('#00ff99'); // Color más brillante y visible
   const [foodEmoji, setFoodEmoji] = useState('🍎');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [equippedSkin, setEquippedSkin] = useState(null);
   // Refs para que drawGame (closure estático) siempre lea el valor actual
-  const snakeColorRef   = useRef('#00ff88');
+  const snakeColorRef   = useRef('#00ff99'); // Color más brillante y visible
   const foodEmojiRef    = useRef('🍎');
   const equippedSkinRef = useRef(null);
   
@@ -860,10 +860,15 @@ function SnakeGame({ onClose, currentUser }) {
   const drawGame=(g,ctx)=>{
     ctx.clearRect(0,0,W,H);
 
-    // Cuadrícula y fondo bonito
-    ctx.fillStyle='#0f172a'; // Fondo oscuro moderno
+    // Fondo con gradiente suave y agradable
+    const bgGradient = ctx.createLinearGradient(0, 0, W, H);
+    bgGradient.addColorStop(0, '#4ade80'); // Verde claro
+    bgGradient.addColorStop(1, '#22c55e'); // Verde más oscuro
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle='rgba(255,255,255,0.05)';
+    
+    // Cuadrícula blanca sutil para diferenciar
+    ctx.strokeStyle='rgba(255,255,255,0.15)';
     ctx.lineWidth=1;
     for(let i=0; i<=W; i+=CELL){ ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
     for(let j=0; j<=H; j+=CELL){ ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(W,j); ctx.stroke(); }
@@ -910,20 +915,29 @@ function SnakeGame({ onClose, currentUser }) {
     const eyeStyle = skin?.eyeStyle || 'normal';
     const R = (CELL-5)/2; // radio del cuerpo
 
-    // ── Aura de color (para skins con patrón especial) ────────────────────
-    if (skin && skin.pattern !== 'solid') {
-      const auraColor = skin.headColor || skin.bodyColor;
-      ctx.shadowColor = auraColor;
-      ctx.shadowBlur = 18;
-    } else if (skin?.pattern === 'neon') {
+    // ── Aura de color optimizada (solo para skins especiales) ────────────────────
+    if (skin?.pattern === 'neon') {
       ctx.shadowColor = skin.bodyColor;
-      ctx.shadowBlur = 22;
+      ctx.shadowBlur = 15;
     }
 
-    // ── Cuerpo + cabeza como línea continua (mismo grosor) ────────────────
+    // ── Cuerpo + cabeza como línea continua (menos transparente, más visible) ────────────────
     if (g.snake.length > 0) {
-      ctx.strokeStyle = bodyFill;
-      ctx.lineWidth = CELL - 5;
+      // Hacer la serpiente más opaca y visible
+      let finalBodyFill = bodyFill;
+      
+      // Si es un color sólido, hacerlo más brillante y menos transparente
+      if (typeof bodyFill === 'string') {
+        // Convertir color hex a RGB y aumentar brillo
+        const hex = bodyFill.replace('#', '');
+        const r = Math.min(255, parseInt(hex.substr(0,2), 16) + 40);
+        const g = Math.min(255, parseInt(hex.substr(2,2), 16) + 40);
+        const b = Math.min(255, parseInt(hex.substr(4,2), 16) + 40);
+        finalBodyFill = `rgb(${r}, ${g}, ${b})`;
+      }
+      
+      ctx.strokeStyle = finalBodyFill;
+      ctx.lineWidth = CELL - 3; // Hacer la serpiente un poco más gruesa
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
@@ -934,26 +948,34 @@ function SnakeGame({ onClose, currentUser }) {
     }
     ctx.shadowBlur = 0;
 
-    // ── Ojos Premium con expresión según rareza/eyeStyle ─────────────────────────
+    // ── Ojos Premium con pupilas que se mueven ─────────────────────────
     if (g.snake.length > 0) {
       const [hx,hy] = g.snake[0];
       const [dx,dy] = g.dir;
       const cx = hx*CELL+CELL/2, cy = hy*CELL+CELL/2;
-      const o = 4, f = 1; // lateral y adelante
-      let e1x,e1y,e2x,e2y;
-      if (dx===1)       { e1x=cx+f; e1y=cy-o; e2x=cx+f; e2y=cy+o; }
-      else if (dx===-1) { e1x=cx-f; e1y=cy-o; e2x=cx-f; e2y=cy+o; }
-      else if (dy===1)  { e1x=cx-o; e1y=cy+f; e2x=cx+o; e2y=cy+f; }
-      else              { e1x=cx-o; e1y=cy-f; e2x=cx+o; e2y=cy-f; }
+      
+      // Ojos siempre mirando hacia arriba (verticales) - un poquito más arriba
+      const e1x = cx - 6.5; // Ojo izquierdo
+      const e1y = cy - 5.5; // Más arriba
+      const e2x = cx + 6.5; // Ojo derecho  
+      const e2y = cy - 5.5; // Más arriba
 
-      // Usar la función premium de renderizado de ojos
-      drawPremiumEyes(ctx, e1x, e1y, e2x, e2y, eyeStyle);
+      // Usar la función premium de renderizado de ojos con dirección para mover pupilas
+      drawPremiumEyes(ctx, e1x, e1y, e2x, e2y, eyeStyle, dx, dy);
     }
 
-    // ── Comida ────────────────────────────────────────────────────────────
-    ctx.font = `${CELL-4}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+    // ── Comida con más color y efecto brillante ────────────────────────────────────────────────────────────
+    // Sombra de color para dar más vida
+    ctx.shadowColor = 'rgba(255, 200, 0, 0.8)';
+    ctx.shadowBlur = 15;
+    
+    ctx.font = `${CELL-2}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(foodEmojiRef.current, g.food[0]*CELL+CELL/2, g.food[1]*CELL+CELL/2);
+    
+    // Limpiar sombra
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
   };
 
   const loop=(ts)=>{
@@ -975,7 +997,7 @@ function SnakeGame({ onClose, currentUser }) {
         let newFood = randFood(g.snake);
         while(newFood[0]===head[0] && newFood[1]===head[1]) { newFood = randFood(g.snake); }
         g.food = newFood;
-        g.speed=Math.max(50,g.speed-4); // Aumenta velocidad más gradualmente
+        g.speed=Math.max(60,g.speed-3); // Aumenta velocidad más suavemente
         setScore(g.score);
       }
     }
@@ -990,7 +1012,7 @@ function SnakeGame({ onClose, currentUser }) {
       nextDir:[1,0],
       dirQueue:[],
       score:0,
-      speed:120,
+      speed:100, // Velocidad inicial más rápida y fluida
       lastTick:0,
       dead:false
     };
@@ -1241,7 +1263,7 @@ function SnakeGame({ onClose, currentUser }) {
               <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'center'}}>
                 <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
                   <span style={{fontSize:12,fontWeight:600,color:'#6e6e73'}}>Color:</span>
-                  {['#00ff88','#ff4757','#3742fa','#ffa502','#7bed9f','#ff6b6b'].map(color=>(
+                  {['#00ff99','#ff5757','#4752ff','#ffb502','#7bff9f','#ff7b7b'].map(color=>(
                     <button key={color} onClick={()=>{ setSnakeColor(color); snakeColorRef.current=color; equippedSkinRef.current=null; setEquippedSkin(null); }}
                       style={{width:24,height:24,borderRadius:12,background:color,border:snakeColor===color?'2px solid #1d1d1f':'1px solid rgba(255,255,255,0.3)',cursor:'pointer'}}/>
                   ))}
