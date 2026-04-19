@@ -4,6 +4,7 @@ import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
 import { Send, Clock, CheckCircle, XCircle, Plus, Trash2, Paperclip, Eye } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
 const STATUS_MAP = {
   Pendiente: { badge: 'badge-pending', icon: Clock },
@@ -22,6 +23,7 @@ export default function AprendizExcusas() {
   const [archivo, setArchivo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useSettings();
 
   const load = async () => {
     try {
@@ -78,11 +80,11 @@ export default function AprendizExcusas() {
   return (
     <div className="animate-fade-in space-y-5">
       <PageHeader
-        title="Mis Excusas"
-        subtitle="Gestiona tus justificaciones de inasistencia"
+        title={t('excuses.title')}
+        subtitle={t('excuses.subtitle')}
         action={
           <button onClick={() => { setModal(true); setError(''); }} className="btn-primary flex items-center gap-2">
-            <Plus size={16}/> Nueva Excusa
+            <Plus size={16}/> {t('excuses.new')}
           </button>
         }
       />
@@ -91,9 +93,9 @@ export default function AprendizExcusas() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total', value: counts.total, cls: 'bg-gray-50 text-gray-700' },
-          { label: 'Pendientes', value: counts.pendientes, cls: 'bg-yellow-50 text-yellow-700' },
-          { label: 'Aprobadas', value: counts.aprobadas, cls: 'bg-green-50 text-[#34A853]' },
-          { label: 'Rechazadas', value: counts.rechazadas, cls: 'bg-red-50 text-[#EA4335]' },
+          { label: t('excuses.pending'), value: counts.pendientes, cls: 'bg-yellow-50 text-yellow-700' },
+          { label: t('excuses.approved'), value: counts.aprobadas, cls: 'bg-green-50 text-[#34A853]' },
+          { label: t('excuses.rejected'), value: counts.rechazadas, cls: 'bg-red-50 text-[#EA4335]' },
         ].map(s => (
           <div key={s.label} className={`card-sm text-center ${s.cls}`}>
             <p className="text-2xl font-bold">{s.value}</p>
@@ -110,9 +112,9 @@ export default function AprendizExcusas() {
         <div className="card">
           <EmptyState
             icon={<Send size={32}/>}
-            title="Sin excusas enviadas"
-            description="Envía una excusa para justificar tus inasistencias."
-            action={<button onClick={() => setModal(true)} className="btn-primary">Enviar Excusa</button>}
+            title={t('excuses.emptyTitle')}
+            description={t('excuses.emptyDesc')}
+            action={<button onClick={() => setModal(true)} className="btn-primary">{t('excuses.new')}</button>}
           />
         </div>
       ) : (

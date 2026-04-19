@@ -39,7 +39,7 @@ export default function GameLayout({
         {/* Ranking — solo desktop, siempre visible */}
         {!isMobile && (
           <div style={{ ...glassLight, padding:'18px 14px', minWidth:200 }}>
-            <GameRanking lb={lb} game={game} maxHeight={460} />
+            <GameRanking lb={lb} game={game} maxHeight={window.innerHeight > 800 ? 550 : window.innerHeight > 700 ? 460 : 380} />
           </div>
         )}
 

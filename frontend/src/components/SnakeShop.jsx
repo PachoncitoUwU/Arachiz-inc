@@ -29,7 +29,10 @@ const LOCAL_SKINS = [
   { id:'local-17', name:'Fénix',              description:'Renace de las llamas. Degradado épico de fuego y oro.',            price:20000, rarity:'legendary', headColor:'#ffd700', bodyColor:'#ff4500', pattern:'fire',     trailEffect:'fire',      eyeStyle:'laser',  isDefault:false },
   { id:'local-18', name:'Cosmos Infinito',    description:'Galaxia + arcoíris. La skin más hermosa del universo.',            price:22000, rarity:'legendary', headColor:'#c084fc', bodyColor:'#1a0030', pattern:'galaxy',   trailEffect:'void',      eyeStyle:'laser',  isDefault:false },
   { id:'local-19', name:'☠️ El Vacío',        description:'Oscuridad absoluta. Solo los más valientes se atreven.',           price:35000, rarity:'mythic',    headColor:'#c084fc', bodyColor:'#0d0020', pattern:'void',     trailEffect:'void',      eyeStyle:'laser',  isDefault:false },
-  { id:'local-20', name:'👑 Serpiente Suprema',description:'La skin definitiva. Arcoíris + fuego + rayos. Eres una leyenda.',price:50000, rarity:'mythic',    headColor:'#ffd700', bodyColor:'#ff0080', pattern:'rainbow',  trailEffect:'lightning', eyeStyle:'laser',  isDefault:false },
+  { id:'local-20', name:'💎 Diamante Puro',   description:'Brillo inigualable que ciega a los enemigos. La skin más lujosa.', price:40000, rarity:'mythic',    headColor:'#e0ffff', bodyColor:'#00ffff', pattern:'ice',      trailEffect:'sparkles',  eyeStyle:'normal', isDefault:false },
+  { id:'local-21', name:'👿 Inframundo',      description:'Fuego oscuro, sombras y terror.',                                  price:45000, rarity:'mythic',    headColor:'#4a0404', bodyColor:'#1a0000', pattern:'fire',     trailEffect:'fire',      eyeStyle:'angry',  isDefault:false },
+  { id:'local-22', name:'🌸 Sakura Mística',  description:'Deja flores de cerezo a su paso. Elegancia pura.',                 price:48000, rarity:'mythic',    headColor:'#ffb7c5', bodyColor:'#ff69b4', pattern:'gradient', trailEffect:'hearts',    eyeStyle:'cute',   isDefault:false },
+  { id:'local-23', name:'👑 Serpiente Suprema',description:'La skin definitiva. Arcoíris + fuego + rayos. Eres una leyenda.',price:50000, rarity:'mythic',    headColor:'#ffd700', bodyColor:'#ff0080', pattern:'rainbow',  trailEffect:'lightning', eyeStyle:'laser',  isDefault:false },
 ];
 // Preview SVG de la serpiente para cada skin
 function SkinPreview({ skin }) {
@@ -133,52 +136,69 @@ function SkinPreview({ skin }) {
   return (
     <svg width="130" height="130" viewBox="0 0 130 130">
       <defs>{defs}</defs>
-      {/* Cuerpo */}
-      {pts.slice(1).map(([x,y], i) => (
-        <circle key={i} cx={x} cy={y} r={9} fill={fillBody} filter={filter}
-          opacity={1 - i * 0.06}
-          stroke={skin.pattern === 'neon' ? skin.bodyColor : 'none'}
-          strokeWidth={skin.pattern === 'neon' ? 1 : 0}
-        />
-      ))}
-      {/* Cabeza */}
-      <circle cx={pts[0][0]} cy={pts[0][1]} r={13} fill={fillHead} filter={filter}
-        stroke={skin.pattern === 'neon' ? skin.headColor : 'none'}
-        strokeWidth={skin.pattern === 'neon' ? 2 : 0}
+      
+      {/* Cuerpo continuo en lugar de círculos superpuestos */}
+      <polyline 
+        points={pts.map(p => p.join(',')).join(' ')} 
+        fill="none" 
+        stroke={fillBody} 
+        strokeWidth="18" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+        filter={filter}
       />
+      {skin.pattern === 'neon' && (
+        <polyline 
+          points={pts.map(p => p.join(',')).join(' ')} 
+          fill="none" 
+          stroke={skin.bodyColor} 
+          strokeWidth="8" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        />
+      )}
+
+      {/* Cabeza */}
+      <circle cx={pts[0][0]} cy={pts[0][1]} r={12} fill={fillHead} filter={filter} />
+
       {/* Ojos */}
-      <circle cx={94} cy={25} r={4} fill="white"/>
-      <circle cx={106} cy={25} r={4} fill="white"/>
-      <circle cx={94} cy={25} r={2.5} fill={eyeColor}/>
-      <circle cx={106} cy={25} r={2.5} fill={eyeColor}/>
+      <circle cx={94} cy={24} r={4} fill="white"/>
+      <circle cx={106} cy={24} r={4} fill="white"/>
+      <circle cx={94} cy={24} r={2.5} fill={eyeColor}/>
+      <circle cx={106} cy={24} r={2.5} fill={eyeColor}/>
       {skin.eyeStyle === 'laser' && <>
-        <line x1={94} y1={25} x2={80} y2={15} stroke="#ff0000" strokeWidth={1.5} opacity={0.7}/>
-        <line x1={106} y1={25} x2={120} y2={15} stroke="#ff0000" strokeWidth={1.5} opacity={0.7}/>
+        <line x1={94} y1={24} x2={75} y2={10} stroke="#ff0000" strokeWidth={2.5} opacity={0.8}/>
+        <line x1={106} y1={24} x2={125} y2={10} stroke="#ff0000" strokeWidth={2.5} opacity={0.8}/>
       </>}
-      {/* Trail effects */}
+      
+      {/* Trail effects simplificado para que no sature */}
       {skin.trailEffect === 'sparkles' && <>
         <circle cx={42} cy={55} r={2.5} fill="#ffe000" opacity={0.8}/>
         <circle cx={38} cy={70} r={2} fill="#ffe000" opacity={0.6}/>
         <circle cx={50} cy={80} r={1.5} fill="#fff" opacity={0.7}/>
       </>}
       {skin.trailEffect === 'fire' && <>
-        <ellipse cx={45} cy={72} rx={5} ry={8} fill="#ff6b00" opacity={0.7}/>
-        <ellipse cx={45} cy={70} rx={3} ry={5} fill="#ffd700" opacity={0.6}/>
+        <path d="M42,55 Q45,50 48,55 Q45,60 42,55" fill="#ff4500" opacity={0.8}/>
+        <path d="M38,70 Q40,66 42,70 Q40,74 38,70" fill="#ff8c00" opacity={0.6}/>
+        <path d="M50,80 Q52,77 54,80 Q52,83 50,80" fill="#ffd700" opacity={0.7}/>
       </>}
       {skin.trailEffect === 'ice' && <>
-        <circle cx={42} cy={68} r={3} fill="#a5f3fc" opacity={0.7}/>
-        <circle cx={48} cy={78} r={2} fill="#e0f7ff" opacity={0.6}/>
-      </>}
-      {skin.trailEffect === 'lightning' && <>
-        <polyline points="45,55 50,65 43,68 50,80" fill="none" stroke="#ffe000" strokeWidth={2} opacity={0.8}/>
+        <circle cx={42} cy={55} r={2} fill="#7dd3fc" opacity={0.8}/>
+        <circle cx={38} cy={70} r={1.5} fill="#e0f7ff" opacity={0.7}/>
+        <circle cx={50} cy={80} r={1} fill="#ffffff" opacity={0.9}/>
       </>}
       {skin.trailEffect === 'stars' && <>
-        <text x={36} y={62} fontSize={10} fill="#ffe000" opacity={0.8}>★</text>
-        <text x={44} y={76} fontSize={8} fill="#fff" opacity={0.6}>✦</text>
+        <polygon points="42,52 43,54 45,55 43,56 42,58 41,56 39,55 41,54" fill="#fbbf24" opacity={0.8}/>
+        <polygon points="38,68 39,69 40,70 39,71 38,72 37,71 36,70 37,69" fill="#fef3c7" opacity={0.6}/>
+        <polygon points="50,78 50.5,79 51.5,80 50.5,81 50,82 49.5,81 48.5,80 49.5,79" fill="#fbbf24" opacity={0.7}/>
       </>}
       {skin.trailEffect === 'hearts' && <>
         <text x={36} y={62} fontSize={10} fill="#ff69b4" opacity={0.9}>♥</text>
         <text x={44} y={76} fontSize={8} fill="#ff69b4" opacity={0.6}>♥</text>
+      </>}
+      {skin.trailEffect === 'lightning' && <>
+        <polyline points="40,50 44,55 42,56 46,62" fill="none" stroke="#fde047" strokeWidth="1.5" opacity={0.8}/>
+        <polyline points="36,68 39,72 37,73 40,78" fill="none" stroke="#fef08a" strokeWidth="1" opacity={0.6}/>
       </>}
       {skin.trailEffect === 'void' && <>
         <circle cx={44} cy={68} r={4} fill="#1a0030" opacity={0.8}/>

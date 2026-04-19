@@ -1,4 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import es from '../locales/es.json';
+import en from '../locales/en.json';
+
+const translations = { es, en };
 
 const SettingsContext = createContext();
 export const useSettings = () => useContext(SettingsContext);
@@ -35,8 +39,19 @@ export function SettingsProvider({ children }) {
 
   const toggleDark = () => updateSetting('darkMode', !settings.darkMode);
 
+  const t = (nsOrPath, key) => {
+    const lang = settings.language || 'es';
+    let ns = nsOrPath;
+    let k = key;
+    if (!key && nsOrPath?.includes('.')) {
+      [ns, k] = nsOrPath.split('.');
+    }
+    if (!ns || !k) return k || nsOrPath || '...';
+    return translations[lang]?.[ns]?.[k] || translations['es']?.[ns]?.[k] || k;
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, toggleDark }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, toggleDark, t }}>
       {children}
     </SettingsContext.Provider>
   );

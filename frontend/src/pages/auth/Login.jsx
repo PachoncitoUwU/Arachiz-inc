@@ -2,10 +2,12 @@ import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, GraduationCap } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import fetchApi from '../../services/api';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
+  const { t } = useSettings();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function Login() {
           <div className="flex justify-center mb-6">
             <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Iniciar sesión</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('login', 'welcome')}</h1>
         </div>
 
         <div className="bg-white rounded-2xl shadow-card p-8 space-y-4">
@@ -61,7 +63,7 @@ export default function Login() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Mail size={17}/>
               </div>
-              <input type="email" required placeholder="Correo electrónico"
+              <input type="email" required placeholder={t('login', 'email')}
                 className="input-field pl-11"
                 value={form.email} onChange={setField('email')} />
             </div>
@@ -71,14 +73,14 @@ export default function Login() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Lock size={17}/>
               </div>
-              <input type="password" required placeholder="Contraseña"
+              <input type="password" required placeholder={t('login', 'password')}
                 className="input-field pl-11"
                 value={form.password} onChange={setField('password')} />
             </div>
 
             <button type="submit" disabled={loading}
               className="w-full bg-[#4285F4] text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50 shadow-sm">
-              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              {loading ? t('login', 'loading') : t('login', 'enter')}
             </button>
           </form>
 
@@ -96,7 +98,7 @@ export default function Login() {
 
           <Link to="/register"
             className="block w-full text-center bg-[#34A853] text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-600 transition-all active:scale-95 shadow-sm">
-            Registrarse
+            {t('login', 'noAccount')}
           </Link>
         </div>
       </div>

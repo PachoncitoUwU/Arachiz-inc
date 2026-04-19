@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import fetchApi from '../../services/api';
 import StatCard from '../../components/StatCard';
+import { useSettings } from '../../context/SettingsContext';
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -21,6 +22,7 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function AprendizDashboard() {
   const { user } = useContext(AuthContext);
+  const { t, settings } = useSettings();
   const { showToast } = useToast();
   const [fichas, setFichas] = useState([]);
   const [materias, setMaterias] = useState([]);
@@ -77,10 +79,10 @@ export default function AprendizDashboard() {
     <div className="space-y-6 animate-fade-in">
       {/* Welcome */}
       <div className="card bg-gradient-to-r from-[#34A853] to-green-500 text-white border-0 shadow-card">
-        <p className="text-green-100 text-sm font-medium">Bienvenido de vuelta</p>
+        <p className="text-green-100 text-sm font-medium">{t('dashboard', 'welcome')}</p>
         <h1 className="text-2xl font-bold mt-1">{user?.fullName || user?.email}</h1>
         <p className="text-green-100 text-sm mt-1">
-          Aprendiz · {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {t('register', 'learner')} · {new Date().toLocaleDateString(settings.language === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
 
@@ -91,10 +93,10 @@ export default function AprendizDashboard() {
               <AlertTriangle size={20} className="text-yellow-600"/>
             </div>
             <div>
-              <h3 className="font-bold text-yellow-800 dark:text-yellow-400">No estás inscrito en ninguna ficha</h3>
-              <p className="text-sm text-yellow-700 dark:text-yellow-500 mt-1">Pídele el código de invitación a tu instructor para unirte.</p>
+              <h3 className="font-bold text-yellow-800 dark:text-yellow-400">{t('dashboard', 'noGroup')}</h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-500 mt-1">{t('dashboard', 'askForCode')}</p>
               <Link to="/aprendiz/asistencia" className="inline-block mt-3 btn-warning text-sm">
-                Unirse a una Ficha
+                {t('dashboard', 'joinGroup')}
               </Link>
             </div>
           </div>
@@ -102,10 +104,10 @@ export default function AprendizDashboard() {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={<BookOpen size={22}/>}    label="Materias"           value={materias.length}  color="blue" />
-            <StatCard icon={<CheckCircle size={22}/>} label="Asistencias"        value={presentes}        color="green" />
-            <StatCard icon={<XCircle size={22}/>}     label="Ausencias"          value={ausentes}         color="red" />
-            <StatCard icon={<FileText size={22}/>}    label="Excusas pendientes" value={pendientes}       color={pendientes > 0 ? 'yellow' : 'gray'} />
+            <StatCard icon={<BookOpen size={22}/>}    label={t('dashboard', 'subjects')}           value={materias.length}  color="blue" />
+            <StatCard icon={<CheckCircle size={22}/>} label={t('dashboard', 'attendances')}        value={presentes}        color="green" />
+            <StatCard icon={<XCircle size={22}/>}     label={t('dashboard', 'absences')}           value={ausentes}         color="red" />
+            <StatCard icon={<FileText size={22}/>}    label={t('dashboard', 'pendingExcuses')} value={pendientes}       color={pendientes > 0 ? 'yellow' : 'gray'} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -113,7 +115,7 @@ export default function AprendizDashboard() {
             <div className="card relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-[#4285F4]/10 to-[#34A853]/10 opacity-50"></div>
               <div className="relative z-10">
-                <h2 className="font-bold text-gray-900 dark:text-white mb-4">Mi Ficha</h2>
+                <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'myGroup')}</h2>
                 
                 {ficha.instructores?.[0]?.instructor && (
                   <div className="flex items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -125,7 +127,7 @@ export default function AprendizDashboard() {
                       </div>
                     )}
                     <div>
-                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Instructor Lider</p>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('dashboard', 'leadInstructor')}</p>
                       <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.instructores[0].instructor.fullName}</p>
                     </div>
                   </div>
@@ -133,10 +135,10 @@ export default function AprendizDashboard() {
 
                 <div className="space-y-2">
                   {[
-                    { label: 'Número', value: ficha.numero },
-                    { label: 'Nivel', value: ficha.nivel },
-                    { label: 'Centro', value: ficha.centro },
-                    { label: 'Jornada', value: ficha.jornada },
+                    { label: t('dashboard', 'number'), value: ficha.numero },
+                    { label: t('dashboard', 'level'), value: ficha.nivel },
+                    { label: t('dashboard', 'center'), value: ficha.centro },
+                    { label: t('dashboard', 'shift'), value: ficha.jornada },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-800/50 last:border-0">
                       <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
@@ -149,13 +151,13 @@ export default function AprendizDashboard() {
 
             {/* Acciones rápidas */}
             <div className="card dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4">Acciones rápidas</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'quickActions')}</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { to: '/aprendiz/asistencia', icon: Clock,    label: 'Ver mis Asistencias',  color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
-                  { to: '/aprendiz/horario',    icon: Clock,    label: 'Ver Horario',          color: 'bg-blue-50 dark:bg-blue-900/20 text-[#4285F4]' },
-                  { to: '/aprendiz/excusas',    icon: FileText, label: 'Enviar Excusa',        color: 'bg-yellow-50 dark:bg-yellow-900/20 text-[#FBBC05]' },
-                  { to: '/aprendiz/materias',   icon: BookOpen, label: 'Mis Materias',         color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-500' },
+                  { to: '/aprendiz/asistencia', icon: Clock,    label: t('dashboard', 'actionViewAttendances'),  color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
+                  { to: '/aprendiz/horario',    icon: Clock,    label: t('dashboard', 'actionSchedule'),          color: 'bg-blue-50 dark:bg-blue-900/20 text-[#4285F4]' },
+                  { to: '/aprendiz/excusas',    icon: FileText, label: t('dashboard', 'actionSendExcuse'),        color: 'bg-yellow-50 dark:bg-yellow-900/20 text-[#FBBC05]' },
+                  { to: '/aprendiz/materias',   icon: BookOpen, label: t('dashboard', 'actionMySubjects'),         color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-500' },
                 ].map(({ to, icon: Icon, label, color }) => (
                   <Link key={to} to={to}
                     className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-soft hover:-translate-y-0.5 transition-all">
@@ -172,7 +174,7 @@ export default function AprendizDashboard() {
           {/* Gráfica de asistencia por materia */}
           {chartData.length > 0 && (
             <div className="card dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4">Asistencia por Materia</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'attendanceBySubject')}</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -190,9 +192,9 @@ export default function AprendizDashboard() {
           {historial.length > 0 && (
             <div className="card dark:bg-gray-900 dark:border-gray-800">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-gray-900 dark:text-white">Asistencias Recientes</h2>
+                <h2 className="font-bold text-gray-900 dark:text-white">{t('dashboard', 'recentAttendances')}</h2>
                 <Link to="/aprendiz/asistencia" className="text-xs text-[#4285F4] hover:underline flex items-center gap-1">
-                  Ver historial <ArrowRight size={12}/>
+                  {t('dashboard', 'viewHistory')} <ArrowRight size={12}/>
                 </Link>
               </div>
               <div className="space-y-2">
@@ -209,7 +211,7 @@ export default function AprendizDashboard() {
                       </div>
                     </div>
                     <span className={`badge ${r.presente ? 'badge-success' : 'badge-danger'}`}>
-                      {r.presente ? 'Presente' : 'Ausente'}
+                      {r.presente ? t('dashboard', 'present') : t('dashboard', 'absent')}
                     </span>
                   </div>
                 ))}

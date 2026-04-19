@@ -10,6 +10,7 @@ import MemoryFlash  from '../games/MemoryFlash';
 import ReactionTime from '../games/ReactionTime';
 import WordleGame   from '../games/WordleGame';
 import SnakeShop    from '../components/SnakeShop';
+import { drawPremiumEyes, getRainbowColor, drawSegment3D, applyNeonGlow, clearGlow } from '../utils/snakeSkinRenderer';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -98,7 +99,7 @@ function BreakoutGame({ onClose, currentUser }) {
     const ctx = canvas.getContext('2d');
     // ── Parámetros de dificultad alta ──
     let x = canvas.width/2, y = canvas.height-50;
-    let dx = 4.5, dy = -4.5;          // bola rápida desde el inicio
+    let dx = 3.0, dy = -3.0;          // bola inicial a velocidad moderada
     const ballR=6, padH=9, padW=60;   // paleta más pequeña
     let padX=(canvas.width-padW)/2;
     let right=false, left=false;
@@ -113,7 +114,7 @@ function BreakoutGame({ onClose, currentUser }) {
 
     const restart=()=>{
       x=canvas.width/2;y=canvas.height-50;
-      dx=4.5;dy=-4.5;level=1;sc=0;
+      dx=3.0;dy=-3.0;level=1;sc=0;
       bricks=makeBricks();
       deadRef.current=false;
       savedRef.current=false;
@@ -158,45 +159,49 @@ function BreakoutGame({ onClose, currentUser }) {
         }
       }
       // Bola
-      ctx.shadowColor='#ff6b6b';ctx.shadowBlur=14;
       ctx.beginPath();ctx.arc(x,y,ballR,0,Math.PI*2);ctx.fillStyle='#ff4444';ctx.fill();
-      ctx.shadowBlur=0;
       // Paleta con glow
-      ctx.shadowColor='#4285F4';ctx.shadowBlur=8;
       ctx.beginPath();ctx.roundRect?ctx.roundRect(padX,canvas.height-padH-3,padW,padH,4):ctx.rect(padX,canvas.height-padH-3,padW,padH);
-      ctx.fillStyle='#4285F4';ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#4285F4';ctx.fill();
       // Colisión ladrillos
       for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
         const b=bricks[c][r];
         if(!b.on)continue;
+        // Hitbox check
         if(x+ballR>b.x&&x-ballR<b.x+BW&&y+ballR>b.y&&y-ballR<b.y+BH){
-          dy=-dy;b.hp--;
+          b.hp--;
           if(b.hp<=0){b.on=0;sc+=level*2;setScore(sc);}
+          
+          // Calcular overlap para determinar de qué lado pegó (Fix bug atravesar pared)
+          const overlapX = Math.min(x+ballR - b.x, b.x+BW - (x-ballR));
+          const overlapY = Math.min(y+ballR - b.y, b.y+BH - (y-ballR));
+          if(overlapX < overlapY) dx = -dx;
+          else dy = -dy;
+
           // Acelerar cada 4 ladrillos destruidos
-          const destroyed=bricks.flat().filter(b=>!b.on).length;
+          const destroyed=bricks.flat().filter(bk=>!bk.on).length;
           if(destroyed%4===0){const spd=Math.min(9,Math.abs(dx)+0.3);dx=dx>0?spd:-spd;dy=dy>0?spd:-spd;}
         }
       }
       // Siguiente nivel
       if(bricks.every(col=>col.every(b=>!b.on))){
         level++;bricks=makeBricks();
-        const spd=Math.min(10,4.5+level*0.6);
+        const spd=Math.min(10,3.0+level*0.4);
         dx=dx>0?spd:-spd;dy=-Math.abs(spd);
       }
       if(x+dx>canvas.width-ballR||x+dx<ballR)dx=-dx;
-      if(y+dy<ballR)dy=-dy;
-      else if(y+dy>canvas.height-ballR){
-        const padTop = canvas.height-padH-3;
-        if(y+dy >= padTop-ballR && x > padX-ballR && x < padX+padW+ballR){
-          // Colisión con paleta — reposicionar encima para evitar que entre
-          y = padTop - ballR;
-          dy = -Math.abs(dy);
-          dx = dx + (x-(padX+padW/2))*0.15;
-          // Limitar ángulo extremo
-          if(Math.abs(dx)>8)dx=dx>0?8:-8;
-        } else if(y+dy > canvas.height+ballR) {
-          deadRef.current=true;setDead(true);return;
-        }
+      
+      const padTop = canvas.height-padH-3;
+      if(y+dy<ballR) dy=-dy;
+      else if(y+dy >= padTop-ballR && y <= padTop && x > padX-ballR && x < padX+padW+ballR && dy > 0){
+        // Colisión con paleta — reposicionar encima para evitar que entre
+        y = padTop - ballR;
+        dy = -Math.abs(dy);
+        dx = dx + (x-(padX+padW/2))*0.15;
+        // Limitar ángulo extremo
+        if(Math.abs(dx)>8)dx=dx>0?8:-8;
+      } else if(y+dy > canvas.height+ballR) {
+        deadRef.current=true;setDead(true);return;
       }
       if(right&&padX<canvas.width-padW)padX+=7;
       if(left&&padX>0)padX-=7;
@@ -217,7 +222,7 @@ function BreakoutGame({ onClose, currentUser }) {
   },[dead,score,currentUser]);
 
   const LBContent=()=>(
-    <div style={{display:'flex',flexDirection:'column',gap:6,overflowY:'auto',maxHeight:280}}>
+    <div style={{display:'flex',flexDirection:'column',gap:6,overflowY:'auto',maxHeight:isMobile?240:420}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
         <span style={{fontSize:14,fontWeight:800,color:'white',letterSpacing:'-0.3px'}}>Ranking</span>
         <span style={{fontSize:14}}>🏆</span>
@@ -372,13 +377,15 @@ function FlappyGame({ onClose, currentUser }) {
     let pipes = [];
     let sc = 0;
     let frame = 0;
-    let speed = 2.5;
+    // Detectar si es móvil para optimizar rendimiento y ajustar dificultad
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let speed = isMobileDevice ? 2.0 : 2.5;
+    const baseGap = isMobileDevice ? 165 : 148;
     let started = false;
     let isDead = false;
     let req;
 
-    // Detectar si es móvil para optimizar rendimiento
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     
     const draw = () => {
       ctx.clearRect(0,0,W,H);
@@ -434,28 +441,21 @@ function FlappyGame({ onClose, currentUser }) {
       ctx.fillStyle = groundGradient;
       ctx.fillRect(0, H - 38, W, 38);
 
-      // Maní mejorado con sombra
+      // Dibujar maní (Emoji predeterminado pero con font-family segura para evitar bugs en iOS)
       ctx.save();
       ctx.translate(bird.x, bird.y);
       const angle = Math.min(Math.max(bird.vy * 0.03, -0.3), 0.6);
       ctx.rotate(angle);
       
-      // Sombra del maní
-      ctx.save();
-      ctx.translate(1, 1);
-      ctx.globalAlpha = 0.3;
-      ctx.font = '32px serif';
+      ctx.font = '28px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#000';
+      // Sombra para dar profundidad
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
       ctx.fillText('🥜', 0, 0);
-      ctx.restore();
       
-      // Maní principal
-      ctx.font = '32px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🥜', 0, 0);
       ctx.restore();
 
       // Score con sombra y mejor estilo
@@ -481,13 +481,13 @@ function FlappyGame({ onClose, currentUser }) {
     const tick = () => {
       if(isDead) return;
       if(started){
-        bird.vy += 0.5;
+        bird.vy += isMobileDevice ? 0.45 : 0.5;
         bird.y  += bird.vy;
         frame++;
         const interval = Math.max(50, 90 - sc * 3.5);
         if(frame % Math.floor(interval) === 0){
-          // Ajustar el GAP de manera más gradual y jugable
-          const currentGap = sc <= 7 ? Math.max(80, GAP - Math.floor(sc * 4)) : Math.max(80, GAP - 28);
+          // Ajustar el GAP de manera más gradual (gap más ámplio si es mobile)
+          const currentGap = sc <= 7 ? Math.max(100, baseGap - Math.floor(sc * 4)) : Math.max(100, baseGap - 30);
           // Asegurar que siempre haya al menos 60px arriba y 60px abajo
           const minTop = 60;
           const maxTop = H - currentGap - 60 - 38; // 38 es el suelo
@@ -500,7 +500,7 @@ function FlappyGame({ onClose, currentUser }) {
           if(!p.scored && p.x+PW < bird.x){
             p.scored=true; sc++;
             setScore(sc);
-            speed = Math.min(6.5, 2.8 + sc*0.12);
+            speed = Math.min(isMobileDevice ? 5.5 : 6.5, (isMobileDevice ? 2.2 : 2.8) + sc*0.12);
           }
         });
         if(bird.y+16 > H-38 || bird.y-16 < 0){
@@ -523,7 +523,7 @@ function FlappyGame({ onClose, currentUser }) {
     const doJump = () => {
       if(isDead) return;
       if(!started) started=true;
-      bird.vy = -9;
+      bird.vy = isMobileDevice ? -7.0 : -9;
     };
 
     rafRef.current = { jump: doJump };
@@ -736,7 +736,7 @@ function Leaderboard({ onClose, currentUser }) {
   const lb = getLeaderboard();
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(180,200,220,0.2)',backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:201,padding:16}} onClick={onClose}>
-      <div style={{background:'rgba(255,255,255,0.45)',backdropFilter:'blur(60px) saturate(220%)',WebkitBackdropFilter:'blur(60px) saturate(220%)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:36,boxShadow:'0 40px 100px rgba(0,0,0,0.12),inset 0 2px 0 rgba(255,255,255,1)',padding:'28px 24px',width:'100%',maxWidth:380,maxHeight:'85vh',overflow:'hidden',display:'flex',flexDirection:'column',gap:16}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:'rgba(255,255,255,0.45)',backdropFilter:'blur(60px) saturate(220%)',WebkitBackdropFilter:'blur(60px) saturate(220%)',border:'1.5px solid rgba(255,255,255,0.9)',borderRadius:36,boxShadow:'0 40px 100px rgba(0,0,0,0.12),inset 0 2px 0 rgba(255,255,255,1)',padding:'28px 24px',width:'100%',maxWidth:380,maxHeight:window.innerWidth<700?'85vh':'95vh',overflow:'hidden',display:'flex',flexDirection:'column',gap:16}} onClick={e=>e.stopPropagation()}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
             <span style={{fontSize:20,fontWeight:800,color:'#1d1d1f',letterSpacing:'-0.6px'}}>Leaderboard</span>
@@ -811,12 +811,15 @@ function SnakeGame({ onClose, currentUser }) {
   const snakeColorRef   = useRef('#00ff88');
   const foodEmojiRef    = useRef('🍎');
   const equippedSkinRef = useRef(null);
+  
+  // Refs para canvas puro (sin SVG overlay)
+  const gradCacheRef = useRef(null); // { skinId, bodyFill, headFill }
   const W = COLS*CELL, H = ROWS*CELL;
 
   // Sincronizar refs con estado para que drawGame siempre lea el valor actual
-  useEffect(() => { snakeColorRef.current = snakeColor; }, [snakeColor]);
+  useEffect(() => { snakeColorRef.current = snakeColor; gradCacheRef.current = null; }, [snakeColor]);
   useEffect(() => { foodEmojiRef.current = foodEmoji; }, [foodEmoji]);
-  useEffect(() => { equippedSkinRef.current = equippedSkin; }, [equippedSkin]);
+  useEffect(() => { equippedSkinRef.current = equippedSkin; gradCacheRef.current = null; }, [equippedSkin]);
 
   // Cargar leaderboard desde el servidor al abrir
   useEffect(()=>{
@@ -856,157 +859,97 @@ function SnakeGame({ onClose, currentUser }) {
 
   const drawGame=(g,ctx)=>{
     ctx.clearRect(0,0,W,H);
-    
-    // Fondo simple y limpio
-    const bg=ctx.createLinearGradient(0,0,W,H);
-    bg.addColorStop(0,'#f8fafc');
-    bg.addColorStop(1,'#e2e8f0');
-    ctx.fillStyle=bg;
+
+    // Fondo claro
+    ctx.fillStyle='rgba(248,250,252,0.9)';
     ctx.fillRect(0,0,W,H);
-    
-    // Aplicar efectos de skin si hay una equipada
+
     const skin = equippedSkinRef.current;
-    let bodyColor = snakeColorRef.current;
-    let headColor = snakeColorRef.current;
-    
-    if (skin) {
-      bodyColor = skin.bodyColor;
-      headColor = skin.headColor;
-      
-      // Efectos de rastro
-      if (skin.trailEffect && skin.trailEffect !== 'none' && g.snake.length > 1) {
-        for (let i = 1; i < Math.min(g.snake.length, 10); i++) {
-          const [x, y] = g.snake[i];
-          const alpha = 1 - (i / 10);
-          
-          if (skin.trailEffect === 'sparkles') {
-            ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.6})`;
-            ctx.beginPath();
-            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 3, 0, Math.PI*2);
-            ctx.fill();
-          } else if (skin.trailEffect === 'fire') {
-            ctx.fillStyle = `rgba(255, 107, 53, ${alpha * 0.7})`;
-            ctx.beginPath();
-            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 4, 0, Math.PI*2);
-            ctx.fill();
-          } else if (skin.trailEffect === 'ice') {
-            ctx.fillStyle = `rgba(160, 216, 241, ${alpha * 0.6})`;
-            ctx.beginPath();
-            ctx.arc(x*CELL+CELL/2, y*CELL+CELL/2, 3, 0, Math.PI*2);
-            ctx.fill();
-          } else if (skin.trailEffect === 'lightning') {
-            ctx.strokeStyle = `rgba(255, 235, 59, ${alpha * 0.8})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(x*CELL+CELL/2, y*CELL+CELL/2);
-            if (i < g.snake.length - 1) {
-              const [nx, ny] = g.snake[i+1];
-              ctx.lineTo(nx*CELL+CELL/2, ny*CELL+CELL/2);
-            }
-            ctx.stroke();
-          } else if (skin.trailEffect === 'stars') {
-            ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.7})`;
-            ctx.font = `${CELL/2}px serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⭐', x*CELL+CELL/2, y*CELL+CELL/2);
-          }
-        }
+    const baseColor = snakeColorRef.current;
+    const cacheKey = skin ? (skin.id||skin.name||skin.pattern) : baseColor;
+
+    // ── Gradiente cacheado — solo se recrea cuando cambia la skin ─────────
+    if (!gradCacheRef.current || gradCacheRef.current.key !== cacheKey) {
+      let bodyFill = baseColor;
+      const p = skin?.pattern;
+      if (skin) {
+        if (p === 'solid')    bodyFill = skin.bodyColor;
+        else if (p === 'neon') bodyFill = skin.bodyColor;
+        else if (p === 'gradient') {
+          const g2=ctx.createLinearGradient(0,0,W,H);
+          g2.addColorStop(0,skin.headColor); g2.addColorStop(1,skin.bodyColor); bodyFill=g2;
+        } else if (p === 'rainbow') {
+          const g2=ctx.createLinearGradient(0,0,W,0);
+          g2.addColorStop(0,'#ff0080'); g2.addColorStop(0.2,'#ff8000');
+          g2.addColorStop(0.4,'#ffff00'); g2.addColorStop(0.6,'#00ff80');
+          g2.addColorStop(0.8,'#0080ff'); g2.addColorStop(1,'#8000ff'); bodyFill=g2;
+        } else if (p === 'galaxy') {
+          const g2=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)/2);
+          g2.addColorStop(0,'#c084fc'); g2.addColorStop(0.5,'#4a148c'); g2.addColorStop(1,'#000'); bodyFill=g2;
+        } else if (p === 'fire') {
+          const g2=ctx.createLinearGradient(0,H,0,0);
+          g2.addColorStop(0,'#ff0000'); g2.addColorStop(0.5,'#ff6b00'); g2.addColorStop(1,'#ffd700'); bodyFill=g2;
+        } else if (p === 'ice') {
+          const g2=ctx.createLinearGradient(0,0,W,H);
+          g2.addColorStop(0,'#e0f7ff'); g2.addColorStop(0.5,'#7dd3fc'); g2.addColorStop(1,'#0ea5e9'); bodyFill=g2;
+        } else if (p === 'gold') {
+          const g2=ctx.createLinearGradient(0,0,W,H);
+          g2.addColorStop(0,'#ffd700'); g2.addColorStop(0.5,'#ffb300'); g2.addColorStop(1,'#ff8c00'); bodyFill=g2;
+        } else if (p === 'void') {
+          const g2=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)/2);
+          g2.addColorStop(0,'#1a0030'); g2.addColorStop(0.6,'#0d0020'); g2.addColorStop(1,'#000'); bodyFill=g2;
+        } else bodyFill = skin.bodyColor;
       }
+      gradCacheRef.current = { key: cacheKey, bodyFill, headFill: skin?.headColor || baseColor };
     }
-    
-    // Serpiente como una línea continua y fluida
-    if(g.snake.length > 0) {
-      // Aplicar patrón de skin
-      if (skin && skin.pattern === 'gradient') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, headColor);
-        grad.addColorStop(1, bodyColor);
-        ctx.strokeStyle = grad;
-      } else if (skin && skin.pattern === 'rainbow') {
-        const grad = ctx.createLinearGradient(0, 0, W, 0);
-        grad.addColorStop(0, '#ff0080');
-        grad.addColorStop(0.25, '#ff8000');
-        grad.addColorStop(0.5, '#ffff00');
-        grad.addColorStop(0.75, '#00ff80');
-        grad.addColorStop(1, '#0080ff');
-        ctx.strokeStyle = grad;
-      } else if (skin && skin.pattern === 'galaxy') {
-        const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W);
-        grad.addColorStop(0, '#4a148c');
-        grad.addColorStop(0.5, '#1a237e');
-        grad.addColorStop(1, '#000000');
-        ctx.strokeStyle = grad;
-      } else if (skin && skin.pattern === 'neon') {
-        ctx.strokeStyle = bodyColor;
-        ctx.shadowColor = bodyColor;
-        ctx.shadowBlur = 15;
-      } else {
-        ctx.strokeStyle = bodyColor;
-      }
-      
-      ctx.lineWidth = CELL - 6;
+    const { bodyFill, headFill } = gradCacheRef.current;
+    const eyeStyle = skin?.eyeStyle || 'normal';
+    const R = (CELL-5)/2; // radio del cuerpo
+
+    // ── Aura de color (para skins con patrón especial) ────────────────────
+    if (skin && skin.pattern !== 'solid') {
+      const auraColor = skin.headColor || skin.bodyColor;
+      ctx.shadowColor = auraColor;
+      ctx.shadowBlur = 18;
+    } else if (skin?.pattern === 'neon') {
+      ctx.shadowColor = skin.bodyColor;
+      ctx.shadowBlur = 22;
+    }
+
+    // ── Cuerpo + cabeza como línea continua (mismo grosor) ────────────────
+    if (g.snake.length > 0) {
+      ctx.strokeStyle = bodyFill;
+      ctx.lineWidth = CELL - 5;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      
       ctx.beginPath();
-      ctx.moveTo(g.snake[0][0] * CELL + CELL/2, g.snake[0][1] * CELL + CELL/2);
-      
-      for(let i = 1; i < g.snake.length; i++) {
-        ctx.lineTo(g.snake[i][0] * CELL + CELL/2, g.snake[i][1] * CELL + CELL/2);
-      }
+      ctx.moveTo(g.snake[0][0]*CELL+CELL/2, g.snake[0][1]*CELL+CELL/2);
+      for (let i=1; i<g.snake.length; i++)
+        ctx.lineTo(g.snake[i][0]*CELL+CELL/2, g.snake[i][1]*CELL+CELL/2);
       ctx.stroke();
-      
-      // Reset shadow
-      ctx.shadowBlur = 0;
-      
-      // Cabeza de la serpiente
-      const [headX, headY] = g.snake[0];
-      ctx.fillStyle = headColor;
-      ctx.beginPath();
-      ctx.arc(headX*CELL+CELL/2, headY*CELL+CELL/2, CELL/2-1, 0, Math.PI*2);
-      ctx.fill();
-      
-      // Ojos según el estilo de la skin
-      const eyeStyle = skin?.eyeStyle || 'normal';
-      ctx.fillStyle = '#ffffff';
-      const eyeSize = eyeStyle === 'cute' ? 5 : 4;
-      const eyeOffset = 7;
-      
-      if (eyeStyle === 'laser') {
-        ctx.fillStyle = '#ff0000';
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 10;
-      }
-      
-      ctx.beginPath();
-      ctx.arc(headX*CELL+eyeOffset, headY*CELL+eyeOffset, eyeSize, 0, Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(headX*CELL+CELL-eyeOffset, headY*CELL+eyeOffset, eyeSize, 0, Math.PI*2);
-      ctx.fill();
-      
-      ctx.shadowBlur = 0;
-      
-      // Pupilas
-      if (eyeStyle !== 'laser') {
-        ctx.fillStyle = eyeStyle === 'angry' ? '#ff0000' : '#000000';
-        const pupilSize = eyeStyle === 'cute' ? 3 : 2;
-        ctx.beginPath();
-        ctx.arc(headX*CELL+eyeOffset, headY*CELL+eyeOffset, pupilSize, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(headX*CELL+CELL-eyeOffset, headY*CELL+eyeOffset, pupilSize, 0, Math.PI*2);
-        ctx.fill();
-      }
     }
-    
-    // Comida personalizable
-    const [fx, fy] = g.food;
-    ctx.font = `${CELL-2}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(foodEmojiRef.current, fx*CELL+CELL/2, fy*CELL+CELL/2);
+    ctx.shadowBlur = 0;
+
+    // ── Ojos Premium con expresión según rareza/eyeStyle ─────────────────────────
+    if (g.snake.length > 0) {
+      const [hx,hy] = g.snake[0];
+      const [dx,dy] = g.dir;
+      const cx = hx*CELL+CELL/2, cy = hy*CELL+CELL/2;
+      const o = 4, f = 1; // lateral y adelante
+      let e1x,e1y,e2x,e2y;
+      if (dx===1)       { e1x=cx+f; e1y=cy-o; e2x=cx+f; e2y=cy+o; }
+      else if (dx===-1) { e1x=cx-f; e1y=cy-o; e2x=cx-f; e2y=cy+o; }
+      else if (dy===1)  { e1x=cx-o; e1y=cy+f; e2x=cx+o; e2y=cy+f; }
+      else              { e1x=cx-o; e1y=cy-f; e2x=cx+o; e2y=cy-f; }
+
+      // Usar la función premium de renderizado de ojos
+      drawPremiumEyes(ctx, e1x, e1y, e2x, e2y, eyeStyle);
+    }
+
+    // ── Comida ────────────────────────────────────────────────────────────
+    ctx.font = `${CELL-4}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(foodEmojiRef.current, g.food[0]*CELL+CELL/2, g.food[1]*CELL+CELL/2);
   };
 
   const loop=(ts)=>{
@@ -1177,7 +1120,7 @@ function SnakeGame({ onClose, currentUser }) {
       {lb.length===0?(
         <div style={{textAlign:'center',padding:'20px 0',color:'#6e6e73',fontSize:12}}><div style={{fontSize:28,marginBottom:6}}>🎮</div>¡Sé el primero!</div>
       ):(
-        <div style={{display:'flex',flexDirection:'column',gap:5,overflowY:'auto',maxHeight:H}}>
+        <div style={{display:'flex',flexDirection:'column',gap:5,overflowY:'auto',maxHeight: window.innerHeight > 700 ? 460 : 380}}>
           {[...lb].sort((a,b)=>b.score-a.score).map((entry,i)=>{
             const isTop=i<3,col=isTop?TOP_COLORS[i]:null;
             return(<div key={i} style={{display:'flex',alignItems:'center',gap:7,padding:'7px 9px',borderRadius:13,background:isTop?col.bg:'rgba(255,255,255,0.35)',border:isTop?`1px solid ${col.glow}`:'1px solid rgba(255,255,255,0.5)',boxShadow:isTop?`0 3px 10px ${col.glow}`:'none'}}>
@@ -1200,16 +1143,16 @@ function SnakeGame({ onClose, currentUser }) {
   useEffect(()=>{const f=()=>setIsMobile(window.innerWidth<700);window.addEventListener('resize',f);return()=>window.removeEventListener('resize',f);},[]);
 
   const glassPanel = {
-    background:'rgba(255,255,255,0.5)',
-    backdropFilter:'blur(60px) saturate(220%)',
-    WebkitBackdropFilter:'blur(60px) saturate(220%)',
-    border:'1.5px solid rgba(255,255,255,0.9)',
+    background:'rgba(255,255,255,0.06)',
+    backdropFilter:'blur(8px)',
+    WebkitBackdropFilter:'blur(8px)',
+    border:'1px solid rgba(255,255,255,0.25)',
     borderRadius:28,
-    boxShadow:'0 30px 80px rgba(0,0,0,0.12),inset 0 2px 0 rgba(255,255,255,1)',
+    boxShadow:'0 2px 16px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5)',
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(180,200,220,0.25)',backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:12,overflowY:'auto'}} onClick={onClose}>
+    <div style={{position:'fixed',inset:0,background:'rgba(255,255,255,0.04)',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:12,overflowY:'auto'}} onClick={onClose}>
       <div style={{display:'flex',flexDirection:isMobile?'column':'row',gap:12,alignItems:'flex-start',maxWidth:'98vw'}} onClick={e=>e.stopPropagation()}>
 
         {/* LB — siempre visible a la izquierda en desktop */}
@@ -1251,8 +1194,9 @@ function SnakeGame({ onClose, currentUser }) {
             </div>
           ) : (
             <>
-              <div style={{position:'relative',borderRadius:18,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.95)',boxShadow:'inset 0 2px 16px rgba(0,0,0,0.06)'}}>
+              <div style={{position:'relative',borderRadius:18,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.6)',boxShadow:'0 4px 20px rgba(0,0,0,0.08)'}}>
                 <canvas ref={canvasRef} width={W} height={H} style={{display:'block',maxWidth:'100%'}}/>
+
                 {dead&&(
                   <button onClick={startGame}
                     style={{
@@ -1365,11 +1309,74 @@ function SnakeGame({ onClose, currentUser }) {
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
+// === DICCIONARIO DE IDOMAS (EJEMPLO) ===
+const translations = {
+  es: {
+    pageTitle: "Configuración",
+    pageSubtitle: "Personaliza tu experiencia en Arachiz",
+    profile: "Perfil",
+    fullName: "Nombre completo",
+    email: "Correo electrónico",
+    instructor: "Instructor",
+    student: "Aprendiz",
+    changePhoto: "Cambiar foto",
+    saveProfile: "Guardar perfil",
+    saving: "Guardando...",
+    appearance: "Apariencia",
+    theme: "Tema",
+    light: "Claro",
+    dark: "Oscuro",
+    language: "Idioma",
+    englishComingSoon: "Traducción aplicada en esta página como ejemplo.",
+    notificationsTitle: "Notificaciones",
+    sysNotifications: "Notificaciones del sistema",
+    sysDesc: "Alertas de sesiones, excusas y actividad",
+    security: "Seguridad",
+    sessionDesc: "Tu sesión expira automáticamente después de 8 horas de inactividad.",
+    currentSession: "Sesión actual",
+    advSensor: "Opciones avanzadas del sensor",
+    clearDb: "Borrar base de datos del sensor de huellas",
+    cancel: "Cancelar"
+  },
+  en: {
+    pageTitle: "Settings",
+    pageSubtitle: "Customize your Arachiz experience",
+    profile: "Profile",
+    fullName: "Full Name",
+    email: "Email address",
+    instructor: "Instructor",
+    student: "Student",
+    changePhoto: "Change photo",
+    saveProfile: "Save profile",
+    saving: "Saving...",
+    appearance: "Appearance",
+    theme: "Theme",
+    light: "Light",
+    dark: "Dark",
+    language: "Language",
+    englishComingSoon: "Translation applied on this page as an example.",
+    notificationsTitle: "Notifications",
+    sysNotifications: "System notifications",
+    sysDesc: "Session alerts, excuses and activity",
+    security: "Security",
+    sessionDesc: "Your session expires automatically after 8 hours of inactivity.",
+    currentSession: "Current session",
+    advSensor: "Advanced sensor options",
+    clearDb: "Clear fingerprint sensor database",
+    cancel: "Cancel"
+  }
+};
+
 export default function Configuracion() {
   const { user, updateUser } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
+
+  const t = (key) => {
+    const lang = settings?.language || 'es';
+    return translations[lang]?.[key] || translations['es'][key] || key;
+  };
 
   const [fullName, setFullName]           = useState(user?.fullName || '');
   const [avatarPreview, setAvatarPreview] = useState(
@@ -1613,10 +1620,10 @@ export default function Configuracion() {
       </Section>
 
       {/* Apariencia */}
-      <Section icon={Palette} title="Apariencia" onTitleClick={handleArkClick}>
-        <p className="text-sm font-medium text-gray-700 mb-3">Tema</p>
+      <Section icon={Palette} title={t('appearance')} onTitleClick={handleArkClick}>
+        <p className="text-sm font-medium text-gray-700 mb-3">{t('theme')}</p>
         <div className="grid grid-cols-2 gap-3">
-          {[{id:'light',label:'Claro',icon:Sun},{id:'dark',label:'Oscuro',icon:Moon}].map(({id,label,icon:Icon}) => {
+          {[{id:'light',label:t('light'),icon:Sun},{id:'dark',label:t('dark'),icon:Moon}].map(({id,label,icon:Icon}) => {
             const active = id==='dark' ? settings.darkMode : !settings.darkMode;
             return (
               <button key={id} type="button"
@@ -1632,7 +1639,7 @@ export default function Configuracion() {
       </Section>
 
       {/* Idioma */}
-      <Section icon={Globe} title="Idioma" onTitleClick={handleIdiomaClick}>
+      <Section icon={Globe} title={t('language')} onTitleClick={handleIdiomaClick}>
         <div className="grid grid-cols-2 gap-3">
           {LANGUAGES.map(({code,label,flag}) => (
             <button key={code} type="button"
@@ -1650,16 +1657,16 @@ export default function Configuracion() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-3">Traducción completa al inglés próximamente.</p>
+        <p className="text-xs text-gray-400 mt-3">{t('englishComingSoon')}</p>
         {idiomaClicks > 0 && idiomaClicks < 7 && <p className="text-xs text-gray-300 text-center mt-1">{7-idiomaClicks} más...</p>}
         {espanolClicks > 0 && espanolClicks < 7 && <p className="text-xs text-blue-300 text-center mt-1">Memory: {7-espanolClicks} más...</p>}
       </Section>
 
       {/* Notificaciones */}
-      <Section icon={Bell} title="Notificaciones" onTitleClick={handleNotiClick}>
+      <Section icon={Bell} title={t('notificationsTitle')} onTitleClick={handleNotiClick}>
         <div className="divide-y divide-gray-100">
           <ToggleSwitch checked={settings.notifications} onChange={v=>updateSetting('notifications',v)}
-            label="Notificaciones del sistema" description="Alertas de sesiones, excusas y actividad"/>
+            label={t('sysNotifications')} description={t('sysDesc')}/>
         </div>
         {notiClicks > 0 && notiClicks < 7 && <p className="text-xs text-gray-300 text-center mt-1">{7-notiClicks} más...</p>}
       </Section>
@@ -1672,11 +1679,11 @@ export default function Configuracion() {
       )}
 
       {/* Seguridad */}
-      <Section icon={Shield} title="Seguridad" onTitleClick={handleSecClick}>
+      <Section icon={Shield} title={t('security')} onTitleClick={handleSecClick}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">Tu sesión expira automáticamente después de 8 horas de inactividad.</p>
+          <p className="text-sm text-gray-500">{t('sessionDesc')}</p>
           <div className="p-3 bg-gray-50 rounded-xl">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Sesión actual</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('currentSession')}</p>
             <p className="text-sm text-gray-700">{user?.email}</p>
             <p className="text-xs text-gray-400 capitalize cursor-default select-none" onClick={handleInstClick}>
               {user?.userType}
@@ -1685,17 +1692,22 @@ export default function Configuracion() {
           {secClicks > 0 && secClicks < 7 && <p className="text-xs text-gray-300 text-center">{7-secClicks} más...</p>}
           {showClear && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-2">
-              <p className="text-xs font-bold text-red-600">Opciones avanzadas del sensor</p>
+              <p className="text-xs font-bold text-red-600">{t('advSensor')}</p>
               <button onClick={handleClearFingerprints} className="w-full text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg py-2 transition-colors">
-                Borrar base de datos del sensor de huellas
+                {t('clearDb')}
               </button>
               <button onClick={() => setShowClear(false)} className="w-full text-xs text-gray-500 hover:text-gray-700 py-1">
-                Cancelar
+                {t('cancel')}
               </button>
             </div>
           )}
         </div>
       </Section>
+
+      <div className="flex items-center justify-center gap-2 pt-8 pb-12 cursor-default select-none opacity-50">
+        <img src="/mi-logo.png" alt="Arachiz Logo" className="w-5 h-5 object-contain" />
+        <p className="text-gray-500 text-xs font-medium">Version 1.2.12</p>
+      </div>
     </div>
   );
 }

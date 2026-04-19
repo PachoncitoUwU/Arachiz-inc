@@ -3,6 +3,7 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import { Calendar, Clock, User, AlertTriangle } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const COLORES = [
@@ -19,6 +20,7 @@ export default function AprendizHorario() {
   const [fichaId, setFichaId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [noFicha, setNoFicha] = useState(false);
+  const { t } = useSettings();
 
   useEffect(() => {
     fetchApi('/fichas/my-fichas').then(d => {
@@ -44,7 +46,7 @@ export default function AprendizHorario() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Mi Horario" subtitle="Clases semanales de tu ficha" />
+      <PageHeader title={t('schedule.title')} subtitle={t('schedule.subtitle')} />
 
       {noFicha ? (
         <div className="card border border-yellow-200 bg-yellow-50">

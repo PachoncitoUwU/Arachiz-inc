@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 Preview de Skins Premium - Snake Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a0a2e 50%, #0a1628 100%);
+            color: white;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #a855f7, #3b82f6, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            font-weight: 900;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.2);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #a855f7;
+        }
+        
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        canvas {
+            border-radius: 10px;
+            background: rgba(248, 250, 252, 0.95);
+        }
+        
+        .description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .features {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+        
+        .feature::before {
+            content: "✓";
+            color: #00ff88;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+        
+        .comparison h3 {
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .comparison-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+        
+        .before {
+            color: #ff6b6b;
+        }
+        
+        .after {
+            color: #00ff88;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 900;
+            color: #a855f7;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 Rediseño Premium de Skins</h1>
+        <p class="subtitle">Ojos con vida, skins bacanas y rendimiento optimizado</p>
+        
+        <div class="grid">
+            <!-- Cute Eyes -->
+            <div class="card">
+                <h2>😊 Cute Eyes</h2>
+                <div class="canvas-container">
+                    <canvas id="cuteCanvas" width="200" height="200"></canvas>
+                </div>
+                <p class="description">Ojos amigables y expresivos con brillo especular. Perfectos para skins comunes y raras.</p>
+                <div class="features">
+                    <div class="feature">Brillo especular realista</div>
+                    <div class="feature">Profundidad con gradientes</div>
+                    <div class="feature">Expresión amigable</div>
+                    <div class="feature">Borde definido</div>
+                </div>
+            </div>
+            
+            <!-- Normal Eyes -->
+            <div class="card">
+                <h2>😐 Normal Eyes</h2>
+                <div class="canvas-container">
+                    <canvas id="normalCanvas" width="200" height="200"></canvas>
+                </div>
+                <p class="description">Ojos estándar mejorados con profundidad. Versión premium de los ojos básicos.</p>
+                <div class="features">
+                    <div class="feature">Gradiente en pupila</div>
+                    <div class="feature">Sombra sutil</div>
+                    <div class="feature">Brillo especular</div>
+                    <div class="feature">Versátil y limpio</div>
+                </div>
+            </div>
+            
+            <!-- Laser Eyes -->
+            <div class="card">
+                <h2>🔴 Laser Eyes</h2>
+                <div class="canvas-container">
+                    <canvas id="laserCanvas" width="200" height="200"></canvas>
+                </div>
+                <p class="description">Ojos láser con glow rojo intenso. Para skins míticas y legendarias.</p>
+                <div class="features">
+                    <div class="feature">Glow neon dinámico</div>
+                    <div class="feature">Gradiente radial</div>
+                    <div class="feature">Centro brillante</div>
+                    <div class="feature">Efecto premium</div>
+                </div>
+            </div>
+            
+            <!-- Angry Eyes -->
+            <div class="card">
+                <h2>😠 Angry Eyes</h2>
+                <div class="canvas-container">
+                    <canvas id="angryCanvas" width="200" height="200"></canvas>
+                </div>
+                <p class="description">Ojos enojados con expresión intensa. Para skins épicas y de fuego.</p>
+                <div class="features">
+                    <div class="feature">Pupila roja</div>
+                    <div class="feature">Expresión intensa</div>
+                    <div class="feature">Brillo destacado</div>
+                    <div class="feature">Personalidad fuerte</div>
+                </div>
+            </div>
+            
+            <!-- Rainbow Skin -->
+            <div class="card">
+                <h2>🌈 Skin Arcoíris Premium</h2>
+                <div class="canvas-container">
+                    <canvas id="rainbowCanvas" width="200" height="200"></canvas>
+                </div>
+                <p class="description">Gusanito arcoíris con efecto 3D, volumen y glow dinámico.</p>
+                <div class="features">
+                    <div class="feature">Gradiente dinámico suave</div>
+                    <div class="feature">Efecto 3D con volumen</div>
+                    <div class="feature">Glow neon por segmento</div>
+                    <div class="feature">Visualmente impactante</div>
+                </div>
+            </div>
+            
+            <!-- Comparison -->
+            <div class="card">
+                <h2>📊 Comparativa</h2>
+                <div class="comparison" style="grid-column: 1; margin: 0; padding: 0; border: none; background: none;">
+                    <div>
+                        <h3 class="before">❌ Antes</h3>
+                        <div class="comparison-item">
+                            <strong>Ojos:</strong> Puntos negros básicos
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Skin:</strong> Gradiente plano
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Brillo:</strong> Amarillo poco estético
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Rendimiento:</strong> Lento con lag
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="after">✅ Después</h3>
+                        <div class="comparison-item">
+                            <strong>Ojos:</strong> Con brillo especular
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Skin:</strong> Efecto 3D premium
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Brillo:</strong> Glow neon dinámico
+                        </div>
+                        <div class="comparison-item">
+                            <strong>Rendimiento:</strong> Optimizado, sin lag
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Estilos de Ojos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Colores Arcoíris</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">60+</div>
+                <div class="stat-label">FPS Optimizado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Compatible</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🐍 Snake Game - Rediseño Premium de Skins | Optimizado para máximo impacto visual y rendimiento</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">Documento de referencia visual - Abril 2026</p>
+        </div>
+    </div>
+    
+    <script>
+        // Función para dibujar ojos
+        function drawEyes(canvas, eyeStyle) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // Fondo
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+            ctx.fillRect(0, 0, w, h);
+            
+            const e1x = w / 2 - 30;
+            const e1y = h / 2;
+            const e2x = w / 2 + 30;
+            const e2y = h / 2;
+            
+            if (eyeStyle === 'cute') {
+                // Sombra
+                ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                ctx.shadowBlur = 2;
+                ctx.shadowOffsetY = 1;
+                
+                // Esclerótica
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Borde
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 20, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 20, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Pupila con gradiente
+                const grad1 = ctx.createRadialGradient(e1x - 2.5, e1y - 2.5, 0, e1x, e1y, 11);
+                grad1.addColorStop(0, '#1a1a1a');
+                grad1.addColorStop(1, '#000000');
+                ctx.fillStyle = grad1;
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 11, 0, Math.PI * 2);
+                ctx.fill();
+                
+                const grad2 = ctx.createRadialGradient(e2x - 2.5, e2y - 2.5, 0, e2x, e2y, 11);
+                grad2.addColorStop(0, '#1a1a1a');
+                grad2.addColorStop(1, '#000000');
+                ctx.fillStyle = grad2;
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 11, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brillo especular
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.beginPath();
+                ctx.arc(e1x + 6, e1y - 6, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x + 6, e2y - 6, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brillo secundario
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath();
+                ctx.arc(e1x - 4, e1y + 4, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x - 4, e2y + 4, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+            } else if (eyeStyle === 'laser') {
+                // Glow
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 30;
+                
+                // Gradiente
+                const gradLaser1 = ctx.createRadialGradient(e1x, e1y, 0, e1x, e1y, 20);
+                gradLaser1.addColorStop(0, '#ff6666');
+                gradLaser1.addColorStop(0.5, '#ff0000');
+                gradLaser1.addColorStop(1, '#cc0000');
+                ctx.fillStyle = gradLaser1;
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                const gradLaser2 = ctx.createRadialGradient(e2x, e2y, 0, e2x, e2y, 20);
+                gradLaser2.addColorStop(0, '#ff6666');
+                gradLaser2.addColorStop(0.5, '#ff0000');
+                gradLaser2.addColorStop(1, '#cc0000');
+                ctx.fillStyle = gradLaser2;
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Centro brillante
+                ctx.fillStyle = '#ffff00';
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                
+            } else if (eyeStyle === 'angry') {
+                // Esclerótica
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 17.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 17.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Pupila roja
+                ctx.fillStyle = '#cc0000';
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brillo
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.beginPath();
+                ctx.arc(e1x + 4, e1y - 4, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x + 4, e2y - 4, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+            } else {
+                // Normal
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 5;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 16, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 16, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Pupila
+                const gradNorm1 = ctx.createRadialGradient(e1x, e1y, 0, e1x, e1y, 9);
+                gradNorm1.addColorStop(0, '#2a2a2a');
+                gradNorm1.addColorStop(1, '#000000');
+                ctx.fillStyle = gradNorm1;
+                ctx.beginPath();
+                ctx.arc(e1x, e1y, 9, 0, Math.PI * 2);
+                ctx.fill();
+                
+                const gradNorm2 = ctx.createRadialGradient(e2x, e2y, 0, e2x, e2y, 9);
+                gradNorm2.addColorStop(0, '#2a2a2a');
+                gradNorm2.addColorStop(1, '#000000');
+                ctx.fillStyle = gradNorm2;
+                ctx.beginPath();
+                ctx.arc(e2x, e2y, 9, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brillo
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.beginPath();
+                ctx.arc(e1x + 4, e1y - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e2x + 4, e2y - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Función para dibujar skin arcoíris
+        function drawRainbowSnake(canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // Fondo
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+            ctx.fillRect(0, 0, w, h);
+            
+            const rainbowColors = [
+                '#ff0080', '#ff4060', '#ff8040', '#ffc020',
+                '#ffff00', '#80ff40', '#00ff80', '#00ffff',
+                '#0080ff', '#4060ff', '#8040ff', '#ff00ff'
+            ];
+            
+            // Dibujar segmentos
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = 15;
+            
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * (40 + i * 8);
+                const y = centerY + Math.sin(angle) * (40 + i * 8);
+                const color = rainbowColors[i % rainbowColors.length];
+                
+                // Sombra 3D
+                const shadowGrad = ctx.createRadialGradient(x, y, radius * 0.6, x, y, radius);
+                shadowGrad.addColorStop(0, color);
+                shadowGrad.addColorStop(0.7, color);
+                shadowGrad.addColorStop(1, '#' + Math.max(0, parseInt(color.slice(1), 16) - 0x333333).toString(16).padStart(6, '0'));
+                
+                ctx.fillStyle = shadowGrad;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Brillo
+                const highlightGrad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+                highlightGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
+                highlightGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+                
+                ctx.fillStyle = highlightGrad;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glow
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Cabeza con ojos
+            drawEyes(canvas, 'cute');
+        }
+        
+        // Inicializar canvas
+        drawEyes(document.getElementById('cuteCanvas'), 'cute');
+        drawEyes(document.getElementById('normalCanvas'), 'normal');
+        drawEyes(document.getElementById('laserCanvas'), 'laser');
+        drawEyes(document.getElementById('angryCanvas'), 'angry');
+        drawRainbowSnake(document.getElementById('rainbowCanvas'));
+    </script>
+</body>
+</html>
