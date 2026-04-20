@@ -29,7 +29,7 @@ export async function loadFaceModels() {
  */
 export async function detectAllFaceDescriptors(videoElement) {
   const detections = await faceapi
-    .detectAllFaces(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.45 }))
+    .detectAllFaces(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
     .withFaceLandmarks(true)
     .withFaceDescriptors();
 
@@ -42,7 +42,7 @@ export async function detectAllFaceDescriptors(videoElement) {
  */
 export async function detectFaceDescriptor(videoElement) {
   const detection = await faceapi
-    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
     .withFaceLandmarks(true)
     .withFaceDescriptor();
 

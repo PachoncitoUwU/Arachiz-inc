@@ -2,12 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/mi-logo.png" />
+    <link rel="icon" type="image/png" href="/mi-logo.png" id="favicon" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arachiz</title>
+    <script>
+      // Cambiar favicon según modo oscuro/claro
+      const favicon = document.getElementById('favicon');
+      const updateFavicon = () => {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        favicon.href = isDark ? '/mi-logo-white.png' : '/mi-logo.png';
+      };
+      
+      // Actualizar al cargar
+      updateFavicon();
+      
+      // Escuchar cambios en el modo
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+    </script>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#4285F4" />
-    <link rel="apple-touch-icon" href="/ArachizLogoPNG.png">
+    <link rel="apple-touch-icon" href="/imagenApp.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
   </head>
