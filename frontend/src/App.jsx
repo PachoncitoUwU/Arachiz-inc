@@ -10,6 +10,7 @@ import Register from './pages/auth/Register';
 
 import InstructorDashboard  from './pages/instructor/Dashboard';
 import InstructorFichas     from './pages/instructor/Fichas';
+import InstructorFichaDetalle from './pages/instructor/FichaDetalle';
 import InstructorMaterias   from './pages/instructor/Materias';
 import InstructorHorario    from './pages/instructor/Horario';
 import InstructorAsistencia from './pages/instructor/Asistencia';
@@ -40,6 +41,7 @@ export default function App() {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard"      element={<InstructorDashboard />} />
                 <Route path="fichas"         element={<InstructorFichas />} />
+                <Route path="fichas/:id"     element={<InstructorFichaDetalle />} />
                 <Route path="materias"       element={<InstructorMaterias />} />
                 <Route path="horario"        element={<InstructorHorario />} />
                 <Route path="asistencia"     element={<InstructorAsistencia />} />

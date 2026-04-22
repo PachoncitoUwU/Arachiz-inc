@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
@@ -7,8 +8,7 @@ import EmptyState from '../../components/EmptyState';
 import EnrollModal from '../../components/EnrollModal';
 import { useToast } from '../../context/ToastContext';
 import {
-  Users, Plus, Copy, RefreshCw, ChevronDown, ChevronUp,
-  UserMinus, Edit2, Check, Download, Loader, Fingerprint, Link
+  Users, Plus, Copy, Check
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -35,8 +35,13 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
       {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
       <div>
         <label className="input-label">Número de Ficha</label>
-        <input required className="input-field" placeholder="3146013"
+        <input required type="number" className="input-field" placeholder="3146013"
           value={form.numero} onChange={e => onChange('numero', e.target.value)} disabled={isEdit}/>
+      </div>
+      <div>
+        <label className="input-label">Nombre del Programa</label>
+        <input required className="input-field" placeholder="Análisis y Desarrollo de Software"
+          value={form.nombre} onChange={e => onChange('nombre', e.target.value)}/>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -60,13 +65,14 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="input-label">Región</label>
-          <input className="input-field" placeholder="Tolima"
+          <input required className="input-field" placeholder="Tolima"
             value={form.region} onChange={e => onChange('region', e.target.value)}/>
         </div>
         <div>
           <label className="input-label">Duración (meses)</label>
-          <input type="number" className="input-field" placeholder="24"
+          <input required type="number" min="1" max="30" className="input-field" placeholder="24"
             value={form.duracion} onChange={e => onChange('duracion', e.target.value)}/>
+          <p className="text-xs text-gray-400 mt-1">Máximo 30 meses</p>
         </div>
       </div>
       <div className="flex gap-3 pt-2">
@@ -79,13 +85,9 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
   );
 }
 
-// ─── FichaCard — expandible en la misma página ────────────────────────────────
-function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendiz, onEnroll, color }) {
-  const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied]     = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const { showToast } = useToast();
+// ─── FichaCard — tarjeta compacta clickeable ─────────────────────────────────
+function FichaCard({ ficha, currentUserId, onViewDetails, color }) {
+  const [copied, setCopied] = useState(false);
   const isAdmin = ficha.instructorAdminId === currentUserId;
 
   const copyCode = (e) => {
@@ -95,86 +97,45 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const copyLink = (e) => {
-    e.stopPropagation();
-    // window.location.origin funciona en cualquier entorno:
-    // - Local: http://192.168.1.x:5173  (accesible desde celular en la misma WiFi)
-    // - Vercel: https://arachiz.vercel.app  (accesible desde cualquier lugar)
-    const link = `${window.location.origin}/unirse/${ficha.code}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    showToast(`Link copiado: ${link}`, 'success');
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const handleExport = async (e) => {
-    e.stopPropagation();
-    setExporting(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/export/ficha/${ficha.id}/asistencia`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Error'); }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = `Ficha${ficha.numero}_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click(); URL.revokeObjectURL(url);
-    } catch (err) { showToast(err.message, 'error'); }
-    finally { setExporting(false); }
+  const handleCardClick = () => {
+    onViewDetails(ficha.id);
   };
 
   return (
-    <div className="card overflow-hidden transition-all duration-200" style={{ borderTopWidth: 3, borderTopColor: color.border }}>
-      {/* Header de la card — siempre visible */}
-      <div className="flex items-start justify-between cursor-pointer" onClick={() => setExpanded(v => !v)}>
+    <div 
+      onClick={handleCardClick}
+      className="card overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
+      style={{ borderTopWidth: 3, borderTopColor: color.border }}
+    >
+      {/* Header de la card */}
+      <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 mb-1">
             <span className="text-lg font-bold text-gray-900">Ficha {ficha.numero}</span>
             {isAdmin && <span className="badge badge-info">Admin</span>}
           </div>
-          <p className="text-xs text-gray-400 mt-0.5">{ficha.nivel} · {ficha.centro} · {ficha.jornada}</p>
-          {ficha.region ? <p className="text-xs text-gray-400">{ficha.region}{ficha.duracion ? ` · ${ficha.duracion} meses` : ''}</p> : null}
-        </div>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
-          <button onClick={handleExport} disabled={exporting} className="btn-icon text-[#34A853] hover:bg-green-50" title="Exportar CSV">
-            {exporting ? <Loader size={15} className="animate-spin"/> : <Download size={15}/>}
-          </button>
-          <button onClick={copyLink} className="btn-icon hover:bg-blue-50" title="Copiar link de invitación"
-            style={{ color: copiedLink ? '#34A853' : '#4285F4' }}>
-            {copiedLink ? <Check size={15}/> : <Link size={15}/>}
-          </button>
-          {isAdmin && (
-            <button onClick={e => { e.stopPropagation(); onEdit(ficha); }} className="btn-icon text-gray-400 hover:bg-gray-100" title="Editar">
-              <Edit2 size={15}/>
-            </button>
-          )}
-          <div className="btn-icon text-gray-400">
-            {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
-          </div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{ficha.nombre}</p>
+          <p className="text-xs text-gray-400">{ficha.nivel} · {ficha.centro}</p>
+          <p className="text-xs text-gray-400">{ficha.jornada}{ficha.region ? ` · ${ficha.region}` : ''}</p>
         </div>
       </div>
 
       {/* Código de invitación */}
-      <div className={`flex items-center gap-2 mt-3 p-2.5 ${color.bg} rounded-xl`}>
+      <div className={`flex items-center gap-2 p-2.5 ${color.bg} rounded-xl mb-3`}>
         <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Código:</span>
-        <span className={`font-mono font-bold ${color.text} tracking-widest text-sm flex-1 select-all`}>{ficha.code}</span>
-        <button onClick={copyCode} className="btn-icon text-gray-400 hover:bg-white/60" title="Copiar">
+        <span className={`font-mono font-bold ${color.text} tracking-widest text-sm flex-1 select-all`}>
+          {ficha.code}
+        </span>
+        <button onClick={copyCode} className="btn-icon text-gray-400 hover:bg-white/60 w-7 h-7" title="Copiar código">
           {copied ? <Check size={14} className="text-[#34A853]"/> : <Copy size={14}/>}
         </button>
-        {isAdmin && (
-          <button onClick={e => { e.stopPropagation(); onRegenerate(ficha.id); }} className="btn-icon text-gray-400 hover:bg-white/60" title="Regenerar">
-            <RefreshCw size={14}/>
-          </button>
-        )}
       </div>
 
       {/* Stats rápidas */}
-      <div className="grid grid-cols-3 gap-2 mt-3">
+      <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Aprendices', value: ficha.aprendices?.length || 0 },
-          { label: 'Materias',   value: ficha.materias?.length || 0 },
+          { label: 'Materias', value: ficha.materias?.length || 0 },
           { label: 'Instructores', value: ficha.instructores?.length || 0 },
         ].map(s => (
           <div key={s.label} className="text-center p-2 bg-gray-50 rounded-xl">
@@ -183,58 +144,15 @@ function FichaCard({ ficha, currentUserId, onRegenerate, onEdit, onRemoveAprendi
           </div>
         ))}
       </div>
-
-      {/* Lista expandible de aprendices */}
-      {expanded && (
-        <div className="mt-4 pt-4 border-t border-gray-100 animate-fade-in">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Aprendices inscritos</p>
-          {ficha.aprendices?.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">Sin aprendices aún</p>
-          ) : (
-            <div className="space-y-1.5 max-h-64 overflow-y-auto">
-              {[...(ficha.aprendices || [])].sort((a,b) => a.fullName.localeCompare(b.fullName)).map(a => {
-                const avatarSrc = resolveAvatar(a.avatarUrl);
-                return (
-                  <div key={a.id} className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-2.5">
-                      {avatarSrc
-                        ? <img src={avatarSrc} className="w-8 h-8 rounded-xl object-cover" alt={a.fullName}/>
-                        : <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: color.border }}>
-                            {a.fullName.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
-                          </div>
-                      }
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{a.fullName}</p>
-                        <p className="text-xs text-gray-400 font-mono">{a.document}</p>
-                      </div>
-                    </div>
-                    {isAdmin && (
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => onEnroll(a)}
-                          className="btn-icon text-[#4285F4] hover:bg-blue-50 w-7 h-7 shrink-0" title="Registrar huella/NFC">
-                          <Fingerprint size={14}/>
-                        </button>
-                        <button onClick={() => onRemoveAprendiz(ficha.id, a.id)}
-                          className="btn-icon text-red-400 hover:bg-red-50 w-7 h-7 shrink-0">
-                          <UserMinus size={13}/>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
-const EMPTY_FORM = { numero: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' };
+const EMPTY_FORM = { numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' };
 
 export default function InstructorFichas() {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
   const [fichas, setFichas]       = useState([]);
@@ -246,7 +164,6 @@ export default function InstructorFichas() {
   const [joinCode, setJoinCode]   = useState('');
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
-  const [enrollAprendiz, setEnrollAprendiz] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -283,7 +200,15 @@ export default function InstructorFichas() {
   };
 
   const openEdit = (ficha) => {
-    setForm({ numero: ficha.numero, nivel: ficha.nivel, centro: ficha.centro, jornada: ficha.jornada, region: ficha.region || '', duracion: ficha.duracion || '' });
+    setForm({ 
+      numero: ficha.numero, 
+      nombre: ficha.nombre,
+      nivel: ficha.nivel, 
+      centro: ficha.centro, 
+      jornada: ficha.jornada, 
+      region: ficha.region || '', 
+      duracion: ficha.duracion || '' 
+    });
     setEditFicha(ficha); setError('');
   };
 
@@ -305,12 +230,8 @@ export default function InstructorFichas() {
     } catch (err) { showToast(err.message, 'error'); }
   };
 
-  const handleRemoveAprendiz = async (fichaId, aprendizId) => {
-    if (!confirm('¿Eliminar este aprendiz de la ficha?')) return;
-    try {
-      await fetchApi(`/fichas/${fichaId}/aprendices/${aprendizId}`, { method: 'DELETE' });
-      showToast('Aprendiz eliminado', 'success'); load();
-    } catch (err) { showToast(err.message, 'error'); }
+  const handleViewDetails = (fichaId) => {
+    navigate(`/instructor/fichas/${fichaId}`);
   };
 
   return (
@@ -348,11 +269,13 @@ export default function InstructorFichas() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {fichas.map((f, idx) => (
-            <FichaCard key={f.id} ficha={f} currentUserId={user?.id}
+            <FichaCard 
+              key={f.id} 
+              ficha={f} 
+              currentUserId={user?.id}
               color={COLORES[idx % COLORES.length]}
-              onRegenerate={handleRegenerate} onEdit={openEdit}
-              onRemoveAprendiz={handleRemoveAprendiz}
-              onEnroll={(a) => setEnrollAprendiz(a)}/>
+              onViewDetails={handleViewDetails}
+            />
           ))}
         </div>
       )}
@@ -379,12 +302,6 @@ export default function InstructorFichas() {
           </div>
         </form>
       </Modal>
-
-      <EnrollModal
-        open={!!enrollAprendiz}
-        onClose={() => setEnrollAprendiz(null)}
-        aprendiz={enrollAprendiz}
-      />
     </div>
   );
 }
