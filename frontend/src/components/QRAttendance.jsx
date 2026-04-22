@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, X, RefreshCw, Clock } from 'lucide-react';
+import { io } from 'socket.io-client';
 import fetchApi from '../services/api';
 import { useToast } from '../context/ToastContext';
+
+const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 export default function QRAttendance({ asistenciaId, onClose }) {
   const { showToast } = useToast();
@@ -9,7 +12,7 @@ export default function QRAttendance({ asistenciaId, onClose }) {
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const timerRef = useRef(null);
-  const pollRef = useRef(null);
+  const socketRef = useRef(null);
 
   const generateQR = async () => {
     setLoading(true);
@@ -44,11 +47,29 @@ export default function QRAttendance({ asistenciaId, onClose }) {
 
   useEffect(() => {
     generateQR();
+    
+    // Conectar socket para escuchar cuando alguien escanea
+    const socket = io(API_BASE);
+    socket.emit('joinSession', asistenciaId);
+    
+    socket.on('nuevaAsistencia', (data) => {
+      if (data.metodo === 'qr') {
+        console.log('[QR] Código escaneado, regenerando...');
+        showToast(`✓ ${data.aprendiz?.fullName} escaneó el QR`, 'success');
+        // Regenerar inmediatamente
+        setTimeout(() => {
+          generateQR();
+        }, 500);
+      }
+    });
+    
+    socketRef.current = socket;
+    
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (pollRef.current) clearInterval(pollRef.current);
+      if (socketRef.current) socketRef.current.disconnect();
     };
-  }, []);
+  }, [asistenciaId]);
 
   // Generar URL del QR
   const qrUrl = qrCode ? `${window.location.origin}/scan-qr?code=${qrCode}` : '';
@@ -85,10 +106,17 @@ export default function QRAttendance({ asistenciaId, onClose }) {
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`}
                     alt="QR Code"
-                    className="w-64 h-64"
+                    className={`w-64 h-64 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
                   />
                 )}
               </div>
+              
+              {/* Loading overlay */}
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-2xl">
+                  <RefreshCw size={32} className="text-[#4285F4] animate-spin" />
+                </div>
+              )}
               
               {/* Timer overlay */}
               <div className="absolute top-3 right-3 bg-[#4285F4] text-white px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg">
@@ -121,7 +149,7 @@ export default function QRAttendance({ asistenciaId, onClose }) {
             </button>
 
             <p className="text-xs text-center text-gray-400 mt-3">
-              El código se regenera automáticamente cada 30 segundos
+              El código se regenera automáticamente cada 30 segundos o al ser escaneado
             </p>
           </>
         )}
