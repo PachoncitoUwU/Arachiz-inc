@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const crypto = require('crypto');
+const { getCurrentColombiaTime } = require('../utils/timeService');
 
 // Almacén temporal de códigos QR activos (en producción usar Redis)
 const activeQRCodes = new Map();
@@ -117,6 +118,9 @@ exports.validateQR = async (req, res) => {
       return res.status(400).json({ error: 'Ya registraste tu asistencia' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     // Registrar asistencia
     const registro = await prisma.registroAsistencia.create({
       data: {
@@ -124,7 +128,7 @@ exports.validateQR = async (req, res) => {
         aprendizId,
         presente: true,
         metodo: 'qr',
-        timestamp: new Date()
+        timestamp: colombiaTime
       },
       include: {
         aprendiz: {

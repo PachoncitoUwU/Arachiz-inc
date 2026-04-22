@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/timeService');
 
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
@@ -13,8 +14,9 @@ const createSession = async (req, res) => {
     });
     if (existing) return res.status(400).json({ error: 'Ya hay una sesión activa para esta materia' });
 
-    // La fecha SIEMPRE será el día de hoy, puesta por el servidor
-    const autoFecha = new Date().toISOString().split('T')[0];
+    // Obtener fecha actual de Colombia
+    const autoFecha = await getCurrentColombiaDate();
+    console.log(`[Asistencia] Creando sesión con fecha de Colombia: ${autoFecha}`);
 
     const newAsistencia = await prisma.asistencia.create({
       data: {
@@ -101,10 +103,14 @@ const registerAttendance = async (req, res) => {
     });
     if (existing) return res.status(400).json({ error: 'Ya registraste tu asistencia en esta sesión' });
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: metodo || 'codigo',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: targetAprendizId } }
       },
@@ -162,10 +168,14 @@ const registerHardwareAttendance = async (req, res) => {
        return res.status(400).json({ error: 'Ya registró su asistencia previamente' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: nfcUid ? 'nfc' : 'huella',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendiz.id } }
       },
@@ -339,10 +349,14 @@ const registerFacialAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Este aprendiz ya registró asistencia' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: 'facial',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendizId } }
       },
@@ -418,11 +432,15 @@ const registerManualAttendance = async (req, res) => {
       return res.status(400).json({ error: 'El aprendiz ya está registrado' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     // Registrar asistencia
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: 'manual',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendizId } }
       },
