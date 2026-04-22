@@ -182,17 +182,17 @@ export default function ImprovedManualAttendance({
         className={`relative group transition-all duration-200 ${
           isSelected 
             ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-            : 'hover:shadow-md hover:scale-[1.02]'
+            : 'hover:shadow-md active:scale-95'
         }`}
       >
         <button
           onClick={() => handleRegister(aprendiz)}
           disabled={isRegistering}
-          className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left bg-white dark:bg-gray-800"
+          className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left bg-white dark:bg-gray-800"
         >
           {/* Avatar */}
           <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
               {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             
@@ -202,29 +202,29 @@ export default function ImprovedManualAttendance({
                 e.stopPropagation();
                 toggleSelection(aprendiz.id);
               }}
-              className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              className={`absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                 isSelected
                   ? 'bg-blue-500 border-blue-500 text-white'
                   : 'bg-white border-gray-300 hover:border-blue-400'
               }`}
             >
-              {isSelected && <CheckCircle size={12} />}
+              {isSelected && <CheckCircle size={10} className="sm:w-3 sm:h-3" />}
             </button>
           </div>
           
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-white truncate">
+            <p className="font-semibold text-gray-900 dark:text-white truncate text-sm sm:text-base">
               {aprendiz.fullName}
             </p>
-            <p className="text-sm text-gray-500 truncate">{aprendiz.email}</p>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">{aprendiz.email}</p>
           </div>
           
           {/* Status */}
           {isRegistering ? (
-            <Loader size={20} className="text-green-500 animate-spin shrink-0" />
+            <Loader size={18} className="text-green-500 animate-spin shrink-0 sm:w-5 sm:h-5" />
           ) : (
-            <CheckCircle size={20} className="text-gray-300 group-hover:text-green-500 transition-colors shrink-0" />
+            <CheckCircle size={18} className="text-gray-300 group-hover:text-green-500 transition-colors shrink-0 sm:w-5 sm:h-5" />
           )}
         </button>
       </div>
@@ -238,26 +238,26 @@ export default function ImprovedManualAttendance({
     return (
       <div
         key={aprendiz.id}
-        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+        className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-lg border transition-all ${
           isSelected 
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-            : 'border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
+            : 'border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 active:scale-95'
         }`}
       >
         {/* Checkbox */}
         <button
           onClick={() => toggleSelection(aprendiz.id)}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+          className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all ${
             isSelected
               ? 'bg-blue-500 border-blue-500 text-white'
               : 'border-gray-300 hover:border-blue-400'
           }`}
         >
-          {isSelected && <CheckCircle size={12} />}
+          {isSelected && <CheckCircle size={10} className="sm:w-3 sm:h-3" />}
         </button>
         
         {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
           {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
         </div>
         
@@ -273,13 +273,13 @@ export default function ImprovedManualAttendance({
         <button
           onClick={() => handleRegister(aprendiz)}
           disabled={isRegistering}
-          className="p-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50"
+          className="p-1.5 sm:p-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50 active:scale-95"
           title="Registro rápido"
         >
           {isRegistering ? (
-            <Loader size={16} className="animate-spin" />
+            <Loader size={14} className="animate-spin sm:w-4 sm:h-4" />
           ) : (
-            <CheckCircle size={16} />
+            <CheckCircle size={14} className="sm:w-4 sm:h-4" />
           )}
         </button>
       </div>
