@@ -8,19 +8,29 @@ const { generarCodigoFicha } = require('../utils/generators');
 
 // RF04 - Crear ficha
 const createFicha = async (req, res) => {
-  const { numero, nivel, centro, jornada, region, duracion } = req.body;
+  const { numero, nombre, nivel, centro, jornada, region, duracion } = req.body;
   const instructorId = req.user.id;
-  if (!numero || !nivel || !centro || !jornada) {
+  if (!numero || !nombre || !nivel || !centro || !jornada || !region || !duracion) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
+  if (nombre.trim() === '') {
+    return res.status(400).json({ error: 'El nombre del programa no puede estar vacío' });
+  }
+  if (duracion > 30) {
+    return res.status(400).json({ error: 'La duración no puede ser mayor a 30 meses' });
+  }
   try {
+    // Verificar si ya existe una ficha con ese número
+    const existingFicha = await prisma.ficha.findUnique({ where: { numero: numero.toString() } });
+    if (existingFicha) {
+      return res.status(400).json({ error: 'Ya existe una ficha con ese número' });
+    }
+    
     const code = generarCodigoFicha();
-    console.log('🔑 Código generado por el generador:', code); // ← aparece en la terminal del backend
     const newFicha = await prisma.ficha.create({
       data: {
-        numero, nivel, centro, jornada,
-        region: region || '',
-        duracion: duracion ? parseInt(duracion) : 0,
+        numero, nombre, nivel, centro, jornada, region,
+        duracion: parseInt(duracion),
         code,
         instructorAdmin: { connect: { id: instructorId } },
         instructores: {
@@ -41,23 +51,53 @@ const createFicha = async (req, res) => {
 // RF04 - Editar ficha (solo admin)
 const updateFicha = async (req, res) => {
   const { id } = req.params;
-  const { nivel, centro, jornada, region, duracion } = req.body;
+  const { numero, nombre, nivel, centro, jornada, region, duracion } = req.body;
   const instructorId = req.user.id;
+  
+  if (nombre && nombre.trim() === '') {
+    return res.status(400).json({ error: 'El nombre del programa no puede estar vacío' });
+  }
+  
+  if (duracion && duracion > 30) {
+    return res.status(400).json({ error: 'La duración no puede ser mayor a 30 meses' });
+  }
+  
   try {
     const ficha = await prisma.ficha.findUnique({ where: { id } });
     if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
     if (ficha.instructorAdminId !== instructorId) {
       return res.status(403).json({ error: 'Solo el administrador puede editar la ficha' });
     }
+    
+    // Si se está cambiando el número, verificar que no exista otra ficha con ese número
+    if (numero && numero.toString() !== ficha.numero.toString()) {
+      const existingFicha = await prisma.ficha.findUnique({ where: { numero: numero.toString() } });
+      if (existingFicha) {
+        return res.status(400).json({ error: 'Ya existe una ficha con ese número' });
+      }
+    }
+    
+    const dataToUpdate = {};
+    
+    // Agregar campos solo si tienen valor
+    if (numero) dataToUpdate.numero = numero.toString();
+    if (nombre) dataToUpdate.nombre = nombre;
+    if (nivel) dataToUpdate.nivel = nivel;
+    if (centro) dataToUpdate.centro = centro;
+    if (jornada) dataToUpdate.jornada = jornada;
+    if (region) dataToUpdate.region = region;
+    if (duracion) dataToUpdate.duracion = parseInt(duracion);
+    
     const updated = await prisma.ficha.update({
       where: { id },
-      data: { nivel, centro, jornada, region, duracion: duracion ? parseInt(duracion) : undefined },
+      data: dataToUpdate,
       include: {
         aprendices: true,
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
         materias: true
       }
     });
+    
     res.json({ message: 'Ficha actualizada', ficha: updated });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar ficha: ' + err.message });
