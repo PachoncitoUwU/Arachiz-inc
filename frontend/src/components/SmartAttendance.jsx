@@ -199,39 +199,46 @@ export default function SmartAttendance({
       <button
         key={method.id}
         onClick={() => handleMethodSelect(method.id)}
-        className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
+        className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all text-left group w-full ${
           isActive 
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 active:scale-95'
         }`}
       >
         {isRecommended && (
-          <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+          <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold z-10">
             Recomendado
           </div>
         )}
         
-        <div className="flex items-start gap-3">
-          <div className={`w-12 h-12 rounded-xl ${method.color} flex items-center justify-center flex-shrink-0`}>
-            <Icon size={24} className="text-white" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${method.color} flex items-center justify-center flex-shrink-0`}>
+            <Icon size={24} className="text-white sm:w-7 sm:h-7" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 text-base sm:text-lg">
               {method.name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
               {method.description}
             </p>
             
             {method.auto && (
               <div className="flex items-center gap-1 mt-2">
-                <CheckCircle2 size={14} className="text-green-500" />
+                <CheckCircle2 size={12} className="text-green-500 flex-shrink-0" />
                 <span className="text-xs text-green-600 dark:text-green-400 font-medium">
                   Detección automática
                 </span>
               </div>
             )}
+          </div>
+          
+          {/* Arrow indicator for mobile */}
+          <div className="text-gray-400 group-hover:text-blue-500 transition-colors sm:hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
           </div>
         </div>
       </button>
@@ -337,14 +344,14 @@ export default function SmartAttendance({
 
   if (capabilities.loading) {
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm w-full mx-4">
           <div className="text-center">
-            <Loader2 size={48} className="text-blue-500 animate-spin mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            <Loader2 size={40} className="text-blue-500 animate-spin mx-auto mb-4 sm:w-12 sm:h-12" />
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2">
               Detectando Hardware
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Verificando dispositivos disponibles...
             </p>
           </div>
@@ -358,73 +365,76 @@ export default function SmartAttendance({
   return (
     <>
       {!activeMethod ? (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Registro de Asistencia
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Selecciona el método más conveniente
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 ml-2">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 w-8 h-8 sm:w-10 sm:h-10"
                   title="Configuración"
                 >
-                  <Settings size={18} />
+                  <Settings size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <button
                   onClick={detectCapabilities}
-                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 w-8 h-8 sm:w-10 sm:h-10"
                   title="Redetectar hardware"
                 >
-                  <RefreshCw size={18} />
+                  <RefreshCw size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <button
                   onClick={onClose}
-                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 w-8 h-8 sm:w-10 sm:h-10"
                 >
-                  <X size={18} />
+                  <X size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
             </div>
 
             {/* Hardware Status */}
             {showSettings && (
-              <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                <HardwareStatus onStatusChange={(newStatus) => {
-                  // Actualizar capabilities basado en el estado real del hardware
-                  setCapabilities({
-                    camera: newStatus.camera.available && newStatus.camera.permission === 'granted',
-                    nfc: newStatus.nfc.supported,
-                    serial: newStatus.serial.connected,
-                    fingerprint: newStatus.serial.connected,
-                    loading: false
-                  });
-                }} />
+              <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <HardwareStatus 
+                  compact={true} 
+                  onStatusChange={(newStatus) => {
+                    // Actualizar capabilities basado en el estado real del hardware
+                    setCapabilities({
+                      camera: newStatus.camera.available && newStatus.camera.permission === 'granted',
+                      nfc: newStatus.nfc.supported,
+                      serial: newStatus.serial.connected,
+                      fingerprint: newStatus.serial.connected,
+                      loading: false
+                    });
+                  }} 
+                />
               </div>
             )}
 
             {/* Methods Grid */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 {availableMethods.map(renderMethodCard)}
               </div>
 
               {availableMethods.length === 1 && availableMethods[0].id === 'manual' && (
-                <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                <div className="mt-4 p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle size={18} className="text-yellow-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                      <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 text-sm">
                         Solo registro manual disponible
                       </h4>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                      <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                         Para habilitar métodos automáticos, conecta hardware (NFC/huella) o 
                         permite el acceso a la cámara para reconocimiento facial.
                       </p>

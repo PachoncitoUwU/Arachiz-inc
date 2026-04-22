@@ -88,36 +88,36 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-6 animate-scale-in mx-2">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <Wifi size={20} className="text-white" />
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+              <Wifi size={16} className="text-white sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="font-bold text-gray-900 dark:text-white">NFC Móvil</h2>
+            <div className="min-w-0">
+              <h2 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">NFC Móvil</h2>
               <p className="text-xs text-gray-400">Lector NFC del navegador</p>
             </div>
           </div>
-          <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
-            <X size={18} />
+          <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 w-8 h-8 sm:w-10 sm:h-10 ml-2">
+            <X size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
         </div>
 
         {/* Content */}
         <div className="space-y-4">
           {!nfcSupported ? (
-            <div className="text-center py-8">
-              <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+            <div className="text-center py-6 sm:py-8">
+              <AlertCircle size={40} className="text-red-500 mx-auto mb-4 sm:w-12 sm:h-12" />
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
                 NFC No Disponible
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Tu navegador o dispositivo no soporta NFC Web API.
               </p>
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-left">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 text-left">
                 <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
                   Alternativas:
                 </p>
@@ -132,17 +132,17 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
             <div className="text-center">
               {!nfcEnabled ? (
                 <>
-                  <Smartphone size={64} className="text-green-500 mx-auto mb-4" />
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  <Smartphone size={48} className="text-green-500 mx-auto mb-4 sm:w-16 sm:h-16" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
                     Activar Lector NFC
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
                     Habilita el lector NFC para detectar tarjetas automáticamente.
                   </p>
                   <button
                     onClick={startNFCReading}
                     disabled={scanning}
-                    className="btn-primary w-full flex items-center justify-center gap-2"
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-3"
                   >
                     <Wifi size={16} />
                     {scanning ? 'Activando...' : 'Activar NFC'}
@@ -150,17 +150,17 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
                 </>
               ) : (
                 <>
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
-                      <Wifi size={40} className="text-green-500" />
+                  <div className="relative mb-4 sm:mb-6">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
+                      <Wifi size={32} className="text-green-500 sm:w-10 sm:h-10" />
                     </div>
                     <div className="absolute inset-0 rounded-full border-4 border-green-500 animate-ping opacity-30"></div>
                   </div>
                   
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
                     Lector NFC Activo
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
                     Acerca una tarjeta NFC al dispositivo para registrar asistencia.
                   </p>
 
@@ -177,7 +177,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
 
                   <button
                     onClick={stopNFCReading}
-                    className="btn-secondary w-full"
+                    className="btn-secondary w-full py-3"
                   >
                     Desactivar NFC
                   </button>
@@ -188,7 +188,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
         </div>
 
         {/* Instructions */}
-        <div className="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="mt-4 sm:mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
             Instrucciones:
           </h4>

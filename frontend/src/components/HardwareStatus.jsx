@@ -135,31 +135,58 @@ export default function HardwareStatus({ compact = false, onStatusChange }) {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-2">
-        {devices.map(device => {
-          const Icon = device.icon;
-          return (
-            <div
-              key={device.id}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
-                device.available 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'
-              }`}
-              title={`${device.name}: ${getStatusText(device.id)}`}
-            >
-              <Icon size={12} />
-              <span className="hidden sm:inline">{device.name}</span>
-            </div>
-          );
-        })}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+          Estado del Hardware
+        </h3>
+        
+        {/* Mobile-optimized hardware status */}
+        <div className="grid grid-cols-1 gap-2">
+          {devices.map(device => {
+            const Icon = device.icon;
+            return (
+              <div
+                key={device.id}
+                className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                  device.available 
+                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                    : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={16} className={device.available ? 'text-green-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">
+                      {device.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {device.description}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(device.available)}
+                  <span className={`text-xs font-medium ${
+                    device.available 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {getStatusText(device.id)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
         <button
           onClick={checkHardwareStatus}
           disabled={refreshing}
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title="Actualizar estado"
+          className="w-full btn-secondary text-sm flex items-center justify-center gap-2"
         >
-          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          Actualizar Estado
         </button>
       </div>
     );

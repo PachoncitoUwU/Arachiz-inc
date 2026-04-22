@@ -287,43 +287,43 @@ export default function ImprovedManualAttendance({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col animate-scale-in">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <UserCheck size={20} className="text-white" />
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+              <UserCheck size={16} className="text-white sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual Mejorado</h2>
+            <div className="min-w-0">
+              <h2 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">Registro Manual Mejorado</h2>
               <p className="text-xs text-gray-400">
                 {availableAprendices.length} pendientes • {selectedIds.size} seleccionados
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
-            <X size={18} />
+          <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 w-8 h-8 sm:w-10 sm:h-10 ml-2">
+            <X size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
         </div>
 
         {/* Controls */}
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
+        <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
           {/* Search and filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3">
             <div className="relative flex-1">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 sm:w-[18px] sm:h-[18px]" />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Buscar por nombre o email... (Ctrl+A para seleccionar todos)"
+                placeholder="Buscar por nombre o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-10 pr-4"
+                className="input-field pl-9 sm:pl-10 pr-4 text-sm sm:text-base"
               />
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
               {/* View mode toggle */}
               <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <button
@@ -335,7 +335,7 @@ export default function ImprovedManualAttendance({
                   }`}
                   title="Vista en cuadrícula"
                 >
-                  <Grid size={16} />
+                  <Grid size={14} className="sm:w-4 sm:h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
@@ -346,8 +346,26 @@ export default function ImprovedManualAttendance({
                   }`}
                   title="Vista en lista"
                 >
-                  <List size={16} />
+                  <List size={14} className="sm:w-4 sm:h-4" />
                 </button>
+              </div>
+              
+              {/* Quick select buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={selectAllFiltered}
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 px-2 py-1"
+                >
+                  Todos
+                </button>
+                {selectedIds.size > 0 && (
+                  <button
+                    onClick={clearSelection}
+                    className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 px-2 py-1"
+                  >
+                    Limpiar
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -356,29 +374,29 @@ export default function ImprovedManualAttendance({
           {selectedIds.size > 0 && (
             <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2">
-                <Zap size={16} className="text-blue-500" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  {selectedIds.size} aprendices seleccionados
+                <Zap size={14} className="text-blue-500 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium text-blue-700 dark:text-blue-300">
+                  {selectedIds.size} seleccionados
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={clearSelection}
-                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 px-2 py-1"
                 >
                   Limpiar
                 </button>
                 <button
                   onClick={handleBulkRegister}
                   disabled={bulkRegistering}
-                  className="btn-primary text-sm flex items-center gap-2"
+                  className="btn-primary text-xs sm:text-sm flex items-center gap-1 px-3 py-1.5"
                 >
                   {bulkRegistering ? (
-                    <Loader size={14} className="animate-spin" />
+                    <Loader size={12} className="animate-spin" />
                   ) : (
-                    <CheckCircle size={14} />
+                    <CheckCircle size={12} />
                   )}
-                  Registrar Seleccionados
+                  Registrar
                 </button>
               </div>
             </div>
@@ -386,11 +404,11 @@ export default function ImprovedManualAttendance({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
           {filteredAprendices.length === 0 ? (
-            <div className="text-center py-12">
-              <Users size={48} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">
+            <div className="text-center py-8 sm:py-12">
+              <Users size={40} className="mx-auto text-gray-300 mb-3 sm:w-12 sm:h-12" />
+              <p className="text-gray-500 font-medium text-sm sm:text-base">
                 {availableAprendices.length === 0
                   ? '✓ Todos los aprendices registrados'
                   : 'No se encontraron aprendices'}
@@ -407,7 +425,7 @@ export default function ImprovedManualAttendance({
           ) : (
             <div className={
               viewMode === 'grid' 
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3'
                 : 'space-y-2'
             }>
               {filteredAprendices.map(aprendiz => 
@@ -420,17 +438,17 @@ export default function ImprovedManualAttendance({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-          <div className="flex items-center justify-between text-sm">
+        <div className="p-3 sm:p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <div className="text-gray-500">
               <span className="font-medium">{availableAprendices.length}</span> pendientes • 
               <span className="font-medium text-green-600 ml-1">{registered.size}</span> registrados
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-xs text-gray-400">
-                Ctrl+A: Seleccionar todos • Ctrl+Enter: Registrar seleccionados
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-xs text-gray-400 hidden sm:block">
+                Ctrl+A: Todos • Ctrl+Enter: Registrar
               </div>
-              <button onClick={onClose} className="btn-secondary text-sm">
+              <button onClick={onClose} className="btn-secondary text-xs sm:text-sm px-3 py-1.5">
                 Cerrar
               </button>
             </div>
