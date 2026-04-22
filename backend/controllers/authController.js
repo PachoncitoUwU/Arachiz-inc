@@ -88,10 +88,15 @@ const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, fullName: true, email: true, document: true, userType: true, createdAt: true, avatarUrl: true }
+      select: {
+        id: true, fullName: true, email: true, document: true,
+        userType: true, createdAt: true, avatarUrl: true,
+        fichasApr: { select: { id: true }, take: 1 },
+      }
     });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ user });
+    const { fichasApr, ...rest } = user;
+    res.json({ user: { ...rest, fichaId: fichasApr?.[0]?.id || null } });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
   }

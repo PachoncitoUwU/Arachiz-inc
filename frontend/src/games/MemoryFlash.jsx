@@ -37,15 +37,16 @@ export default function MemoryFlash({ onClose, currentUser }) {
   const [phase,     setPhase]     = useState('idle'); // idle | showing | input | dead
   const [active,    setActive]    = useState(null);
   const [score,     setScore]     = useState(0);
-  const [lb,        setLb]        = useState(getCachedLB('memory'));
+  const fichaId = currentUser?.fichaId || null;
+  const [lb,        setLb]        = useState(getCachedLB('memory', fichaId));
   const savedRef = useRef(false);
 
-  useEffect(() => { fetchLB('memory').then(d => setLb(d)); }, []);
+  useEffect(() => { fetchLB('memory', fichaId).then(d => setLb(d)); }, [fichaId]);
 
   useEffect(() => {
     if (phase === 'dead' && !savedRef.current && score > 0) {
       savedRef.current = true;
-      saveGameScore('memory', score).then(() => fetchLB('memory').then(d => setLb(d)));
+      saveGameScore('memory', score).then(() => fetchLB('memory', fichaId).then(d => setLb(d)));
     }
   }, [phase, score]);
 
@@ -131,7 +132,7 @@ export default function MemoryFlash({ onClose, currentUser }) {
   };
 
   return (
-    <GameLayout title="🧠 Memory Flash" score={score} lb={lb} game="memory" onClose={onClose}>
+    <GameLayout title="🧠 Memory Flash" score={score} lb={lb} game="memory" onClose={onClose} hasFicha={!!fichaId}>
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, padding:'8px 0', width:'100%', maxWidth:'min(450px, 95vw)' }}>
         {phase === 'idle' && (
           <button onClick={startGame}

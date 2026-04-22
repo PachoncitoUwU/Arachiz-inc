@@ -22,14 +22,20 @@ const LOWER_IS_BETTER = ['wordle'];
 // GET /api/games/:game/leaderboard
 router.get('/:game/leaderboard', async (req, res) => {
   const { game } = req.params;
+  const { fichaId } = req.query;
   const model = MODELS[game];
   if (!model) return res.status(400).json({ error: 'Juego no válido' });
 
   try {
-    // SIEMPRE desc excepto wordle
     const orderBy = game === 'wordle' ? { score: 'asc' } : { score: 'desc' };
 
+    // Si viene fichaId, filtrar solo usuarios de esa ficha
+    const whereClause = fichaId
+      ? { user: { fichasApr: { some: { id: fichaId } } } }
+      : undefined;
+
     const scores = await prisma[model].findMany({
+      where: whereClause,
       orderBy,
       take: 10,
       include: { user: { select: { fullName: true, avatarUrl: true } } }
