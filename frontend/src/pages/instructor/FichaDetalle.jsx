@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/Modal';
+import EnrollModal from '../../components/EnrollModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
   Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus
@@ -37,6 +38,8 @@ export default function FichaDetalle() {
   const [formEdit, setFormEdit] = useState({ numero: '', nombre: '', nivel: '', centro: '', jornada: '', region: '', duracion: '' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [errorEdit, setErrorEdit] = useState('');
+  const [modalEnroll, setModalEnroll] = useState(false);
+  const [selectedAprendiz, setSelectedAprendiz] = useState(null);
 
   useEffect(() => {
     loadFicha();
@@ -175,6 +178,17 @@ export default function FichaDetalle() {
     }
   };
 
+  const handleOpenEnroll = (aprendiz) => {
+    setSelectedAprendiz(aprendiz);
+    setModalEnroll(true);
+  };
+
+  const handleCloseEnroll = () => {
+    setModalEnroll(false);
+    setSelectedAprendiz(null);
+    loadFicha(); // Recargar para actualizar los datos del aprendiz
+  };
+
   if (loading) {
     return (
       <div className="animate-fade-in">
@@ -256,7 +270,7 @@ export default function FichaDetalle() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna principal */}
+        {/* Columna principal de la info */}
         <div className="lg:col-span-2 space-y-6">
           
           {/* Información general */}
@@ -356,14 +370,15 @@ export default function FichaDetalle() {
                       {isAdmin && (
                         <div className="flex items-center gap-1">
                           <button 
-                            className="btn-icon text-[#4285F4] hover:bg-blue-50 w-8 h-8" 
+                            onClick={() => handleOpenEnroll(aprendiz)}
+                            className="btn-icon text-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20 w-8 h-8" 
                             title="Registrar huella/NFC"
                           >
                             <Fingerprint size={16} />
                           </button>
                           <button 
                             onClick={() => handleRemoveAprendiz(aprendiz.id)}
-                            className="btn-icon text-red-400 hover:bg-red-50 w-8 h-8"
+                            className="btn-icon text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-8 h-8"
                             title="Eliminar"
                           >
                             <UserMinus size={16} />
@@ -752,6 +767,15 @@ export default function FichaDetalle() {
           </div>
         </form>
       </Modal>
+
+      {/* Modal para registrar métodos biométricos */}
+      {selectedAprendiz && (
+        <EnrollModal 
+          open={modalEnroll} 
+          onClose={handleCloseEnroll} 
+          aprendiz={selectedAprendiz} 
+        />
+      )}
     </div>
   );
 }
