@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { X, UserCheck, Search, CheckCircle } from 'lucide-react';
+import { X, UserCheck, Search, CheckCircle, Loader } from 'lucide-react';
 import fetchApi from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegistered, onClose, onRegistered }) {
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [registering, setRegistering] = useState(null);
+  const [registering, setRegistering] = useState(new Set());
+  const [registered, setRegistered] = useState(new Set());
 
   // Filtrar aprendices que no están registrados
-  const availableAprendices = aprendices.filter(a => !alreadyRegistered.has(a.id));
+  const availableAprendices = aprendices.filter(a => !alreadyRegistered.has(a.id) && !registered.has(a.id));
 
   // Filtrar por búsqueda
   const filteredAprendices = availableAprendices.filter(a =>
@@ -18,7 +19,9 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
   );
 
   const handleRegister = async (aprendiz) => {
-    setRegistering(aprendiz.id);
+    // Agregar a registrando
+    setRegistering(prev => new Set([...prev, aprendiz.id]));
+    
     try {
       await fetchApi('/asistencias/manual-register', {
         method: 'POST',
@@ -28,7 +31,9 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
         })
       });
 
-      showToast(`✓ ${aprendiz.fullName} registrado manualmente`, 'success');
+      // Marcar como registrado
+      setRegistered(prev => new Set([...prev, aprendiz.id]));
+      showToast(`✓ ${aprendiz.fullName}`, 'success');
       
       if (onRegistered) {
         onRegistered(aprendiz);
@@ -36,7 +41,12 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
     } catch (error) {
       showToast(error.message, 'error');
     } finally {
-      setRegistering(null);
+      // Quitar de registrando
+      setRegistering(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(aprendiz.id);
+        return newSet;
+      });
     }
   };
 
@@ -51,7 +61,7 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
             </div>
             <div>
               <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual</h2>
-              <p className="text-xs text-gray-400">Selecciona un aprendiz para registrar</p>
+              <p className="text-xs text-gray-400">Haz clic en un aprendiz para registrar</p>
             </div>
           </div>
           <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -81,38 +91,40 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
               <UserCheck size={48} className="mx-auto text-gray-300 mb-3" />
               <p className="text-gray-500 font-medium">
                 {availableAprendices.length === 0
-                  ? 'Todos los aprendices ya están registrados'
+                  ? '✓ Todos los aprendices registrados'
                   : 'No se encontraron aprendices'}
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredAprendices.map((aprendiz) => (
-                <button
-                  key={aprendiz.id}
-                  onClick={() => handleRegister(aprendiz)}
-                  disabled={registering === aprendiz.id}
-                  className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-[#34A853] hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#34A853] to-[#0F9D58] flex items-center justify-center text-white font-bold text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {filteredAprendices.map((aprendiz) => {
+                const isRegistering = registering.has(aprendiz.id);
+                
+                return (
+                  <button
+                    key={aprendiz.id}
+                    onClick={() => handleRegister(aprendiz)}
+                    disabled={isRegistering}
+                    className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-[#34A853] hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#34A853] to-[#0F9D58] flex items-center justify-center text-white font-bold text-sm shrink-0">
                       {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">
                         {aprendiz.fullName}
                       </p>
-                      <p className="text-xs text-gray-500">{aprendiz.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{aprendiz.email}</p>
                     </div>
-                  </div>
-                  
-                  {registering === aprendiz.id ? (
-                    <div className="w-6 h-6 border-2 border-[#34A853] border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <CheckCircle size={20} className="text-gray-300 group-hover:text-[#34A853] transition-colors" />
-                  )}
-                </button>
-              ))}
+                    
+                    {isRegistering ? (
+                      <Loader size={18} className="text-[#34A853] animate-spin shrink-0" />
+                    ) : (
+                      <CheckCircle size={18} className="text-gray-300 group-hover:text-[#34A853] transition-colors shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -121,7 +133,7 @@ export default function ManualAttendance({ asistenciaId, aprendices, alreadyRegi
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">
-              {availableAprendices.length} aprendiz{availableAprendices.length !== 1 ? 'es' : ''} pendiente{availableAprendices.length !== 1 ? 's' : ''}
+              {availableAprendices.length} pendiente{availableAprendices.length !== 1 ? 's' : ''} · {registered.size} registrado{registered.size !== 1 ? 's' : ''}
             </span>
             <button onClick={onClose} className="btn-secondary text-sm">
               Cerrar
