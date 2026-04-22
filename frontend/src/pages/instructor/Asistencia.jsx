@@ -9,8 +9,9 @@ import Modal from '../../components/Modal';
 import FacialScanner from '../../components/FacialScanner';
 import QRAttendance from '../../components/QRAttendance';
 import ManualAttendance from '../../components/ManualAttendance';
+import SmartAttendance from '../../components/SmartAttendance';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, UserCheck } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, UserCheck, Zap } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -55,6 +56,7 @@ export default function InstructorAsistencia() {
   const [facialScannerOpen, setFacialScannerOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [smartAttendanceOpen, setSmartAttendanceOpen] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -311,18 +313,28 @@ export default function InstructorAsistencia() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setManualModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#34A853] text-white text-sm font-semibold hover:bg-green-600 transition-all shadow-sm">
-                      <UserCheck size={16}/> Registro Manual
+                    {/* Botón principal inteligente */}
+                    <button onClick={() => setSmartAttendanceOpen(true)}
+                      className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg transform hover:scale-105">
+                      <Zap size={18}/> Registro Inteligente
                     </button>
-                    <button onClick={() => setQrModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm">
-                      <QrCode size={16}/> Código QR
-                    </button>
-                    <button onClick={() => setFacialScannerOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4285F4] text-white text-sm font-semibold hover:bg-blue-600 transition-all shadow-sm">
-                      <ScanFace size={16}/> Escáner Facial
-                    </button>
+                    
+                    {/* Botones individuales (opcionales) */}
+                    <div className="flex items-center gap-1 opacity-75">
+                      <button onClick={() => setManualModalOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                        <UserCheck size={14}/> Manual
+                      </button>
+                      <button onClick={() => setQrModalOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                        <QrCode size={14}/> QR
+                      </button>
+                      <button onClick={() => setFacialScannerOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                        <ScanFace size={14}/> Facial
+                      </button>
+                    </div>
+                    
                     <button onClick={endSession} className="btn-danger flex items-center gap-2">
                       <Square size={16}/> Finalizar Sesión
                     </button>
@@ -558,6 +570,33 @@ export default function InstructorAsistencia() {
                   aprendiz: { fullName: aprendiz.fullName },
                   presente: true,
                   metodo: 'manual',
+                  timestamp: new Date().toISOString()
+                }]
+              };
+            });
+          }}
+        />
+      )}
+
+      {/* Modal Registro Inteligente */}
+      {smartAttendanceOpen && activeSession && (
+        <SmartAttendance
+          asistenciaId={activeSession.id}
+          aprendices={activeSession.materia?.ficha?.aprendices || []}
+          alreadyRegistered={new Set((activeSession.registros || []).map(r => r.aprendizId))}
+          onClose={() => setSmartAttendanceOpen(false)}
+          onRegistered={(aprendiz) => {
+            setActiveSession(prev => {
+              if (!prev) return prev;
+              if (prev.registros?.some(r => r.aprendizId === aprendiz.id)) return prev;
+              return {
+                ...prev,
+                registros: [...(prev.registros || []), {
+                  id: 'smart-' + Date.now(),
+                  aprendizId: aprendiz.id,
+                  aprendiz: { fullName: aprendiz.fullName },
+                  presente: true,
+                  metodo: 'smart',
                   timestamp: new Date().toISOString()
                 }]
               };
