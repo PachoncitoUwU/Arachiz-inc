@@ -47,7 +47,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
         <div>
           <label className="input-label">Nivel</label>
           <select className="input-field" value={form.nivel} onChange={e => onChange('nivel', e.target.value)}>
-            <option>Técnico</option><option>Tecnólogo</option><option>Especialización</option>
+            <option>Técnico</option><option>Tecnólogo</option>
           </select>
         </div>
         <div>

@@ -702,7 +702,6 @@ export default function FichaDetalle() {
               >
                 <option>Técnico</option>
                 <option>Tecnólogo</option>
-                <option>Especialización</option>
               </select>
             </div>
             <div>

@@ -6,6 +6,7 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 
 router.use(authMiddleware);
 
+router.get('/my-horarios', roleMiddleware(['instructor']), horarioController.getMyHorarios);
 router.get('/ficha/:fichaId', horarioController.getHorarioByFicha);
 router.post('/', roleMiddleware(['instructor']), horarioController.createHorario);
 router.put('/:id', roleMiddleware(['instructor']), horarioController.updateHorario);
