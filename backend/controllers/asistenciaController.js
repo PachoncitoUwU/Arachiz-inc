@@ -366,5 +366,97 @@ const registerFacialAttendance = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance };
+// Registro manual por instructor
+const registerManualAttendance = async (req, res) => {
+  const { asistenciaId, aprendizId } = req.body;
+  const instructorId = req.user.id;
+
+  if (!asistenciaId || !aprendizId) {
+    return res.status(400).json({ error: 'Faltan datos requeridos' });
+  }
+
+  try {
+    // Verificar que la sesión existe, está activa y pertenece al instructor
+    const session = await prisma.asistencia.findFirst({
+      where: {
+        id: asistenciaId,
+        instructorId,
+        activa: true
+      },
+      include: {
+        materia: {
+          include: {
+            ficha: {
+              include: {
+                aprendices: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada o no activa' });
+    }
+
+    // Verificar que el aprendiz pertenece a la ficha
+    const isEnrolled = session.materia.ficha.aprendices.some(a => a.id === aprendizId);
+    if (!isEnrolled) {
+      return res.status(403).json({ error: 'El aprendiz no pertenece a esta ficha' });
+    }
+
+    // Verificar si ya está registrado
+    const existing = await prisma.registroAsistencia.findFirst({
+      where: {
+        asistenciaId,
+        aprendizId
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'El aprendiz ya está registrado' });
+    }
+
+    // Registrar asistencia
+    const registro = await prisma.registroAsistencia.create({
+      data: {
+        presente: true,
+        metodo: 'manual',
+        asistencia: { connect: { id: asistenciaId } },
+        aprendiz: { connect: { id: aprendizId } }
+      },
+      include: { 
+        aprendiz: { 
+          select: { 
+            id: true,
+            fullName: true, 
+            document: true,
+            email: true
+          } 
+        } 
+      }
+    });
+
+    // Emitir evento socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+        id: registro.id,
+        aprendizId: registro.aprendizId,
+        aprendiz: registro.aprendiz,
+        presente: true,
+        metodo: 'manual',
+        timestamp: registro.timestamp
+      });
+    }
+
+    res.json({ message: 'Asistencia registrada manualmente', registro });
+  } catch (err) {
+    console.error('Error en registro manual:', err);
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerManualAttendance };
 

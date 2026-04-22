@@ -109,7 +109,8 @@ export default function AprendizAsistencia() {
                            r.metodo === 'nfc' ? 'Lector NFC' :
                            r.metodo === 'huella' ? 'Lector Dactilar' :
                            r.metodo === 'facial' ? '🎭 Reconocimiento Facial' :
-                           r.metodo === 'qr' ? 'Código QR' :
+                           r.metodo === 'qr' ? '📱 Código QR' :
+                           r.metodo === 'manual' ? '✍️ Registro Manual' :
                            'Instructor'
                          }
                        </p>

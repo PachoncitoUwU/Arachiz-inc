@@ -8,8 +8,9 @@ import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
 import FacialScanner from '../../components/FacialScanner';
 import QRAttendance from '../../components/QRAttendance';
+import ManualAttendance from '../../components/ManualAttendance';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, UserCheck } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -53,6 +54,7 @@ export default function InstructorAsistencia() {
   const [tab, setTab] = useState('sesion'); // 'sesion' | 'estadisticas'
   const [facialScannerOpen, setFacialScannerOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [manualModalOpen, setManualModalOpen] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -309,6 +311,10 @@ export default function InstructorAsistencia() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
+                    <button onClick={() => setManualModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#34A853] text-white text-sm font-semibold hover:bg-green-600 transition-all shadow-sm">
+                      <UserCheck size={16}/> Registro Manual
+                    </button>
                     <button onClick={() => setQrModalOpen(true)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm">
                       <QrCode size={16}/> Código QR
@@ -376,7 +382,14 @@ export default function InstructorAsistencia() {
                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                           {reg.aprendiz?.fullName || reg.fullName || 'Aprendiz'}
                         </p>
-                        <p className="text-xs text-gray-400">{reg.metodo || 'codigo'}</p>
+                        <p className="text-xs text-gray-400">
+                          {reg.metodo === 'nfc' ? 'NFC' :
+                           reg.metodo === 'huella' ? 'Huella' :
+                           reg.metodo === 'facial' ? 'Facial' :
+                           reg.metodo === 'qr' ? 'QR' :
+                           reg.metodo === 'manual' ? 'Manual' :
+                           'Código'}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -523,6 +536,33 @@ export default function InstructorAsistencia() {
         <QRAttendance 
           asistenciaId={activeSession.id}
           onClose={() => setQrModalOpen(false)}
+        />
+      )}
+
+      {/* Modal Registro Manual */}
+      {manualModalOpen && activeSession && (
+        <ManualAttendance
+          asistenciaId={activeSession.id}
+          aprendices={activeSession.materia?.ficha?.aprendices || []}
+          alreadyRegistered={new Set((activeSession.registros || []).map(r => r.aprendizId))}
+          onClose={() => setManualModalOpen(false)}
+          onRegistered={(aprendiz) => {
+            setActiveSession(prev => {
+              if (!prev) return prev;
+              if (prev.registros?.some(r => r.aprendizId === aprendiz.id)) return prev;
+              return {
+                ...prev,
+                registros: [...(prev.registros || []), {
+                  id: 'manual-' + Date.now(),
+                  aprendizId: aprendiz.id,
+                  aprendiz: { fullName: aprendiz.fullName },
+                  presente: true,
+                  metodo: 'manual',
+                  timestamp: new Date().toISOString()
+                }]
+              };
+            });
+          }}
         />
       )}
     </div>
