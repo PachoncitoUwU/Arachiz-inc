@@ -7,8 +7,9 @@ import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
 import FacialScanner from '../../components/FacialScanner';
+import QRAttendance from '../../components/QRAttendance';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -51,6 +52,7 @@ export default function InstructorAsistencia() {
   const [selectedFecha, setSelectedFecha] = useState(() => new Date().toISOString().split('T')[0]); // Se deja internamente si es necesario, pero se oculta o elimina
   const [tab, setTab] = useState('sesion'); // 'sesion' | 'estadisticas'
   const [facialScannerOpen, setFacialScannerOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -296,6 +298,10 @@ export default function InstructorAsistencia() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
+                    <button onClick={() => setQrModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm">
+                      <QrCode size={16}/> Código QR
+                    </button>
                     <button onClick={() => setFacialScannerOpen(true)}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4285F4] text-white text-sm font-semibold hover:bg-blue-600 transition-all shadow-sm">
                       <ScanFace size={16}/> Escáner Facial
@@ -500,6 +506,14 @@ export default function InstructorAsistencia() {
           />
         )}
       </Modal>
+
+      {/* Modal QR */}
+      {qrModalOpen && activeSession && (
+        <QRAttendance 
+          asistenciaId={activeSession.id}
+          onClose={() => setQrModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

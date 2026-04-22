@@ -202,3 +202,22 @@ html.dark .shadow-xl {
 html.dark .backdrop-blur-sm {
   background-color: rgba(0, 0, 0, 0.8) !important;
 }
+
+/* QR Scanner animations */
+@keyframes scan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(256px); }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
