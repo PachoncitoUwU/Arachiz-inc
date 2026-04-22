@@ -10,167 +10,146 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  userType  String   // 'instructor' or 'aprendiz'
-  fullName  String
-  document  String   @unique
-  email     String   @unique
-  password  String
-  avatarUrl String?
-  nfcUid         String?  @unique
-  huellas        Int[]    @default([])
-  faceDescriptor Float[]  @default([]) // Vector facial 128D de face-api.js
-  createdAt DateTime @default(now())
-
-  // Relations
-  fichasAdmin   Ficha[]  @relation("InstructorAdmin")
-  fichasInst    FichaInstructor[]
-  fichasApr     Ficha[]  @relation("Aprendices")
-  materias      Materia[] @relation("InstructorMaterias")
-  asistencias   Asistencia[] @relation("InstructorAsistencia")
-  registros     RegistroAsistencia[]
-  excusas       Excusa[]
-  snakeScore    SnakeScore?
-  breakoutScore BreakoutScore?
-  flappyScore   FlappyScore?
-  towerScore    TowerScore?
-  reactionScore ReactionScore?
-  memoryScore   MemoryScore?
-  wordleScore   WordleScore?
-  userSkins     UserSkin[]
+  id             String               @id @default(cuid())
+  userType       String
+  fullName       String
+  document       String               @unique
+  email          String               @unique
+  password       String
+  avatarUrl      String?
+  nfcUid         String?              @unique
+  huellas        Int[]                @default([])
+  createdAt      DateTime             @default(now())
+  faceDescriptor Float[]              @default([])
+  asistencias    Asistencia[]         @relation("InstructorAsistencia")
+  breakoutScore  BreakoutScore?
+  excusas        Excusa[]
+  fichasAdmin    Ficha[]              @relation("InstructorAdmin")
+  fichasInst     FichaInstructor[]
+  flappyScore    FlappyScore?
+  materias       Materia[]            @relation("InstructorMaterias")
+  memoryScore    MemoryScore?
+  reactionScore  ReactionScore?
+  registros      RegistroAsistencia[]
+  snakeScore     SnakeScore?
+  towerScore     TowerScore?
+  userSkins      UserSkin[]
+  wordleScore    WordleScore?
+  fichasApr      Ficha[]              @relation("Aprendices")
 }
 
 model Ficha {
-  id              String   @id @default(cuid())
-  numero          String   @unique
-  nivel           String
-  centro          String
-  jornada         String
-  region          String   @default("")
-  duracion        Int      @default(0)
-  code            String   @unique
-  createdAt       DateTime @default(now())
-
+  id                String            @id @default(cuid())
+  numero            String            @unique
+  nivel             String
+  centro            String
+  jornada           String
+  region            String            @default("")
+  duracion          Int               @default(0)
+  code              String            @unique
+  createdAt         DateTime          @default(now())
   instructorAdminId String
-  instructorAdmin   User     @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
-  
-  instructores FichaInstructor[]
-  aprendices   User[] @relation("Aprendices")
-
-  materias   Materia[]
-  horarios   Horario[]
+  nombre            String            @default("Programa sin nombre")
+  instructorAdmin   User              @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
+  instructores      FichaInstructor[]
+  horarios          Horario[]
+  materias          Materia[]
+  aprendices        User[]            @relation("Aprendices")
 }
 
 model FichaInstructor {
-  id          String @id @default(cuid())
-  role        String @default("invitado") // 'admin' | 'invitado'
-  fichaId     String
+  id           String @id @default(cuid())
+  role         String @default("invitado")
+  fichaId      String
   instructorId String
-  ficha       Ficha  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  instructor  User   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  ficha        Ficha  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  instructor   User   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 
   @@unique([fichaId, instructorId])
 }
 
 model Materia {
-  id          String   @id @default(cuid())
-  nombre      String
-  tipo        String
-  
-  fichaId     String
-  ficha       Ficha    @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-
+  id           String       @id @default(cuid())
+  nombre       String
+  tipo         String
+  fichaId      String
   instructorId String
-  instructor   User    @relation("InstructorMaterias", fields: [instructorId], references: [id])
-
-  asistencias Asistencia[]
-  horarios    Horario[]
+  asistencias  Asistencia[]
+  horarios     Horario[]
+  ficha        Ficha        @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  instructor   User         @relation("InstructorMaterias", fields: [instructorId], references: [id])
 }
 
 model Horario {
-  id          String @id @default(cuid())
-  dia         String // 'Lunes', 'Martes', etc.
-  horaInicio  String // '08:00'
-  horaFin     String // '10:00'
-
-  fichaId     String
-  ficha       Ficha    @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-
-  materiaId   String
-  materia     Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  id         String  @id @default(cuid())
+  dia        String
+  horaInicio String
+  horaFin    String
+  fichaId    String
+  materiaId  String
+  ficha      Ficha   @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  materia    Materia @relation(fields: [materiaId], references: [id], onDelete: Cascade)
 }
 
 model Asistencia {
-  id           String   @id @default(cuid())
+  id           String               @id @default(cuid())
   fecha        String
-  activa       Boolean  @default(true)
-  timestamp    DateTime @default(now())
-
+  activa       Boolean              @default(true)
+  timestamp    DateTime             @default(now())
   materiaId    String
-  materia      Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-
   instructorId String
-  instructor   User     @relation("InstructorAsistencia", fields: [instructorId], references: [id])
-
+  instructor   User                 @relation("InstructorAsistencia", fields: [instructorId], references: [id])
+  materia      Materia              @relation(fields: [materiaId], references: [id], onDelete: Cascade)
   registros    RegistroAsistencia[]
 }
 
 model RegistroAsistencia {
-  id           String   @id @default(cuid())
-  presente     Boolean  @default(true)
-  metodo       String   @default("manual") // 'qr', 'codigo', 'manual', 'facial', 'huella', 'nfc'
-  timestamp    DateTime @default(now())
-
+  id           String     @id @default(cuid())
+  presente     Boolean    @default(true)
+  metodo       String     @default("manual")
+  timestamp    DateTime   @default(now())
   asistenciaId String
-  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
-  
   aprendizId   String
   aprendiz     User       @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
 
   @@unique([asistenciaId, aprendizId])
 }
 
 model Excusa {
-  id           String   @id @default(cuid())
-  motivo       String
-  descripcion  String
-  fechas       String
-  estado       String   @default("Pendiente")
-  respuesta    String?
-  archivoUrl   String?
-  createdAt    DateTime @default(now())
-  respondedAt  DateTime?
-
-  aprendizId   String
-  aprendiz     User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  motivo      String
+  descripcion String
+  fechas      String
+  estado      String    @default("Pendiente")
+  respuesta   String?
+  archivoUrl  String?
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+  aprendizId  String
+  aprendiz    User      @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
 }
 
-// Leaderboard global del juego Snake
 model SnakeScore {
   id        String   @id @default(cuid())
   score     Int
   updatedAt DateTime @default(now()) @updatedAt
-
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Leaderboard global del juego La Bolita (Breakout)
 model BreakoutScore {
   id        String   @id @default(cuid())
   score     Int
   updatedAt DateTime @default(now()) @updatedAt
-
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Leaderboard global del juego El Maní (Flappy Bird)
 model FlappyScore {
   id        String   @id @default(cuid())
   score     Int
   updatedAt DateTime @default(now()) @updatedAt
-
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -185,7 +164,7 @@ model TowerScore {
 
 model ReactionScore {
   id        String   @id @default(cuid())
-  score     Int      // milisegundos — menor es mejor
+  score     Int
   updatedAt DateTime @default(now()) @updatedAt
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -201,59 +180,55 @@ model MemoryScore {
 
 model WordleScore {
   id        String   @id @default(cuid())
-  score     Int      // intentos usados — menor es mejor
+  score     Int
   updatedAt DateTime @default(now()) @updatedAt
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Sistema de Skins para Snake
 model SnakeSkin {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String      @id @default(cuid())
+  name        String      @unique
   description String
-  price       Float    // Precio en pesos colombianos (COP)
-  rarity      String   // 'common', 'rare', 'epic', 'legendary', 'mythic'
+  price       Float
+  rarity      String
   headColor   String
   bodyColor   String
-  pattern     String   // 'solid', 'gradient', 'neon', 'metallic', 'rainbow', 'galaxy', 'fire', 'ice'
-  trailEffect String?  // 'none', 'sparkles', 'fire', 'ice', 'lightning', 'stars'
-  eyeStyle    String   @default("normal") // 'normal', 'laser', 'cute', 'angry'
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  
-  userSkins   UserSkin[]
+  pattern     String
+  trailEffect String?
+  eyeStyle    String      @default("normal")
+  isDefault   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
   orders      SkinOrder[]
+  userSkins   UserSkin[]
 }
 
 model UserSkin {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   skinId     String
-  equipped   Boolean  @default(false)
-  unlockedAt DateTime @default(now())
-  
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipped   Boolean   @default(false)
+  unlockedAt DateTime  @default(now())
   skin       SnakeSkin @relation(fields: [skinId], references: [id], onDelete: Cascade)
-  
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, skinId])
 }
 
 model SkinOrder {
-  id              String   @id @default(cuid())
-  userId          String
-  skinId          String
-  amount          Float    // Monto pagado
-  currency        String   @default("COP")
-  status          String   // 'pending', 'approved', 'rejected', 'cancelled'
-  paymentMethod   String?  // 'mercadopago', 'epayco', etc.
-  externalId      String?  // ID de la transacción en la pasarela
-  preferenceId    String?  // ID de preferencia de Mercado Pago
-  createdAt       DateTime @default(now())
-  approvedAt      DateTime?
-  
-  skin            SnakeSkin @relation(fields: [skinId], references: [id])
-  
+  id            String    @id @default(cuid())
+  userId        String
+  skinId        String
+  amount        Float
+  currency      String    @default("COP")
+  status        String
+  paymentMethod String?
+  externalId    String?
+  preferenceId  String?
+  createdAt     DateTime  @default(now())
+  approvedAt    DateTime?
+  skin          SnakeSkin @relation(fields: [skinId], references: [id])
+
   @@index([userId])
   @@index([externalId])
 }
