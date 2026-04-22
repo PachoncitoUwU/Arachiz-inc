@@ -10,6 +10,8 @@ import FacialScanner from '../../components/FacialScanner';
 import QRAttendance from '../../components/QRAttendance';
 import ManualAttendance from '../../components/ManualAttendance';
 import SmartAttendance from '../../components/SmartAttendance';
+import FloatingActionButton from '../../components/FloatingActionButton';
+import SmartAttendanceBanner from '../../components/SmartAttendanceBanner';
 import { useToast } from '../../context/ToastContext';
 import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, UserCheck, Zap } from 'lucide-react';
 import { io } from 'socket.io-client';
@@ -288,12 +290,20 @@ export default function InstructorAsistencia() {
 
       {tab === 'sesion' && (
         <>
+          {/* Banner para móviles */}
+          {activeSession && (
+            <SmartAttendanceBanner 
+              onOpenSmart={() => setSmartAttendanceOpen(true)}
+              visible={!!activeSession}
+            />
+          )}
+
           {/* Selector de materia */}
           <div className="card dark:bg-gray-900 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex flex-col gap-4">
               <div className="flex-1">
                 <label className="input-label">Materia</label>
-                <select className="input-field dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                <select className="input-field dark:bg-gray-800 dark:border-gray-700 dark:text-white w-full"
                   value={selectedMateria}
                   onChange={e => setSelectedMateria(e.target.value)}
                   disabled={!!activeSession || materias.length === 0}>
@@ -306,21 +316,34 @@ export default function InstructorAsistencia() {
               <div className="w-full sm:w-40" style={{display: 'none'}}>
                 {/* Se eliminó visualmente el selector de fecha para forzar el uso del día actual */}
               </div>
-              <div>
+              <div className="w-full">
                 {!activeSession ? (
-                  <button onClick={startSession} disabled={!selectedMateria || starting} className="btn-success flex items-center gap-2">
+                  <button onClick={startSession} disabled={!selectedMateria || starting} className="btn-success flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-3">
                     <Play size={16}/> {starting ? 'Iniciando...' : 'Iniciar Sesión'}
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    {/* Botón principal inteligente */}
+                  <div className="flex flex-col gap-3 w-full">
+                    {/* Botón principal inteligente - Muy prominente en móvil */}
                     <button onClick={() => setSmartAttendanceOpen(true)}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg transform hover:scale-105">
-                      <Zap size={18}/> Registro Inteligente
+                      className="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold hover:from-purple-600 hover:to-blue-600 transition-all shadow-xl active:scale-95 w-full text-base sm:text-lg">
+                      <Zap size={20} className="sm:w-6 sm:h-6"/> 
+                      <span>🚀 Registro Inteligente</span>
                     </button>
                     
-                    {/* Botones individuales (opcionales) */}
-                    <div className="flex items-center gap-1 opacity-75">
+                    {/* Botones secundarios en móvil */}
+                    <div className="grid grid-cols-2 gap-2 sm:hidden">
+                      <button onClick={() => setManualModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-95">
+                        <UserCheck size={16}/> Manual
+                      </button>
+                      <button onClick={() => setQrModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-95">
+                        <QrCode size={16}/> QR
+                      </button>
+                    </div>
+                    
+                    {/* Botones individuales - Solo desktop */}
+                    <div className="hidden sm:flex items-center gap-2 opacity-75">
                       <button onClick={() => setManualModalOpen(true)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
                         <UserCheck size={14}/> Manual
@@ -335,8 +358,10 @@ export default function InstructorAsistencia() {
                       </button>
                     </div>
                     
-                    <button onClick={endSession} className="btn-danger flex items-center gap-2">
-                      <Square size={16}/> Finalizar Sesión
+                    {/* Botón finalizar */}
+                    <button onClick={endSession} className="btn-danger flex items-center justify-center gap-2 px-4 py-3 text-sm sm:text-base w-full sm:w-auto">
+                      <Square size={16} className="sm:w-4 sm:h-4"/> 
+                      <span>Finalizar Sesión</span>
                     </button>
                   </div>
                 )}
@@ -347,18 +372,18 @@ export default function InstructorAsistencia() {
           {/* Sesión activa */}
           {activeSession && (
             <div className="card border-l-4 border-l-[#34A853] dark:bg-gray-900 dark:border-gray-800">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                 <div className="flex items-center gap-3">
                   <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34A853] opacity-75"/>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-[#34A853]"/>
                   </span>
                   <div>
-                    <p className="font-bold text-gray-900 dark:text-white">{activeSession.materia?.nombre}</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{activeSession.materia?.nombre}</p>
                     <p className="text-xs text-gray-400">Ficha {activeSession.materia?.ficha?.numero}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-xl">
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-xl self-start sm:self-auto">
                   <button onClick={() => exportSession(activeSession.id, activeSession.fecha)} className="btn-icon text-[#34A853] hover:bg-green-50 mr-2" title="Exportar Sesión">
                     <Download size={15}/>
                   </button>
@@ -366,14 +391,14 @@ export default function InstructorAsistencia() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
                 {[
                   { label: 'Total', value: totalAprendices, cls: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
                   { label: 'Presentes', value: presentes, cls: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
                   { label: 'Pendientes', value: pendientes, cls: 'bg-yellow-50 dark:bg-yellow-900/20 text-[#FBBC05]' },
                 ].map(s => (
-                  <div key={s.label} className={`${s.cls} rounded-xl p-3 text-center transition-all`}>
-                    <p className="text-2xl font-bold tabular-nums">{s.value}</p>
+                  <div key={s.label} className={`${s.cls} rounded-xl p-2 sm:p-3 text-center transition-all`}>
+                    <p className="text-lg sm:text-2xl font-bold tabular-nums">{s.value}</p>
                     <p className="text-xs font-medium mt-0.5">{s.label}</p>
                   </div>
                 ))}
@@ -381,15 +406,15 @@ export default function InstructorAsistencia() {
 
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Aprendices registrados</h3>
               {presentes === 0 ? (
-                <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-                  <Users size={28} className="mx-auto mb-2 opacity-30"/>
+                <div className="text-center py-6 sm:py-8 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                  <Users size={24} className="mx-auto mb-2 opacity-30 sm:w-7 sm:h-7"/>
                   <p className="text-sm">Esperando registros...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 sm:max-h-64 overflow-y-auto">
                   {activeSession.registros?.filter(r => r.presente !== false).map((reg, i) => (
-                    <div key={reg.id || i} className="flex items-center gap-3 p-2.5 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                      <CheckCircle size={16} className="text-[#34A853] shrink-0"/>
+                    <div key={reg.id || i} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                      <CheckCircle size={14} className="text-[#34A853] shrink-0 sm:w-4 sm:h-4"/>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                           {reg.aprendiz?.fullName || reg.fullName || 'Aprendiz'}
@@ -604,6 +629,12 @@ export default function InstructorAsistencia() {
           }}
         />
       )}
+
+      {/* Botón flotante para móviles */}
+      <FloatingActionButton 
+        onClick={() => setSmartAttendanceOpen(true)}
+        visible={!!activeSession}
+      />
     </div>
   );
 }
