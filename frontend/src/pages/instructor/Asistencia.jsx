@@ -78,8 +78,8 @@ export default function InstructorAsistencia() {
   const [qrTimeLeft, setQrTimeLeft] = useState(30);
   const qrTimerRef = useRef(null);
 
-  const THRESHOLD = 0.50; // Más sensible
-  const COOLDOWN_MS = 3000; // Reducido a 3 segundos
+  const THRESHOLD = 0.45; // Más sensible para mejor detección
+  const COOLDOWN_MS = 2000; // Reducido a 2 segundos
 
   useEffect(() => {
     fetchApi('/asistencias/my-active-any').then(activeData => {
@@ -301,7 +301,12 @@ export default function InstructorAsistencia() {
     try {
       await loadFaceModels();
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+        video: { 
+          facingMode: 'user', 
+          width: { ideal: 1920 }, 
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30 }
+        }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -328,7 +333,7 @@ export default function InstructorAsistencia() {
   };
 
   const startFaceLoop = () => {
-    const OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 });
+    const OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 }); // Balance entre velocidad y precisión
     const candidates = (activeSession?.materia?.ficha?.aprendices || [])
       .filter(a => a.faceDescriptor?.length === 128)
       .map(a => ({ ...a, descriptor: arrayToDescriptor(a.faceDescriptor) }));
@@ -405,7 +410,7 @@ export default function InstructorAsistencia() {
       } catch (_) {}
 
       busyRef.current = false;
-      loopRef.current = setTimeout(tick, 150);
+      loopRef.current = setTimeout(tick, 100); // Más rápido: 10 fps
     };
 
     loopRef.current = setTimeout(tick, 100);
@@ -543,29 +548,37 @@ export default function InstructorAsistencia() {
 
       {/* Vista cuando NO hay sesión activa */}
       {!activeSession && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Camera size={32} className="text-white" />
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white mb-2">Reconocimiento Facial</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Detecta automáticamente a los estudiantes con IA</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Detecta automáticamente con IA</p>
           </div>
 
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8">
+          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
               <QrCode size={32} className="text-white" />
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white mb-2">Código QR</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Los estudiantes escanean desde su celular</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Escanea desde el celular</p>
           </div>
 
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8">
+          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Fingerprint size={32} className="text-white" />
+            </div>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Huella Digital</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Sensor biométrico rápido</p>
+          </div>
+
+          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
               <UserPlus size={32} className="text-white" />
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white mb-2">Registro Manual</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Marca asistencia manualmente si es necesario</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Marca manualmente si es necesario</p>
           </div>
         </div>
       )}
@@ -654,7 +667,7 @@ export default function InstructorAsistencia() {
                         </div>
                         <div>
                           <p className="text-white font-bold text-xl">{lastDetectedName}</p>
-                          <p className="text-green-400 text-sm">Detectado</p>
+                          <p className="text-green-400 text-sm">✓ Detectado</p>
                         </div>
                       </div>
                     </div>
@@ -663,12 +676,7 @@ export default function InstructorAsistencia() {
                   {/* Indicador de estado */}
                   <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
                     <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                    <span className="text-white text-xs font-semibold">ACTIVO</span>
-                  </div>
-
-                  {/* Contador */}
-                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                    <span className="text-white text-xs font-mono">{detectionCount} detecciones</span>
+                    <span className="text-white text-xs font-semibold">EN VIVO</span>
                   </div>
                 </div>
               ) : (
@@ -686,21 +694,21 @@ export default function InstructorAsistencia() {
                 </div>
               )}
 
-              {/* Botones de acción */}
+              {/* Botones de métodos de registro - Horizontal */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button 
                   onClick={toggleQR}
-                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105 ${
+                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 ${
                     qrActive 
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' 
-                      : 'bg-gradient-to-r from-[#FBBC05] to-yellow-500 hover:from-yellow-500 hover:to-yellow-600'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600' 
+                      : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
                   }`}>
-                  <QrCode size={16}/> {qrActive ? 'Ocultar QR' : 'Mostrar QR'}
+                  <QrCode size={18}/> {qrActive ? 'Ocultar QR' : 'Código QR'}
                 </button>
                 <button 
                   onClick={() => setManualRegisterOpen(true)}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105">
-                  <UserPlus size={16}/> Registro Manual
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105">
+                  <UserPlus size={18}/> Registro Manual
                 </button>
               </div>
             </div>
@@ -864,64 +872,81 @@ export default function InstructorAsistencia() {
         </div>
       )}
 
-      {/* Modal Registro Manual */}
+      {/* Modal Registro Manual - Mejorado */}
       {manualRegisterOpen && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
                   <UserPlus size={24} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual</h2>
-                  <p className="text-xs text-gray-400">Selecciona un aprendiz</p>
+                  <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual de Asistencia</h2>
+                  <p className="text-xs text-gray-400">Selecciona un estudiante para marcar presente</p>
                 </div>
               </div>
-              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+              <button onClick={() => { setManualRegisterOpen(false); setSelectedAprendiz(''); }} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="mb-4">
-              <label className="input-label">Aprendiz</label>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Estudiante
+              </label>
               <select 
-                className="input-field"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                 value={selectedAprendiz}
                 onChange={e => setSelectedAprendiz(e.target.value)}>
-                <option value="">Selecciona un aprendiz...</option>
+                <option value="">-- Selecciona un estudiante --</option>
                 {activeSession.materia?.ficha?.aprendices
                   ?.filter(a => !activeSession.registros?.some(r => r.aprendizId === a.id))
+                  .sort((a, b) => a.fullName.localeCompare(b.fullName))
                   .map(a => (
                     <option key={a.id} value={a.id}>{a.fullName}</option>
                   ))}
               </select>
+              {activeSession.materia?.ficha?.aprendices?.filter(a => !activeSession.registros?.some(r => r.aprendizId === a.id)).length === 0 && (
+                <p className="text-xs text-gray-500 mt-2">Todos los estudiantes ya están registrados</p>
+              )}
             </div>
 
-            <button 
-              onClick={registerManual}
-              disabled={!selectedAprendiz}
-              className="w-full btn-primary flex items-center justify-center gap-2">
-              <CheckCircle size={16} />
-              Registrar Asistencia
-            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => { setManualRegisterOpen(false); setSelectedAprendiz(''); }}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                Cancelar
+              </button>
+              <button 
+                onClick={registerManual}
+                disabled={!selectedAprendiz}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <CheckCircle size={18} />
+                Registrar Asistencia
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal Detalle de Sesión con GRÁFICAS */}
       {selectedSessionDetail && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in overflow-y-auto" onClick={() => setSelectedSessionDetail(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full p-6 animate-scale-in my-8" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="font-bold text-gray-900 dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
-                <p className="text-sm text-gray-400">{selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
+                  <p className="text-sm text-gray-400">{selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}</p>
+                </div>
+                <button onClick={() => setSelectedSessionDetail(null)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={() => setSelectedSessionDetail(null)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
-                <X size={20} />
-              </button>
             </div>
+
+            <div className="p-6">{/* Contenido del modal */}
 
             {/* Estadísticas principales */}
             <div className="grid grid-cols-4 gap-4 mb-6">
@@ -1128,6 +1153,7 @@ export default function InstructorAsistencia() {
                 <Download size={16} />
                 Exportar Sesión Completa
               </button>
+            </div>
             </div>
           </div>
         </div>
