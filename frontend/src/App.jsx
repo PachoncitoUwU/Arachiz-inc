@@ -24,6 +24,7 @@ import AprendizExcusas    from './pages/aprendiz/Excusas';
 
 import Configuracion from './pages/Configuracion';
 import JoinFicha from './pages/JoinFicha';
+import ScanQR from './pages/ScanQR';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/login"    element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/unirse/:code" element={<JoinFicha />} />
+              <Route path="/scan-qr" element={<ScanQR />} />
 
               <Route path="/instructor" element={<MainLayout allowedRoles={['instructor']} />}>
                 <Route index element={<Navigate to="dashboard" replace />} />

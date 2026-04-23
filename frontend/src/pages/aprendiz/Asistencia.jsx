@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
-import { LogIn, CheckCircle, XCircle, Clock } from 'lucide-react';
+import QRScanner from '../../components/QRScanner';
+import { LogIn, CheckCircle, XCircle, Clock, QrCode } from 'lucide-react';
 
 export default function AprendizAsistencia() {
+  const location = useLocation();
   const [fichas, setFichas] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState('');
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+
+  useEffect(() => {
+    // Si viene desde el escaneo de QR, abrir el scanner
+    if (location.state?.openQRScanner) {
+      setQrScannerOpen(true);
+    }
+  }, [location]);
 
   const loadData = async () => {
     try {
@@ -72,7 +83,14 @@ export default function AprendizAsistencia() {
         </div>
       ) : (
         <div className="card max-w-4xl mx-auto">
-          <h2 className="font-bold text-gray-900 mb-4">Historial Reciente</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-gray-900">Historial Reciente</h2>
+            <button 
+              onClick={() => setQrScannerOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm">
+              <QrCode size={16}/> Escanear QR
+            </button>
+          </div>
           {historial.length === 0 ? (
             <EmptyState icon={<Clock size={28}/>} title="Sin registros" description="Aún no tienes asistencias registradas." />
           ) : (
@@ -91,7 +109,8 @@ export default function AprendizAsistencia() {
                            r.metodo === 'nfc' ? 'Lector NFC' :
                            r.metodo === 'huella' ? 'Lector Dactilar' :
                            r.metodo === 'facial' ? '🎭 Reconocimiento Facial' :
-                           r.metodo === 'qr' ? 'Código QR' :
+                           r.metodo === 'qr' ? '📱 Código QR' :
+                           r.metodo === 'manual' ? '✍️ Registro Manual' :
                            'Instructor'
                          }
                        </p>
@@ -105,6 +124,16 @@ export default function AprendizAsistencia() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal QR Scanner */}
+      {qrScannerOpen && (
+        <QRScanner 
+          onClose={() => setQrScannerOpen(false)}
+          onSuccess={(registro) => {
+            loadData(); // Recargar historial
+          }}
+        />
       )}
     </div>
   );

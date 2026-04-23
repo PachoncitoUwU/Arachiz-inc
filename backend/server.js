@@ -17,6 +17,7 @@ const snakeRoutes  = require('./routes/snakeRoutes');
 const gamesRoutes  = require('./routes/gamesRoutes');
 const skinRoutes   = require('./routes/skinRoutes');
 const materiaEvitadaRoutes = require('./routes/materiaEvitada');
+const qrRoutes     = require('./routes/qrRoutes');
 const SerialService = require('./utils/serialService');
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/snake',  snakeRoutes);
 app.use('/api/games',  gamesRoutes);
 app.use('/api/skins',  skinRoutes);
 app.use('/api', materiaEvitadaRoutes);
+app.use('/api/qr',     qrRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);

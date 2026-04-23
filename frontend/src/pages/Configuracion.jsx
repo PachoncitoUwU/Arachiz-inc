@@ -1732,7 +1732,7 @@ export default function Configuracion() {
 
       <div className="flex items-center justify-center gap-2 pt-8 pb-12 cursor-default select-none opacity-50">
         <img src="/mi-logo.png" alt="Arachiz Logo" className="w-5 h-5 object-contain" />
-        <p className="text-gray-500 text-xs font-medium">Version 1.2.12</p>
+        <p className="text-gray-500 text-xs font-medium">Arachiz Version 1.3.2</p>
       </div>
     </div>
   );

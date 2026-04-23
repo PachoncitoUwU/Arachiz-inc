@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createExcusa, getUserExcusas, getAllExcusas, updateExcusaStatus } = require('../controllers/excusaController');
 const authMiddleware = require('../middlewares/authMiddleware');
-const roleMiddleware = require('../middlewares/roleMiddleware');
+const { roleMiddleware } = require('../middlewares/roleMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 router.use(authMiddleware);

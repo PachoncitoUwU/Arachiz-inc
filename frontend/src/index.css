@@ -69,6 +69,26 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -201,4 +221,23 @@ html.dark .shadow-xl {
 }
 html.dark .backdrop-blur-sm {
   background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* QR Scanner animations */
+@keyframes scan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(256px); }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
 }
