@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/Modal';
 import EnrollModal from '../../components/EnrollModal';
 import AprendizPerfilModal from '../../components/AprendizPerfilModal';
+import MateriaInfoModal from '../../components/MateriaInfoModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
   Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus
@@ -42,6 +43,8 @@ export default function FichaDetalle() {
   const [modalEnroll, setModalEnroll] = useState(false);
   const [selectedAprendiz, setSelectedAprendiz] = useState(null);
   const [modalPerfil, setModalPerfil] = useState(false);
+  const [modalMateriaInfo, setModalMateriaInfo] = useState(false);
+  const [selectedMateria, setSelectedMateria] = useState(null);
 
   useEffect(() => {
     loadFicha();
@@ -203,6 +206,26 @@ export default function FichaDetalle() {
 
   const handleBiometricUpdate = () => {
     loadFicha(); // Recargar para actualizar los datos del aprendiz
+  };
+
+  const handleOpenMateriaInfo = (materia) => {
+    console.log('Materia seleccionada:', materia);
+    console.log('Horarios de la materia:', materia.horarios);
+    setSelectedMateria(materia);
+    setModalMateriaInfo(true);
+  };
+
+  const handleCloseMateriaInfo = () => {
+    setModalMateriaInfo(false);
+    setSelectedMateria(null);
+  };
+
+  const handleMateriaUpdate = () => {
+    loadFicha(); // Recargar para actualizar los datos
+  };
+
+  const handleMateriaDelete = () => {
+    loadFicha(); // Recargar para actualizar la lista
   };
 
   if (loading) {
@@ -432,21 +455,25 @@ export default function FichaDetalle() {
               </div>
             ) : (
               <div className="space-y-2">
-                {ficha.materias.map(materia => (
-                  <div 
-                    key={materia.id} 
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{materia.nombre}</p>
-                      <p className="text-xs text-gray-400">{materia.tipo}</p>
+                {ficha.materias.map(materia => {
+                  const isCreatorOrAdmin = materia.instructorId === user?.id || isAdmin;
+                  return (
+                    <div 
+                      key={materia.id} 
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700 cursor-pointer"
+                      onClick={() => handleOpenMateriaInfo(materia)}
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{materia.nombre}</p>
+                        <p className="text-xs text-gray-400">{materia.tipo}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{materia.instructor?.fullName}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{materia.instructor?.fullName}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -783,6 +810,18 @@ export default function FichaDetalle() {
           materias={ficha.materias || []}
           onRemoveAprendiz={handleRemoveAprendiz}
           onBiometricUpdate={handleBiometricUpdate}
+        />
+      )}
+
+      {/* Modal de información de materia */}
+      {selectedMateria && (
+        <MateriaInfoModal 
+          open={modalMateriaInfo} 
+          onClose={handleCloseMateriaInfo} 
+          materia={selectedMateria}
+          isCreatorOrAdmin={selectedMateria.instructorId === user?.id || isAdmin}
+          onUpdate={handleMateriaUpdate}
+          onDelete={handleMateriaDelete}
         />
       )}
     </div>

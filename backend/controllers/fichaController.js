@@ -167,7 +167,13 @@ const getFichaById = async (req, res) => {
             }
           } 
         },
-        materias: { include: { instructor: { select: { id: true, fullName: true } } } },
+        materias: { 
+          include: { 
+            instructor: { select: { id: true, fullName: true } },
+            horarios: true,
+            ficha: { select: { numero: true } }
+          } 
+        },
         horarios: { include: { materia: { select: { nombre: true } } } }
       }
     });

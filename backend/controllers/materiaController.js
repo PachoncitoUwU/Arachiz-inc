@@ -51,6 +51,48 @@ const deleteMateria = async (req, res) => {
   }
 };
 
+// Editar materia
+const updateMateria = async (req, res) => {
+  const { id } = req.params;
+  const { nombre, tipo } = req.body;
+  const instructorId = req.user.id;
+  
+  if (!nombre || !tipo) {
+    return res.status(400).json({ error: 'Nombre y tipo son obligatorios' });
+  }
+  
+  try {
+    const materia = await prisma.materia.findUnique({
+      where: { id },
+      include: { ficha: true }
+    });
+    
+    if (!materia) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+    
+    const isAdmin = materia.ficha.instructorAdminId === instructorId;
+    const isCreator = materia.instructorId === instructorId;
+    
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({ error: 'Solo el creador o admin puede editar esta materia' });
+    }
+    
+    const updatedMateria = await prisma.materia.update({
+      where: { id },
+      data: { nombre, tipo },
+      include: {
+        instructor: { select: { id: true, fullName: true } },
+        ficha: { select: { numero: true } }
+      }
+    });
+    
+    res.json({ message: 'Materia actualizada', materia: updatedMateria });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar materia: ' + err.message });
+  }
+};
+
 // RF71 - Materias por ficha
 const getMateriasByFicha = async (req, res) => {
   const { fichaId } = req.params;
@@ -59,6 +101,8 @@ const getMateriasByFicha = async (req, res) => {
       where: { fichaId },
       include: {
         instructor: { select: { id: true, fullName: true } },
+        horarios: true,
+        ficha: { select: { numero: true } },
         asistencias: { 
           where: { activa: true },
           select: { id: true, activa: true } 
@@ -81,6 +125,7 @@ const getUserMaterias = async (req, res) => {
         where: { instructorId: userId },
         include: {
           ficha: { select: { numero: true, id: true } },
+          horarios: true,
           asistencias: { 
             where: { activa: true },
             select: { id: true, activa: true } 
@@ -97,7 +142,8 @@ const getUserMaterias = async (req, res) => {
       const misMaterias = await prisma.materia.findMany({
         where: { fichaId: miFicha.id },
         include: {
-          instructor: { select: { fullName: true } }
+          instructor: { select: { fullName: true } },
+          horarios: true
         }
       });
       return res.json({ materias: misMaterias });
@@ -107,4 +153,4 @@ const getUserMaterias = async (req, res) => {
   }
 };
 
-module.exports = { createMateria, deleteMateria, getMateriasByFicha, getUserMaterias };
+module.exports = { createMateria, deleteMateria, updateMateria, getMateriasByFicha, getUserMaterias };

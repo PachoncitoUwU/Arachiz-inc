@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/timeService');
 
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
@@ -13,8 +14,9 @@ const createSession = async (req, res) => {
     });
     if (existing) return res.status(400).json({ error: 'Ya hay una sesión activa para esta materia' });
 
-    // La fecha SIEMPRE será el día de hoy, puesta por el servidor
-    const autoFecha = new Date().toISOString().split('T')[0];
+    // Obtener fecha actual de Colombia
+    const autoFecha = await getCurrentColombiaDate();
+    console.log(`[Asistencia] Creando sesión con fecha de Colombia: ${autoFecha}`);
 
     const newAsistencia = await prisma.asistencia.create({
       data: {
@@ -25,9 +27,35 @@ const createSession = async (req, res) => {
       },
       include: {
         registros: { include: { aprendiz: { select: { fullName: true, document: true } } } },
-        materia: { include: { ficha: { select: { numero: true, aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } } } } } }
+        materia: { 
+          include: { 
+            ficha: { 
+              select: { 
+                numero: true, 
+                aprendices: { 
+                  where: {
+                    NOT: {
+                      materiasEvitadas: {
+                        some: { materiaId }
+                      }
+                    }
+                  },
+                  select: { 
+                    id: true, 
+                    fullName: true, 
+                    document: true, 
+                    nfcUid: true, 
+                    huellas: true, 
+                    faceDescriptor: true 
+                  } 
+                } 
+              } 
+            } 
+          } 
+        }
       }
     });
+    
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
     if (serialService) serialService.sendCommand('SESSION ON');
@@ -35,26 +63,6 @@ const createSession = async (req, res) => {
     res.status(201).json({ message: 'Sesión creada', asistencia: newAsistencia });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear la sesión: ' + err.message });
-  }
-};
-
-// RF24/RF55 - Sesiones por materia
-const getSessionsByMateria = async (req, res) => {
-  const { materiaId } = req.params;
-  try {
-    const list = await prisma.asistencia.findMany({
-      where: { materiaId },
-      include: {
-        registros: {
-          include: { aprendiz: { select: { fullName: true, document: true } } }
-        },
-        instructor: { select: { fullName: true } }
-      },
-      orderBy: { timestamp: 'desc' }
-    });
-    res.json({ asistencias: list });
-  } catch (err) {
-    res.status(500).json({ error: 'Error del servidor: ' + err.message });
   }
 };
 
@@ -79,6 +87,28 @@ const getMyAttendance = async (req, res) => {
   }
 };
 
+// Get all sessions for a specific materia
+const getSessionsByMateria = async (req, res) => {
+  const { materiaId } = req.params;
+  try {
+    const sessions = await prisma.asistencia.findMany({
+      where: { materiaId },
+      include: {
+        registros: { 
+          include: { 
+            aprendiz: { select: { fullName: true, document: true } } 
+          } 
+        },
+        instructor: { select: { fullName: true } }
+      },
+      orderBy: { fecha: 'desc' }
+    });
+    res.json({ sessions });
+  } catch (err) {
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
 // RF09 - Registrar asistencia
 const registerAttendance = async (req, res) => {
   const { asistenciaId, metodo } = req.body;
@@ -95,16 +125,34 @@ const registerAttendance = async (req, res) => {
     if (!perteneceAFicha) {
       return res.status(403).json({ error: 'No perteneces a la ficha de esta materia' });
     }
+    
+    // Verificar que el aprendiz NO tenga esta materia evitada
+    const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
+      where: {
+        aprendizId_materiaId: {
+          aprendizId: targetAprendizId,
+          materiaId: asistencia.materiaId
+        }
+      }
+    });
+    
+    if (tieneMateriaEvitada) {
+      return res.status(403).json({ error: 'No puedes registrar asistencia en una materia evitada' });
+    }
 
     const existing = await prisma.registroAsistencia.findUnique({
       where: { asistenciaId_aprendizId: { asistenciaId, aprendizId: targetAprendizId } }
     });
     if (existing) return res.status(400).json({ error: 'Ya registraste tu asistencia en esta sesión' });
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: metodo || 'codigo',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: targetAprendizId } }
       },
@@ -152,6 +200,20 @@ const registerHardwareAttendance = async (req, res) => {
 
     const perteneceAFicha = asistencia.materia.ficha.aprendices.some(a => a.id === aprendiz.id);
     if (!perteneceAFicha) return res.status(403).json({ error: 'Aprendiz no pertenece a esta ficha' });
+    
+    // Verificar que el aprendiz NO tenga esta materia evitada
+    const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
+      where: {
+        aprendizId_materiaId: {
+          aprendizId: aprendiz.id,
+          materiaId: asistencia.materiaId
+        }
+      }
+    });
+    
+    if (tieneMateriaEvitada) {
+      return res.status(403).json({ error: 'Este aprendiz tiene esta materia evitada' });
+    }
 
     const existing = await prisma.registroAsistencia.findUnique({
       where: { asistenciaId_aprendizId: { asistenciaId, aprendizId: aprendiz.id } }
@@ -162,10 +224,14 @@ const registerHardwareAttendance = async (req, res) => {
        return res.status(400).json({ error: 'Ya registró su asistencia previamente' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: nfcUid ? 'nfc' : 'huella',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendiz.id } }
       },
@@ -194,15 +260,39 @@ const registerHardwareAttendance = async (req, res) => {
 const endSession = async (req, res) => {
   const { id } = req.params;
   try {
+    // First fetch to get materiaId
+    const asistenciaBasic = await prisma.asistencia.findUnique({
+      where: { id },
+      select: { id: true, activa: true, materiaId: true }
+    });
+    
+    if (!asistenciaBasic) return res.status(404).json({ error: 'Sesión no encontrada' });
+    if (!asistenciaBasic.activa) return res.status(400).json({ error: 'La sesión ya fue cerrada' });
+
+    // Now fetch with filtered aprendices using the materiaId
     const asistencia = await prisma.asistencia.findUnique({
       where: { id },
       include: {
         registros: true,
-        materia: { include: { ficha: { include: { aprendices: true } } } }
+        materia: { 
+          include: { 
+            ficha: { 
+              include: { 
+                aprendices: {
+                  where: {
+                    NOT: {
+                      materiasEvitadas: {
+                        some: { materiaId: asistenciaBasic.materiaId }
+                      }
+                    }
+                  }
+                }
+              } 
+            } 
+          } 
+        }
       }
     });
-    if (!asistencia) return res.status(404).json({ error: 'Sesión no encontrada' });
-    if (!asistencia.activa) return res.status(400).json({ error: 'La sesión ya fue cerrada' });
 
     const todosAprendices = asistencia.materia.ficha.aprendices;
     const registradosIds = asistencia.registros.map(r => r.aprendizId);
@@ -249,13 +339,25 @@ const getActiveSession = async (req, res) => {
         materia: {
           include: {
             ficha: {
-              include: { aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } } }
+              include: { 
+                aprendices: { 
+                  where: {
+                    NOT: {
+                      materiasEvitadas: {
+                        some: { materiaId }
+                      }
+                    }
+                  },
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                } 
+              }
             },
             instructor: { select: { fullName: true } }
           }
         }
       }
     });
+    
     res.json({ session: session || null });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
@@ -266,6 +368,14 @@ const getActiveSession = async (req, res) => {
 const getSessionById = async (req, res) => {
   const { id } = req.params;
   try {
+    // First get the materiaId
+    const sessionBasic = await prisma.asistencia.findUnique({
+      where: { id },
+      select: { materiaId: true }
+    });
+    
+    if (!sessionBasic) return res.status(404).json({ error: 'Sesión no encontrada' });
+    
     const session = await prisma.asistencia.findUnique({
       where: { id },
       include: {
@@ -273,14 +383,25 @@ const getSessionById = async (req, res) => {
         materia: {
           include: {
             ficha: {
-              include: { aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } } }
+              include: { 
+                aprendices: { 
+                  where: {
+                    NOT: {
+                      materiasEvitadas: {
+                        some: { materiaId: sessionBasic.materiaId }
+                      }
+                    }
+                  },
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                } 
+              }
             },
             instructor: { select: { fullName: true } }
           }
         }
       }
     });
-    if (!session) return res.status(404).json({ error: 'Sesión no encontrada' });
+    
     res.json({ session });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
@@ -290,6 +411,16 @@ const getSessionById = async (req, res) => {
 // Buscar CUALQUIER sesión activa del instructor en el momento
 const getMyActiveAnySession = async (req, res) => {
   try {
+    // First get the session to know materiaId
+    const sessionBasic = await prisma.asistencia.findFirst({
+      where: { instructorId: req.user.id, activa: true },
+      select: { id: true, materiaId: true }
+    });
+    
+    if (!sessionBasic) {
+      return res.json({ session: null });
+    }
+    
     const session = await prisma.asistencia.findFirst({
       where: { instructorId: req.user.id, activa: true },
       include: {
@@ -297,13 +428,25 @@ const getMyActiveAnySession = async (req, res) => {
         materia: {
           include: {
             ficha: {
-              include: { aprendices: { select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } } }
+              include: { 
+                aprendices: { 
+                  where: {
+                    NOT: {
+                      materiasEvitadas: {
+                        some: { materiaId: sessionBasic.materiaId }
+                      }
+                    }
+                  },
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                } 
+              }
             },
             instructor: { select: { fullName: true } }
           }
         }
       }
     });
+    
     res.json({ session: session || null });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
@@ -331,6 +474,20 @@ const registerFacialAttendance = async (req, res) => {
     if (!perteneceAFicha) {
       return res.status(403).json({ error: 'Aprendiz no pertenece a esta ficha' });
     }
+    
+    // Verificar que el aprendiz NO tenga esta materia evitada
+    const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
+      where: {
+        aprendizId_materiaId: {
+          aprendizId,
+          materiaId: asistencia.materiaId
+        }
+      }
+    });
+    
+    if (tieneMateriaEvitada) {
+      return res.status(403).json({ error: 'Este aprendiz tiene esta materia evitada' });
+    }
 
     const existing = await prisma.registroAsistencia.findUnique({
       where: { asistenciaId_aprendizId: { asistenciaId, aprendizId } }
@@ -339,10 +496,14 @@ const registerFacialAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Este aprendiz ya registró asistencia' });
     }
 
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: 'facial',
+        timestamp: colombiaTime,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendizId } }
       },
@@ -366,5 +527,115 @@ const registerFacialAttendance = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance };
+// Registro manual por instructor
+const registerManualAttendance = async (req, res) => {
+  const { asistenciaId, aprendizId } = req.body;
+  const instructorId = req.user.id;
+
+  if (!asistenciaId || !aprendizId) {
+    return res.status(400).json({ error: 'Faltan datos requeridos' });
+  }
+
+  try {
+    // Verificar que la sesión existe, está activa y pertenece al instructor
+    const session = await prisma.asistencia.findFirst({
+      where: {
+        id: asistenciaId,
+        instructorId,
+        activa: true
+      },
+      include: {
+        materia: {
+          include: {
+            ficha: {
+              include: {
+                aprendices: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada o no activa' });
+    }
+
+    // Verificar que el aprendiz pertenece a la ficha
+    const isEnrolled = session.materia.ficha.aprendices.some(a => a.id === aprendizId);
+    if (!isEnrolled) {
+      return res.status(403).json({ error: 'El aprendiz no pertenece a esta ficha' });
+    }
+    
+    // Verificar que el aprendiz NO tenga esta materia evitada
+    const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
+      where: {
+        aprendizId_materiaId: {
+          aprendizId,
+          materiaId: session.materiaId
+        }
+      }
+    });
+    
+    if (tieneMateriaEvitada) {
+      return res.status(403).json({ error: 'Este aprendiz tiene esta materia evitada' });
+    }
+
+    // Verificar si ya está registrado
+    const existing = await prisma.registroAsistencia.findFirst({
+      where: {
+        asistenciaId,
+        aprendizId
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'El aprendiz ya está registrado' });
+    }
+
+    // Obtener hora actual de Colombia
+    const colombiaTime = await getCurrentColombiaTime();
+
+    // Registrar asistencia
+    const registro = await prisma.registroAsistencia.create({
+      data: {
+        presente: true,
+        metodo: 'manual',
+        timestamp: colombiaTime,
+        asistencia: { connect: { id: asistenciaId } },
+        aprendiz: { connect: { id: aprendizId } }
+      },
+      include: { 
+        aprendiz: { 
+          select: { 
+            id: true,
+            fullName: true, 
+            document: true,
+            email: true
+          } 
+        } 
+      }
+    });
+
+    // Emitir evento socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+        id: registro.id,
+        aprendizId: registro.aprendizId,
+        aprendiz: registro.aprendiz,
+        presente: true,
+        metodo: 'manual',
+        timestamp: registro.timestamp
+      });
+    }
+
+    res.json({ message: 'Asistencia registrada manualmente', registro });
+  } catch (err) {
+    console.error('Error en registro manual:', err);
+    res.status(500).json({ error: 'Error: ' + err.message });
+  }
+};
+
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerManualAttendance };
 

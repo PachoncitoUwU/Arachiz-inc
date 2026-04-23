@@ -84,7 +84,7 @@ export default function MateriasEvitadasModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Gestionar Materias Evitadas" maxWidth="max-w-lg">
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
         {/* Info del aprendiz */}
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -119,7 +119,7 @@ export default function MateriasEvitadasModal({
             <Loader size={24} className="animate-spin text-[#4285F4]" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
+          <div className="space-y-2">
             {materias.map(materia => {
               const isEvitada = materiasEvitadasIds.includes(materia.id);
               return (

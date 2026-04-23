@@ -4,9 +4,10 @@ import { useSettings } from '../../context/SettingsContext';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import MateriaInfoModal from '../../components/MateriaInfoModal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { BookOpen, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Plus } from 'lucide-react';
 
 const COLORES_FICHA = [
   { bg: 'bg-blue-50',   icon: 'text-[#4285F4]',  card: 'bg-blue-50/60 border-blue-100',   accent: '#4285F4' },
@@ -27,6 +28,8 @@ export default function InstructorMaterias() {
   const [form, setForm] = useState({ fichaId: '', nombre: '', tipo: 'Técnica' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [selectedMateria, setSelectedMateria] = useState(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -61,8 +64,32 @@ export default function InstructorMaterias() {
     try {
       await fetchApi(`/materias/${id}`, { method: 'DELETE' });
       showToast('Materia eliminada', 'success');
+      setInfoModalOpen(false);
+      setSelectedMateria(null);
       load();
     } catch (err) { showToast(err.message, 'error'); }
+  };
+
+  const handleMateriaClick = (materia, ficha) => {
+    console.log('Materia seleccionada en Materias page:', materia);
+    console.log('Horarios de la materia:', materia.horarios);
+    setSelectedMateria({ ...materia, ficha });
+    setInfoModalOpen(true);
+  };
+
+  const handleCloseInfoModal = () => {
+    setInfoModalOpen(false);
+    setSelectedMateria(null);
+  };
+
+  const handleUpdateMateria = () => {
+    load();
+  };
+
+  const handleDeleteMateria = () => {
+    if (selectedMateria) {
+      handleDelete(selectedMateria.id);
+    }
   };
 
   // Agrupar por ficha
@@ -123,20 +150,19 @@ export default function InstructorMaterias() {
                   const mCol = COLORES_FICHA[mIdx % COLORES_FICHA.length];
                   const isOwner = m.instructorId === user?.id;
                   const isAdmin = ficha.instructorAdminId === user?.id;
-                  const canDelete = isOwner || isAdmin;
+                  const canEdit = isOwner || isAdmin;
                   const hasActive = m.asistencias?.some(a => a.activa);
                   return (
-                    <div key={m.id} className={`p-3 rounded-xl border hover:shadow-soft transition-all ${mCol.card}`}>
+                    <div 
+                      key={m.id} 
+                      onClick={() => handleMateriaClick(m, ficha)}
+                      className={`p-3 rounded-xl border hover:shadow-soft transition-all cursor-pointer ${mCol.card}`}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-gray-800 truncate">{m.nombre}</p>
                           <p className="text-xs text-gray-400 mt-0.5">{m.instructor?.fullName}</p>
                         </div>
-                        {canDelete && (
-                          <button onClick={() => handleDelete(m.id)} className="btn-icon w-7 h-7 text-red-400 hover:bg-red-50 shrink-0">
-                            <Trash2 size={13}/>
-                          </button>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <span className={`badge ${m.tipo === 'Técnica' ? 'badge-info' : 'badge-gray'}`}>{m.tipo}</span>
@@ -178,6 +204,19 @@ export default function InstructorMaterias() {
           </div>
         </form>
       </Modal>
+
+      <MateriaInfoModal
+        open={infoModalOpen}
+        onClose={handleCloseInfoModal}
+        materia={selectedMateria}
+        isCreatorOrAdmin={
+          selectedMateria && user && 
+          (selectedMateria.instructorId === user.id || 
+           selectedMateria.ficha?.instructorAdminId === user.id)
+        }
+        onUpdate={handleUpdateMateria}
+        onDelete={handleDeleteMateria}
+      />
     </div>
   );
 }
