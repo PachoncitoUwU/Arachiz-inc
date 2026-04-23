@@ -417,10 +417,6 @@ export default function InstructorAsistencia() {
     }
   };
 
-  // Estados para hardware
-  const [comPort, setComPort] = useState('COM8');
-  const [hardwareConnected, setHardwareConnected] = useState(false);
-
   return (
     <div className="animate-fade-in space-y-5">
       <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} />
