@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, LineChart, Line
 } from 'recharts';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, Fingerprint, Wifi, RefreshCw, TrendingUp, Award, X, Camera } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, Fingerprint, Wifi, RefreshCw, TrendingUp, Award, X, Camera, UserPlus, Zap, Activity, Eye, EyeOff } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { loadFaceModels, faceDistance, arrayToDescriptor } from '../../utils/faceApi';
 import * as faceapi from 'face-api.js';
@@ -51,6 +51,7 @@ export default function InstructorAsistencia() {
   const [selectedFecha, setSelectedFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [facialScannerActive, setFacialScannerActive] = useState(false);
   const [qrActive, setQrActive] = useState(false);
+  const [manualRegisterOpen, setManualRegisterOpen] = useState(false);
   const [selectedSessionDetail, setSelectedSessionDetail] = useState(null);
   const socketRef = useRef(null);
 
@@ -60,6 +61,7 @@ export default function InstructorAsistencia() {
 
   // Estados para reconocimiento facial integrado
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const loopRef = useRef(null);
   const busyRef = useRef(false);
@@ -67,10 +69,16 @@ export default function InstructorAsistencia() {
   const cooldownRef = useRef({});
   const [faceReady, setFaceReady] = useState(false);
   const [liveMatches, setLiveMatches] = useState([]);
+  const [detectionCount, setDetectionCount] = useState(0);
   const liveTimer = useRef(null);
 
-  const THRESHOLD = 0.55;
-  const COOLDOWN_MS = 5000;
+  // Estados para QR
+  const [qrCode, setQrCode] = useState(null);
+  const [qrTimeLeft, setQrTimeLeft] = useState(30);
+  const qrTimerRef = useRef(null);
+
+  const THRESHOLD = 0.50; // Más sensible
+  const COOLDOWN_MS = 3000; // Reducido a 3 segundos
 
   useEffect(() => {
     fetchApi('/asistencias/my-active-any').then(activeData => {
@@ -292,7 +300,7 @@ export default function InstructorAsistencia() {
     try {
       await loadFaceModels();
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -301,6 +309,7 @@ export default function InstructorAsistencia() {
       }
       setFaceReady(true);
       startFaceLoop();
+      showToast('🎥 Reconocimiento facial activado', 'success');
     } catch (err) {
       showToast('Error al iniciar cámara: ' + err.message, 'error');
       setFacialScannerActive(false);
@@ -314,17 +323,18 @@ export default function InstructorAsistencia() {
     setFacialScannerActive(false);
     setFaceReady(false);
     setLiveMatches([]);
+    setDetectionCount(0);
   };
 
   const startFaceLoop = () => {
-    const OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 });
+    const OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
     const candidates = (activeSession?.materia?.ficha?.aprendices || [])
       .filter(a => a.faceDescriptor?.length === 128)
       .map(a => ({ ...a, descriptor: arrayToDescriptor(a.faceDescriptor) }));
 
     const tick = async () => {
       if (!videoRef.current || videoRef.current.readyState < 2 || busyRef.current) {
-        loopRef.current = setTimeout(tick, 80);
+        loopRef.current = setTimeout(tick, 100);
         return;
       }
       busyRef.current = true;
@@ -335,12 +345,26 @@ export default function InstructorAsistencia() {
           .withFaceLandmarks(true)
           .withFaceDescriptors();
 
+        setDetectionCount(prev => prev + 1);
+
         if (!detections || detections.length === 0) {
           setLiveMatches([]);
         } else {
           const now = Date.now();
           const matched = [];
           const toRegister = [];
+
+          // Dibujar en canvas
+          if (canvasRef.current && videoRef.current) {
+            const displaySize = { 
+              width: videoRef.current.offsetWidth, 
+              height: videoRef.current.offsetHeight 
+            };
+            faceapi.matchDimensions(canvasRef.current, displaySize);
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            const ctx = canvasRef.current.getContext('2d');
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
 
           for (const det of detections) {
             let best = null, bestDist = Infinity;
@@ -355,6 +379,7 @@ export default function InstructorAsistencia() {
                 id: best.id, 
                 name: best.fullName, 
                 isNew: !alreadyDone && !onCooldown,
+                confidence: Math.round((1 - bestDist) * 100),
                 box: det.detection.box
               });
               if (!alreadyDone && !onCooldown) {
@@ -366,7 +391,7 @@ export default function InstructorAsistencia() {
 
           setLiveMatches(matched);
           if (liveTimer.current) clearTimeout(liveTimer.current);
-          liveTimer.current = setTimeout(() => setLiveMatches([]), 1500);
+          liveTimer.current = setTimeout(() => setLiveMatches([]), 2000);
 
           if (toRegister.length > 0) {
             Promise.all(toRegister.map(saveFacialAttendance)).then(results => {
@@ -389,7 +414,7 @@ export default function InstructorAsistencia() {
                       }]
                     };
                   });
-                  showToast(`✓ ${a.fullName} registrado`, 'success');
+                  showToast(`✅ ${a.fullName} registrado por reconocimiento facial`, 'success');
                 });
               }
             });
@@ -398,7 +423,7 @@ export default function InstructorAsistencia() {
       } catch (_) {}
 
       busyRef.current = false;
-      loopRef.current = setTimeout(tick, 350);
+      loopRef.current = setTimeout(tick, 200); // Más rápido
     };
 
     loopRef.current = setTimeout(tick, 300);
@@ -414,6 +439,78 @@ export default function InstructorAsistencia() {
     } catch (err) {
       if (err.message?.includes('ya registró')) registeredRef.current.add(aprendiz.id);
       return null;
+    }
+  };
+
+  // ─── Funciones de QR ───────────────────────────────────────────────────────
+  const generateQR = async () => {
+    try {
+      const data = await fetchApi('/qr/generate', {
+        method: 'POST',
+        body: JSON.stringify({ asistenciaId: activeSession.id })
+      });
+      
+      setQrCode(data.code);
+      setQrTimeLeft(30);
+      
+      if (qrTimerRef.current) clearInterval(qrTimerRef.current);
+      qrTimerRef.current = setInterval(() => {
+        setQrTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(qrTimerRef.current);
+            generateQR();
+            return 30;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  };
+
+  const toggleQR = () => {
+    if (!qrActive) {
+      setQrActive(true);
+      generateQR();
+    } else {
+      setQrActive(false);
+      if (qrTimerRef.current) clearInterval(qrTimerRef.current);
+    }
+  };
+
+  // ─── Registro Manual ───────────────────────────────────────────────────────
+  const [selectedAprendiz, setSelectedAprendiz] = useState('');
+  
+  const registerManual = async () => {
+    if (!selectedAprendiz) return;
+    try {
+      await fetchApi('/asistencias/manual-register', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          asistenciaId: activeSession.id, 
+          aprendizId: selectedAprendiz 
+        })
+      });
+      
+      const aprendiz = activeSession.materia?.ficha?.aprendices?.find(a => a.id === selectedAprendiz);
+      setActiveSession(prev => ({
+        ...prev,
+        registros: [...(prev.registros || []), {
+          id: 'manual-' + Date.now(),
+          aprendizId: selectedAprendiz,
+          aprendiz: { fullName: aprendiz?.fullName },
+          presente: true,
+          metodo: 'manual',
+          timestamp: new Date().toISOString()
+        }]
+      }));
+      
+      showToast(`✅ ${aprendiz?.fullName} registrado manualmente`, 'success');
+      setManualRegisterOpen(false);
+      setSelectedAprendiz('');
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   };
 
@@ -501,7 +598,7 @@ export default function InstructorAsistencia() {
               </div>
 
               {facialScannerActive ? (
-                <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '4/3', maxHeight: 400 }}>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black shadow-2xl" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
                   <video 
                     ref={videoRef} 
                     muted 
@@ -509,60 +606,113 @@ export default function InstructorAsistencia() {
                     className="w-full h-full object-cover"
                     style={{ transform: 'scaleX(-1)' }} 
                   />
+                  <canvas 
+                    ref={canvasRef}
+                    className="absolute inset-0 w-full h-full"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
 
-                  {/* Overlay de detección */}
-                  {liveMatches.length > 0 && (
-                    <div className="absolute inset-0">
-                      {liveMatches.map((m, i) => (
-                        <div key={m.id} className="absolute" style={{
-                          left: `${(m.box?.x / videoRef.current?.videoWidth) * 100}%`,
-                          top: `${(m.box?.y / videoRef.current?.videoHeight) * 100}%`,
-                          width: `${(m.box?.width / videoRef.current?.videoWidth) * 100}%`,
-                          height: `${(m.box?.height / videoRef.current?.videoHeight) * 100}%`,
-                        }}>
-                          <div className={`w-full h-full border-4 rounded-lg ${m.isNew ? 'border-[#34A853]' : 'border-[#4285F4]'} animate-pulse`}>
-                            <div className={`absolute -bottom-8 left-0 right-0 ${m.isNew ? 'bg-[#34A853]' : 'bg-[#4285F4]'} text-white px-2 py-1 rounded text-xs font-bold text-center`}>
-                              {m.name}
+                  {/* Overlay de detección mejorado */}
+                  {liveMatches.length > 0 && liveMatches.map((m, i) => (
+                    <div 
+                      key={m.id} 
+                      className="absolute animate-fade-in"
+                      style={{
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}>
+                      <div className={`relative p-6 rounded-2xl backdrop-blur-md ${
+                        m.isNew 
+                          ? 'bg-gradient-to-br from-green-500/90 to-emerald-600/90 shadow-lg shadow-green-500/50' 
+                          : 'bg-gradient-to-br from-blue-500/90 to-indigo-600/90 shadow-lg shadow-blue-500/50'
+                      } animate-scale-in`}>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl ${
+                            m.isNew ? 'bg-white/20' : 'bg-white/20'
+                          } animate-pulse`}>
+                            {m.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-white font-bold text-xl mb-1">{m.name}</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <Activity size={14} className="text-white/80" />
+                                <span className="text-white/90 text-sm font-medium">{m.confidence}% confianza</span>
+                              </div>
+                              {m.isNew && (
+                                <span className="px-2 py-0.5 rounded-full bg-white/30 text-white text-xs font-bold flex items-center gap-1">
+                                  <Zap size={10} /> NUEVO
+                                </span>
+                              )}
                             </div>
                           </div>
+                          <CheckCircle size={32} className="text-white animate-bounce" />
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  )}
+                  ))}
 
-                  {/* Guías de esquinas */}
+                  {/* Guías de esquinas animadas */}
                   {faceReady && liveMatches.length === 0 && (
                     <>
-                      <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-white/50 rounded-tl animate-pulse" />
-                      <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-white/50 rounded-tr animate-pulse" />
-                      <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-white/50 rounded-bl animate-pulse" />
-                      <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-white/50 rounded-br animate-pulse" />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                        <p className="text-white text-center text-sm">Posiciona tu rostro dentro del marco</p>
+                      {[
+                        { pos: 'top-6 left-6', corners: 'border-t-4 border-l-4', round: 'rounded-tl-2xl' },
+                        { pos: 'top-6 right-6', corners: 'border-t-4 border-r-4', round: 'rounded-tr-2xl' },
+                        { pos: 'bottom-6 left-6', corners: 'border-b-4 border-l-4', round: 'rounded-bl-2xl' },
+                        { pos: 'bottom-6 right-6', corners: 'border-b-4 border-r-4', round: 'rounded-br-2xl' },
+                      ].map((guide, i) => (
+                        <div 
+                          key={i}
+                          className={`absolute ${guide.pos} w-12 h-12 ${guide.corners} ${guide.round} border-cyan-400 animate-pulse`}
+                          style={{ animationDelay: `${i * 150}ms` }}
+                        />
+                      ))}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6">
+                        <div className="flex items-center justify-center gap-3 text-white">
+                          <Eye size={20} className="animate-pulse" />
+                          <p className="text-sm font-medium">Buscando rostros... {detectionCount} detecciones</p>
+                        </div>
                       </div>
                     </>
                   )}
+
+                  {/* Indicador de estado */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-white text-xs font-semibold">EN VIVO</span>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl" style={{ aspectRatio: '4/3', maxHeight: 400 }}>
+                <div className="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
                   <div className="text-center">
-                    <Camera size={48} className="mx-auto mb-3 text-gray-400 opacity-50" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Haz clic en "Iniciar Escáner" para comenzar</p>
+                    <div className="relative inline-block mb-4">
+                      <Camera size={64} className="text-gray-400 opacity-50" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#34A853] rounded-full flex items-center justify-center">
+                        <Play size={14} className="text-white ml-0.5" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Reconocimiento Facial Desactivado</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">Haz clic en "Iniciar Escáner" para comenzar</p>
                   </div>
                 </div>
               )}
 
-              {/* Botones adicionales */}
-              <div className="mt-4 flex gap-2">
+              {/* Botones de acción */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <button 
-                  onClick={() => setQrActive(!qrActive)}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105">
-                  <QrCode size={14}/> Código QR
+                  onClick={toggleQR}
+                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105 ${
+                    qrActive 
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' 
+                      : 'bg-gradient-to-r from-[#FBBC05] to-yellow-500 hover:from-yellow-500 hover:to-yellow-600'
+                  }`}>
+                  <QrCode size={16}/> {qrActive ? 'Ocultar QR' : 'Mostrar QR'}
                 </button>
                 <button 
-                  onClick={() => exportSession(activeSession.id, activeSession.fecha)}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#4285F4] text-white text-sm font-semibold hover:bg-blue-600 transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105">
-                  <Download size={14}/> Exportar
+                  onClick={() => setManualRegisterOpen(true)}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 transform hover:scale-105">
+                  <UserPlus size={16}/> Registro Manual
                 </button>
               </div>
             </div>
@@ -620,8 +770,9 @@ export default function InstructorAsistencia() {
               return (
                 <div 
                   key={s.id} 
-                  className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 transition-all duration-300 hover:shadow-md transform hover:-translate-y-0.5"
-                  style={{ animation: `slideIn 0.3s ease-out ${idx * 100}ms` }}>
+                  className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 transition-all duration-300 hover:shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+                  style={{ animation: `slideIn 0.3s ease-out ${idx * 100}ms` }}
+                  onClick={() => setSelectedSessionDetail(s)}>
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{s.fecha}</p>
@@ -636,7 +787,7 @@ export default function InstructorAsistencia() {
                         {pct}%
                       </span>
                       <button 
-                        onClick={() => exportSession(s.id, s.fecha)} 
+                        onClick={(e) => { e.stopPropagation(); exportSession(s.id, s.fecha); }} 
                         className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110" 
                         title="Exportar">
                         <Download size={14} className="text-[#34A853]"/>
@@ -662,6 +813,185 @@ export default function InstructorAsistencia() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Modal QR */}
+      {qrActive && activeSession && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FBBC05] to-yellow-600 flex items-center justify-center shadow-lg">
+                  <QrCode size={24} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900 dark:text-white">Código QR</h2>
+                  <p className="text-xs text-gray-400">Escanea para registrar</p>
+                </div>
+              </div>
+              <button onClick={() => setQrActive(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={18} />
+              </button>
+            </div>
+
+            {qrCode && (
+              <>
+                <div className="relative bg-white p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/scan-qr?code=${qrCode}`)}`}
+                    alt="QR Code"
+                    className="w-full h-auto"
+                  />
+                  <div className="absolute top-3 right-3 bg-[#FBBC05] text-white px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg animate-pulse">
+                    <Clock size={14} />
+                    <span className="font-mono font-bold text-sm">{qrTimeLeft}s</span>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">
+                    📱 Instrucciones:
+                  </p>
+                  <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Abre Arachiz en tu celular</li>
+                    <li>Ve a Asistencia → "Escanear QR"</li>
+                    <li>Apunta la cámara al código</li>
+                  </ol>
+                </div>
+
+                <button 
+                  onClick={generateQR}
+                  className="w-full btn-primary flex items-center justify-center gap-2">
+                  <RefreshCw size={16} />
+                  Generar nuevo código
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registro Manual */}
+      {manualRegisterOpen && activeSession && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <UserPlus size={24} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual</h2>
+                  <p className="text-xs text-gray-400">Selecciona un aprendiz</p>
+                </div>
+              </div>
+              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="input-label">Aprendiz</label>
+              <select 
+                className="input-field"
+                value={selectedAprendiz}
+                onChange={e => setSelectedAprendiz(e.target.value)}>
+                <option value="">Selecciona un aprendiz...</option>
+                {activeSession.materia?.ficha?.aprendices
+                  ?.filter(a => !activeSession.registros?.some(r => r.aprendizId === a.id))
+                  .map(a => (
+                    <option key={a.id} value={a.id}>{a.fullName}</option>
+                  ))}
+              </select>
+            </div>
+
+            <button 
+              onClick={registerManual}
+              disabled={!selectedAprendiz}
+              className="w-full btn-primary flex items-center justify-center gap-2">
+              <CheckCircle size={16} />
+              Registrar Asistencia
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detalle de Sesión */}
+      {selectedSessionDetail && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-bold text-gray-900 dark:text-white text-xl">Detalle de Sesión</h2>
+                <p className="text-sm text-gray-400">{selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre}</p>
+              </div>
+              <button onClick={() => setSelectedSessionDetail(null)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Estadísticas */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: 'Total', value: selectedSessionDetail.registros?.length || 0, color: 'gray', icon: Users },
+                { label: 'Presentes', value: selectedSessionDetail.registros?.filter(r => r.presente).length || 0, color: 'green', icon: CheckCircle },
+                { label: 'Ausentes', value: selectedSessionDetail.registros?.filter(r => !r.presente).length || 0, color: 'red', icon: X },
+              ].map(stat => (
+                <div key={stat.label} className={`bg-${stat.color}-50 dark:bg-${stat.color}-900/20 rounded-xl p-4 text-center`}>
+                  <stat.icon size={24} className={`mx-auto mb-2 text-${stat.color}-600`} />
+                  <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Listas */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <CheckCircle size={16} className="text-[#34A853]" />
+                  Presentes ({selectedSessionDetail.registros?.filter(r => r.presente).length || 0})
+                </h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                  {selectedSessionDetail.registros?.filter(r => r.presente).map((reg, i) => (
+                    <div key={i} className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#34A853] flex items-center justify-center text-white font-bold text-xs">
+                        {reg.aprendiz?.fullName?.charAt(0) || 'A'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {reg.aprendiz?.fullName || 'Aprendiz'}
+                        </p>
+                        <p className="text-xs text-gray-500">{reg.metodo || 'manual'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <X size={16} className="text-[#EA4335]" />
+                  Ausentes ({selectedSessionDetail.registros?.filter(r => !r.presente).length || 0})
+                </h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                  {selectedSessionDetail.registros?.filter(r => !r.presente).map((reg, i) => (
+                    <div key={i} className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#EA4335] flex items-center justify-center text-white font-bold text-xs">
+                        {reg.aprendiz?.fullName?.charAt(0) || 'A'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {reg.aprendiz?.fullName || 'Aprendiz'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
