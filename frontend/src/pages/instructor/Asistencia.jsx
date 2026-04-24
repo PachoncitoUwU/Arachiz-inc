@@ -618,18 +618,18 @@ export default function InstructorAsistencia() {
   };
 
   return (
-    <div className="animate-fade-in space-y-5">
+    <div className="animate-fade-in-up space-y-5">
       <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} />
 
       {/* Selector de materia y botón */}
-      <div className="card dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 hover:shadow-lg">
+      <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 hover:shadow-xl animate-slide-in-down">
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1">
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
               Selecciona una Materia
             </label>
             <select 
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all hover:border-gray-300 dark:hover:border-gray-600"
               value={selectedMateria}
               onChange={e => setSelectedMateria(e.target.value)}
               disabled={!!activeSession || materias.length === 0}>
@@ -644,13 +644,13 @@ export default function InstructorAsistencia() {
               <button 
                 onClick={startSession} 
                 disabled={!selectedMateria || starting} 
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform hover:scale-105">
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600 hover:from-green-600 hover:via-emerald-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform hover:scale-105 active:scale-95 animate-pulse-glow">
                 <Play size={18}/> {starting ? 'Iniciando...' : 'Iniciar Sesión'}
               </button>
             ) : (
               <button 
                 onClick={endSession} 
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 transform hover:scale-105">
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-500 via-rose-500 to-rose-600 hover:from-red-600 hover:via-rose-600 hover:to-rose-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95">
                 <Square size={18}/> Finalizar Sesión
               </button>
             )}
@@ -661,35 +661,35 @@ export default function InstructorAsistencia() {
       {/* Vista cuando NO hay sesión activa */}
       {!activeSession && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '100ms' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:rotate-6">
               <Camera size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Reconocimiento Facial</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-500 transition-colors">Reconocimiento Facial</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Detecta automáticamente con IA</p>
           </div>
 
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '200ms' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-yellow-500/50 transition-all duration-300 group-hover:rotate-6">
               <QrCode size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Código QR</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-yellow-500 transition-colors">Código QR</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Escanea desde el celular</p>
           </div>
 
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '300ms' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:rotate-6">
               <Fingerprint size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Huella Digital</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-500 transition-colors">Huella Digital</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Sensor biométrico rápido</p>
           </div>
 
-          <div className="card dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-xl transition-all">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '400ms' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:rotate-6">
               <UserPlus size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Registro Manual</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-500 transition-colors">Registro Manual</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Marca manualmente si es necesario</p>
           </div>
         </div>
@@ -698,9 +698,11 @@ export default function InstructorAsistencia() {
       {activeSession && (
         <>
           {/* Lector de Huella y NFC */}
-          <div className="card dark:bg-gray-900 dark:border-gray-800 transition-all duration-300">
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-slide-in-left">
             <div className="flex items-center gap-2 mb-3">
-              <Fingerprint size={18} className="text-[#4285F4]" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                <Fingerprint size={18} className="text-white" />
+              </div>
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Lector de Huella y NFC</h3>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -763,9 +765,9 @@ export default function InstructorAsistencia() {
             )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Users size={24} className="text-gray-600 dark:text-gray-400" />
                 </div>
               </div>
@@ -773,19 +775,19 @@ export default function InstructorAsistencia() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-green-500 shadow-sm hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{presentes}</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1 animate-pulse-number">{presentes}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Presentes</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '300ms' }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
@@ -793,9 +795,9 @@ export default function InstructorAsistencia() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Ausentes</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '400ms' }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
@@ -807,25 +809,27 @@ export default function InstructorAsistencia() {
           {/* Layout principal: Reconocimiento facial + Registrados */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Reconocimiento Facial - 2 columnas */}
-            <div className="lg:col-span-2 card dark:bg-gray-900 dark:border-gray-800 transition-all duration-300">
+            <div className="lg:col-span-2 card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-slide-in-left">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Camera size={18} className="text-[#4285F4]" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                    <Camera size={18} className="text-white" />
+                  </div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reconocimiento Facial</h3>
                 </div>
                 <button 
                   onClick={startFacialScanner}
-                  className={`px-4 py-2 rounded-xl text-white text-sm font-semibold transition-all shadow-sm flex items-center gap-2 transform hover:scale-105 ${
+                  className={`px-4 py-2 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center gap-2 transform hover:scale-105 active:scale-95 ${
                     facialScannerActive 
-                      ? 'bg-[#EA4335] hover:bg-red-600' 
-                      : 'bg-[#34A853] hover:bg-green-600'
+                      ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 hover:shadow-red-500/50' 
+                      : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-green-500/50 animate-pulse-glow'
                   }`}>
                   {facialScannerActive ? <><X size={14}/> Detener</> : <><ScanFace size={14}/> Iniciar Escáner</>}
                 </button>
               </div>
 
               {facialScannerActive ? (
-                <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
+                <div className="relative rounded-2xl overflow-hidden bg-black shadow-2xl animate-scale-in" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
                   <video 
                     ref={videoRef} 
                     muted 
@@ -836,31 +840,31 @@ export default function InstructorAsistencia() {
 
                   {/* Nombre detectado */}
                   {lastDetectedName && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 animate-slide-in-up">
                       <div className="flex items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-lg animate-pulse">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-lg animate-pulse-glow">
                           {lastDetectedName.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-white font-bold text-xl">{lastDetectedName}</p>
-                          <p className="text-green-400 text-sm">✓ Detectado</p>
+                          <p className="text-white font-bold text-xl animate-fade-in">{lastDetectedName}</p>
+                          <p className="text-green-400 text-sm animate-fade-in">✓ Detectado</p>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* Indicador de estado */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg animate-fade-in">
                     <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                     <span className="text-white text-xs font-semibold">EN VIVO</span>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
+                <div className="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 animate-fade-in" style={{ aspectRatio: '16/9', maxHeight: 450 }}>
                   <div className="text-center">
                     <div className="relative inline-block mb-4">
-                      <Camera size={64} className="text-gray-400 opacity-50" />
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#34A853] rounded-full flex items-center justify-center">
+                      <Camera size={64} className="text-gray-400 opacity-50 animate-pulse" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#34A853] rounded-full flex items-center justify-center animate-bounce">
                         <Play size={14} className="text-white ml-0.5" />
                       </div>
                     </div>
@@ -874,30 +878,33 @@ export default function InstructorAsistencia() {
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button 
                   onClick={toggleQR}
-                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 ${
+                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 active:scale-95 ${
                     qrActive 
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600' 
-                      : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 hover:shadow-orange-500/50' 
+                      : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 hover:shadow-yellow-500/50'
                   }`}>
                   <QrCode size={18}/> {qrActive ? 'Ocultar QR' : 'Código QR'}
                 </button>
                 <button 
                   onClick={() => setManualRegisterOpen(true)}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105">
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:shadow-purple-500/50 text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 active:scale-95">
                   <UserPlus size={18}/> Registro Manual
                 </button>
               </div>
             </div>
 
             {/* Registrados - 1 columna */}
-            <div className="card dark:bg-gray-900 dark:border-gray-800 transition-all duration-300">
+            <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-slide-in-right">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#34A853]">✓ Registrados</h3>
-                <span className="px-3 py-1 rounded-full bg-[#34A853] text-white text-xs font-bold">{presentes}</span>
+                <h3 className="text-sm font-semibold text-[#34A853] flex items-center gap-2">
+                  <CheckCircle size={16} />
+                  Registrados
+                </h3>
+                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold shadow-md animate-pulse-glow">{presentes}</span>
               </div>
               {presentes === 0 ? (
-                <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-                  <Users size={32} className="mx-auto mb-2 opacity-30"/>
+                <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl animate-fade-in">
+                  <Users size={32} className="mx-auto mb-2 opacity-30 animate-pulse"/>
                   <p className="text-sm">Esperando registros...</p>
                 </div>
               ) : (
@@ -905,9 +912,9 @@ export default function InstructorAsistencia() {
                   {activeSession.registros?.filter(r => r.presente !== false).map((reg, i) => (
                     <div 
                       key={reg.id || i} 
-                      className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800 transition-all duration-300 hover:shadow-md transform hover:-translate-y-0.5"
-                      style={{ animation: `slideIn 0.3s ease-out ${i * 50}ms` }}>
-                      <div className="w-10 h-10 rounded-full bg-[#34A853] flex items-center justify-center text-white font-bold text-sm shadow-md">
+                      className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20 transform hover:-translate-y-0.5 animate-slide-in-right group"
+                      style={{ animationDelay: `${i * 50}ms` }}>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-110 transition-transform">
                         {(reg.aprendiz?.fullName || reg.fullName || 'A').charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -915,10 +922,14 @@ export default function InstructorAsistencia() {
                           {reg.aprendiz?.fullName || reg.fullName || 'Aprendiz'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {reg.metodo || 'manual'} • {new Date(reg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                          <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 font-medium">
+                            {reg.metodo || 'manual'}
+                          </span>
+                          {' • '}
+                          {new Date(reg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <CheckCircle size={18} className="text-[#34A853] shrink-0"/>
+                      <CheckCircle size={18} className="text-[#34A853] shrink-0 group-hover:scale-110 transition-transform"/>
                     </div>
                   ))}
                 </div>
@@ -930,10 +941,15 @@ export default function InstructorAsistencia() {
 
       {/* Historial de Sesiones - Mejorado */}
       {!activeSession && closedSessions.length > 0 && (
-        <div className="card dark:bg-gray-900 dark:border-gray-800 transition-all duration-300">
+        <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-fade-in-up">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">Historial de Sesiones</h2>
-            <span className="text-xs text-gray-500">{closedSessions.length} sesiones</span>
+            <h2 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                <BarChart2 size={18} className="text-white" />
+              </div>
+              Historial de Sesiones
+            </h2>
+            <span className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">{closedSessions.length} sesiones</span>
           </div>
           
           <div className="space-y-3">
@@ -945,25 +961,25 @@ export default function InstructorAsistencia() {
               return (
                 <div 
                   key={s.id} 
-                  className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 transition-all duration-300 hover:shadow-md transform hover:-translate-y-0.5 cursor-pointer"
-                  style={{ animation: `slideIn 0.3s ease-out ${idx * 100}ms` }}
+                  className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer animate-slide-in-right border border-transparent hover:border-blue-200 dark:hover:border-blue-700 group"
+                  style={{ animationDelay: `${idx * 100}ms` }}
                   onClick={() => setSelectedSessionDetail(s)}>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{s.fecha}</p>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.fecha}</p>
                       <p className="text-xs text-gray-400">{s.materia?.nombre}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        pct >= 90 ? 'bg-green-100 text-[#34A853]' :
-                        pct >= 70 ? 'bg-yellow-100 text-[#FBBC05]' :
-                        'bg-red-100 text-[#EA4335]'
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                        pct >= 90 ? 'bg-green-100 text-[#34A853] dark:bg-green-900/30' :
+                        pct >= 70 ? 'bg-yellow-100 text-[#FBBC05] dark:bg-yellow-900/30' :
+                        'bg-red-100 text-[#EA4335] dark:bg-red-900/30'
                       }`}>
                         {pct}%
                       </span>
                       <button 
                         onClick={(e) => { e.stopPropagation(); exportSession(s.id, s.fecha); }} 
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110" 
+                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all transform hover:scale-110 active:scale-95" 
                         title="Exportar">
                         <Download size={14} className="text-[#34A853]"/>
                       </button>
@@ -981,7 +997,7 @@ export default function InstructorAsistencia() {
 
                   <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-[#34A853] rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -995,10 +1011,10 @@ export default function InstructorAsistencia() {
       {/* Modal QR */}
       {qrActive && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FBBC05] to-yellow-600 flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FBBC05] to-yellow-600 flex items-center justify-center shadow-lg animate-pulse-glow">
                   <QrCode size={24} className="text-white" />
                 </div>
                 <div>
@@ -1006,14 +1022,14 @@ export default function InstructorAsistencia() {
                   <p className="text-xs text-gray-400">Escanea para registrar</p>
                 </div>
               </div>
-              <button onClick={() => setQrActive(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+              <button onClick={() => setQrActive(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hover:rotate-90">
                 <X size={18} />
               </button>
             </div>
 
             {qrCode && (
               <>
-                <div className="relative bg-white p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg">
+                <div className="relative bg-white p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg animate-fade-in">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/scan-qr?code=${qrCode}`)}`}
                     alt="QR Code"
@@ -1025,7 +1041,7 @@ export default function InstructorAsistencia() {
                   </div>
                 </div>
 
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-4 border border-yellow-100 dark:border-yellow-800">
                   <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">
                     📱 Instrucciones:
                   </p>
@@ -1038,7 +1054,7 @@ export default function InstructorAsistencia() {
 
                 <button 
                   onClick={generateQR}
-                  className="w-full btn-primary flex items-center justify-center gap-2">
+                  className="w-full btn-primary flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/50 transition-all">
                   <RefreshCw size={16} />
                   Generar nuevo código
                 </button>
@@ -1051,10 +1067,10 @@ export default function InstructorAsistencia() {
       {/* Modal Registro Manual - Lista Clickeable */}
       {manualRegisterOpen && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg animate-pulse-glow">
                   <UserPlus size={24} className="text-white" />
                 </div>
                 <div>
@@ -1062,7 +1078,7 @@ export default function InstructorAsistencia() {
                   <p className="text-xs text-gray-400">Haz clic en un estudiante para registrar su asistencia</p>
                 </div>
               </div>
-              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-white dark:hover:bg-gray-800 transition-all hover:rotate-90">
                 <X size={18} />
               </button>
             </div>
@@ -1075,8 +1091,8 @@ export default function InstructorAsistencia() {
 
                 if (pendingStudents.length === 0) {
                   return (
-                    <div className="text-center py-12">
-                      <CheckCircle size={48} className="mx-auto mb-4 text-[#34A853] opacity-50" />
+                    <div className="text-center py-12 animate-fade-in">
+                      <CheckCircle size={48} className="mx-auto mb-4 text-[#34A853] opacity-50 animate-bounce" />
                       <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">¡Todos registrados!</p>
                       <p className="text-sm text-gray-500">Todos los estudiantes ya tienen su asistencia marcada</p>
                     </div>
@@ -1103,19 +1119,19 @@ export default function InstructorAsistencia() {
                             key={student.id}
                             onClick={() => !isRegistering && registerManualStudent(student.id)}
                             disabled={isRegistering}
-                            className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all transform text-left ${
+                            className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all transform text-left animate-scale-in ${
                               isRegistering 
                                 ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 cursor-not-allowed opacity-75 scale-95'
-                                : 'bg-gray-50 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-transparent hover:border-purple-200 dark:hover:border-purple-700 hover:scale-105 active:scale-95'
+                                : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 border-transparent hover:border-purple-200 dark:hover:border-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95'
                             }`}
                             style={{ 
-                              animation: `slideIn 0.3s ease-out ${i * 50}ms`,
+                              animationDelay: `${i * 50}ms`,
                               pointerEvents: isRegistering ? 'none' : 'auto'
                             }}>
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md transition-all ${
                               isRegistering 
-                                ? 'bg-gradient-to-br from-green-400 to-emerald-500 animate-pulse'
-                                : 'bg-gradient-to-br from-purple-400 to-pink-500'
+                                ? 'bg-gradient-to-br from-green-400 to-emerald-500 animate-pulse-glow'
+                                : 'bg-gradient-to-br from-purple-400 to-pink-500 group-hover:scale-110'
                             }`}>
                               {isRegistering ? (
                                 <CheckCircle size={20} />
