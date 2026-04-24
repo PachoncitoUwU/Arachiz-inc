@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { glassLight, overlayStyle, MEDAL, TOP_COLORS } from './gameUtils';
 
 const GAME_DURATION = 10;
-const LS_KEY = 'arachiz_reaction_lb_v3'; // v3 = limpio tras borrar BD
+const LS_KEY = (fichaId) => `arachiz_reaction_${fichaId || 'global'}_lb`;
 
-const getLocalLB = () => {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+const getLocalLB = (fichaId) => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY(fichaId))) || []; } catch { return []; }
 };
 
-const saveLocalScore = (score, userName, avatarUrl) => {
-  const lb = getLocalLB();
+const saveLocalScore = (score, userName, avatarUrl, fichaId) => {
+  const lb = getLocalLB(fichaId);
   const idx = lb.findIndex(e => e.name === userName);
   const entry = { name: userName, avatar: avatarUrl || null, score, date: new Date().toLocaleDateString('es-CO') };
   if (idx >= 0) {
@@ -19,7 +19,7 @@ const saveLocalScore = (score, userName, avatarUrl) => {
   }
   lb.sort((a, b) => b.score - a.score);
   const top10 = lb.slice(0, 10);
-  localStorage.setItem(LS_KEY, JSON.stringify(top10));
+  localStorage.setItem(LS_KEY(fichaId), JSON.stringify(top10));
   return top10;
 };
 
@@ -36,20 +36,20 @@ const trySaveBackend = (score) => {
   } catch {}
 };
 
-// Traer ranking del backend y actualizar localStorage
-const fetchBackendLB = async () => {
+// Traer ranking del backend filtrado por ficha
+const fetchBackendLB = async (fichaId) => {
   try {
     const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    const res  = await fetch(`${API}/games/reaction/leaderboard`);
+    const params = fichaId ? `?fichaId=${fichaId}` : '';
+    const res  = await fetch(`${API}/games/reaction/leaderboard${params}`);
     const data = await res.json();
     if (data.scores?.length) {
-      // Ordenar desc por si acaso
       const sorted = [...data.scores].sort((a, b) => b.score - a.score);
-      localStorage.setItem(LS_KEY, JSON.stringify(sorted));
+      localStorage.setItem(LS_KEY(fichaId), JSON.stringify(sorted));
       return sorted;
     }
   } catch {}
-  return getLocalLB();
+  return getLocalLB(fichaId);
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -59,19 +59,23 @@ const COLORS   = ['#EA4335','#4285F4','#34A853','#FBBC05','#9C27B0','#FF5722','#
 const randCol  = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
 // ── Ranking panel ─────────────────────────────────────────────────────────────
-function RankingPanel({ lb, maxHeight = 380 }) {
+function RankingPanel({ lb, maxHeight = 380, hasFicha = true }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
       <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
         <span style={{ fontSize:15, fontWeight:800, color:'#1d1d1f' }}>Ranking</span>
         <span>🏆</span>
       </div>
-      {lb.length === 0 ? (
+      {!hasFicha ? (
+        <div style={{ textAlign:'center', padding:'20px 0', color:'#6e6e73', fontSize:12 }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>🏫</div>Únete a una ficha para ver el ranking
+        </div>
+      ) : lb.length === 0 ? (
         <div style={{ textAlign:'center', padding:'20px 0', color:'#6e6e73', fontSize:12 }}>
           <div style={{ fontSize:32, marginBottom:8 }}>💥</div>¡Sé el primero!
         </div>
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY:'auto', maxHeight }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY: lb.length > 10 ? 'auto' : 'visible', maxHeight: lb.length > 10 ? maxHeight : 'none' }}>
           {lb.map((e, i) => {
             const top = i < 3;
             const c   = top ? TOP_COLORS[i] : null;
@@ -111,7 +115,8 @@ export default function ReactionTime({ onClose, currentUser }) {
   const [score,    setScore]    = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [circle,   setCircle]   = useState(null);
-  const [lb,       setLb]       = useState(getLocalLB);
+  const fichaId = currentUser?.fichaId || null;
+  const [lb,       setLb]       = useState(() => getLocalLB(fichaId));
   const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
   const [showLB,   setShowLB]   = useState(false);
 
@@ -123,8 +128,8 @@ export default function ReactionTime({ onClose, currentUser }) {
   const AREA_H = isMobile ? 300 : 380;
 
   useEffect(() => {
-    // Al abrir, traer ranking del backend (ya limpio y ordenado)
-    fetchBackendLB().then(lb => setLb(lb));
+    // Al abrir, traer ranking del backend filtrado por ficha
+    fetchBackendLB(fichaId).then(lb => setLb(lb));
     const f = () => setIsMobile(window.innerWidth < 700);
     window.addEventListener('resize', f);
     return () => window.removeEventListener('resize', f);
@@ -154,18 +159,14 @@ export default function ReactionTime({ onClose, currentUser }) {
     if (phase === 'done' && scoreRef.current > 0) {
       const name   = currentUser?.fullName || 'Jugador';
       const avatar = currentUser?.avatarUrl || null;
-      // Guardar local inmediatamente (solo si es mejor)
-      const updated = saveLocalScore(scoreRef.current, name, avatar);
+      const updated = saveLocalScore(scoreRef.current, name, avatar, fichaId);
       setLb(updated);
-      // Solo enviar al backend si este score es el mejor local del usuario
       const localBest = updated.find(e => e.name === name);
       if (localBest && localBest.score === scoreRef.current) {
-        // Es el mejor — enviar al backend
         trySaveBackend(scoreRef.current);
-        setTimeout(() => fetchBackendLB().then(lb => setLb(lb)), 1500);
+        setTimeout(() => fetchBackendLB(fichaId).then(lb => setLb(lb)), 1500);
       } else {
-        // No es el mejor — solo refrescar el ranking sin enviar
-        setTimeout(() => fetchBackendLB().then(lb => setLb(lb)), 500);
+        setTimeout(() => fetchBackendLB(fichaId).then(lb => setLb(lb)), 500);
       }
     }
   }, [phase, currentUser]);
@@ -198,7 +199,7 @@ export default function ReactionTime({ onClose, currentUser }) {
 
         {!isMobile && (
           <div style={{ ...glassLight, padding:'18px 14px', minWidth:200 }}>
-            <RankingPanel lb={lb} maxHeight={380} />
+            <RankingPanel lb={lb} maxHeight={380} hasFicha={!!fichaId} />
           </div>
         )}
 
@@ -226,7 +227,7 @@ export default function ReactionTime({ onClose, currentUser }) {
 
           {isMobile && showLB ? (
             <div style={{ width:'100%', maxWidth:360, maxHeight:260, overflowY:'auto' }}>
-              <RankingPanel lb={lb} maxHeight={240} />
+              <RankingPanel lb={lb} maxHeight={240} hasFicha={!!fichaId} />
             </div>
           ) : (
             <>

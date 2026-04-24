@@ -31,7 +31,11 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+<<<<<<< HEAD
     "@vitejs/plugin-react": "^5.0.0",
+=======
+    "@vitejs/plugin-react": "^4.3.4",
+>>>>>>> origin/danieljuegos
     "autoprefixer": "^10.4.27",
     "esbuild": "^0.24.0",
     "eslint": "^9.39.4",
@@ -41,8 +45,13 @@
     "globals": "^17.4.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
+<<<<<<< HEAD
     "tailwindcss-animate": "^1.0.7",
     "vite": "^6.0.0",
     "vite-plugin-pwa": "^0.21.1"
+=======
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.2.0"
+>>>>>>> origin/danieljuegos
   }
 }

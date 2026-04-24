@@ -12,22 +12,23 @@ export const TOP_COLORS = [
 // Juegos donde menor score = mejor (intentos wordle)
 export const LOWER_IS_BETTER = ['wordle'];
 
-const LS = (game) => `arachiz_${game}_lb`;
+const LS = (game, fichaId) => `arachiz_${game}_${fichaId || 'global'}_lb`;
 
-export const getCachedLB = (game) => {
-  try { return JSON.parse(localStorage.getItem(LS(game))) || []; } catch { return []; }
+export const getCachedLB = (game, fichaId) => {
+  try { return JSON.parse(localStorage.getItem(LS(game, fichaId))) || []; } catch { return []; }
 };
 
-export const fetchLB = async (game) => {
+export const fetchLB = async (game, fichaId) => {
   try {
-    const res  = await fetch(`${API_URL}/games/${game}/leaderboard`);
+    const params = fichaId ? `?fichaId=${fichaId}` : '';
+    const res  = await fetch(`${API_URL}/games/${game}/leaderboard${params}`);
     const data = await res.json();
     if (data.scores) {
-      localStorage.setItem(LS(game), JSON.stringify(data.scores));
+      localStorage.setItem(LS(game, fichaId), JSON.stringify(data.scores));
       return data.scores;
     }
   } catch {}
-  return getCachedLB(game);
+  return getCachedLB(game, fichaId);
 };
 
 export const saveGameScore = async (game, score) => {

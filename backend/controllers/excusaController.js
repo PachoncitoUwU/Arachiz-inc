@@ -1,6 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { uploadToSupabase, isSupabaseConfigured } = require('../utils/supabaseStorage');
-const prisma = new PrismaClient();
 
 //mira
 

@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { generarCodigoFicha } = require('../utils/generators');
 
 // generateCode ahora usa el generador de generators.js

@@ -15,6 +15,7 @@ export default function GameLayout({
   onClose,      // función para cerrar
   children,     // área del juego
   onOverlayClick, // click en el fondo (para saltar en flappy)
+  hasFicha,     // bool — si el usuario pertenece a una ficha
 }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 700);
   const [showLB,   setShowLB]   = useState(false);
@@ -39,7 +40,7 @@ export default function GameLayout({
         {/* Ranking — solo desktop, siempre visible */}
         {!isMobile && (
           <div style={{ ...glassLight, padding:'18px 14px', minWidth:200 }}>
-            <GameRanking lb={lb} game={game} maxHeight={window.innerHeight > 800 ? 550 : window.innerHeight > 700 ? 460 : 380} />
+          <GameRanking lb={lb} game={game} maxHeight={window.innerHeight > 800 ? 550 : window.innerHeight > 700 ? 460 : 380} hasFicha={hasFicha} />
           </div>
         )}
 
@@ -75,7 +76,7 @@ export default function GameLayout({
           {/* Ranking móvil (toggle) */}
           {isMobile && showLB ? (
             <div style={{ width:300, maxHeight:260, overflowY:'auto' }}>
-              <GameRanking lb={lb} game={game} maxHeight={240} />
+              <GameRanking lb={lb} game={game} maxHeight={240} hasFicha={hasFicha} />
             </div>
           ) : (
             children

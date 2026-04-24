@@ -10,15 +10,16 @@ export default function TowerStack({ onClose, currentUser }) {
   const savedRef  = useRef(false);
   const [score,   setScore]   = useState(0);
   const [dead,    setDead]    = useState(false);
-  const [lb,      setLb]      = useState(getCachedLB('tower'));
+  const fichaId = currentUser?.fichaId || null;
+  const [lb,      setLb]      = useState(getCachedLB('tower', fichaId));
   const [restartKey, setRestartKey] = useState(0);
 
-  useEffect(() => { fetchLB('tower').then(d => setLb(d)); }, []);
+  useEffect(() => { fetchLB('tower', fichaId).then(d => setLb(d)); }, [fichaId]);
 
   useEffect(() => {
     if (dead && !savedRef.current && score > 0) {
       savedRef.current = true;
-      saveGameScore('tower', score).then(() => fetchLB('tower').then(d => setLb(d)));
+      saveGameScore('tower', score).then(() => fetchLB('tower', fichaId).then(d => setLb(d)));
     }
   }, [dead, score]);
 
@@ -161,7 +162,7 @@ export default function TowerStack({ onClose, currentUser }) {
   const btn = { width:60, height:60, background:'rgba(255,255,255,0.6)', border:'1.5px solid rgba(255,255,255,0.9)', borderRadius:16, color:'#1d1d1f', fontSize:22, fontWeight:700, cursor:'pointer', backdropFilter:'blur(10px)', transition:'transform 0.1s', display:'flex', alignItems:'center', justifyContent:'center' };
 
   return (
-    <GameLayout title="🏗️ Tower Stack" score={score} lb={lb} game="tower" onClose={onClose}>
+    <GameLayout title="🍰 El Pastel" score={score} lb={lb} game="tower" onClose={onClose} hasFicha={!!fichaId}>
       <div key={restartKey} style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1.5px solid rgba(255,255,255,0.2)', cursor:'pointer' }}
         onClick={e => { e.stopPropagation(); handleAction(); }}>
         <canvas ref={canvasRef} width={W} height={H} style={{ display:'block' }}/>
@@ -203,7 +204,7 @@ export default function TowerStack({ onClose, currentUser }) {
       <button style={btn} onClick={e => { e.stopPropagation(); handleAction(); }}
         onMouseDown={e => e.currentTarget.style.transform='scale(0.93)'}
         onMouseUp={e => e.currentTarget.style.transform='scale(1)'}>
-        📦
+        🍰
       </button>
       <p style={{ color:'rgba(0,0,0,0.3)', fontSize:10, margin:0 }}>Espacio / W / Toca · ESC cierra</p>
     </GameLayout>

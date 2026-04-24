@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL } } });
 
 // ePayco SDK para pagos en Colombia (PSE, Nequi, Tarjetas)
 const epayco = require('epayco-sdk-node');

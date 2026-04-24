@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // RF07/RF57 - Crear clase en horario
 const createHorario = async (req, res) => {

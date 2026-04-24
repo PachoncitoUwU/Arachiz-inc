@@ -104,8 +104,8 @@ export default function WordleGame({ onClose }) {
   const savedRef = React.useRef(false);
 
   // Tamaño de celda adaptativo según longitud
-  const cellSize = wordLength === 6 ? 52 : wordLength === 4 ? 62 : 56;
-  const keyW     = wordLength === 6 ? 30 : 34;
+  const cellSize = wordLength === 6 ? 48 : wordLength === 4 ? 58 : 52;
+  const keyW     = wordLength === 6 ? 28 : 32;
 
   const submit = useCallback(() => {
     if (phase !== 'playing') return;
@@ -160,8 +160,8 @@ export default function WordleGame({ onClose }) {
     <div style={{ ...overlayStyle }} onClick={e => e.stopPropagation()}>
       <div style={{
         ...glassLight,
-        padding:'20px 20px 16px',
-        display:'flex', flexDirection:'column', alignItems:'center', gap:12,
+        padding:'16px 16px 12px',
+        display:'flex', flexDirection:'column', alignItems:'center', gap:10,
         maxWidth:'98vw', width: 'fit-content',
       }}>
         <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
@@ -203,7 +203,7 @@ export default function WordleGame({ onClose }) {
         )}
 
         {/* Grid */}
-        <div style={{ display:'flex', flexDirection:'column', gap:6, opacity: alreadyPlayed ? 0.5 : 1 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:5, opacity: alreadyPlayed ? 0.5 : 1 }}>
           {Array.from({ length: MAX_ATTEMPTS }).map((_, row) => {
             const guess = guesses[row];
             const isActive = row === guesses.length && phase === 'playing';
@@ -214,7 +214,7 @@ export default function WordleGame({ onClose }) {
               ? guess.map(g => g.state)
               : Array(WORD.length).fill(isActive ? 'active' : 'empty');
             return (
-              <div key={row} style={{ display:'flex', gap:6, animation: isActive && shake ? 'shake 0.4s ease' : 'none' }}>
+              <div key={row} style={{ display:'flex', gap:5, animation: isActive && shake ? 'shake 0.4s ease' : 'none' }}>
                 {letters.map((l, col) => {
                   const s = STATE_COLORS[states[col]] || STATE_COLORS.empty;
                   return (
@@ -261,9 +261,9 @@ export default function WordleGame({ onClose }) {
                     <button key={key} onClick={() => pressKey(key)} disabled={isDisabled}
                       style={{
                         width: isWide ? keyW * 1.7 : keyW,
-                        height: 42, borderRadius:8, border:'none',
+                        height: 38, borderRadius:8, border:'none',
                         background: col.bg, color: col.text,
-                        fontSize: isWide ? 11 : 14, fontWeight:700,
+                        fontSize: isWide ? 10 : 13, fontWeight:700,
                         cursor: isDisabled ? 'not-allowed' : 'pointer',
                         opacity: isDisabled ? 0.5 : 1,
                         backdropFilter:'blur(8px)', transition:'background 0.2s',

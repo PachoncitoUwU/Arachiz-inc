@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/timeService');
 
 // RF08 - Crear sesión

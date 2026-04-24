@@ -5,7 +5,7 @@ import { MEDAL, TOP_COLORS, LOWER_IS_BETTER } from './gameUtils';
  * Panel de ranking reutilizable para todos los juegos.
  * Muestra top 10 con medallas, avatares y colores oro/plata/bronce.
  */
-export default function GameRanking({ lb = [], game = '', maxHeight = 400 }) {
+export default function GameRanking({ lb = [], game = '', maxHeight = 400, hasFicha = true }) {
   const lowerBetter = LOWER_IS_BETTER.includes(game);
 
   // Ordenar en el cliente también — por si el backend devuelve orden incorrecto
@@ -30,13 +30,18 @@ export default function GameRanking({ lb = [], game = '', maxHeight = 400 }) {
         )}
       </div>
 
-      {lb.length === 0 ? (
+      {!hasFicha ? (
+        <div style={{ textAlign:'center', padding:'20px 0', color:'#6e6e73', fontSize:12 }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>🏫</div>
+          Únete a una ficha para ver el ranking
+        </div>
+      ) : lb.length === 0 ? (
         <div style={{ textAlign:'center', padding:'20px 0', color:'#6e6e73', fontSize:12 }}>
           <div style={{ fontSize:32, marginBottom:8 }}>🎮</div>
           ¡Sé el primero en el ranking!
         </div>
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY:'auto', maxHeight }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:5, overflowY: sorted.length > 10 ? 'auto' : 'visible', maxHeight: sorted.length > 10 ? maxHeight : 'none' }}>
           {sorted.map((entry, i) => {
             const isTop = i < 3;
             const col   = isTop ? TOP_COLORS[i] : null;

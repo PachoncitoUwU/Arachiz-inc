@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// GET /api/snake/leaderboard — top 10 global Snake
+// GET /api/snake/leaderboard — top 10 Snake por ficha
 router.get('/leaderboard', async (req, res) => {
+  const { fichaId } = req.query;
   try {
+    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
     const scores = await prisma.snakeScore.findMany({
-      orderBy: { score: 'desc' }, take: 10,
+      where, orderBy: { score: 'desc' }, take: 10,
       include: { user: { select: { fullName: true, avatarUrl: true } } }
     });
     res.json({ scores: scores.map(s => ({
@@ -33,11 +34,13 @@ router.post('/score', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/snake/breakout/leaderboard — top 10 global Breakout
+// GET /api/snake/breakout/leaderboard — top 10 Breakout por ficha
 router.get('/breakout/leaderboard', async (req, res) => {
+  const { fichaId } = req.query;
   try {
+    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
     const scores = await prisma.breakoutScore.findMany({
-      orderBy: { score: 'desc' }, take: 10,
+      where, orderBy: { score: 'desc' }, take: 10,
       include: { user: { select: { fullName: true, avatarUrl: true } } }
     });
     res.json({ scores: scores.map(s => ({
@@ -66,9 +69,11 @@ module.exports = router;
 
 // GET /api/snake/flappy/leaderboard
 router.get('/flappy/leaderboard', async (req, res) => {
+  const { fichaId } = req.query;
   try {
+    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
     const scores = await prisma.flappyScore.findMany({
-      orderBy: { score: 'desc' }, take: 10,
+      where, orderBy: { score: 'desc' }, take: 10,
       include: { user: { select: { fullName: true, avatarUrl: true } } }
     });
     res.json({ scores: scores.map(s => ({
