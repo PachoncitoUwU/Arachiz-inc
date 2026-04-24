@@ -158,3 +158,62 @@ exports.simulateEvent = (req, res) => {
 
   res.json({ success: true, message: `Simulación enviada exitosamente: ${type}` });
 };
+
+// ─── NUEVO: Evento WiFi desde ESP8266 ──────────────────────────────────────────
+// POST /api/serial/wifi-event
+// Body: { type: 'nfc'|'finger', uid?: string, fingerId?: number, sessionId: number }
+// No requiere dispositivo COM conectado — llega directo del ESP8266 por internet
+exports.wifiEvent = async (req, res) => {
+  const { type, uid, fingerId, sessionId } = req.body;
+  const io = req.app.get('io');
+
+  if (!type) return res.status(400).json({ error: 'El campo type es requerido' });
+  if (!io)   return res.status(500).json({ error: 'Socket no inicializado' });
+
+  try {
+    if (type === 'nfc') {
+      // ── Buscar aprendiz por NFC UID ──
+      if (!uid) return res.status(400).json({ error: 'uid requerido para type nfc' });
+
+      const aprendiz = await prisma.user.findFirst({
+        where: { nfcUid: uid, userType: 'aprendiz' },
+        select: { id: true, fullName: true }
+      });
+
+      if (!aprendiz) {
+        // Emitir igualmente para que el frontend sepa
+        io.emit('arduino_read_nfc', { uid, sessionId });
+        return res.status(200).json({ success: false, message: 'NFC no registrado', uid });
+      }
+
+      // Emitir el mismo evento que ya usa el frontend
+      io.emit('arduino_read_nfc', { uid, sessionId });
+      return res.status(200).json({ success: true, nombre: aprendiz.fullName, userId: aprendiz.id });
+
+    } else if (type === 'finger') {
+      // ── Buscar aprendiz por ID de huella ──
+      if (fingerId === undefined) return res.status(400).json({ error: 'fingerId requerido para type finger' });
+
+      const aprendiz = await prisma.user.findFirst({
+        where: { huellas: { has: parseInt(fingerId, 10) }, userType: 'aprendiz' },
+        select: { id: true, fullName: true }
+      });
+
+      if (!aprendiz) {
+        io.emit('arduino_read_finger', { id: parseInt(fingerId, 10), sessionId });
+        return res.status(200).json({ success: false, message: 'Huella no registrada', fingerId });
+      }
+
+      // Emitir el mismo evento que ya usa el frontend
+      io.emit('arduino_read_finger', { id: parseInt(fingerId, 10), sessionId });
+      return res.status(200).json({ success: true, nombre: aprendiz.fullName, userId: aprendiz.id });
+
+    } else {
+      return res.status(400).json({ error: `Tipo desconocido: ${type}` });
+    }
+
+  } catch (error) {
+    console.error('Error en wifiEvent:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
