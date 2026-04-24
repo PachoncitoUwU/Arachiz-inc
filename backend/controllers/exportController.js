@@ -13,9 +13,19 @@ function* generarFilasExportacion(ficha) {
         // Determinar asistencia y hora
         let status = 'No Asistió';
         let horaIngreso = 'N/A';
+        let metodo = 'N/A';
         if (registro && registro.presente) {
           status = 'Asistió';
-          horaIngreso = new Date(registro.timestamp).toLocaleTimeString('es-CO');
+          if (registro.timestamp) {
+            const fecha = new Date(registro.timestamp);
+            horaIngreso = fecha.toLocaleTimeString('es-CO', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              second: '2-digit',
+              hour12: false 
+            });
+          }
+          metodo = registro.metodo || 'código';
         }
 
         yield {
@@ -24,7 +34,8 @@ function* generarFilasExportacion(ficha) {
           Nombre: aprendiz.fullName,
           Documento: aprendiz.document,
           Estado: status,
-          'Hora Ingreso': horaIngreso
+          'Hora Ingreso': horaIngreso,
+          'Método': metodo
         };
       }
     }
@@ -130,9 +141,19 @@ const exportSessionAsistencia = async (req, res) => {
       const registro = asistencia.registros.find(r => r.aprendizId === aprendiz.id);
       let status = 'No Asistió';
       let horaIngreso = 'N/A';
+      let metodo = 'N/A';
       if (registro && registro.presente) {
         status = 'Asistió';
-        horaIngreso = new Date(registro.timestamp).toLocaleTimeString('es-CO');
+        if (registro.timestamp) {
+          const fecha = new Date(registro.timestamp);
+          horaIngreso = fecha.toLocaleTimeString('es-CO', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            hour12: false 
+          });
+        }
+        metodo = registro.metodo || 'código';
       }
       return {
         Clase: asistencia.materia.nombre,
@@ -140,7 +161,8 @@ const exportSessionAsistencia = async (req, res) => {
         Nombre: aprendiz.fullName,
         Documento: aprendiz.document,
         Estado: status,
-        'Hora Ingreso': horaIngreso
+        'Hora Ingreso': horaIngreso,
+        'Método': metodo
       };
     });
 

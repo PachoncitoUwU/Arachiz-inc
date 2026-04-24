@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fichaController = require('../controllers/fichaController');
 const authMiddleware = require('../middlewares/authMiddleware');
-const roleMiddleware = require('../middlewares/roleMiddleware');
+const { roleMiddleware } = require('../middlewares/roleMiddleware');
 
 router.use(authMiddleware);
 

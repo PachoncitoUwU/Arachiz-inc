@@ -566,7 +566,6 @@ const registerManualAttendance = async (req, res) => {
     if (!isEnrolled) {
       return res.status(403).json({ error: 'El aprendiz no pertenece a esta ficha' });
     }
-    
     // Verificar que el aprendiz NO tenga esta materia evitada
     const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
       where: {
