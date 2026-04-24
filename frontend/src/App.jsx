@@ -7,6 +7,9 @@ import MainLayout from './layouts/MainLayout';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import GoogleCallback from './pages/auth/GoogleCallback';
 
 import InstructorDashboard  from './pages/instructor/Dashboard';
 import InstructorFichas     from './pages/instructor/Fichas';
@@ -21,6 +24,7 @@ import AprendizMaterias   from './pages/aprendiz/Materias';
 import AprendizHorario    from './pages/aprendiz/Horario';
 import AprendizAsistencia from './pages/aprendiz/Asistencia';
 import AprendizExcusas    from './pages/aprendiz/Excusas';
+import AprendizCompañeros from './pages/aprendiz/Compañeros';
 
 import Configuracion from './pages/Configuracion';
 import JoinFicha from './pages/JoinFicha';
@@ -36,6 +40,9 @@ export default function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login"    element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<GoogleCallback />} />
               <Route path="/unirse/:code" element={<JoinFicha />} />
               <Route path="/scan-qr" element={<ScanQR />} />
 
@@ -58,6 +65,7 @@ export default function App() {
                 <Route path="horario"        element={<AprendizHorario />} />
                 <Route path="asistencia"     element={<AprendizAsistencia />} />
                 <Route path="excusas"        element={<AprendizExcusas />} />
+                <Route path="compañeros"     element={<AprendizCompañeros />} />
                 <Route path="configuracion"  element={<Configuracion />} />
               </Route>
 

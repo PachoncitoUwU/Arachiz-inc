@@ -1,0 +1,64 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Get commit count
+        id: commit_count
+        run: echo "count=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+        
+      - name: Generate version
+        id: version
+        run: |
+          MAJOR=1
+          MINOR=4
+          PATCH=${{ steps.commit_count.outputs.count }}
+          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+          
+      - name: Update backend package.json
+        run: |
+          cd backend
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
+          
+      - name: Update frontend package.json
+        run: |
+          cd frontend
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
+          
+      - name: Create version file
+        run: |
+          echo "${{ steps.version.outputs.version }}" > VERSION
+          echo "Build: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> VERSION
+          echo "Commit: $(git rev-parse --short HEAD)" >> VERSION
+          
+      - name: Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add backend/package.json frontend/package.json VERSION
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

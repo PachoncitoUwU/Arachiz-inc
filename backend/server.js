@@ -4,6 +4,9 @@ const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
+const session = require('express-session');
+const passport = require('./config/passport');
+const jwt = require('jsonwebtoken');
 
 const authRoutes = require('./routes/authRoutes');
 const fichaRoutes = require('./routes/fichaRoutes');
@@ -18,6 +21,7 @@ const gamesRoutes  = require('./routes/gamesRoutes');
 const skinRoutes   = require('./routes/skinRoutes');
 const materiaEvitadaRoutes = require('./routes/materiaEvitada');
 const qrRoutes     = require('./routes/qrRoutes');
+const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const SerialService = require('./utils/serialService');
 
 const app = express();
@@ -30,6 +34,38 @@ app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Configurar sesiones para Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'arachiz-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+// Inicializar Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Rutas de autenticación con Google
+app.get('/api/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/api/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Generar JWT token
+    const token = jwt.sign(
+      { id: req.user.id, userType: req.user.userType, email: req.user.email, fullName: req.user.fullName },
+      process.env.JWT_SECRET || 'supersecretarachiz',
+      { expiresIn: '8h' }
+    );
+    
+    // Redirigir al frontend con el token
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+  }
+);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/fichas', fichaRoutes);
@@ -44,6 +80,7 @@ app.use('/api/games',  gamesRoutes);
 app.use('/api/skins',  skinRoutes);
 app.use('/api', materiaEvitadaRoutes);
 app.use('/api/qr',     qrRoutes);
+app.use('/api/password', passwordResetRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);
