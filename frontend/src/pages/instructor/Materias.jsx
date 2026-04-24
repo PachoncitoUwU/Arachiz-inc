@@ -71,8 +71,6 @@ export default function InstructorMaterias() {
   };
 
   const handleMateriaClick = (materia, ficha) => {
-    console.log('Materia seleccionada en Materias page:', materia);
-    console.log('Horarios de la materia:', materia.horarios);
     setSelectedMateria({ ...materia, ficha });
     setInfoModalOpen(true);
   };
@@ -184,7 +182,7 @@ export default function InstructorMaterias() {
             <label className="input-label">Ficha</label>
             <select required className="input-field" value={form.fichaId}
               onChange={e => setForm({...form, fichaId: e.target.value})}>
-              {fichas.map(f => <option key={f.id} value={f.id}>Ficha {f.numero} – {f.nivel}</option>)}
+              {fichas.map(f => <option key={f.id} value={f.id}>Ficha {f.numero} – {f.nombre}</option>)}
             </select>
           </div>
           <div>

@@ -45,6 +45,12 @@ export default function FichaDetalle() {
   const [modalPerfil, setModalPerfil] = useState(false);
   const [modalMateriaInfo, setModalMateriaInfo] = useState(false);
   const [selectedMateria, setSelectedMateria] = useState(null);
+  
+  // Estados para pestañas y búsqueda
+  const [activeTab, setActiveTab] = useState('aprendices'); // 'aprendices' | 'materias'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterTipo, setFilterTipo] = useState('all'); // 'all' | 'Técnica' | 'Transversal'
+  const [filterInstructor, setFilterInstructor] = useState('all'); // 'all' | instructorId
 
   useEffect(() => {
     loadFicha();
@@ -204,13 +210,25 @@ export default function FichaDetalle() {
     setSelectedAprendiz(null);
   };
 
-  const handleBiometricUpdate = () => {
-    loadFicha(); // Recargar para actualizar los datos del aprendiz
+  const handleBiometricUpdate = async () => {
+    // Recargar solo los datos de la ficha sin mostrar loading completo
+    try {
+      const data = await fetchApi(`/fichas/${id}`);
+      setFicha(data.ficha);
+      
+      // Actualizar el aprendiz seleccionado si existe
+      if (selectedAprendiz) {
+        const updatedAprendiz = data.ficha.aprendices.find(a => a.id === selectedAprendiz.id);
+        if (updatedAprendiz) {
+          setSelectedAprendiz(updatedAprendiz);
+        }
+      }
+    } catch (err) {
+      console.error('Error al actualizar datos:', err);
+    }
   };
 
   const handleOpenMateriaInfo = (materia) => {
-    console.log('Materia seleccionada:', materia);
-    console.log('Horarios de la materia:', materia.horarios);
     setSelectedMateria(materia);
     setModalMateriaInfo(true);
   };
@@ -220,12 +238,24 @@ export default function FichaDetalle() {
     setSelectedMateria(null);
   };
 
-  const handleMateriaUpdate = () => {
-    loadFicha(); // Recargar para actualizar los datos
+  const handleMateriaUpdate = async () => {
+    // Recargar solo los datos sin mostrar loading completo
+    try {
+      const data = await fetchApi(`/fichas/${id}`);
+      setFicha(data.ficha);
+    } catch (err) {
+      console.error('Error al actualizar datos:', err);
+    }
   };
 
-  const handleMateriaDelete = () => {
-    loadFicha(); // Recargar para actualizar la lista
+  const handleMateriaDelete = async () => {
+    // Recargar solo los datos sin mostrar loading completo
+    try {
+      const data = await fetchApi(`/fichas/${id}`);
+      setFicha(data.ficha);
+    } catch (err) {
+      console.error('Error al actualizar datos:', err);
+    }
   };
 
   if (loading) {
@@ -240,28 +270,60 @@ export default function FichaDetalle() {
             <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-32 animate-pulse" />
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        
+        {/* Estadísticas horizontales skeleton */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card animate-pulse">
+              <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Información General + Código skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2 card animate-pulse">
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
+            <div className="space-y-3">
+              <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded" />
+              <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded" />
+            </div>
+          </div>
+          <div className="card animate-pulse">
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4" />
+            <div className="space-y-3">
+              <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
+              <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Tarjeta con pestañas skeleton */}
+        <div className="card animate-pulse mb-6">
+          <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded w-1/2 mb-4" />
+          <div className="space-y-3">
+            <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
+            <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
+            <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
+          </div>
+        </div>
+
+        {/* Instructores skeleton */}
+        <div className="card animate-pulse mb-6">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="card animate-pulse">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
-                <div className="space-y-3">
-                  <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded" />
-                  <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-5/6" />
-                  <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-4/6" />
-                </div>
-              </div>
+              <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl" />
             ))}
           </div>
-          <div className="space-y-6">
-            {[1, 2].map(i => (
-              <div key={i} className="card animate-pulse">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4" />
-                <div className="space-y-3">
-                  <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
-                  <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded" />
-                </div>
-              </div>
+        </div>
+
+        {/* Horario skeleton */}
+        <div className="card animate-pulse">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl" />
             ))}
           </div>
         </div>
@@ -274,6 +336,75 @@ export default function FichaDetalle() {
   const isAdmin = ficha.instructorAdminId === user?.id;
   const isInstructor = ficha.instructores?.some(fi => fi.instructorId === user?.id);
   const COLOR = '#4285F4'; // Color principal azul
+
+  // Colores para materias en el horario
+  const MATERIA_COLORS = [
+    '#4285F4', // Azul
+    '#34A853', // Verde
+    '#FBBC05', // Amarillo
+    '#EA4335', // Rojo
+    '#8b5cf6', // Púrpura
+    '#06b6d4', // Cyan
+    '#f97316', // Naranja
+    '#ec4899', // Rosa
+  ];
+
+  // Filtrar aprendices
+  const filteredAprendices = (ficha.aprendices || []).filter(aprendiz => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      aprendiz.fullName.toLowerCase().includes(query) ||
+      aprendiz.email.toLowerCase().includes(query) ||
+      aprendiz.document.toLowerCase().includes(query)
+    );
+  }).sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+  // Filtrar materias
+  const filteredMaterias = (ficha.materias || []).filter(materia => {
+    let matches = true;
+    
+    // Filtro de búsqueda
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      matches = matches && materia.nombre.toLowerCase().includes(query);
+    }
+    
+    // Filtro de tipo
+    if (filterTipo !== 'all') {
+      matches = matches && materia.tipo === filterTipo;
+    }
+    
+    // Filtro de instructor
+    if (filterInstructor !== 'all') {
+      matches = matches && materia.instructorId === filterInstructor;
+    }
+    
+    return matches;
+  });
+
+  // Obtener instructores únicos para el filtro
+  const uniqueInstructors = [...new Set((ficha.materias || []).map(m => m.instructorId))]
+    .map(id => {
+      const materia = ficha.materias.find(m => m.instructorId === id);
+      return {
+        id,
+        name: materia?.instructor?.fullName || 'Desconocido'
+      };
+    });
+
+  // Agrupar horarios por día y filtrar días sin materias
+  const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  const horariosPorDia = diasSemana.map(dia => {
+    const horariosDelDia = (ficha.horarios || []).filter(h => h.dia === dia);
+    return {
+      dia,
+      horarios: horariosDelDia
+    };
+  }).filter(d => d.horarios.length > 0); // Solo días con materias
+
+  // Calcular altura máxima de materias por día
+  const maxMateriasEnUnDia = Math.max(...horariosPorDia.map(d => d.horarios.length), 1);
 
   return (
     <div className="animate-fade-in">
@@ -288,9 +419,9 @@ export default function FichaDetalle() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ficha {ficha.numero}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {ficha.nivel} · {ficha.centro}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              {ficha.nombre || ficha.nivel}
             </p>
           </div>
         </div>
@@ -308,76 +439,238 @@ export default function FichaDetalle() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna principal de la info */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Información general */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Información General</h2>
-              {isAdmin && (
-                <button onClick={handleOpenEdit} className="btn-icon text-gray-400 hover:bg-gray-100" title="Editar">
-                  <Edit2 size={16} />
-                </button>
-              )}
+      {/* Estadísticas horizontales */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                Instructores
+              </p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {ficha.instructores?.length || 0}
+              </p>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Número</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.numero}</p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Nivel</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.nivel}</p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl col-span-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Nombre del Programa</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Jornada</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.jornada}</p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Duración</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">
-                  {ficha.duracion ? `${ficha.duracion} meses` : 'No especificada'}
-                </p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl col-span-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Centro de Formación</p>
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.centro}</p>
-              </div>
-              {ficha.region && (
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl col-span-2">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Región</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-gray-100">{ficha.region}</p>
-                </div>
-              )}
+            <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
+              <Users size={24} className="text-purple-600 dark:text-purple-400" />
             </div>
           </div>
+        </div>
 
-          {/* Lista de Aprendices */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users size={20} className="text-[#4285F4]" />
-                <h2 className="text-lg font-bold text-gray-900">
-                  Aprendices ({ficha.aprendices?.length || 0})
-                </h2>
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                Aprendices
+              </p>
+              <p className="text-2xl font-bold text-[#4285F4]">
+                {ficha.aprendices?.length || 0}
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+              <Users size={24} className="text-[#4285F4]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                Materias
+              </p>
+              <p className="text-2xl font-bold text-[#34A853]">
+                {ficha.materias?.length || 0}
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <BookOpen size={24} className="text-[#34A853]" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Información General + Código */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Información General (2 columnas) */}
+        <div className="lg:col-span-2 card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Información General</h2>
+            {isAdmin && (
+              <button onClick={handleOpenEdit} className="btn-icon text-gray-400 hover:bg-gray-100" title="Editar">
+                <Edit2 size={16} />
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Número</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.numero}</p>
+            </div>
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Nivel</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nivel}</p>
+            </div>
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Jornada</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.jornada}</p>
+            </div>
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Programa</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
+            </div>
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Centro</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.centro}</p>
+            </div>
+            <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Duración</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                {ficha.duracion ? `${ficha.duracion}m` : 'N/A'}
+              </p>
+            </div>
+            {ficha.region && (
+              <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Región</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.region}</p>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Código de invitación (1 columna) */}
+        <div className="card">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Código de Invitación
+          </h3>
+          
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-3">
+            <p className="text-center font-mono font-bold text-xl text-[#4285F4] tracking-widest select-all">
+              {ficha.code}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <button 
+              onClick={copyCode} 
+              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+            >
+              {copied ? <Check size={14} className="text-[#34A853]" /> : <Copy size={14} />}
+              {copied ? 'Copiado' : 'Copiar código'}
+            </button>
+            
+            <button 
+              onClick={copyLink} 
+              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+            >
+              {copiedLink ? <Check size={14} className="text-[#34A853]" /> : <Link size={14} />}
+              {copiedLink ? 'Link copiado' : 'Copiar link'}
+            </button>
+
+            {isAdmin && (
+              <button 
+                onClick={handleRegenerate} 
+                className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2 text-orange-600 hover:bg-orange-50"
+              >
+                <RefreshCw size={14} />
+                Regenerar
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tarjeta con pestañas: Aprendices y Materias */}
+      <div className="card mb-6">
+        {/* Tabs */}
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-4">
+          <div className="flex gap-1">
+            <button
+              onClick={() => {
+                setActiveTab('aprendices');
+                setSearchQuery('');
+                setFilterTipo('all');
+                setFilterInstructor('all');
+              }}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === 'aprendices'
+                  ? 'text-[#4285F4]'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Users size={16} />
+                Aprendices ({ficha.aprendices?.length || 0})
+              </div>
+              {activeTab === 'aprendices' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4285F4]" />
+              )}
+            </button>
+            
+            <button
+              onClick={() => {
+                setActiveTab('materias');
+                setSearchQuery('');
+                setFilterTipo('all');
+                setFilterInstructor('all');
+              }}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === 'materias'
+                  ? 'text-[#34A853]'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen size={16} />
+                Materias ({ficha.materias?.length || 0})
+              </div>
+              {activeTab === 'materias' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
+              )}
+            </button>
+          </div>
+
+          {/* Botón agregar materia */}
+          {activeTab === 'materias' && isInstructor && (
+            <button 
+              onClick={() => {
+                setModalMateria(true);
+                setErrorMateria('');
+                setFormMateria({ nombre: '', tipo: 'Técnica' });
+              }}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus size={16} />
+              Agregar
+            </button>
+          )}
+        </div>
+
+        {/* Contenido de Aprendices */}
+        {activeTab === 'aprendices' && (
+          <>
+            {/* Búsqueda */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Buscar por nombre, correo o documento..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-field"
+              />
             </div>
 
-            {ficha.aprendices?.length === 0 ? (
+            {/* Lista de aprendices */}
+            {filteredAprendices.length === 0 ? (
               <div className="text-center py-8">
                 <Users size={32} className="text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Sin aprendices inscritos aún</p>
+                <p className="text-sm text-gray-400">
+                  {searchQuery ? 'No se encontraron aprendices' : 'Sin aprendices inscritos aún'}
+                </p>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {[...(ficha.aprendices || [])].sort((a, b) => a.fullName.localeCompare(b.fullName)).map(aprendiz => {
+                {filteredAprendices.map(aprendiz => {
                   const avatarSrc = resolveAvatar(aprendiz.avatarUrl);
                   return (
                     <div 
@@ -399,47 +692,64 @@ export default function FichaDetalle() {
                           {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{aprendiz.fullName}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{aprendiz.fullName}</p>
                         <p className="text-xs text-gray-400 font-mono">{aprendiz.document}</p>
-                        <p className="text-xs text-gray-400">{aprendiz.email}</p>
+                        <p className="text-xs text-gray-400 truncate">{aprendiz.email}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
             )}
-          </div>
+          </>
+        )}
 
-          {/* Lista de Materias */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <BookOpen size={20} className="text-[#34A853]" />
-                <h2 className="text-lg font-bold text-gray-900">
-                  Materias ({ficha.materias?.length || 0})
-                </h2>
-              </div>
-              {isInstructor && (
-                <button 
-                  onClick={() => {
-                    setModalMateria(true);
-                    setErrorMateria('');
-                    setFormMateria({ nombre: '', tipo: 'Técnica' });
-                  }}
-                  className="btn-primary flex items-center gap-2 text-sm"
-                >
-                  <Plus size={16} />
-                  Agregar Materia
-                </button>
-              )}
+        {/* Contenido de Materias */}
+        {activeTab === 'materias' && (
+          <>
+            {/* Búsqueda y filtros */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <input
+                type="text"
+                placeholder="Buscar por nombre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-field"
+              />
+              
+              <select
+                value={filterTipo}
+                onChange={(e) => setFilterTipo(e.target.value)}
+                className="input-field"
+              >
+                <option value="all">Todos los tipos</option>
+                <option value="Técnica">Técnica</option>
+                <option value="Transversal">Transversal</option>
+              </select>
+
+              <select
+                value={filterInstructor}
+                onChange={(e) => setFilterInstructor(e.target.value)}
+                className="input-field"
+              >
+                <option value="all">Todos los instructores</option>
+                {uniqueInstructors.map(inst => (
+                  <option key={inst.id} value={inst.id}>{inst.name}</option>
+                ))}
+              </select>
             </div>
 
-            {ficha.materias?.length === 0 ? (
+            {/* Lista de materias */}
+            {filteredMaterias.length === 0 ? (
               <div className="text-center py-8">
                 <BookOpen size={32} className="text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Sin materias asignadas aún</p>
-                {isInstructor && (
+                <p className="text-sm text-gray-400">
+                  {searchQuery || filterTipo !== 'all' || filterInstructor !== 'all' 
+                    ? 'No se encontraron materias con esos filtros' 
+                    : 'Sin materias asignadas aún'}
+                </p>
+                {!searchQuery && filterTipo === 'all' && filterInstructor === 'all' && isInstructor && (
                   <button 
                     onClick={() => {
                       setModalMateria(true);
@@ -454,193 +764,130 @@ export default function FichaDetalle() {
                 )}
               </div>
             ) : (
-              <div className="space-y-2">
-                {ficha.materias.map(materia => {
-                  const isCreatorOrAdmin = materia.instructorId === user?.id || isAdmin;
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredMaterias.map(materia => {
                   return (
                     <div 
                       key={materia.id} 
                       className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700 cursor-pointer"
                       onClick={() => handleOpenMateriaInfo(materia)}
                     >
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{materia.nombre}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{materia.nombre}</p>
                         <p className="text-xs text-gray-400">{materia.tipo}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{materia.instructor?.fullName}</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
+                          {materia.instructor?.fullName}
+                        </p>
                       </div>
                     </div>
                   );
                 })}
               </div>
             )}
-          </div>
+          </>
+        )}
+      </div>
 
-          {/* Horarios */}
-          {ficha.horarios && ficha.horarios.length > 0 && (
-            <div className="card">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock size={20} className="text-[#FBBC05]" />
-                <h2 className="text-lg font-bold text-gray-900">
-                  Horarios ({ficha.horarios.length})
-                </h2>
-              </div>
+      {/* Instructores */}
+      <div className="card mb-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          Instructores ({ficha.instructores?.length || 0})
+        </h3>
 
-              <div className="space-y-2">
-                {ficha.horarios.map(horario => (
-                  <div 
-                    key={horario.id} 
-                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{horario.dia}</p>
-                      <p className="text-xs text-gray-400">{horario.materia?.nombre}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-mono font-medium text-gray-700 dark:text-gray-300">
-                        {horario.horaInicio} - {horario.horaFin}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Columna lateral */}
-        <div className="space-y-6">
-          
-          {/* Código de invitación */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-              Código de Invitación
-            </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {ficha.instructores?.map(fi => {
+            const avatarSrc = resolveAvatar(fi.instructor.avatarUrl);
+            const isAdminInstructor = fi.role === 'admin';
             
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-3">
-              <p className="text-center font-mono font-bold text-2xl text-[#4285F4] tracking-widest select-all">
-                {ficha.code}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <button 
-                onClick={copyCode} 
-                className="btn-secondary w-full flex items-center justify-center gap-2"
+            return (
+              <div 
+                key={fi.id} 
+                className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
               >
-                {copied ? <Check size={16} className="text-[#34A853]" /> : <Copy size={16} />}
-                {copied ? 'Copiado' : 'Copiar código'}
-              </button>
-              
-              <button 
-                onClick={copyLink} 
-                className="btn-secondary w-full flex items-center justify-center gap-2"
-              >
-                {copiedLink ? <Check size={16} className="text-[#34A853]" /> : <Link size={16} />}
-                {copiedLink ? 'Link copiado' : 'Copiar link'}
-              </button>
-
-              {isAdmin && (
-                <button 
-                  onClick={handleRegenerate} 
-                  className="btn-secondary w-full flex items-center justify-center gap-2 text-orange-600 hover:bg-orange-50"
-                >
-                  <RefreshCw size={16} />
-                  Regenerar código
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Instructores */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-              Instructores ({ficha.instructores?.length || 0})
-            </h3>
-
-            <div className="space-y-2">
-              {ficha.instructores?.map(fi => {
-                const avatarSrc = resolveAvatar(fi.instructor.avatarUrl);
-                const isAdminInstructor = fi.role === 'admin';
-                
-                return (
+                {avatarSrc ? (
+                  <img 
+                    src={avatarSrc} 
+                    className="w-10 h-10 rounded-xl object-cover" 
+                    alt={fi.instructor.fullName} 
+                  />
+                ) : (
                   <div 
-                    key={fi.id} 
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
+                    style={{ backgroundColor: COLOR }}
                   >
-                    {avatarSrc ? (
-                      <img 
-                        src={avatarSrc} 
-                        className="w-10 h-10 rounded-xl object-cover" 
-                        alt={fi.instructor.fullName} 
-                      />
-                    ) : (
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-                        style={{ backgroundColor: COLOR }}
-                      >
-                        {fi.instructor.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {fi.instructor.fullName}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">{fi.instructor.email}</p>
-                    </div>
-                    {isAdminInstructor && (
-                      <span className="badge badge-info shrink-0">Admin</span>
-                    )}
+                    {fi.instructor.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Estadísticas rápidas */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Estadísticas
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <Users size={16} className="text-[#4285F4]" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Aprendices</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {fi.instructor.fullName}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{fi.instructor.email}</p>
                 </div>
-                <span className="text-lg font-bold text-[#4285F4]">
-                  {ficha.aprendices?.length || 0}
-                </span>
+                {isAdminInstructor && (
+                  <span className="badge badge-info shrink-0 text-xs">Admin</span>
+                )}
               </div>
-
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <BookOpen size={16} className="text-[#34A853]" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Materias</span>
-                </div>
-                <span className="text-lg font-bold text-[#34A853]">
-                  {ficha.materias?.length || 0}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <Users size={16} className="text-purple-600 dark:text-purple-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Instructores</span>
-                </div>
-                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                  {ficha.instructores?.length || 0}
-                </span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Modal para crear materia */}
+      {/* Horario Visual */}
+      {horariosPorDia.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={20} className="text-[#FBBC05]" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Horario Semanal
+            </h3>
+          </div>
+
+          <div className={`grid gap-4 ${
+            horariosPorDia.length === 1 ? 'grid-cols-1' :
+            horariosPorDia.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+            horariosPorDia.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
+            horariosPorDia.length === 4 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' :
+            horariosPorDia.length === 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' :
+            horariosPorDia.length === 6 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' :
+            'grid-cols-2 sm:grid-cols-3 lg:grid-cols-7'
+          }`}>
+            {horariosPorDia.map((diaData, diaIdx) => (
+              <div key={diaData.dia} className="flex flex-col">
+                <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 px-2">
+                  {diaData.dia}
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  {diaData.horarios.map((horario, idx) => {
+                    const colorIdx = (ficha.materias || []).findIndex(m => m.id === horario.materiaId);
+                    const bgColor = MATERIA_COLORS[colorIdx % MATERIA_COLORS.length];
+                    
+                    return (
+                      <div
+                        key={horario.id}
+                        className="p-2.5 rounded-lg text-white flex-1 flex flex-col justify-center"
+                        style={{ backgroundColor: bgColor }}
+                      >
+                        <p className="text-xs font-bold mb-0.5 truncate">
+                          {horario.materia?.nombre}
+                        </p>
+                        <p className="text-xs opacity-90 font-mono">
+                          {horario.horaInicio} - {horario.horaFin}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
       <Modal open={modalMateria} onClose={() => setModalMateria(false)} title="Agregar Materia">
         <form onSubmit={handleCreateMateria} className="space-y-4">
           {errorMateria && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl">{errorMateria}</p>}

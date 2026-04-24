@@ -25,23 +25,29 @@ export default function AprendizPerfilModal({
 }) {
   const [modalEnroll, setModalEnroll] = useState(false);
   const [modalMateriasEvitadas, setModalMateriasEvitadas] = useState(false);
+  const [localAprendiz, setLocalAprendiz] = useState(aprendiz);
   const COLOR = '#4285F4';
 
-  if (!aprendiz) return null;
+  // Actualizar localAprendiz cuando aprendiz cambie
+  React.useEffect(() => {
+    setLocalAprendiz(aprendiz);
+  }, [aprendiz]);
 
-  const avatarSrc = resolveAvatar(aprendiz.avatarUrl);
-  const hasNfc = !!aprendiz.nfcUid;
-  const fingerprintCount = aprendiz.huellas?.length || 0;
-  const hasFace = aprendiz.faceDescriptor && aprendiz.faceDescriptor.length === 128;
+  if (!localAprendiz) return null;
+
+  const avatarSrc = resolveAvatar(localAprendiz.avatarUrl);
+  const hasNfc = !!localAprendiz.nfcUid;
+  const fingerprintCount = localAprendiz.huellas?.length || 0;
+  const hasFace = localAprendiz.faceDescriptor && localAprendiz.faceDescriptor.length === 128;
 
   const handleOpenEnroll = () => {
     setModalEnroll(true);
   };
 
-  const handleCloseEnroll = () => {
+  const handleCloseEnroll = async () => {
     setModalEnroll(false);
     if (onBiometricUpdate) {
-      onBiometricUpdate();
+      await onBiometricUpdate();
     }
   };
 
@@ -49,16 +55,16 @@ export default function AprendizPerfilModal({
     setModalMateriasEvitadas(true);
   };
 
-  const handleCloseMateriasEvitadas = () => {
+  const handleCloseMateriasEvitadas = async () => {
     setModalMateriasEvitadas(false);
     if (onBiometricUpdate) {
-      onBiometricUpdate(); // Recargar datos
+      await onBiometricUpdate();
     }
   };
 
   const handleRemove = () => {
     if (onRemoveAprendiz) {
-      onRemoveAprendiz(aprendiz.id);
+      onRemoveAprendiz(localAprendiz.id);
     }
   };
 
@@ -72,29 +78,29 @@ export default function AprendizPerfilModal({
               <img 
                 src={avatarSrc} 
                 className="w-20 h-20 rounded-2xl object-cover" 
-                alt={aprendiz.fullName} 
+                alt={localAprendiz.fullName} 
               />
             ) : (
               <div 
                 className="w-20 h-20 rounded-2xl flex items-center justify-center text-xl font-bold text-white"
                 style={{ backgroundColor: COLOR }}
               >
-                {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                {localAprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
               </div>
             )}
             
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                {aprendiz.fullName}
+                {localAprendiz.fullName}
               </h3>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <User size={14} />
-                  <span className="font-mono">{aprendiz.document}</span>
+                  <span className="font-mono">{localAprendiz.document}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Mail size={14} />
-                  <span>{aprendiz.email}</span>
+                  <span>{localAprendiz.email}</span>
                 </div>
               </div>
             </div>
@@ -174,9 +180,9 @@ export default function AprendizPerfilModal({
               )}
             </div>
 
-            {aprendiz.materiasEvitadas && aprendiz.materiasEvitadas.length > 0 ? (
+            {localAprendiz.materiasEvitadas && localAprendiz.materiasEvitadas.length > 0 ? (
               <div className="space-y-2">
-                {aprendiz.materiasEvitadas.map(me => (
+                {localAprendiz.materiasEvitadas.map(me => (
                   <div 
                     key={me.id}
                     className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800"
@@ -221,7 +227,7 @@ export default function AprendizPerfilModal({
         <EnrollModal 
           open={modalEnroll} 
           onClose={handleCloseEnroll} 
-          aprendiz={aprendiz} 
+          aprendiz={localAprendiz} 
         />
       )}
 
@@ -230,7 +236,7 @@ export default function AprendizPerfilModal({
         <MateriasEvitadasModal 
           open={modalMateriasEvitadas} 
           onClose={handleCloseMateriasEvitadas} 
-          aprendiz={aprendiz}
+          aprendiz={localAprendiz}
           fichaId={fichaId}
           materias={materias || []}
           onUpdate={handleCloseMateriasEvitadas}

@@ -466,7 +466,7 @@ export default function InstructorHorario() {
           <div className="card mb-6">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3 flex items-center gap-2">
               <GripVertical size={16} className="text-gray-400" />
-              Tus Materias ({materias.length})
+              Tienes {materias.length} {materias.length === 1 ? 'materia' : 'materias'} a cargo
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {materias.map(materia => (

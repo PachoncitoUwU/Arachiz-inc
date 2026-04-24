@@ -22,9 +22,6 @@ export default function MateriaInfoModal({
 
   if (!materia) return null;
 
-  console.log('MateriaInfoModal - materia recibida:', materia);
-  console.log('MateriaInfoModal - horarios:', materia.horarios);
-
   const handleEdit = () => {
     setFormData({
       nombre: materia.nombre,

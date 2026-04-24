@@ -78,7 +78,7 @@
   },
   "subjects": {
     "title": "Mis Materias",
-    "subtitle": "{count} materia(s) en tu ficha",
+    "subtitle": "Tienes {count} materia(s) a cargo",
     "emptyTitle": "Sin materias",
     "emptyDesc": "Aún no hay materias registradas en tu ficha. Consulta con tu instructor.",
     "active": "Activa",
