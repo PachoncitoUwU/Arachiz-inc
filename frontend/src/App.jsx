@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { SettingsProvider } from './context/SettingsContext';
 import MainLayout from './layouts/MainLayout';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -32,6 +33,7 @@ import ScanQR from './pages/ScanQR';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <SettingsProvider>
         <ToastProvider>
@@ -75,5 +77,6 @@ export default function App() {
         </ToastProvider>
       </SettingsProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

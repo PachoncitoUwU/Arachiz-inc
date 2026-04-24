@@ -87,21 +87,32 @@ export default function InstructorAsistencia() {
   const COOLDOWN_MS = 2000; // Reducido a 2 segundos
 
   useEffect(() => {
-    fetchApi('/asistencias/my-active-any').then(activeData => {
-      let activeSet = false;
-      if (activeData.session) {
-        setSelectedMateria(activeData.session.materiaId);
-        setActiveSession(activeData.session);
-        connectSocket(activeData.session.id);
-        activeSet = true;
-      }
-      fetchApi('/materias/my-materias').then(d => {
-        setMaterias(d.materias);
-        if (d.materias.length > 0 && !activeSet && !selectedMateria) {
-          setSelectedMateria(d.materias[0].id);
+    const loadInitialData = async () => {
+      try {
+        const activeData = await fetchApi('/asistencias/my-active-any').catch(() => ({ session: null }));
+        let activeSet = false;
+        
+        if (activeData?.session) {
+          setSelectedMateria(activeData.session.materiaId);
+          setActiveSession(activeData.session);
+          connectSocket(activeData.session.id);
+          activeSet = true;
         }
-      }).catch(console.error).finally(() => setLoading(false));
-    });
+        
+        const materiasData = await fetchApi('/materias/my-materias').catch(() => ({ materias: [] }));
+        setMaterias(materiasData.materias || []);
+        
+        if (materiasData.materias?.length > 0 && !activeSet && !selectedMateria) {
+          setSelectedMateria(materiasData.materias[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -114,18 +125,30 @@ export default function InstructorAsistencia() {
   }, [selectedMateria]);
 
   const loadSessions = async () => {
+    if (!selectedMateria) return;
     try {
       const d = await fetchApi(`/asistencias/materia/${selectedMateria}`);
-      setSessions(d.asistencias);
-    } catch {}
+      setSessions(d.asistencias || []);
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      setSessions([]);
+    }
   };
 
   const checkActiveSession = async () => {
+    if (!selectedMateria) return;
     try {
       const d = await fetchApi(`/asistencias/materia/${selectedMateria}/active`);
-      if (d.session) { setActiveSession(d.session); connectSocket(d.session.id); }
-      else setActiveSession(null);
-    } catch {}
+      if (d.session) { 
+        setActiveSession(d.session); 
+        connectSocket(d.session.id); 
+      } else {
+        setActiveSession(null);
+      }
+    } catch (error) {
+      console.error('Error checking active session:', error);
+      setActiveSession(null);
+    }
   };
 
   const connectSocket = (sessionId) => {
@@ -621,6 +644,15 @@ export default function InstructorAsistencia() {
     <div className="animate-fade-in-up space-y-5">
       <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} />
 
+      {loading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-[#34A853] border-t-transparent rounded-full animate-spin mx-auto mb-4"/>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando asistencia...</p>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Selector de materia y botón */}
       <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 hover:shadow-xl animate-slide-in-down">
         <div className="flex flex-col sm:flex-row gap-4 items-end">
@@ -1394,6 +1426,8 @@ export default function InstructorAsistencia() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
