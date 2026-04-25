@@ -258,26 +258,6 @@ export default function FichaDetalle() {
     }
   };
 
-  const handleOpenMateriaInfo = (materia) => {
-    console.log('Materia seleccionada:', materia);
-    console.log('Horarios de la materia:', materia.horarios);
-    setSelectedMateria(materia);
-    setModalMateriaInfo(true);
-  };
-
-  const handleCloseMateriaInfo = () => {
-    setModalMateriaInfo(false);
-    setSelectedMateria(null);
-  };
-
-  const handleMateriaUpdate = () => {
-    loadFicha(); // Recargar para actualizar los datos
-  };
-
-  const handleMateriaDelete = () => {
-    loadFicha(); // Recargar para actualizar la lista
-  };
-
   if (loading) {
     return (
       <div className="animate-fade-in">
