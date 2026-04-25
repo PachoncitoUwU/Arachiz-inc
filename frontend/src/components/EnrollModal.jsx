@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 import FaceCapture from './FaceCapture';
 import { socket } from '../services/socket';
 import fetchApi from '../services/api';
@@ -11,6 +12,7 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
   const [status, setStatus] = useState('idle'); // idle, waiting, success, error
   const [message, setMessage] = useState('');
   const [hasFace, setHasFace] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, data: null });
 
   // Reiniciar estado
   useEffect(() => {
@@ -121,33 +123,43 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
   };
 
   const removeFingerprint = async (id) => {
-    if (!confirm(`¿Estás seguro de eliminar la huella ${id}?`)) return;
+    setConfirmModal({ isOpen: true, action: 'removeFingerprint', data: id });
+  };
+
+  const confirmRemoveFingerprint = async () => {
     try {
       await fetchApi('/serial/finger', {
         method: 'DELETE',
-        body: JSON.stringify({ userId: aprendiz.id, huellaId: id })
+        body: JSON.stringify({ userId: aprendiz.id, huellaId: confirmModal.data })
       });
-      aprendiz.huellas = aprendiz.huellas.filter(h => h !== id);
+      aprendiz.huellas = aprendiz.huellas.filter(h => h !== confirmModal.data);
       setStatus('idle');
-      setMessage('');
+      setMessage('Huella eliminada exitosamente');
     } catch(err) {
-      alert(err.message);
+      setStatus('error');
+      setMessage(err.message || 'Error al eliminar huella');
     }
   };
 
   const deleteFaceDescriptor = async () => {
-    if (!confirm('¿Eliminar el reconocimiento facial de este aprendiz?')) return;
+    setConfirmModal({ isOpen: true, action: 'deleteFace', data: null });
+  };
+
+  const confirmDeleteFace = async () => {
     try {
       await fetchApi(`/auth/face-descriptor-for/${aprendiz.id}`, { method: 'DELETE' });
       setHasFace(false);
+      setStatus('success');
       setMessage('Reconocimiento facial eliminado');
     } catch (err) {
-      alert(err.message);
+      setStatus('error');
+      setMessage(err.message || 'Error al eliminar reconocimiento facial');
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Credenciales Biométricas">
+    <>
+      <Modal open={open} onClose={onClose} title="Credenciales Biométricas">
       <div className="space-y-4 text-center pb-2">
         {aprendiz && (
           <p className="text-gray-600 mb-4 pb-4 border-b border-gray-100">
@@ -275,5 +287,28 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
         )}
       </div>
     </Modal>
+    
+    <ConfirmModal
+      isOpen={confirmModal.isOpen}
+      onClose={() => setConfirmModal({ isOpen: false, action: null, data: null })}
+      onConfirm={() => {
+        if (confirmModal.action === 'removeFingerprint') confirmRemoveFingerprint();
+        else if (confirmModal.action === 'deleteFace') confirmDeleteFace();
+      }}
+      title={
+        confirmModal.action === 'removeFingerprint' ? '¿Eliminar huella?' :
+        confirmModal.action === 'deleteFace' ? '¿Eliminar reconocimiento facial?' :
+        '¿Estás seguro?'
+      }
+      message={
+        confirmModal.action === 'removeFingerprint' ? `¿Estás seguro de eliminar la huella ${confirmModal.data}?` :
+        confirmModal.action === 'deleteFace' ? '¿Eliminar el reconocimiento facial de este aprendiz?' :
+        'Esta acción no se puede deshacer.'
+      }
+      confirmText="Eliminar"
+      cancelText="Cancelar"
+      variant="danger"
+    />
+    </>
   );
 }

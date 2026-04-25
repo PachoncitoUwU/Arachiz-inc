@@ -7,6 +7,7 @@ import Modal from '../../components/Modal';
 import EnrollModal from '../../components/EnrollModal';
 import AprendizPerfilModal from '../../components/AprendizPerfilModal';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
   Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus
@@ -51,6 +52,9 @@ export default function FichaDetalle() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState('all'); // 'all' | 'Técnica' | 'Transversal'
   const [filterInstructor, setFilterInstructor] = useState('all'); // 'all' | instructorId
+  
+  // Estados para modales de confirmación
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, data: null });
 
   useEffect(() => {
     loadFicha();
@@ -85,7 +89,14 @@ export default function FichaDetalle() {
   };
 
   const handleRegenerate = async () => {
-    if (!confirm('¿Regenerar el código? El anterior dejará de funcionar.')) return;
+    setConfirmModal({
+      isOpen: true,
+      action: 'regenerate',
+      data: null
+    });
+  };
+
+  const confirmRegenerate = async () => {
     try {
       await fetchApi(`/fichas/${id}/regenerate-code`, { method: 'POST' });
       showToast('Código regenerado', 'success');
@@ -122,9 +133,16 @@ export default function FichaDetalle() {
   };
 
   const handleRemoveAprendiz = async (aprendizId) => {
-    if (!confirm('¿Eliminar este aprendiz de la ficha?')) return;
+    setConfirmModal({
+      isOpen: true,
+      action: 'removeAprendiz',
+      data: aprendizId
+    });
+  };
+
+  const confirmRemoveAprendiz = async () => {
     try {
-      await fetchApi(`/fichas/${id}/aprendices/${aprendizId}`, { method: 'DELETE' });
+      await fetchApi(`/fichas/${id}/aprendices/${confirmModal.data}`, { method: 'DELETE' });
       showToast('Aprendiz eliminado', 'success');
       loadFicha();
     } catch (err) {
@@ -1071,6 +1089,29 @@ export default function FichaDetalle() {
           onDelete={handleMateriaDelete}
         />
       )}
+
+      {/* Modal de confirmación */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, action: null, data: null })}
+        onConfirm={() => {
+          if (confirmModal.action === 'regenerate') confirmRegenerate();
+          else if (confirmModal.action === 'removeAprendiz') confirmRemoveAprendiz();
+        }}
+        title={
+          confirmModal.action === 'regenerate' ? '¿Regenerar código?' :
+          confirmModal.action === 'removeAprendiz' ? '¿Eliminar aprendiz?' :
+          '¿Estás seguro?'
+        }
+        message={
+          confirmModal.action === 'regenerate' ? 'El código anterior dejará de funcionar.' :
+          confirmModal.action === 'removeAprendiz' ? '¿Eliminar este aprendiz de la ficha?' :
+          'Esta acción no se puede deshacer.'
+        }
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 import fetchApi from '../services/api';
 import { BookOpen, User, Clock, Edit2, Trash2, Loader } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export default function MateriaInfoModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false });
 
   if (!materia) return null;
 
@@ -69,10 +71,10 @@ export default function MateriaInfoModal({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    setConfirmModal({ isOpen: true });
+  };
 
+  const confirmDelete = async () => {
     try {
       setDeleting(true);
       setError('');
@@ -105,7 +107,8 @@ export default function MateriaInfoModal({
     : 'Sin horarios asignados';
 
   return (
-    <Modal open={open} onClose={onClose} title="Información de la Materia" maxWidth="max-w-2xl">
+    <>
+      <Modal open={open} onClose={onClose} title="Información de la Materia" maxWidth="max-w-2xl">
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
@@ -262,5 +265,38 @@ export default function MateriaInfoModal({
         )}
       </div>
     </Modal>
+
+    <ConfirmModal
+      isOpen={confirmModal.isOpen}
+      onClose={() => setConfirmModal({ isOpen: false })}
+      onConfirm={confirmDelete}
+      title="¿Eliminar materia?"
+      message={`¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`}
+      confirmText="Eliminar"
+      cancelText="Cancelar"
+      variant="danger"
+    />
+  </>
+  );
+}
+
+// Agregar el ConfirmModal fuera del return principal
+function MateriaInfoModalWithConfirm(props) {
+  const [confirmModal, setConfirmModal] = React.useState({ isOpen: false });
+  
+  return (
+    <>
+      <MateriaInfoModal {...props} />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false })}
+        onConfirm={() => {}}
+        title="¿Eliminar materia?"
+        message="Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+    </>
   );
 }

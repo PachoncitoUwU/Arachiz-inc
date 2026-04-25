@@ -5,6 +5,7 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { BookOpen, Plus } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function InstructorMaterias() {
   const [error, setError] = useState('');
   const [selectedMateria, setSelectedMateria] = useState(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, materiaId: null });
 
   const load = async () => {
     try {
@@ -60,9 +62,12 @@ export default function InstructorMaterias() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar esta materia? Se eliminarán también sus sesiones de asistencia.')) return;
+    setConfirmModal({ isOpen: true, materiaId: id });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await fetchApi(`/materias/${id}`, { method: 'DELETE' });
+      await fetchApi(`/materias/${confirmModal.materiaId}`, { method: 'DELETE' });
       showToast('Materia eliminada', 'success');
       setInfoModalOpen(false);
       setSelectedMateria(null);
@@ -214,6 +219,17 @@ export default function InstructorMaterias() {
         }
         onUpdate={handleUpdateMateria}
         onDelete={handleDeleteMateria}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, materiaId: null })}
+        onConfirm={confirmDelete}
+        title="¿Eliminar materia?"
+        message="¿Eliminar esta materia? Se eliminarán también sus sesiones de asistencia."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
       />
     </div>
   );

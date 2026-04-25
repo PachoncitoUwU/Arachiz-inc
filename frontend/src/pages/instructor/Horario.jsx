@@ -7,6 +7,7 @@ import fetchApi from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { Calendar, Plus, Trash2, Clock, Edit2, GripVertical, CheckCircle2, Check } from 'lucide-react';
@@ -192,6 +193,7 @@ export default function InstructorHorario() {
   const [modoEditar, setModoEditar] = useState(false);
   const [modoEliminar, setModoEliminar] = useState(false);
   const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, count: 0 });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -244,8 +246,10 @@ export default function InstructorHorario() {
       return;
     }
 
-    if (!confirm(`¿Eliminar ${horariosSeleccionados.length} clase(s) del horario?`)) return;
+    setConfirmModal({ isOpen: true, count: horariosSeleccionados.length });
+  };
 
+  const confirmEliminarSeleccionados = async () => {
     try {
       await Promise.all(
         horariosSeleccionados.map(id => fetchApi(`/horarios/${id}`, { method: 'DELETE' }))
@@ -253,7 +257,7 @@ export default function InstructorHorario() {
       setHorarios(prev => prev.filter(h => !horariosSeleccionados.includes(h.id)));
       setHorariosSeleccionados([]);
       setModoEliminar(false);
-      showToast(`${horariosSeleccionados.length} clase(s) eliminada(s)`, 'success');
+      showToast(`${confirmModal.count} clase(s) eliminada(s)`, 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -626,6 +630,17 @@ export default function InstructorHorario() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, count: 0 })}
+        onConfirm={confirmEliminarSeleccionados}
+        title="¿Eliminar clases?"
+        message={`¿Eliminar ${confirmModal.count} clase(s) del horario?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </div>
   );
 }
