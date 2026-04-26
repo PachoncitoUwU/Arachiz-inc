@@ -21,6 +21,8 @@ import InstructorAsistencia from './pages/instructor/Asistencia';
 import InstructorExcusas    from './pages/instructor/Excusas';
 
 import AprendizDashboard  from './pages/aprendiz/Dashboard';
+import AprendizFichas     from './pages/aprendiz/Fichas';
+import AprendizFichaDetalle from './pages/aprendiz/FichaDetalle';
 import AprendizMaterias   from './pages/aprendiz/Materias';
 import AprendizHorario    from './pages/aprendiz/Horario';
 import AprendizAsistencia from './pages/aprendiz/Asistencia';
@@ -63,6 +65,8 @@ export default function App() {
               <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard"      element={<AprendizDashboard />} />
+                <Route path="fichas"         element={<AprendizFichas />} />
+                <Route path="fichas/:id"     element={<AprendizFichaDetalle />} />
                 <Route path="materias"       element={<AprendizMaterias />} />
                 <Route path="horario"        element={<AprendizHorario />} />
                 <Route path="asistencia"     element={<AprendizAsistencia />} />

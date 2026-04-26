@@ -19,6 +19,7 @@ const INSTRUCTOR_LINKS = [
 
 const APRENDIZ_LINKS = [
   { to: '/aprendiz/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
+  { to: '/aprendiz/fichas', icon: Users, labelKey: 'fichas' },
   { to: '/aprendiz/materias', icon: BookOpen, labelKey: 'materias' },
   { to: '/aprendiz/horario', icon: Calendar, labelKey: 'horario' },
   { to: '/aprendiz/asistencia', icon: Clock, labelKey: 'asistencia' },

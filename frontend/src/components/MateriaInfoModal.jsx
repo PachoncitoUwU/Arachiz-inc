@@ -10,7 +10,8 @@ export default function MateriaInfoModal({
   materia, 
   isCreatorOrAdmin,
   onUpdate,
-  onDelete 
+  onDelete,
+  isAprendizView = false
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -204,18 +205,20 @@ export default function MateriaInfoModal({
                 </p>
               </div>
 
-              {/* Ficha */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen size={16} className="text-gray-500" />
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Ficha
+              {/* Ficha - Solo visible para instructores */}
+              {!isAprendizView && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BookOpen size={16} className="text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      Ficha
+                    </p>
+                  </div>
+                  <p className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    {materia.ficha?.numero || 'No asignada'}
                   </p>
                 </div>
-                <p className="text-base font-medium text-gray-900 dark:text-gray-100">
-                  {materia.ficha?.numero || 'No asignada'}
-                </p>
-              </div>
+              )}
 
               {/* Horarios */}
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
