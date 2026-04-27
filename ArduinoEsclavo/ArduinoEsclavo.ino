@@ -13,13 +13,15 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 const int PIN_BUZZER = 6;
 const int PIN_SWITCH = 7;
 const int PIN_RX_ESP = 8;
-const int PIN_TX_ESP = 9;  // Via divisor de tensión hacia ESP8266 D2
+const int PIN_TX_ESP = 9;
 
 // Comunicación con ESP8266
-SoftwareSerial espSerial(PIN_RX_ESP, PIN_TX_ESP); // RX, TX
+SoftwareSerial espSerial(PIN_RX_ESP, PIN_TX_ESP);
 
 // --- PROTOTIPOS ---
-void sonidoExito();
+void sonidoNFC();
+void sonidoHuella();
+void sonidoEnrolamiento();
 void sonidoError();
 bool enrolar(int id);
 String hexUID(uint8_t* uid, uint8_t len);
@@ -32,7 +34,7 @@ void setup() {
   pinMode(PIN_SWITCH, INPUT_PULLUP);
 
   Serial.println(F("\n-------------------------------------------"));
-  Serial.println(F("SISTEMA ARACHIZ - MODO ESCLAVO V7.0"));
+  Serial.println(F("SISTEMA ARACHIZ - MODO ESCLAVO V7.1"));
   Serial.println(F("-------------------------------------------"));
 
   Serial.println(F("DEBUG: Iniciando NFC..."));
@@ -64,54 +66,36 @@ void enviarEvento(String msg) {
   bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
   if (modoESP) {
     espSerial.listen();
-    espSerial.println(msg);
+    espSerial.println("MODO:RENDER|" + msg);
   } else {
     Serial.println(msg);
   }
 }
 
-void procesarComando(String comando) {
-  if (comando == "CLEAR_DB") {
-    mySerial.listen();
-    finger.emptyDatabase();
-    Serial.println("DEBUG: Base de datos borrada con exito");
-    sonidoExito();
-  } else if (comando.startsWith("ENROLL ")) {
-    int idx = comando.substring(7).toInt();
-    if (idx > 0 && idx < 128) {
-      Serial.print("DEBUG: Iniciando enrolamiento en ID ");
-      Serial.println(idx);
-      mySerial.listen();
-      bool res = enrolar(idx);
-      if (res) {
-        enviarEvento("ENROLL_SUCCESS: " + String(idx));
-      } else {
-        enviarEvento("ENROLL_ERROR: Cancelado o fallo");
-      }
-    }
-  }
-}
-
 void loop() {
-  // 1. Escuchar comandos desde Node.js (modo USB) o desde ESP (modo WiFi)
-  bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
-  
-  if (!modoESP && Serial.available() > 0) {
-    // Modo USB: comandos desde Node.js
+  // 1. Escuchar comandos desde Node.js (solo en modo USB)
+  if (Serial.available() > 0) {
     String comando = Serial.readStringUntil('\n');
     comando.trim();
-    procesarComando(comando);
-  }
-  
-  if (modoESP) {
-    // Modo WiFi: escuchar comandos del ESP
-    espSerial.listen();
-    if (espSerial.available() > 0) {
-      String comando = espSerial.readStringUntil('\n');
-      comando.trim();
-      Serial.println("Comando desde ESP: " + comando);
-      mySerial.listen(); // Cambiar a huella para enrolamiento
-      procesarComando(comando);
+    if (comando == "CLEAR_DB") {
+      mySerial.listen();
+      finger.emptyDatabase();
+      Serial.println("DEBUG: Base de datos borrada con exito");
+      sonidoEnrolamiento();
+    } else if (comando.startsWith("ENROLL ")) {
+      int idx = comando.substring(7).toInt();
+      if (idx > 0 && idx < 128) {
+        Serial.print("DEBUG: Iniciando enrolamiento en ID ");
+        Serial.println(idx);
+        mySerial.listen();
+        bool res = enrolar(idx);
+        if (res) {
+          Serial.print("ENROLL_SUCCESS: ");
+          Serial.println(idx);
+        } else {
+          Serial.println("ENROLL_ERROR: Cancelado o fallo");
+        }
+      }
     }
   }
 
@@ -124,14 +108,7 @@ void loop() {
 
   if (success) {
     String uid_str = hexUID(uid, uidLength);
-    bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
-    if (modoESP) {
-      espSerial.listen();
-      espSerial.println("MODO:RENDER|READ_NFC: " + uid_str);
-    } else {
-      Serial.print("READ_NFC: ");
-      Serial.println(uid_str);
-    }
+    enviarEvento("READ_NFC: " + uid_str);
     sonidoNFC();
     delay(500);
     nfc_hardware.SAMConfig();
@@ -142,20 +119,13 @@ void loop() {
   if (finger.getImage() == FINGERPRINT_OK) {
     if (finger.image2Tz() == FINGERPRINT_OK) {
       if (finger.fingerFastSearch() == FINGERPRINT_OK) {
-        bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
-        if (modoESP) {
-          espSerial.listen();
-          espSerial.println("MODO:RENDER|READ_FINGER: " + String(finger.fingerID));
-        } else {
-          Serial.print("READ_FINGER: ");
-          Serial.println(finger.fingerID);
-        }
+        enviarEvento("READ_FINGER: " + String(finger.fingerID));
         sonidoHuella();
         delay(500);
       } else {
         Serial.println("DEBUG: Huella no reconocida por el sensor");
         sonidoError();
-        delay(1000);
+        delay(500);
       }
     }
   }
@@ -216,7 +186,6 @@ bool enrolar(int id) {
   if (finger.createModel() == FINGERPRINT_OK) {
     if (finger.storeModel(id) == FINGERPRINT_OK) {
       sonidoEnrolamiento();
-      enviarEvento("ENROLL_SUCCESS: " + String(id));
       return true;
     }
   }
@@ -236,16 +205,6 @@ String hexUID(uint8_t* uid, uint8_t len) {
   }
   s.toUpperCase();
   return s;
-}
-
-void sonidoExito() { 
-  tone(PIN_BUZZER, 2500, 200); 
-}
-
-void sonidoError() { 
-  tone(PIN_BUZZER, 500, 300); 
-  delay(100); 
-  tone(PIN_BUZZER, 500, 300); 
 }
 
 void sonidoNFC() {
@@ -268,4 +227,10 @@ void sonidoEnrolamiento() {
   tone(PIN_BUZZER, 2400, 100);
   delay(120);
   tone(PIN_BUZZER, 2800, 200);
+}
+
+void sonidoError() {
+  tone(PIN_BUZZER, 500, 300);
+  delay(100);
+  tone(PIN_BUZZER, 500, 300);
 }
