@@ -91,9 +91,26 @@ const deleteHorario = async (req, res) => {
 // RF21/RF92 - Horario de una ficha
 const getHorarioByFicha = async (req, res) => {
   const { fichaId } = req.params;
+  const userId = req.user?.id;
+  const userType = req.user?.userType;
+  
   try {
+    let materiasEvitadasIds = [];
+    
+    // Si es un aprendiz, obtener sus materias evitadas
+    if (userType === 'aprendiz' && userId) {
+      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        where: { aprendizId: userId },
+        select: { materiaId: true }
+      });
+      materiasEvitadasIds = materiasEvitadas.map(me => me.materiaId);
+    }
+    
     const horarios = await prisma.horario.findMany({
-      where: { fichaId },
+      where: { 
+        fichaId,
+        ...(materiasEvitadasIds.length > 0 && { materiaId: { notIn: materiasEvitadasIds } })
+      },
       include: {
         materia: { include: { instructor: { select: { fullName: true } } } }
       },

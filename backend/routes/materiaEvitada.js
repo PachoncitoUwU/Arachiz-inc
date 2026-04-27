@@ -4,9 +4,17 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const { roleMiddleware } = require('../middlewares/roleMiddleware');
 const materiaEvitadaController = require('../controllers/materiaEvitadaController');
 
+// Obtener materias evitadas del aprendiz autenticado
+router.get(
+  '/materias-evitadas/my-materias-evitadas',
+  authMiddleware,
+  roleMiddleware(['aprendiz']),
+  materiaEvitadaController.getMyMateriasEvitadas
+);
+
 // Obtener materias evitadas de un aprendiz en una ficha
 router.get(
-  '/fichas/:fichaId/aprendices/:aprendizId/materias-evitadas',
+  '/materias-evitadas/fichas/:fichaId/aprendices/:aprendizId/materias-evitadas',
   authMiddleware,
   roleMiddleware(['instructor']),
   materiaEvitadaController.getMateriasEvitadas
@@ -14,7 +22,7 @@ router.get(
 
 // Actualizar materias evitadas de un aprendiz
 router.put(
-  '/fichas/:fichaId/aprendices/:aprendizId/materias-evitadas',
+  '/materias-evitadas/fichas/:fichaId/aprendices/:aprendizId/materias-evitadas',
   authMiddleware,
   roleMiddleware(['instructor']),
   materiaEvitadaController.updateMateriasEvitadas

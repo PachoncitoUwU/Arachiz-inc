@@ -35,7 +35,7 @@ export default function AprendizMaterias() {
     <div className="animate-fade-in">
       <PageHeader
         title={t('subjects.title')}
-        subtitle={t('subjects.subtitle').replace('{count}', materias.length)}
+        subtitle="Estas son todas tus materias"
       />
 
       {materias.length === 0 ? (

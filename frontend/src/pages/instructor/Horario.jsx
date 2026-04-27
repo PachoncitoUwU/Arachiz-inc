@@ -179,6 +179,8 @@ export default function InstructorHorario() {
   const { showToast } = useToast();
   const { user } = useContext(AuthContext);
   const [materias, setMaterias] = useState([]);
+  const [fichas, setFichas] = useState([]);
+  const [selectedFichaId, setSelectedFichaId] = useState('all');
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalEdit, setModalEdit] = useState(false);
@@ -206,12 +208,14 @@ export default function InstructorHorario() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [m, h] = await Promise.all([
+      const [m, h, f] = await Promise.all([
         fetchApi('/materias/my-materias'),
-        fetchApi('/horarios/my-horarios')
+        fetchApi('/horarios/my-horarios'),
+        fetchApi('/fichas/my-fichas')
       ]);
       setMaterias(m.materias || []);
       setHorarios(h.horarios || []);
+      setFichas(f.fichas || []);
     } catch (err) {
       showToast(err.message || 'Error al cargar datos', 'error');
     } finally {
@@ -375,13 +379,22 @@ export default function InstructorHorario() {
     ? materias.find(m => `materia-${m.id}` === activeId)
     : horarios.find(h => h.id === activeId);
 
+  // Filtrar materias y horarios por ficha seleccionada
+  const filteredMaterias = selectedFichaId === 'all' 
+    ? materias 
+    : materias.filter(m => m.fichaId === selectedFichaId);
+  
+  const filteredHorarios = selectedFichaId === 'all' 
+    ? horarios 
+    : horarios.filter(h => h.materia?.fichaId === selectedFichaId);
+
   const byDia = DIAS.map(dia => ({
     dia,
-    clases: horarios.filter(h => h.dia === dia).sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+    clases: filteredHorarios.filter(h => h.dia === dia).sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
   }));
 
   // Identificar qué materias ya tienen horarios
-  const materiasConHorario = new Set(horarios.map(h => h.materiaId));
+  const materiasConHorario = new Set(filteredHorarios.map(h => h.materiaId));
 
   return (
     <div className="animate-fade-in">
@@ -396,7 +409,7 @@ export default function InstructorHorario() {
 
       {/* Botones de modo */}
       {!loading && materias.length > 0 && horarios.length > 0 && (
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
           <button
             onClick={() => {
               setModoEditar(!modoEditar);
@@ -436,6 +449,22 @@ export default function InstructorHorario() {
               <Trash2 size={16} />
               Eliminar ({horariosSeleccionados.length})
             </button>
+          )}
+
+          {/* Selector de ficha */}
+          {fichas.length > 1 && (
+            <select 
+              value={selectedFichaId} 
+              onChange={(e) => setSelectedFichaId(e.target.value)}
+              className="input-field max-w-xs ml-auto"
+            >
+              <option value="all">Todas las fichas</option>
+              {fichas.map(f => (
+                <option key={f.id} value={f.id}>
+                  Ficha {f.numero} - {f.nombre}
+                </option>
+              ))}
+            </select>
           )}
         </div>
       )}

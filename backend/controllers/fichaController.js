@@ -202,12 +202,6 @@ const joinFicha = async (req, res) => {
       if (ficha.aprendices.some(a => a.id === userId)) {
         return res.status(400).json({ error: 'Ya estás en esta ficha' });
       }
-      const isAlreadyInOtherFicha = await prisma.ficha.findFirst({
-        where: { aprendices: { some: { id: userId } } }
-      });
-      if (isAlreadyInOtherFicha) {
-        return res.status(400).json({ error: 'Un aprendiz solo puede unirse a una ficha.' });
-      }
       await prisma.ficha.update({
         where: { id: ficha.id },
         data: { aprendices: { connect: { id: userId } } }

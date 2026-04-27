@@ -433,8 +433,8 @@
   .table tbody tr:last-child td { @apply border-b-0; }
   .table tbody tr:hover td      { @apply bg-gray-50/50; }
 
-  .modal-overlay { @apply fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50; }
-  .modal-box     { @apply bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-fade-in; }
+  .modal-overlay { @apply fixed top-0 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4; z-index: 9999; }
+  .modal-box     { @apply bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-fade-in relative; z-index: 10000; }
   .modal-title   { @apply text-lg font-bold text-gray-900 mb-4; }
 
   .empty-state { @apply flex flex-col items-center justify-center py-16 text-center; }

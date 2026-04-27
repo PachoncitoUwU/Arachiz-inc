@@ -77,6 +77,7 @@ model Materia {
   instructorId     String
   asistencias      Asistencia[]
   horarios         Horario[]
+  excusas          Excusa[]
   ficha            Ficha              @relation(fields: [fichaId], references: [id], onDelete: Cascade)
   instructor       User               @relation("InstructorMaterias", fields: [instructorId], references: [id])
   materiasEvitadas MateriaEvitada[]
@@ -110,26 +111,36 @@ model RegistroAsistencia {
   presente     Boolean    @default(true)
   metodo       String     @default("manual")
   timestamp    DateTime   @default(now())
+  justificado  Boolean    @default(false)
   asistenciaId String
   aprendizId   String
   aprendiz     User       @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
   asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
+  excusas      Excusa[]
 
   @@unique([asistenciaId, aprendizId])
 }
 
 model Excusa {
-  id          String    @id @default(cuid())
-  motivo      String
-  descripcion String
-  fechas      String
-  estado      String    @default("Pendiente")
-  respuesta   String?
-  archivoUrl  String?
-  createdAt   DateTime  @default(now())
-  respondedAt DateTime?
-  aprendizId  String
-  aprendiz    User      @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  id                   String              @id @default(cuid())
+  fechas               String
+  motivo               String
+  archivosUrls         String?
+  estado               String              @default("Pendiente")
+  respuesta            String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @default(now()) @updatedAt
+  respondedAt          DateTime?
+  aprendizId           String
+  materiaId            String
+  registroAsistenciaId String?
+  aprendiz             User                @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  materia              Materia             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
+
+  @@index([aprendizId])
+  @@index([materiaId])
+  @@index([estado])
 }
 
 model MateriaEvitada {

@@ -19,6 +19,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "epayco-sdk-node": "^1.4.4",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",

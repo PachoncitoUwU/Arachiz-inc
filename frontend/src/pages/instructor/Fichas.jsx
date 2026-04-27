@@ -9,7 +9,7 @@ import EmptyState from '../../components/EmptyState';
 import EnrollModal from '../../components/EnrollModal';
 import { useToast } from '../../context/ToastContext';
 import {
-  Users, Plus, Copy, Check
+  Users, Plus, Copy, Check, Star
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -87,7 +87,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }
 }
 
 // ─── FichaCard — tarjeta compacta clickeable ─────────────────────────────────
-function FichaCard({ ficha, currentUserId, onViewDetails, color }) {
+function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
   const [copied, setCopied] = useState(false);
   const isAdmin = ficha.instructorAdminId === currentUserId;
 
@@ -113,6 +113,9 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg font-bold text-gray-900">Ficha {ficha.numero}</span>
+            {isPinned && (
+              <Star size={16} fill="currentColor" className="text-yellow-500" />
+            )}
             {isAdmin && <span className="badge badge-info">Admin</span>}
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{ficha.nombre}</p>
@@ -171,10 +174,22 @@ export default function InstructorFichas() {
     try {
       setLoading(true);
       const data = await fetchApi('/fichas/my-fichas');
-      setFichas(data.fichas);
+      
+      // Ordenar fichas: ancladas primero
+      const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user?.id}`) || '[]');
+      const sorted = data.fichas.sort((a, b) => {
+        const aIsPinned = pinnedFichas.includes(a.id);
+        const bIsPinned = pinnedFichas.includes(b.id);
+        
+        if (aIsPinned && !bIsPinned) return -1;
+        if (!aIsPinned && bIsPinned) return 1;
+        return 0;
+      });
+      
+      setFichas(sorted);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, []);
+  }, [user]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -273,15 +288,21 @@ export default function InstructorFichas() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {fichas.map((f, idx) => (
-            <FichaCard 
-              key={f.id} 
-              ficha={f} 
-              currentUserId={user?.id}
-              color={COLORES[idx % COLORES.length]}
-              onViewDetails={handleViewDetails}
-            />
-          ))}
+          {fichas.map((f, idx) => {
+            const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user?.id}`) || '[]');
+            const isPinned = pinnedFichas.includes(f.id);
+            
+            return (
+              <FichaCard 
+                key={f.id} 
+                ficha={f} 
+                currentUserId={user?.id}
+                color={COLORES[idx % COLORES.length]}
+                onViewDetails={handleViewDetails}
+                isPinned={isPinned}
+              />
+            );
+          })}
         </div>
       )}
 

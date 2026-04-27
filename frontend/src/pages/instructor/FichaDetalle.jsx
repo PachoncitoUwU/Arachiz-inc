@@ -10,7 +10,7 @@ import MateriaInfoModal from '../../components/MateriaInfoModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
-  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus
+  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -55,10 +55,21 @@ export default function FichaDetalle() {
   
   // Estados para modales de confirmación
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, data: null });
+  
+  // Estado para fichas ancladas
+  const [isPinned, setIsPinned] = useState(false);
 
   useEffect(() => {
     loadFicha();
   }, [id]);
+  
+  useEffect(() => {
+    // Cargar estado de anclado desde localStorage
+    if (ficha && user) {
+      const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user.id}`) || '[]');
+      setIsPinned(pinnedFichas.includes(ficha.id));
+    }
+  }, [ficha, user]);
 
   const loadFicha = async () => {
     try {
@@ -87,6 +98,24 @@ export default function FichaDetalle() {
     showToast(`Link copiado: ${link}`, 'success');
     setTimeout(() => setCopiedLink(false), 2000);
   };
+  
+  const togglePin = () => {
+    const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user.id}`) || '[]');
+    let newPinnedFichas;
+    
+    if (isPinned) {
+      // Desanclar
+      newPinnedFichas = pinnedFichas.filter(fichaId => fichaId !== ficha.id);
+      showToast('Ficha desanclada', 'success');
+    } else {
+      // Anclar
+      newPinnedFichas = [...pinnedFichas, ficha.id];
+      showToast('Ficha anclada', 'success');
+    }
+    
+    localStorage.setItem(`pinnedFichas_${user.id}`, JSON.stringify(newPinnedFichas));
+    setIsPinned(!isPinned);
+  };
 
   const handleRegenerate = async () => {
     setConfirmModal({
@@ -110,7 +139,7 @@ export default function FichaDetalle() {
     setExporting(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/export/ficha/${id}/asistencia`, {
+      const res = await fetch(`${API_BASE}/api/export/ficha/${id}/info`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -121,10 +150,10 @@ export default function FichaDetalle() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Ficha${ficha.numero}_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `Ficha${ficha.numero}_Info_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Archivo exportado exitosamente', 'success');
+      showToast('Información de ficha exportada exitosamente', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -437,7 +466,20 @@ export default function FichaDetalle() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+              <button
+                onClick={togglePin}
+                className={`p-1.5 rounded-lg transition-all ${
+                  isPinned 
+                    ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' 
+                    : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={isPinned ? 'Desanclar ficha' : 'Anclar ficha'}
+              >
+                <Star size={20} fill={isPinned ? 'currentColor' : 'none'} />
+              </button>
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {ficha.nombre || ficha.nivel}
             </p>
@@ -449,10 +491,10 @@ export default function FichaDetalle() {
             onClick={handleExport} 
             disabled={exporting} 
             className="btn-secondary flex items-center gap-2"
-            title="Exportar asistencia"
+            title="Exportar información completa de la ficha"
           >
             {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
-            Exportar CSV
+            Exportar Info
           </button>
         </div>
       </div>

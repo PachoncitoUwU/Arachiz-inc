@@ -4,8 +4,9 @@ import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
+import Modal from '../../components/Modal';
 import { useToast } from '../../context/ToastContext';
-import { Users, BookOpen } from 'lucide-react';
+import { Users, BookOpen, Plus, Star } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -23,7 +24,7 @@ const COLORES = [
   { border: '#EA4335', bg: 'bg-red-50',    text: 'text-[#EA4335]' },
 ];
 
-function FichaCard({ ficha, color, onViewDetails }) {
+function FichaCard({ ficha, color, onViewDetails, isPinned }) {
   const handleCardClick = () => {
     onViewDetails(ficha.id);
   };
@@ -38,6 +39,9 @@ function FichaCard({ ficha, color, onViewDetails }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg font-bold text-gray-900">Ficha {ficha.numero}</span>
+            {isPinned && (
+              <Star size={16} fill="currentColor" className="text-yellow-500" />
+            )}
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{ficha.nombre}</p>
           <p className="text-xs text-gray-400">{ficha.nivel} · {ficha.centro}</p>
@@ -67,18 +71,34 @@ export default function AprendizFichas() {
   const { showToast } = useToast();
   const [fichas, setFichas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalJoin, setModalJoin] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchApi('/fichas/my-fichas');
-      setFichas(data.fichas);
+      
+      // Ordenar fichas: ancladas primero
+      const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user?.id}`) || '[]');
+      const sorted = data.fichas.sort((a, b) => {
+        const aIsPinned = pinnedFichas.includes(a.id);
+        const bIsPinned = pinnedFichas.includes(b.id);
+        
+        if (aIsPinned && !bIsPinned) return -1;
+        if (!aIsPinned && bIsPinned) return 1;
+        return 0;
+      });
+      
+      setFichas(sorted);
     } catch (err) {
       showToast(err.message || 'Error al cargar fichas', 'error');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, user]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -86,11 +106,36 @@ export default function AprendizFichas() {
     navigate(`/aprendiz/fichas/${fichaId}`);
   };
 
+  const handleJoin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      await fetchApi('/fichas/join', { method: 'POST', body: JSON.stringify({ code: joinCode }) });
+      setModalJoin(false);
+      setJoinCode('');
+      showToast('Te uniste a la ficha exitosamente', 'success');
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <PageHeader
         title="Mis Fichas"
         subtitle="Fichas de formación en las que estás inscrito"
+        action={
+          <button 
+            onClick={() => { setModalJoin(true); setError(''); setJoinCode(''); }} 
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus size={16} /> Unirse a Ficha
+          </button>
+        }
       />
 
       {loading ? (
@@ -109,20 +154,74 @@ export default function AprendizFichas() {
             icon={<Users size={32}/>} 
             title="No estás inscrito en ninguna ficha"
             description="Solicita a tu instructor el código de invitación para unirte a una ficha."
+            action={
+              <button 
+                onClick={() => { setModalJoin(true); setError(''); setJoinCode(''); }} 
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus size={16} /> Unirse a Ficha
+              </button>
+            }
           />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {fichas.map((f, idx) => (
-            <FichaCard 
-              key={f.id} 
-              ficha={f} 
-              color={COLORES[idx % COLORES.length]}
-              onViewDetails={handleViewDetails}
-            />
-          ))}
+          {fichas.map((f, idx) => {
+            const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user?.id}`) || '[]');
+            const isPinned = pinnedFichas.includes(f.id);
+            
+            return (
+              <FichaCard 
+                key={f.id} 
+                ficha={f} 
+                color={COLORES[idx % COLORES.length]}
+                onViewDetails={handleViewDetails}
+                isPinned={isPinned}
+              />
+            );
+          })}
         </div>
       )}
+
+      {/* Modal para unirse a una ficha */}
+      <Modal open={modalJoin} onClose={() => setModalJoin(false)} title="Unirse a una Ficha">
+        <form onSubmit={handleJoin} className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Ingresa el código de invitación que te proporcionó tu instructor.
+          </p>
+          <input 
+            required 
+            className="input-field text-center font-mono text-lg tracking-widest uppercase"
+            placeholder="X7B9K2" 
+            value={joinCode} 
+            onChange={e => setJoinCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            disabled={saving}
+          />
+          <div className="flex gap-3">
+            <button 
+              type="button" 
+              onClick={() => setModalJoin(false)} 
+              className="btn-secondary flex-1"
+              disabled={saving}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              disabled={saving} 
+              className="btn-primary flex-1"
+            >
+              {saving ? 'Uniéndose...' : 'Unirse'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

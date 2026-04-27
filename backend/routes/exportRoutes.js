@@ -8,6 +8,7 @@ router.use(authMiddleware);
 router.use(roleMiddleware(['instructor']));
 
 router.get('/ficha/:fichaId/asistencia', exportController.exportAsistenciaFicha);
+router.get('/ficha/:fichaId/info', exportController.exportFichaInfo);
 router.get('/session/:sessionId/asistencia', exportController.exportSessionAsistencia);
 
 module.exports = router;

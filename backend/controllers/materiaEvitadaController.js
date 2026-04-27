@@ -38,6 +38,31 @@ exports.getMateriasEvitadas = async (req, res) => {
   }
 };
 
+// Obtener materias evitadas del aprendiz autenticado (para vista de aprendiz)
+exports.getMyMateriasEvitadas = async (req, res) => {
+  try {
+    const aprendizId = req.user.id;
+
+    // Obtener todas las materias evitadas del aprendiz
+    const materiasEvitadas = await prisma.materiaEvitada.findMany({
+      where: { aprendizId },
+      include: {
+        materia: {
+          include: {
+            instructor: { select: { fullName: true } },
+            ficha: { select: { numero: true, nombre: true } }
+          }
+        }
+      }
+    });
+
+    res.json({ materiasEvitadas });
+  } catch (error) {
+    console.error('Error al obtener materias evitadas:', error);
+    res.status(500).json({ error: 'Error al obtener materias evitadas' });
+  }
+};
+
 // Actualizar materias evitadas de un aprendiz
 exports.updateMateriasEvitadas = async (req, res) => {
   try {

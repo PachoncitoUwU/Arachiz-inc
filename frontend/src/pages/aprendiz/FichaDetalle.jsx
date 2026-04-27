@@ -5,7 +5,7 @@ import fetchApi from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
 import {
-  ArrowLeft, Users, BookOpen
+  ArrowLeft, Users, BookOpen, Star
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -33,11 +33,22 @@ export default function AprendizFichaDetalle() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState('all');
   const [filterInstructor, setFilterInstructor] = useState('all');
+  
+  // Estado para fichas ancladas
+  const [isPinned, setIsPinned] = useState(false);
 
   useEffect(() => {
     loadFicha();
     loadMateriasEvitadas();
   }, [id]);
+  
+  useEffect(() => {
+    // Cargar estado de anclado desde localStorage
+    if (ficha && user) {
+      const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user.id}`) || '[]');
+      setIsPinned(pinnedFichas.includes(ficha.id));
+    }
+  }, [ficha, user]);
 
   const loadFicha = async () => {
     try {
@@ -69,6 +80,24 @@ export default function AprendizFichaDetalle() {
   const handleCloseMateriaInfo = () => {
     setModalMateriaInfo(false);
     setSelectedMateria(null);
+  };
+  
+  const togglePin = () => {
+    const pinnedFichas = JSON.parse(localStorage.getItem(`pinnedFichas_${user.id}`) || '[]');
+    let newPinnedFichas;
+    
+    if (isPinned) {
+      // Desanclar
+      newPinnedFichas = pinnedFichas.filter(fichaId => fichaId !== ficha.id);
+      showToast('Ficha desanclada', 'success');
+    } else {
+      // Anclar
+      newPinnedFichas = [...pinnedFichas, ficha.id];
+      showToast('Ficha anclada', 'success');
+    }
+    
+    localStorage.setItem(`pinnedFichas_${user.id}`, JSON.stringify(newPinnedFichas));
+    setIsPinned(!isPinned);
   };
 
   if (loading) {
@@ -173,7 +202,20 @@ export default function AprendizFichaDetalle() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+              <button
+                onClick={togglePin}
+                className={`p-1.5 rounded-lg transition-all ${
+                  isPinned 
+                    ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' 
+                    : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={isPinned ? 'Desanclar ficha' : 'Anclar ficha'}
+              >
+                <Star size={20} fill={isPinned ? 'currentColor' : 'none'} />
+              </button>
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {ficha.nombre || ficha.nivel}
             </p>

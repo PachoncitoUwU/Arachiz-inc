@@ -1,4 +1,6 @@
-const prisma = require('../lib/prisma');
+const { PrismaClient } = require('@prisma/client');
+const ExcelJS = require('exceljs');
+const prisma = new PrismaClient();
 
 // Generador para exportar Asistencias de la clase
 function* generarFilasExportacion(ficha) {
@@ -180,4 +182,194 @@ const exportSessionAsistencia = async (req, res) => {
   }
 };
 
-module.exports = { exportAsistenciaFicha, exportSessionAsistencia };
+// GET /api/export/ficha/:fichaId/info
+const exportFichaInfo = async (req, res) => {
+  const { fichaId } = req.params;
+  const instructorId = req.user.id;
+
+  try {
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        instructores: {
+          include: {
+            instructor: { select: { id: true, fullName: true, email: true, document: true } }
+          }
+        },
+        aprendices: {
+          select: { id: true, fullName: true, document: true, email: true },
+          orderBy: { fullName: 'asc' }
+        },
+        materias: {
+          include: {
+            instructor: { select: { fullName: true } }
+          },
+          orderBy: { nombre: 'asc' }
+        },
+        horarios: {
+          include: {
+            materia: { select: { nombre: true } }
+          },
+          orderBy: [{ dia: 'asc' }, { horaInicio: 'asc' }]
+        }
+      }
+    });
+
+    if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
+    if (!ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    // Obtener materias evitadas por cada aprendiz
+    const materiasEvitadasPorAprendiz = {};
+    for (const aprendiz of ficha.aprendices) {
+      const evitadas = await prisma.materiaEvitada.findMany({
+        where: { aprendizId: aprendiz.id },
+        include: { materia: { select: { nombre: true } } }
+      });
+      materiasEvitadasPorAprendiz[aprendiz.id] = evitadas.map(e => e.materia.nombre);
+    }
+
+    const fechaDescarga = new Date().toLocaleString('es-CO', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+
+    // Crear workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Arachiz';
+    workbook.created = new Date();
+
+    // HOJA 1: INFORMACIÓN GENERAL
+    const sheetInfo = workbook.addWorksheet('Información General');
+    sheetInfo.columns = [
+      { header: 'Campo', key: 'campo', width: 25 },
+      { header: 'Valor', key: 'valor', width: 40 }
+    ];
+    sheetInfo.addRows([
+      { campo: 'Fecha de Descarga', valor: fechaDescarga },
+      { campo: 'Número de Ficha', valor: ficha.numero },
+      { campo: 'Nombre del Programa', valor: ficha.nombre || 'N/A' },
+      { campo: 'Nivel', valor: ficha.nivel },
+      { campo: 'Jornada', valor: ficha.jornada },
+      { campo: 'Centro de Formación', valor: ficha.centro },
+      { campo: 'Región', valor: ficha.region || 'N/A' },
+      { campo: 'Duración (meses)', valor: ficha.duracion || 'N/A' }
+    ]);
+    // Estilo para headers
+    sheetInfo.getRow(1).font = { bold: true };
+    sheetInfo.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }
+    };
+
+    // HOJA 2: INSTRUCTORES
+    const sheetInstructores = workbook.addWorksheet('Instructores');
+    sheetInstructores.columns = [
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Documento', key: 'documento', width: 15 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Rol', key: 'rol', width: 15 }
+    ];
+    ficha.instructores.forEach(fi => {
+      sheetInstructores.addRow({
+        nombre: fi.instructor.fullName,
+        documento: fi.instructor.document || 'N/A',
+        email: fi.instructor.email,
+        rol: fi.role === 'admin' ? 'Admin' : 'Instructor'
+      });
+    });
+    sheetInstructores.getRow(1).font = { bold: true };
+    sheetInstructores.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }
+    };
+
+    // HOJA 3: MATERIAS
+    const sheetMaterias = workbook.addWorksheet('Materias');
+    sheetMaterias.columns = [
+      { header: 'Nombre', key: 'nombre', width: 35 },
+      { header: 'Tipo', key: 'tipo', width: 15 },
+      { header: 'Instructor a cargo', key: 'instructor', width: 30 }
+    ];
+    ficha.materias.forEach(materia => {
+      sheetMaterias.addRow({
+        nombre: materia.nombre,
+        tipo: materia.tipo,
+        instructor: materia.instructor?.fullName || 'N/A'
+      });
+    });
+    sheetMaterias.getRow(1).font = { bold: true };
+    sheetMaterias.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }
+    };
+
+    // HOJA 4: APRENDICES
+    const sheetAprendices = workbook.addWorksheet('Aprendices');
+    sheetAprendices.columns = [
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Documento', key: 'documento', width: 15 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Materias Evitadas', key: 'evitadas', width: 40 }
+    ];
+    ficha.aprendices.forEach(aprendiz => {
+      const evitadas = materiasEvitadasPorAprendiz[aprendiz.id] || [];
+      sheetAprendices.addRow({
+        nombre: aprendiz.fullName,
+        documento: aprendiz.document,
+        email: aprendiz.email,
+        evitadas: evitadas.length > 0 ? evitadas.join(', ') : 'Ninguna'
+      });
+    });
+    sheetAprendices.getRow(1).font = { bold: true };
+    sheetAprendices.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }
+    };
+
+    // HOJA 5: HORARIOS
+    const sheetHorarios = workbook.addWorksheet('Horarios');
+    sheetHorarios.columns = [
+      { header: 'Día', key: 'dia', width: 15 },
+      { header: 'Materia', key: 'materia', width: 35 },
+      { header: 'Hora Inicio', key: 'horaInicio', width: 15 },
+      { header: 'Hora Fin', key: 'horaFin', width: 15 }
+    ];
+    ficha.horarios.forEach(horario => {
+      sheetHorarios.addRow({
+        dia: horario.dia,
+        materia: horario.materia?.nombre || 'N/A',
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin
+      });
+    });
+    sheetHorarios.getRow(1).font = { bold: true };
+    sheetHorarios.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }
+    };
+
+    // Generar el archivo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `Ficha${ficha.numero}_Info_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al exportar: ' + err.message });
+  }
+};
+
+module.exports = { exportAsistenciaFicha, exportSessionAsistencia, exportFichaInfo };

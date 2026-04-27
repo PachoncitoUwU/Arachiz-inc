@@ -134,15 +134,41 @@ const getUserMaterias = async (req, res) => {
       });
       return res.json({ materias: misMaterias });
     } else {
-      const miFicha = await prisma.ficha.findFirst({
-        where: { aprendices: { some: { id: userId } } }
+      // Para aprendices: obtener todas las fichas en las que está inscrito
+      const misFichas = await prisma.ficha.findMany({
+        where: { aprendices: { some: { id: userId } } },
+        select: { id: true }
       });
-      if (!miFicha) return res.json({ materias: [] });
+      
+      if (misFichas.length === 0) return res.json({ materias: [] });
+      
+      const fichaIds = misFichas.map(f => f.id);
+      
+      // Obtener materias evitadas por el aprendiz
+      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        where: { aprendizId: userId },
+        select: { materiaId: true }
+      });
+      
+      const materiasEvitadasIds = materiasEvitadas.map(me => me.materiaId);
+      
+      // Obtener materias de todas las fichas, excluyendo las evitadas
       const misMaterias = await prisma.materia.findMany({
-        where: { fichaId: miFicha.id },
+        where: { 
+          fichaId: { in: fichaIds },
+          id: { notIn: materiasEvitadasIds }
+        },
         include: {
           instructor: { select: { fullName: true } },
-          horarios: true
+          horarios: true,
+          asistencias: {
+            include: {
+              registros: {
+                where: { aprendizId: userId },
+                select: { presente: true }
+              }
+            }
+          }
         }
       });
       return res.json({ materias: misMaterias });
