@@ -22,6 +22,7 @@ const skinRoutes   = require('./routes/skinRoutes');
 const materiaEvitadaRoutes = require('./routes/materiaEvitada');
 const qrRoutes     = require('./routes/qrRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
+const hardwareRoutes = require('./routes/hardwareRoutes');
 const SerialService = require('./utils/serialService');
 
 const app = express();
@@ -81,6 +82,7 @@ app.use('/api/skins',  skinRoutes);
 app.use('/api', materiaEvitadaRoutes);
 app.use('/api/qr',     qrRoutes);
 app.use('/api/password', passwordResetRoutes);
+app.use('/api/hardware', hardwareRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);
