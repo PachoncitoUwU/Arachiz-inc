@@ -42,6 +42,7 @@ export default function InstructorExcusas() {
   const [confirmRestaurar, setConfirmRestaurar] = useState(false);
   const [guardandoRespuestas, setGuardandoRespuestas] = useState(false);
   const [confirmSalir, setConfirmSalir] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState('Todas');
@@ -266,6 +267,21 @@ export default function InstructorExcusas() {
     setRespuesta(selected.respuesta || '');
   };
 
+  const handleDeleteExcusa = async () => {
+    try {
+      setSaving(true);
+      await fetchApi(`/excusas/${selected.id}`, { method: 'DELETE' });
+      showToast('Excusa enviada a la papelera', 'success');
+      setSelected(null);
+      setConfirmDelete(false);
+      loadExcusas();
+    } catch (err) {
+      showToast(err.message || 'Error al eliminar excusa', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const limpiarFiltros = () => {
     setFiltroEstado('Todas');
     setFiltroNombre('');
@@ -387,7 +403,7 @@ export default function InstructorExcusas() {
                     </p>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">{excusa.motivo}</p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                      <span>Enviada: {new Date(excusa.createdAt).toLocaleDateString('es-CO')}</span>
+                      <span>Enviada: {excusa.createdAt ? new Date(excusa.createdAt).toLocaleDateString('es-CO') : 'N/A'}</span>
                     </div>
                     {excusa.respuesta && (
                       <div className="mt-2 p-2.5 bg-gray-50 rounded-lg border-l-2 border-[#4285F4]">
@@ -473,7 +489,7 @@ export default function InstructorExcusas() {
 
               {/* Fecha de envío */}
               <div className="text-xs text-gray-400 space-y-0.5 p-2 bg-gray-50 rounded">
-                <p>📅 Enviada: {new Date(selected.createdAt).toLocaleDateString('es-CO')} a las {new Date(selected.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p>📅 Enviada: {selected.createdAt ? `${new Date(selected.createdAt).toLocaleDateString('es-CO')} a las ${new Date(selected.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}` : 'N/A'}</p>
                 {selected.respondedAt && <p>✅ Respondida: {new Date(selected.respondedAt).toLocaleDateString('es-CO')} a las {new Date(selected.respondedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</p>}
               </div>
 
@@ -570,6 +586,13 @@ export default function InstructorExcusas() {
                           <Check size={16}/> Aprobar
                         </button>
                       </div>
+                      <button 
+                        onClick={() => setConfirmDelete(true)} 
+                        disabled={saving}
+                        className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 border-red-200 mt-2"
+                      >
+                        <Trash2 size={16}/> Enviar a Papelera
+                      </button>
                     </>
                   ) : (
                     <button onClick={openEditMode} className="btn-primary w-full flex items-center justify-center gap-2">
@@ -664,6 +687,18 @@ export default function InstructorExcusas() {
         confirmText={confirmAction?.estado === 'Aprobada' ? 'Sí, aprobar' : 'Sí, rechazar'}
         cancelText="Cancelar"
         type={confirmAction?.estado === 'Aprobada' ? 'info' : 'danger'}
+      />
+
+      {/* Confirmación eliminar excusa */}
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDeleteExcusa}
+        title="¿Enviar excusa a papelera?"
+        message="Esta excusa será enviada a la papelera y podrá ser recuperada desde la sección de papelera."
+        confirmText="Enviar a Papelera"
+        cancelText="Cancelar"
+        type="danger"
       />
 
       {/* Modal gestión de respuestas rápidas */}

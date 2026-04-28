@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController');
 
 // =====================================================
 // GESTIÓN DE FICHAS
@@ -555,6 +556,84 @@ const getConflictosDeInstructor = async (req, res) => {
 };
 
 /**
+ * Obtener horarios de un instructor específico (para admin)
+ */
+const getHorariosDeInstructor = async (req, res) => {
+  try {
+    const { instructorId } = req.params;
+
+    // Verificar que el instructor pertenece a alguna ficha del admin
+    const fichasInstructor = await prisma.fichaInstructor.findFirst({
+      where: {
+        instructorId,
+        ficha: {
+          administradorId: req.user.id
+        }
+      }
+    });
+
+    if (!fichasInstructor) {
+      return res.status(403).json({ error: 'No tienes acceso a este instructor' });
+    }
+
+    const horarios = await prisma.horario.findMany({
+      where: {
+        materia: { instructorId }
+      },
+      include: {
+        materia: { 
+          include: { 
+            instructor: { select: { fullName: true } },
+            ficha: { select: { numero: true, nombre: true } }
+          } 
+        }
+      },
+      orderBy: [{ dia: 'asc' }, { horaInicio: 'asc' }]
+    });
+
+    res.json({ horarios });
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo horarios: ' + err.message });
+  }
+};
+
+/**
+ * Obtener materias de un instructor específico (para admin)
+ */
+const getMateriasDeInstructor = async (req, res) => {
+  try {
+    const { instructorId } = req.params;
+
+    // Verificar que el instructor pertenece a alguna ficha del admin
+    const fichasInstructor = await prisma.fichaInstructor.findFirst({
+      where: {
+        instructorId,
+        ficha: {
+          administradorId: req.user.id
+        }
+      }
+    });
+
+    if (!fichasInstructor) {
+      return res.status(403).json({ error: 'No tienes acceso a este instructor' });
+    }
+
+    const materias = await prisma.materia.findMany({
+      where: { instructorId },
+      include: {
+        instructor: { select: { id: true, fullName: true } },
+        ficha: { select: { id: true, numero: true, nombre: true } },
+        _count: { select: { asistencias: true } }
+      }
+    });
+
+    res.json({ materias });
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo materias: ' + err.message });
+  }
+};
+
+/**
  * Crear una nueva ficha (solo administrador)
  */
 const crearFicha = async (req, res) => {
@@ -792,7 +871,7 @@ const actualizarFicha = async (req, res) => {
 };
 
 /**
- * Eliminar un aprendiz de una ficha
+ * Enviar un aprendiz a la papelera (removerlo de una ficha)
  */
 const eliminarAprendizDeFicha = async (req, res) => {
   try {
@@ -823,7 +902,17 @@ const eliminarAprendizDeFicha = async (req, res) => {
 
     const aprendiz = ficha.aprendices[0];
 
-    // Eliminar aprendiz de la ficha
+    // Enviar a papelera antes de eliminar
+    await enviarAPapelera(
+      'aprendiz',
+      aprendizId,
+      fichaId,
+      req.user.id,
+      req.user.userType,
+      `Aprendiz removido de la ficha ${ficha.numero}`
+    );
+
+    // Remover aprendiz de la ficha
     await prisma.ficha.update({
       where: { id: fichaId },
       data: {
@@ -834,20 +923,601 @@ const eliminarAprendizDeFicha = async (req, res) => {
     });
 
     // Registrar en historial
-    await prisma.historialCambios.create({
-      data: {
-        fichaId,
-        usuarioId: req.user.id,
-        tipoEvento: 'eliminar_aprendiz',
-        entidad: 'aprendiz',
-        entidadId: aprendizId,
-        descripcion: `Eliminó al aprendiz ${aprendiz.fullName} de la ficha ${ficha.numero}`
+    await crearHistorialCambio(
+      fichaId,
+      req.user.id,
+      'enviar_papelera',
+      'aprendiz',
+      aprendizId,
+      `Envió al aprendiz ${aprendiz.fullName} a la papelera (removido de ficha ${ficha.numero})`
+    );
+
+    res.json({ message: 'Aprendiz enviado a la papelera exitosamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error enviando aprendiz a papelera: ' + err.message });
+  }
+};
+
+/**
+ * Enviar un instructor a la papelera (removerlo de una ficha)
+ */
+const eliminarInstructorDeFicha = async (req, res) => {
+  try {
+    const { fichaId, instructorId } = req.params;
+
+    // Verificar que la ficha existe y pertenece al admin
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        instructores: {
+          where: { instructorId },
+          include: {
+            instructor: {
+              select: { id: true, fullName: true }
+            }
+          }
+        }
       }
     });
 
-    res.json({ message: 'Aprendiz eliminado de la ficha exitosamente' });
+    if (!ficha) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+
+    if (ficha.administradorId !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permisos sobre esta ficha' });
+    }
+
+    if (ficha.instructores.length === 0) {
+      return res.status(404).json({ error: 'El instructor no pertenece a esta ficha' });
+    }
+
+    // No permitir eliminar al líder de la ficha
+    if (ficha.instructorAdminId === instructorId) {
+      return res.status(400).json({ error: 'No puedes eliminar al líder de la ficha. Primero cambia el líder.' });
+    }
+
+    const instructor = ficha.instructores[0].instructor;
+
+    // Enviar a papelera antes de eliminar
+    await enviarAPapelera(
+      'instructor',
+      instructorId,
+      fichaId,
+      req.user.id,
+      req.user.userType,
+      `Instructor removido de la ficha ${ficha.numero}`
+    );
+
+    // Remover instructor de la ficha
+    await prisma.fichaInstructor.delete({
+      where: {
+        fichaId_instructorId: {
+          fichaId,
+          instructorId
+        }
+      }
+    });
+
+    // Registrar en historial
+    await crearHistorialCambio(
+      fichaId,
+      req.user.id,
+      'enviar_papelera',
+      'instructor',
+      instructorId,
+      `Envió al instructor ${instructor.fullName} a la papelera (removido de ficha ${ficha.numero})`
+    );
+
+    res.json({ message: 'Instructor enviado a la papelera exitosamente' });
   } catch (err) {
-    res.status(500).json({ error: 'Error eliminando aprendiz: ' + err.message });
+    res.status(500).json({ error: 'Error enviando instructor a papelera: ' + err.message });
+  }
+};
+
+/**
+ * Salir de una ficha (cualquier rol)
+ * La ficha se guarda en papelera como "ficha anterior"
+ */
+const salirDeFicha = async (req, res) => {
+  try {
+    const { fichaId } = req.params;
+    const userId = req.user.id;
+    const userType = req.user.userType;
+
+    // Verificar que la ficha existe
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        instructores: true,
+        aprendices: { where: { id: userId }, select: { id: true, fullName: true } }
+      }
+    });
+
+    if (!ficha) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+
+    let userFullName = '';
+    let tipoSalida = '';
+
+    if (userType === 'aprendiz') {
+      // Verificar que el aprendiz está en la ficha
+      if (ficha.aprendices.length === 0) {
+        return res.status(404).json({ error: 'No perteneces a esta ficha' });
+      }
+      
+      userFullName = ficha.aprendices[0].fullName;
+      tipoSalida = 'aprendiz';
+
+      // Enviar a papelera como "ficha anterior"
+      await enviarAPapelera(
+        'ficha_anterior',
+        fichaId,
+        fichaId,
+        userId,
+        userType,
+        `Aprendiz ${userFullName} salió de la ficha ${ficha.numero}`
+      );
+
+      // Remover aprendiz de la ficha
+      await prisma.ficha.update({
+        where: { id: fichaId },
+        data: {
+          aprendices: {
+            disconnect: { id: userId }
+          }
+        }
+      });
+
+    } else if (userType === 'instructor' || userType === 'administrador') {
+      // Verificar que el instructor/admin está en la ficha
+      const fichaInstructor = ficha.instructores.find(fi => fi.instructorId === userId);
+      
+      if (!fichaInstructor && ficha.administradorId !== userId) {
+        return res.status(404).json({ error: 'No perteneces a esta ficha' });
+      }
+
+      // No permitir salir si es el líder de la ficha
+      if (ficha.instructorAdminId === userId) {
+        return res.status(400).json({ error: 'No puedes salir de una ficha donde eres líder. Primero cambia el líder o elimina la ficha.' });
+      }
+
+      // No permitir salir si es el administrador de la ficha
+      if (ficha.administradorId === userId) {
+        return res.status(400).json({ error: 'No puedes salir de una ficha donde eres administrador. Primero transfiere la administración.' });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { fullName: true }
+      });
+
+      userFullName = user.fullName;
+      tipoSalida = userType;
+
+      // Enviar a papelera como "ficha anterior"
+      await enviarAPapelera(
+        'ficha_anterior',
+        fichaId,
+        fichaId,
+        userId,
+        userType,
+        `${userType === 'instructor' ? 'Instructor' : 'Administrador'} ${userFullName} salió de la ficha ${ficha.numero}`
+      );
+
+      // Remover instructor de la ficha
+      if (fichaInstructor) {
+        await prisma.fichaInstructor.delete({
+          where: {
+            fichaId_instructorId: {
+              fichaId,
+              instructorId: userId
+            }
+          }
+        });
+      }
+    }
+
+    // Registrar en historial
+    await crearHistorialCambio(
+      fichaId,
+      userId,
+      'salir_ficha',
+      'ficha_anterior',
+      fichaId,
+      `${tipoSalida === 'aprendiz' ? 'Aprendiz' : tipoSalida === 'instructor' ? 'Instructor' : 'Administrador'} ${userFullName} salió de la ficha ${ficha.numero}`
+    );
+
+    res.json({ message: 'Has salido de la ficha exitosamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error saliendo de la ficha: ' + err.message });
+  }
+};
+
+/**
+ * Eliminar ficha completa (solo administrador)
+ */
+const eliminarFicha = async (req, res) => {
+  try {
+    const { fichaId } = req.params;
+    const userId = req.user.id;
+
+    // Verificar que la ficha existe y pertenece al admin
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        _count: {
+          select: {
+            aprendices: true,
+            instructores: true,
+            materias: true,
+            horarios: true
+          }
+        }
+      }
+    });
+
+    if (!ficha) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+
+    if (ficha.administradorId !== userId) {
+      return res.status(403).json({ error: 'Solo el administrador puede eliminar la ficha' });
+    }
+
+    // Enviar a papelera antes de eliminar
+    await enviarAPapelera(
+      'ficha',
+      fichaId,
+      fichaId,
+      userId,
+      'administrador',
+      `Ficha ${ficha.numero} eliminada con ${ficha._count.aprendices} aprendices, ${ficha._count.instructores} instructores, ${ficha._count.materias} materias`
+    );
+
+    // Eliminar ficha (esto eliminará en cascada todo lo relacionado)
+    await prisma.ficha.delete({
+      where: { id: fichaId }
+    });
+
+    // Registrar en historial (aunque la ficha ya no existe, se guarda en papelera)
+    await crearHistorialCambio(
+      fichaId,
+      userId,
+      'eliminar_ficha',
+      'ficha',
+      fichaId,
+      `Eliminó la ficha ${ficha.numero} permanentemente`
+    );
+
+    res.json({ message: 'Ficha eliminada exitosamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error eliminando ficha: ' + err.message });
+  }
+};
+const getExcusasAdmin = async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const { 
+      estado, 
+      fichaId, 
+      materiaId, 
+      instructorId, 
+      aprendizId,
+      fechaDesde,
+      fechaHasta,
+      fechaJustificadaDesde,
+      fechaJustificadaHasta
+    } = req.query;
+
+    // Obtener todas las fichas del admin
+    const fichasAdmin = await prisma.ficha.findMany({
+      where: { administradorId: adminId },
+      select: { id: true }
+    });
+
+    const fichasIds = fichasAdmin.map(f => f.id);
+
+    if (fichasIds.length === 0) {
+      return res.json({ excusas: [] });
+    }
+
+    // Construir filtros
+    const where = {
+      materia: {
+        fichaId: { in: fichasIds }
+      }
+    };
+
+    // Filtro por estado
+    if (estado && estado !== 'Todas') {
+      where.estado = estado;
+    }
+
+    // Filtro por ficha
+    if (fichaId && fichaId !== 'all') {
+      where.materia.fichaId = fichaId;
+    }
+
+    // Filtro por materia
+    if (materiaId && materiaId !== 'all') {
+      where.materiaId = materiaId;
+    }
+
+    // Filtro por instructor
+    if (instructorId && instructorId !== 'all') {
+      where.materia.instructorId = instructorId;
+    }
+
+    // Filtro por aprendiz
+    if (aprendizId && aprendizId !== 'all') {
+      where.aprendizId = aprendizId;
+    }
+
+    // Filtro por fecha de envío
+    if (fechaDesde || fechaHasta) {
+      where.createdAt = {};
+      if (fechaDesde) where.createdAt.gte = new Date(fechaDesde);
+      if (fechaHasta) {
+        const hasta = new Date(fechaHasta);
+        hasta.setHours(23, 59, 59, 999);
+        where.createdAt.lte = hasta;
+      }
+    }
+
+    // Obtener excusas
+    const excusas = await prisma.excusa.findMany({
+      where,
+      include: {
+        aprendiz: {
+          select: { 
+            id: true,
+            fullName: true, 
+            document: true,
+            avatarUrl: true 
+          }
+        },
+        materia: {
+          select: {
+            id: true,
+            nombre: true,
+            instructor: {
+              select: {
+                id: true,
+                fullName: true
+              }
+            },
+            ficha: { 
+              select: { 
+                id: true,
+                numero: true, 
+                nombre: true 
+              } 
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Filtrar por fechas justificadas si es necesario
+    let excusasFiltradas = excusas;
+    if (fechaJustificadaDesde || fechaJustificadaHasta) {
+      excusasFiltradas = excusas.filter(excusa => {
+        try {
+          const fechas = JSON.parse(excusa.fechas);
+          return fechas.some(fecha => {
+            const fechaDate = new Date(fecha);
+            if (fechaJustificadaDesde && fechaDate < new Date(fechaJustificadaDesde)) return false;
+            if (fechaJustificadaHasta && fechaDate > new Date(fechaJustificadaHasta)) return false;
+            return true;
+          });
+        } catch {
+          return false;
+        }
+      });
+    }
+
+    res.json({ excusas: excusasFiltradas });
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo excusas: ' + err.message });
+  }
+};
+
+/**
+ * Obtener estadísticas de excusas
+ */
+const getEstadisticasExcusas = async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const { fichaId, aprendizId, instructorId, materiaId } = req.query;
+
+    // Obtener todas las fichas del admin
+    const fichasAdmin = await prisma.ficha.findMany({
+      where: { administradorId: adminId },
+      select: { id: true }
+    });
+
+    const fichasIds = fichasAdmin.map(f => f.id);
+
+    if (fichasIds.length === 0) {
+      return res.json({ 
+        total: 0,
+        pendientes: 0,
+        aprobadas: 0,
+        rechazadas: 0,
+        porcentajeAprobacion: 0,
+        porcentajeRechazo: 0,
+        topAprendices: [],
+        topMaterias: [],
+        topInstructores: [],
+        excusasPorMes: []
+      });
+    }
+
+    // Construir filtros base
+    const where = {
+      materia: {
+        fichaId: { in: fichasIds }
+      }
+    };
+
+    // Aplicar filtros específicos
+    if (fichaId && fichaId !== 'all') {
+      where.materia.fichaId = fichaId;
+    }
+
+    if (aprendizId && aprendizId !== 'all') {
+      where.aprendizId = aprendizId;
+    }
+
+    if (instructorId && instructorId !== 'all') {
+      where.materia.instructorId = instructorId;
+    }
+
+    if (materiaId && materiaId !== 'all') {
+      where.materiaId = materiaId;
+    }
+
+    // Obtener todas las excusas con filtros
+    const excusas = await prisma.excusa.findMany({
+      where,
+      include: {
+        aprendiz: {
+          select: { id: true, fullName: true }
+        },
+        materia: {
+          select: {
+            id: true,
+            nombre: true,
+            instructor: {
+              select: { id: true, fullName: true }
+            }
+          }
+        }
+      }
+    });
+
+    // Calcular estadísticas generales
+    const total = excusas.length;
+    const pendientes = excusas.filter(e => e.estado === 'Pendiente').length;
+    const aprobadas = excusas.filter(e => e.estado === 'Aprobada').length;
+    const rechazadas = excusas.filter(e => e.estado === 'Rechazada').length;
+    
+    const totalRespondidas = aprobadas + rechazadas;
+    const porcentajeAprobacion = totalRespondidas > 0 ? ((aprobadas / totalRespondidas) * 100).toFixed(1) : 0;
+    const porcentajeRechazo = totalRespondidas > 0 ? ((rechazadas / totalRespondidas) * 100).toFixed(1) : 0;
+
+    // Top 5 aprendices con más excusas
+    const aprendicesMap = {};
+    excusas.forEach(e => {
+      const key = e.aprendiz.id;
+      if (!aprendicesMap[key]) {
+        aprendicesMap[key] = {
+          id: e.aprendiz.id,
+          nombre: e.aprendiz.fullName,
+          total: 0,
+          aprobadas: 0,
+          rechazadas: 0,
+          pendientes: 0
+        };
+      }
+      aprendicesMap[key].total++;
+      if (e.estado === 'Aprobada') aprendicesMap[key].aprobadas++;
+      if (e.estado === 'Rechazada') aprendicesMap[key].rechazadas++;
+      if (e.estado === 'Pendiente') aprendicesMap[key].pendientes++;
+    });
+
+    const topAprendices = Object.values(aprendicesMap)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // Top 5 materias con más excusas
+    const materiasMap = {};
+    excusas.forEach(e => {
+      const key = e.materia.id;
+      if (!materiasMap[key]) {
+        materiasMap[key] = {
+          id: e.materia.id,
+          nombre: e.materia.nombre,
+          total: 0,
+          aprobadas: 0,
+          rechazadas: 0,
+          pendientes: 0
+        };
+      }
+      materiasMap[key].total++;
+      if (e.estado === 'Aprobada') materiasMap[key].aprobadas++;
+      if (e.estado === 'Rechazada') materiasMap[key].rechazadas++;
+      if (e.estado === 'Pendiente') materiasMap[key].pendientes++;
+    });
+
+    const topMaterias = Object.values(materiasMap)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // Top 5 instructores con más excusas recibidas
+    const instructoresMap = {};
+    excusas.forEach(e => {
+      const key = e.materia.instructor.id;
+      if (!instructoresMap[key]) {
+        instructoresMap[key] = {
+          id: e.materia.instructor.id,
+          nombre: e.materia.instructor.fullName,
+          total: 0,
+          aprobadas: 0,
+          rechazadas: 0,
+          pendientes: 0
+        };
+      }
+      instructoresMap[key].total++;
+      if (e.estado === 'Aprobada') instructoresMap[key].aprobadas++;
+      if (e.estado === 'Rechazada') instructoresMap[key].rechazadas++;
+      if (e.estado === 'Pendiente') instructoresMap[key].pendientes++;
+    });
+
+    const topInstructores = Object.values(instructoresMap)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // Excusas por mes (últimos 6 meses)
+    const excusasPorMes = [];
+    const hoy = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const mesNombre = fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+      const inicioMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+      const finMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0, 23, 59, 59);
+
+      const excusasMes = excusas.filter(e => {
+        const fechaExcusa = new Date(e.createdAt);
+        return fechaExcusa >= inicioMes && fechaExcusa <= finMes;
+      });
+
+      excusasPorMes.push({
+        mes: mesNombre,
+        total: excusasMes.length,
+        aprobadas: excusasMes.filter(e => e.estado === 'Aprobada').length,
+        rechazadas: excusasMes.filter(e => e.estado === 'Rechazada').length,
+        pendientes: excusasMes.filter(e => e.estado === 'Pendiente').length
+      });
+    }
+
+    res.json({
+      total,
+      pendientes,
+      aprobadas,
+      rechazadas,
+      porcentajeAprobacion: parseFloat(porcentajeAprobacion),
+      porcentajeRechazo: parseFloat(porcentajeRechazo),
+      topAprendices,
+      topMaterias,
+      topInstructores,
+      excusasPorMes
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo estadísticas: ' + err.message });
   }
 };
 
@@ -858,12 +1528,19 @@ module.exports = {
   unirseAFicha,
   regenerarCodigoFicha,
   actualizarFicha,
+  eliminarFicha,
   eliminarAprendizDeFicha,
+  eliminarInstructorDeFicha,
+  salirDeFicha,
   cambiarLiderFicha,
   cambiarInstructorMateria,
   getInstructores,
   getAprendices,
   getFichasDeAprendiz,
   getFichasDeInstructor,
-  getConflictosDeInstructor
+  getConflictosDeInstructor,
+  getHorariosDeInstructor,
+  getMateriasDeInstructor,
+  getExcusasAdmin,
+  getEstadisticasExcusas
 };

@@ -13,7 +13,11 @@ const fetchApi = async (endpoint, options = {}) => {
   const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
   const data = await response.json();
 
-  if (!response.ok) throw new Error(data.error || 'Error en la solicitud');
+  // Si es 401, no cerrar sesión automáticamente, solo lanzar el error
+  if (!response.ok) {
+    throw new Error(data.error || 'Error en la solicitud');
+  }
+  
   return data;
 };
 

@@ -215,7 +215,7 @@ export default function AprendizPerfilModal({
                 className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
               >
                 <UserMinus size={16} />
-                Eliminar aprendiz de esta ficha
+                Enviar aprendiz a papelera
               </button>
             </div>
           )}

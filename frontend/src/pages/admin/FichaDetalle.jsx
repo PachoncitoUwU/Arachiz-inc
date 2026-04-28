@@ -81,8 +81,12 @@ export default function FichaDetalle() {
       const data = await fetchApi(`/admin/fichas/${id}`);
       setFicha(data.ficha);
     } catch (err) {
+      console.error('Error cargando ficha:', err);
       showToast(err.message || 'Error al cargar la ficha', 'error');
-      navigate('/admin/fichas');
+      // Solo navegar si no es un error de red temporal
+      if (err.message && !err.message.includes('Failed to fetch')) {
+        setTimeout(() => navigate('/admin/fichas'), 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -176,8 +180,47 @@ export default function FichaDetalle() {
   const confirmRemoveAprendiz = async () => {
     try {
       await fetchApi(`/admin/fichas/${id}/aprendices/${confirmModal.data}`, { method: 'DELETE' });
-      showToast('Aprendiz eliminado', 'success');
-      loadFicha();
+      showToast('Aprendiz enviado a la papelera', 'success');
+      setModalPerfil(false); // Cerrar modal de perfil
+      loadFicha(); // Recargar vista
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleRemoveInstructor = async (instructorId, instructorName) => {
+    setConfirmModal({
+      isOpen: true,
+      action: 'removeInstructor',
+      data: { instructorId, instructorName }
+    });
+  };
+
+  const confirmRemoveInstructor = async () => {
+    try {
+      await fetchApi(`/admin/fichas/${id}/instructores/${confirmModal.data.instructorId}`, { method: 'DELETE' });
+      showToast('Instructor enviado a la papelera', 'success');
+      loadFicha(); // Recargar vista
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const confirmSalirFicha = async () => {
+    try {
+      await fetchApi(`/admin/fichas/${id}/salir`, { method: 'POST' });
+      showToast('Has salido de la ficha exitosamente', 'success');
+      setTimeout(() => navigate('/admin/fichas'), 1500);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const confirmEliminarFicha = async () => {
+    try {
+      await fetchApi(`/admin/fichas/${id}`, { method: 'DELETE' });
+      showToast('Ficha eliminada exitosamente', 'success');
+      setTimeout(() => navigate('/admin/fichas'), 1500);
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -529,6 +572,24 @@ export default function FichaDetalle() {
         </div>
         
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button 
+              onClick={() => setConfirmModal({ isOpen: true, action: 'eliminarFicha', data: null })}
+              className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+              title="Eliminar ficha permanentemente"
+            >
+              <UserMinus size={16} />
+              Eliminar Ficha
+            </button>
+          )}
+          <button 
+            onClick={() => setConfirmModal({ isOpen: true, action: 'salirFicha', data: null })}
+            className="btn-secondary flex items-center gap-2"
+            title="Salir de esta ficha"
+          >
+            <ArrowLeft size={16} />
+            Salir de Ficha
+          </button>
           <button 
             onClick={handleExport} 
             disabled={exporting} 
@@ -952,31 +1013,47 @@ export default function FichaDetalle() {
                 return (
                   <div 
                     key={fi.id} 
-                    onClick={() => handleOpenInstructorPerfil(fi.instructor)}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
                   >
-                    {avatarSrc ? (
-                      <img 
-                        src={avatarSrc} 
-                        className="w-10 h-10 rounded-xl object-cover" 
-                        alt={fi.instructor.fullName} 
-                      />
-                    ) : (
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-                        style={{ backgroundColor: COLOR }}
-                      >
-                        {fi.instructor.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                    <div 
+                      onClick={() => handleOpenInstructorPerfil(fi.instructor)}
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                    >
+                      {avatarSrc ? (
+                        <img 
+                          src={avatarSrc} 
+                          className="w-10 h-10 rounded-xl object-cover" 
+                          alt={fi.instructor.fullName} 
+                        />
+                      ) : (
+                        <div 
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
+                          style={{ backgroundColor: COLOR }}
+                        >
+                          {fi.instructor.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {fi.instructor.fullName}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">{fi.instructor.email}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {fi.instructor.fullName}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">{fi.instructor.email}</p>
+                      {isLider && (
+                        <span className="badge badge-info shrink-0 text-xs">Líder</span>
+                      )}
                     </div>
-                    {isLider && (
-                      <span className="badge badge-info shrink-0 text-xs">Líder</span>
+                    {!isLider && isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveInstructor(fi.instructorId, fi.instructor.fullName);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity btn-icon text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        title="Enviar a papelera"
+                      >
+                        <UserMinus size={16} />
+                      </button>
                     )}
                   </div>
                 );
@@ -1294,17 +1371,26 @@ export default function FichaDetalle() {
         onConfirm={() => {
           if (confirmModal.action === 'regenerate') confirmRegenerate();
           else if (confirmModal.action === 'removeAprendiz') confirmRemoveAprendiz();
+          else if (confirmModal.action === 'removeInstructor') confirmRemoveInstructor();
+          else if (confirmModal.action === 'salirFicha') confirmSalirFicha();
+          else if (confirmModal.action === 'eliminarFicha') confirmEliminarFicha();
           else if (confirmModal.action === 'designarLider') confirmDesignarLider();
         }}
         title={
           confirmModal.action === 'regenerate' ? '¿Regenerar código?' :
-          confirmModal.action === 'removeAprendiz' ? '¿Eliminar aprendiz?' :
+          confirmModal.action === 'removeAprendiz' ? '¿Enviar aprendiz a papelera?' :
+          confirmModal.action === 'removeInstructor' ? '¿Enviar instructor a papelera?' :
+          confirmModal.action === 'salirFicha' ? '¿Salir de esta ficha?' :
+          confirmModal.action === 'eliminarFicha' ? '¿Eliminar ficha permanentemente?' :
           confirmModal.action === 'designarLider' ? '¿Designar como Líder?' :
           '¿Estás seguro?'
         }
         message={
           confirmModal.action === 'regenerate' ? 'El código anterior dejará de funcionar.' :
-          confirmModal.action === 'removeAprendiz' ? '¿Eliminar este aprendiz de la ficha?' :
+          confirmModal.action === 'removeAprendiz' ? '¿Enviar este aprendiz a la papelera? Podrá ser recuperado desde la sección de papelera.' :
+          confirmModal.action === 'removeInstructor' ? `¿Enviar a ${confirmModal.data?.instructorName} a la papelera? Será removido de esta ficha y podrá ser recuperado desde la sección de papelera.` :
+          confirmModal.action === 'salirFicha' ? 'Serás removido de esta ficha y podrás verla en "Fichas Anteriores" en la papelera.' :
+          confirmModal.action === 'eliminarFicha' ? 'Esta acción eliminará permanentemente la ficha y todos sus datos asociados. Esta acción NO se puede deshacer.' :
           confirmModal.action === 'designarLider' ? 'El líder actual perderá sus permisos y este instructor será el nuevo líder de la ficha.' :
           'Esta acción no se puede deshacer.'
         }

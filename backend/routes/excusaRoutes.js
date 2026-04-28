@@ -6,6 +6,7 @@ const {
   getExcusasInstructor,
   updateExcusaEstado,
   updateExcusa,
+  deleteExcusa,
   getMateriasConHorarios
 } = require('../controllers/excusaController');
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -23,5 +24,8 @@ router.put('/:id', roleMiddleware(['aprendiz']), upload.array('archivos', 10), u
 // Rutas de instructor
 router.get('/', roleMiddleware(['instructor']), getExcusasInstructor);
 router.put('/:id/estado', roleMiddleware(['instructor']), updateExcusaEstado);
+
+// Ruta de eliminar (instructor y administrador)
+router.delete('/:id', roleMiddleware(['instructor', 'administrador']), deleteExcusa);
 
 module.exports = router;

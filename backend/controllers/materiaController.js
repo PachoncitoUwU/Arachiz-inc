@@ -1,18 +1,53 @@
 const prisma = require('../lib/prisma');
+const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController');
 
 // RF06 - Crear materia
 const createMateria = async (req, res) => {
-  const { fichaId, nombre, tipo } = req.body;
-  const instructorId = req.user.id;
+  const { fichaId, nombre, tipo, instructorId: bodyInstructorId } = req.body;
+  const userId = req.user.id;
+  const userType = req.user.userType;
+  
   if (!fichaId || !nombre) return res.status(400).json({ error: 'Faltan datos' });
+  
   try {
     const ficha = await prisma.ficha.findUnique({
       where: { id: fichaId },
       include: { instructores: true }
     });
-    if (!ficha || !ficha.instructores.some(i => i.instructorId === instructorId)) {
-      return res.status(403).json({ error: 'No tienes permiso para agregar materias a esta ficha' });
+    
+    if (!ficha) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
     }
+    
+    let instructorId;
+    
+    // Determinar el instructor según el tipo de usuario
+    if (userType === 'instructor') {
+      // El instructor crea la materia para sí mismo
+      if (!ficha.instructores.some(i => i.instructorId === userId)) {
+        return res.status(403).json({ error: 'No tienes permiso para agregar materias a esta ficha' });
+      }
+      instructorId = userId;
+    } else if (userType === 'administrador') {
+      // El admin debe especificar el instructor
+      if (ficha.administradorId !== userId) {
+        return res.status(403).json({ error: 'No tienes permiso sobre esta ficha' });
+      }
+      
+      if (!bodyInstructorId) {
+        return res.status(400).json({ error: 'Debes especificar el instructor a cargo' });
+      }
+      
+      // Verificar que el instructor pertenece a la ficha
+      if (!ficha.instructores.some(i => i.instructorId === bodyInstructorId)) {
+        return res.status(400).json({ error: 'El instructor no pertenece a esta ficha' });
+      }
+      
+      instructorId = bodyInstructorId;
+    } else {
+      return res.status(403).json({ error: 'No tienes permiso' });
+    }
+    
     const newMateria = await prisma.materia.create({
       data: {
         nombre,
@@ -20,33 +55,70 @@ const createMateria = async (req, res) => {
         ficha: { connect: { id: fichaId } },
         instructor: { connect: { id: instructorId } }
       },
-      include: { instructor: { select: { fullName: true } }, ficha: { select: { numero: true } } }
+      include: { 
+        instructor: { select: { id: true, fullName: true } }, 
+        ficha: { select: { id: true, numero: true, nombre: true } } 
+      }
     });
+    
     res.status(201).json({ message: 'Materia creada', materia: newMateria });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear materia: ' + err.message });
   }
 };
 
-// RF70 - Eliminar materia
+// RF70 - Enviar materia a papelera
 const deleteMateria = async (req, res) => {
   const { id } = req.params;
-  const instructorId = req.user.id;
+  const userId = req.user.id;
+  const userType = req.user.userType;
+  
   try {
     const materia = await prisma.materia.findUnique({
       where: { id },
-      include: { ficha: true }
+      include: { 
+        ficha: true,
+        instructor: { select: { fullName: true } }
+      }
     });
+    
     if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
-    const isLider = materia.ficha.instructorAdminId === instructorId;
-    const isCreator = materia.instructorId === instructorId;
-    if (!isLider && !isCreator) {
-      return res.status(403).json({ error: 'Solo el creador o admin puede eliminar esta materia' });
+    
+    // Verificar permisos
+    const isLider = materia.ficha.instructorAdminId === userId;
+    const isCreator = materia.instructorId === userId;
+    const isAdmin = userType === 'administrador' && materia.ficha.administradorId === userId;
+    
+    if (!isLider && !isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar esta materia' });
     }
+    
+    // Enviar a papelera antes de eliminar
+    await enviarAPapelera(
+      'materia',
+      id,
+      materia.fichaId,
+      userId,
+      userType,
+      `Materia ${materia.nombre} eliminada por ${userType}`
+    );
+    
+    // Eliminar materia
     await prisma.materia.delete({ where: { id } });
-    res.json({ message: 'Materia eliminada' });
+    
+    // Registrar en historial
+    await crearHistorialCambio(
+      materia.fichaId,
+      userId,
+      'enviar_papelera',
+      'materia',
+      id,
+      `Envió la materia ${materia.nombre} a la papelera`
+    );
+    
+    res.json({ message: 'Materia enviada a la papelera exitosamente' });
   } catch (err) {
-    res.status(500).json({ error: 'Error al eliminar materia: ' + err.message });
+    res.status(500).json({ error: 'Error al enviar materia a papelera: ' + err.message });
   }
 };
 
@@ -54,7 +126,8 @@ const deleteMateria = async (req, res) => {
 const updateMateria = async (req, res) => {
   const { id } = req.params;
   const { nombre, tipo } = req.body;
-  const instructorId = req.user.id;
+  const userId = req.user.id;
+  const userType = req.user.userType;
   
   if (!nombre || !tipo) {
     return res.status(400).json({ error: 'Nombre y tipo son obligatorios' });
@@ -70,11 +143,13 @@ const updateMateria = async (req, res) => {
       return res.status(404).json({ error: 'Materia no encontrada' });
     }
     
-    const isLider = materia.ficha.instructorAdminId === instructorId;
-    const isCreator = materia.instructorId === instructorId;
+    // Verificar permisos
+    const isLider = materia.ficha.instructorAdminId === userId;
+    const isCreator = materia.instructorId === userId;
+    const isAdmin = userType === 'administrador' && materia.ficha.administradorId === userId;
     
-    if (!isLider && !isCreator) {
-      return res.status(403).json({ error: 'Solo el creador o líder puede editar esta materia' });
+    if (!isLider && !isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No tienes permiso para editar esta materia' });
     }
     
     const updatedMateria = await prisma.materia.update({

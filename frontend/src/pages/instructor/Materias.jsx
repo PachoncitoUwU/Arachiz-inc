@@ -68,7 +68,7 @@ export default function InstructorMaterias() {
   const confirmDelete = async () => {
     try {
       await fetchApi(`/materias/${confirmModal.materiaId}`, { method: 'DELETE' });
-      showToast('Materia eliminada', 'success');
+      showToast('Materia enviada a la papelera', 'success');
       setInfoModalOpen(false);
       setSelectedMateria(null);
       load();
@@ -225,9 +225,9 @@ export default function InstructorMaterias() {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false, materiaId: null })}
         onConfirm={confirmDelete}
-        title="¿Eliminar materia?"
-        message="¿Eliminar esta materia? Se eliminarán también sus sesiones de asistencia."
-        confirmText="Eliminar"
+        title="¿Enviar materia a papelera?"
+        message="¿Enviar esta materia a la papelera? Podrá ser recuperada desde la sección de papelera."
+        confirmText="Enviar a Papelera"
         cancelText="Cancelar"
         variant="danger"
       />

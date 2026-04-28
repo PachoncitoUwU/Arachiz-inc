@@ -10,7 +10,7 @@ import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { Calendar, Plus, Trash2, Clock, Edit2, GripVertical, CheckCircle2, Check } from 'lucide-react';
+import { Calendar, Plus, Trash2, Clock, Edit2, GripVertical, CheckCircle2, Check, AlertTriangle } from 'lucide-react';
 import ConflictosAlert from '../../components/ConflictosAlert';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -130,7 +130,7 @@ function HorarioBloque({ horario, onEdit, isDragging, color, modoEditar, modoEli
 }
 
 // ─── Columna droppable ────────────────────────────────────────────────────────
-function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, horariosSeleccionados, onToggleSelect }) {
+function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, horariosSeleccionados, onToggleSelect, tieneConflicto }) {
   const { setNodeRef, isOver } = useDroppable({ id: dia });
 
   return (
@@ -138,11 +138,15 @@ function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, h
       ref={setNodeRef}
       className={`card dark:bg-gray-900 dark:border-gray-800 transition-all min-h-[160px] ${
         isOver ? 'ring-2 ring-[#4285F4] ring-offset-1 bg-blue-50/50 dark:bg-blue-900/10' : ''
-      }`}
+      } ${tieneConflicto ? 'border-2 border-red-400 dark:border-red-600' : ''}`}
     >
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
-        <div className="w-7 h-7 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-          <Calendar size={14} className="text-[#4285F4]" />
+        <div className={`w-7 h-7 ${tieneConflicto ? 'bg-red-100 dark:bg-red-900/40' : 'bg-blue-50 dark:bg-blue-900/30'} rounded-lg flex items-center justify-center`}>
+          {tieneConflicto ? (
+            <AlertTriangle size={14} className="text-red-500" />
+          ) : (
+            <Calendar size={14} className="text-[#4285F4]" />
+          )}
         </div>
         <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{dia}</span>
         <span className="ml-auto badge badge-gray">{clases.length}</span>
@@ -197,6 +201,8 @@ export default function InstructorHorario() {
   const [modoEliminar, setModoEliminar] = useState(false);
   const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, count: 0 });
+  const [conflictos, setConflictos] = useState([]);
+  const [diasConConflicto, setDiasConConflicto] = useState([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -204,7 +210,27 @@ export default function InstructorHorario() {
 
   useEffect(() => {
     loadData();
+    loadConflictos();
   }, []);
+
+  const loadConflictos = async () => {
+    try {
+      const data = await fetchApi('/horarios/conflictos');
+      const conflictosData = data.conflictos || [];
+      setConflictos(conflictosData);
+      // Extraer días con conflictos
+      const dias = [...new Set(conflictosData.map(c => c.dia))];
+      setDiasConConflicto(dias);
+    } catch (err) {
+      console.error('Error cargando conflictos:', err);
+    }
+  };
+
+  const handleConflictoDismissed = (conflictosActuales) => {
+    // Mantener los días con conflictos aunque se cierre la alerta
+    const dias = [...new Set(conflictosActuales.map(c => c.dia))];
+    setDiasConConflicto(dias);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -247,7 +273,7 @@ export default function InstructorHorario() {
 
   const handleEliminarSeleccionados = async () => {
     if (horariosSeleccionados.length === 0) {
-      showToast('Selecciona al menos una clase para eliminar', 'error');
+      showToast('Selecciona al menos una clase para enviar a papelera', 'error');
       return;
     }
 
@@ -262,7 +288,7 @@ export default function InstructorHorario() {
       setHorarios(prev => prev.filter(h => !horariosSeleccionados.includes(h.id)));
       setHorariosSeleccionados([]);
       setModoEliminar(false);
-      showToast(`${confirmModal.count} clase(s) eliminada(s)`, 'success');
+      showToast(`${confirmModal.count} clase(s) enviada(s) a la papelera`, 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -409,7 +435,7 @@ export default function InstructorHorario() {
       />
 
       {/* Alerta de conflictos */}
-      <ConflictosAlert userType={user?.userType} />
+      <ConflictosAlert userType={user?.userType} onDismiss={handleConflictoDismissed} />
 
       {/* Botones de modo */}
       {!loading && materias.length > 0 && horarios.length > 0 && (
@@ -442,7 +468,7 @@ export default function InstructorHorario() {
             }`}
           >
             <Trash2 size={16} />
-            {modoEliminar ? 'Cancelar' : 'Eliminar Clases'}
+            {modoEliminar ? 'Cancelar' : 'Enviar a Papelera'}
           </button>
 
           {modoEliminar && horariosSeleccionados.length > 0 && (
@@ -451,7 +477,7 @@ export default function InstructorHorario() {
               className="btn-primary bg-red-500 hover:bg-red-600 flex items-center gap-2"
             >
               <Trash2 size={16} />
-              Eliminar ({horariosSeleccionados.length})
+              Enviar a Papelera ({horariosSeleccionados.length})
             </button>
           )}
 
@@ -534,6 +560,7 @@ export default function InstructorHorario() {
                 modoEliminar={modoEliminar}
                 horariosSeleccionados={horariosSeleccionados}
                 onToggleSelect={toggleSeleccionHorario}
+                tieneConflicto={diasConConflicto.includes(dia)}
               />
             ))}
           </div>
@@ -668,8 +695,8 @@ export default function InstructorHorario() {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false, count: 0 })}
         onConfirm={confirmEliminarSeleccionados}
-        title="¿Eliminar clases?"
-        message={`¿Eliminar ${confirmModal.count} clase(s) del horario?`}
+        title="¿Enviar clases a papelera?"
+        message={`¿Enviar ${confirmModal.count} clase(s) a la papelera? Podrán ser recuperadas desde la sección de papelera.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

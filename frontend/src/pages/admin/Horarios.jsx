@@ -3,8 +3,9 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { useToast } from '../../context/ToastContext';
-import { Calendar, Clock, Edit2, AlertTriangle, Search, Users, BookOpen } from 'lucide-react';
+import { Calendar, Clock, Edit2, AlertTriangle, Search, Users, BookOpen, Plus, Trash2, Check, X } from 'lucide-react';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -53,6 +54,34 @@ export default function AdminHorarios() {
   const [formEdit, setFormEdit] = useState({ id: '', dia: 'Lunes', horaInicio: '08:00', horaFin: '10:00', materiaId: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  
+  // Estados para eliminar
+  const [modoEliminar, setModoEliminar] = useState(false);
+  const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
+  const [confirmEliminar, setConfirmEliminar] = useState({ isOpen: false, count: 0 });
+  
+  // Estados para crear materia
+  const [modalCrearMateria, setModalCrearMateria] = useState(false);
+  const [formCrearMateria, setFormCrearMateria] = useState({
+    nombre: '',
+    tipo: 'Técnica',
+    instructorId: '',
+    fichaId: '',
+    dia: 'Lunes',
+    horaInicio: '',
+    horaFin: ''
+  });
+  const [confirmDescartarCrear, setConfirmDescartarCrear] = useState(false);
+  
+  // Estados para agregar materia existente
+  const [modalAgregarMateria, setModalAgregarMateria] = useState(false);
+  const [formAgregarMateria, setFormAgregarMateria] = useState({
+    materiaId: '',
+    dia: 'Lunes',
+    horaInicio: '',
+    horaFin: ''
+  });
+  const [confirmDescartarAgregar, setConfirmDescartarAgregar] = useState(false);
   
   // Estados para conflictos
   const [conflictos, setConflictos] = useState([]);
@@ -122,15 +151,13 @@ export default function AdminHorarios() {
     setLoading(true);
     
     try {
-      // Cargar horarios del instructor
-      const horariosData = await fetchApi('/horarios/my-horarios');
-      const horariosInstructor = horariosData.horarios.filter(h => h.materia?.instructorId === instructor.id);
-      setHorarios(horariosInstructor);
+      // Cargar horarios del instructor usando endpoint de admin
+      const horariosData = await fetchApi(`/admin/instructores/${instructor.id}/horarios`);
+      setHorarios(horariosData.horarios || []);
       
-      // Cargar materias del instructor para poder agregar
-      const materiasData = await fetchApi('/materias/my-materias');
-      const materiasInstructor = materiasData.materias.filter(m => m.instructorId === instructor.id);
-      setMaterias(materiasInstructor);
+      // Cargar materias del instructor usando endpoint de admin
+      const materiasData = await fetchApi(`/admin/instructores/${instructor.id}/materias`);
+      setMaterias(materiasData.materias || []);
       
       // Cargar conflictos del instructor
       const conflictosData = await fetchApi(`/admin/instructores/${instructor.id}/conflictos`);
@@ -183,6 +210,210 @@ export default function AdminHorarios() {
       } else {
         showToast('Horario actualizado', 'success');
       }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Funciones para eliminar
+  const toggleSeleccionHorario = (horarioId) => {
+    if (!modoEliminar) return;
+    setHorariosSeleccionados(prev => 
+      prev.includes(horarioId) 
+        ? prev.filter(id => id !== horarioId)
+        : [...prev, horarioId]
+    );
+  };
+
+  const handleEliminarSeleccionados = async () => {
+    if (horariosSeleccionados.length === 0) {
+      showToast('Selecciona al menos una clase para enviar a papelera', 'error');
+      return;
+    }
+    setConfirmEliminar({ isOpen: true, count: horariosSeleccionados.length });
+  };
+
+  const confirmEliminarHorarios = async () => {
+    try {
+      await Promise.all(
+        horariosSeleccionados.map(id => fetchApi(`/horarios/${id}`, { method: 'DELETE' }))
+      );
+      
+      // Recargar horarios según la vista actual en lugar de filtrar del estado
+      if (vista === 'ficha' && fichaSeleccionada) {
+        const data = await fetchApi(`/horarios/ficha/${fichaSeleccionada.id}`);
+        setHorarios(data.horarios || []);
+      } else if (vista === 'instructor' && instructorSeleccionado) {
+        const horariosData = await fetchApi(`/admin/instructores/${instructorSeleccionado.id}/horarios`);
+        setHorarios(horariosData.horarios || []);
+      }
+      
+      setHorariosSeleccionados([]);
+      setModoEliminar(false);
+      setConfirmEliminar({ isOpen: false, count: 0 });
+      showToast(`${horariosSeleccionados.length} clase(s) enviada(s) a la papelera`, 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const cancelarModoEliminar = () => {
+    setModoEliminar(false);
+    setHorariosSeleccionados([]);
+  };
+
+  // Funciones para crear materia
+  const handleOpenCrearMateria = () => {
+    setFormCrearMateria({
+      nombre: '',
+      tipo: 'Técnica',
+      instructorId: selectedInstructor?.id || '',
+      fichaId: selectedInstructor?.fichas?.[0]?.id || selectedFicha?.id || '',
+      dia: 'Lunes',
+      horaInicio: '',
+      horaFin: ''
+    });
+    setModalCrearMateria(true);
+    setError('');
+  };
+
+  const handleCloseCrearMateria = () => {
+    const hasContent = formCrearMateria.nombre || formCrearMateria.horaInicio || formCrearMateria.horaFin || formCrearMateria.fichaId;
+    if (hasContent) {
+      setConfirmDescartarCrear(true);
+    } else {
+      setModalCrearMateria(false);
+    }
+  };
+
+  const handleCrearMateria = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+
+    try {
+      // Validar conflictos en el horario visible
+      const conflictoVisible = horarios.find(h => {
+        if (h.dia !== formCrearMateria.dia) return false;
+        const inicio = formCrearMateria.horaInicio;
+        const fin = formCrearMateria.horaFin;
+        return (
+          (h.horaInicio <= inicio && h.horaFin > inicio) ||
+          (h.horaInicio < fin && h.horaFin >= fin) ||
+          (h.horaInicio >= inicio && h.horaFin <= fin)
+        );
+      });
+
+      if (conflictoVisible) {
+        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia.nombre} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
+        setSaving(false);
+        return;
+      }
+
+      // Validar que se haya seleccionado una ficha
+      const fichaId = formCrearMateria.fichaId || selectedFicha?.id;
+      if (!fichaId) {
+        setError('Debes seleccionar una ficha');
+        setSaving(false);
+        return;
+      }
+
+      // Crear materia
+      const materiaResponse = await fetchApi('/materias', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre: formCrearMateria.nombre,
+          tipo: formCrearMateria.tipo,
+          fichaId: fichaId,
+          instructorId: formCrearMateria.instructorId
+        })
+      });
+
+      // Crear horario
+      const horarioResponse = await fetchApi('/horarios', {
+        method: 'POST',
+        body: JSON.stringify({
+          fichaId: fichaId,
+          materiaId: materiaResponse.materia.id,
+          dia: formCrearMateria.dia,
+          horaInicio: formCrearMateria.horaInicio,
+          horaFin: formCrearMateria.horaFin
+        })
+      });
+
+      setHorarios(prev => [...prev, horarioResponse.horario]);
+      setMaterias(prev => [...prev, materiaResponse.materia]);
+      setModalCrearMateria(false);
+      showToast('Materia y horario creados exitosamente', 'success');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Funciones para agregar materia existente
+  const handleOpenAgregarMateria = () => {
+    setFormAgregarMateria({
+      materiaId: '',
+      dia: 'Lunes',
+      horaInicio: '',
+      horaFin: ''
+    });
+    setModalAgregarMateria(true);
+    setError('');
+  };
+
+  const handleCloseAgregarMateria = () => {
+    const hasContent = formAgregarMateria.materiaId || formAgregarMateria.horaInicio || formAgregarMateria.horaFin;
+    if (hasContent) {
+      setConfirmDescartarAgregar(true);
+    } else {
+      setModalAgregarMateria(false);
+    }
+  };
+
+  const handleAgregarMateria = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+
+    try {
+      // Validar conflictos en el horario visible
+      const conflictoVisible = horarios.find(h => {
+        if (h.dia !== formAgregarMateria.dia) return false;
+        const inicio = formAgregarMateria.horaInicio;
+        const fin = formAgregarMateria.horaFin;
+        return (
+          (h.horaInicio <= inicio && h.horaFin > inicio) ||
+          (h.horaInicio < fin && h.horaFin >= fin) ||
+          (h.horaInicio >= inicio && h.horaFin <= fin)
+        );
+      });
+
+      if (conflictoVisible) {
+        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia.nombre} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
+        setSaving(false);
+        return;
+      }
+
+      // Crear horario
+      const horarioResponse = await fetchApi('/horarios', {
+        method: 'POST',
+        body: JSON.stringify({
+          fichaId: selectedFicha?.id || selectedInstructor?.fichas[0]?.id,
+          materiaId: formAgregarMateria.materiaId,
+          dia: formAgregarMateria.dia,
+          horaInicio: formAgregarMateria.horaInicio,
+          horaFin: formAgregarMateria.horaFin
+        })
+      });
+
+      setHorarios(prev => [...prev, horarioResponse.horario]);
+      setModalAgregarMateria(false);
+      showToast('Horario agregado exitosamente', 'success');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -293,7 +524,7 @@ export default function AdminHorarios() {
             <Search size={16} />
             Buscar Instructor
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Buscar por nombre..."
@@ -310,14 +541,6 @@ export default function AdminHorarios() {
               {fichas.map(f => (
                 <option key={f.id} value={f.id}>Ficha {f.numero} - {f.nombre}</option>
               ))}
-            </select>
-            <select
-              value={filterMateriaId}
-              onChange={(e) => setFilterMateriaId(e.target.value)}
-              className="input-field"
-            >
-              <option value="all">Todas las materias</option>
-              {/* TODO: Cargar materias únicas de todos los instructores */}
             </select>
           </div>
         </div>
@@ -449,6 +672,7 @@ export default function AdminHorarios() {
                     setSelectedInstructor(null);
                     setHorarios([]);
                     setModoEditar(false);
+                    setModoEliminar(false);
                     setConflictos([]);
                   }}
                   className="btn-secondary"
@@ -456,16 +680,65 @@ export default function AdminHorarios() {
                   Volver
                 </button>
                 {horarios.length > 0 && (
-                  <button
-                    onClick={() => setModoEditar(!modoEditar)}
-                    className={`btn-secondary flex items-center gap-2 ${
-                      modoEditar ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-700' : ''
-                    }`}
-                  >
-                    <Edit2 size={16} />
-                    {modoEditar ? 'Salir de Edición' : 'Modo Editar'}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setModoEditar(!modoEditar);
+                        setModoEliminar(false);
+                        setHorariosSeleccionados([]);
+                      }}
+                      className={`btn-secondary flex items-center gap-2 ${
+                        modoEditar ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-700' : ''
+                      }`}
+                    >
+                      <Edit2 size={16} />
+                      {modoEditar ? 'Salir de Edición' : 'Modo Editar'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        if (modoEliminar) {
+                          cancelarModoEliminar();
+                        } else {
+                          setModoEliminar(true);
+                          setModoEditar(false);
+                        }
+                      }}
+                      className={`btn-secondary flex items-center gap-2 ${
+                        modoEliminar ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+                      }`}
+                    >
+                      <Trash2 size={16} />
+                      {modoEliminar ? 'Cancelar' : 'Enviar a Papelera'}
+                    </button>
+
+                    {modoEliminar && horariosSeleccionados.length > 0 && (
+                      <button
+                        onClick={handleEliminarSeleccionados}
+                        className="btn-primary bg-red-500 hover:bg-red-600 flex items-center gap-2"
+                      >
+                        <Trash2 size={16} />
+                        Enviar a Papelera ({horariosSeleccionados.length})
+                      </button>
+                    )}
+                  </>
                 )}
+                
+                <button
+                  onClick={handleOpenCrearMateria}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Crear Materia
+                </button>
+                
+                <button
+                  onClick={handleOpenAgregarMateria}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Agregar Existente
+                </button>
               </div>
             </div>
           </div>
@@ -536,29 +809,48 @@ export default function AdminHorarios() {
                     <div className="space-y-2">
                       {clases.map((c) => {
                         const color = COLORES[getColorForMateria(c.materiaId || c.materia?.id || c.materia?.nombre)];
+                        const isSelected = horariosSeleccionados.includes(c.id);
                         return (
                           <div
                             key={c.id}
-                            onClick={() => handleOpenEdit(c)}
-                            className={`p-2.5 rounded-xl border transition-all ${
-                              modoEditar ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400' : ''
-                            } ${color.bg} ${color.border}`}
+                            onClick={() => modoEditar ? handleOpenEdit(c) : modoEliminar ? toggleSeleccionHorario(c.id) : null}
+                            className={`relative p-2.5 rounded-xl border transition-all ${
+                              modoEditar || modoEliminar ? 'cursor-pointer hover:shadow-md' : ''
+                            } ${
+                              modoEditar ? 'hover:ring-2 hover:ring-blue-400' : ''
+                            } ${
+                              isSelected ? 'ring-2 ring-red-400 bg-red-50 dark:bg-red-900/20' : `${color.bg} ${color.border}`
+                            }`}
                           >
-                            <p className={`text-xs font-bold truncate ${color.text}`}>
-                              {c.materia?.nombre}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                              <Clock size={10} /> {c.horaInicio} – {c.horaFin}
-                            </p>
-                            {selectedFicha && (
-                              <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
-                                {c.materia?.instructor?.fullName}
+                            <div className={modoEliminar ? 'pr-8' : ''}>
+                              <p className={`text-xs font-bold truncate ${color.text}`}>
+                                {c.materia?.nombre}
                               </p>
-                            )}
-                            {selectedInstructor && (
-                              <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
-                                Ficha {c.materia?.ficha?.numero}
+                              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                <Clock size={10} /> {c.horaInicio} – {c.horaFin}
                               </p>
+                              {selectedFicha && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                                  {c.materia?.instructor?.fullName}
+                                </p>
+                              )}
+                              {selectedInstructor && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                                  Ficha {c.materia?.ficha?.numero}
+                                </p>
+                              )}
+                            </div>
+                            
+                            {modoEliminar && (
+                              <div className="absolute top-2 right-2">
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                  isSelected 
+                                    ? 'bg-red-500 border-red-500' 
+                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                }`}>
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                              </div>
                             )}
                           </div>
                         );
@@ -642,6 +934,254 @@ export default function AdminHorarios() {
           </div>
         </form>
       </Modal>
+
+      {/* Modal para crear materia */}
+      <Modal open={modalCrearMateria} onClose={handleCloseCrearMateria} title="Crear Nueva Materia">
+        <form onSubmit={handleCrearMateria} className="space-y-4">
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl">
+              {error}
+            </p>
+          )}
+
+          <div>
+            <label className="input-label">Nombre de la Materia</label>
+            <input
+              type="text"
+              required
+              className="input-field"
+              placeholder="Ej: Matemáticas"
+              value={formCrearMateria.nombre}
+              onChange={(e) => setFormCrearMateria(p => ({ ...p, nombre: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="input-label">Tipo</label>
+            <select
+              className="input-field"
+              value={formCrearMateria.tipo}
+              onChange={(e) => setFormCrearMateria(p => ({ ...p, tipo: e.target.value }))}
+            >
+              <option>Técnica</option>
+              <option>Transversal</option>
+            </select>
+          </div>
+
+          {viewMode === 'ficha' && (
+            <div>
+              <label className="input-label">Instructor a Cargo</label>
+              <select
+                required
+                className="input-field"
+                value={formCrearMateria.instructorId}
+                onChange={(e) => setFormCrearMateria(p => ({ ...p, instructorId: e.target.value }))}
+              >
+                <option value="">Seleccionar instructor...</option>
+                {materias
+                  .map(m => m.instructor)
+                  .filter((inst, idx, arr) => arr.findIndex(i => i.id === inst.id) === idx)
+                  .map(instructor => (
+                    <option key={instructor.id} value={instructor.id}>
+                      {instructor.fullName}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
+          {viewMode === 'instructor' && (
+            <>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                  Instructor a Cargo
+                </p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {selectedInstructor?.fullName}
+                </p>
+              </div>
+              
+              <div>
+                <label className="input-label">Ficha</label>
+                <select
+                  required
+                  className="input-field"
+                  value={formCrearMateria.fichaId || ''}
+                  onChange={(e) => setFormCrearMateria(p => ({ ...p, fichaId: e.target.value }))}
+                >
+                  <option value="">Seleccionar ficha...</option>
+                  {selectedInstructor?.fichas?.map(ficha => (
+                    <option key={ficha.id} value={ficha.id}>
+                      Ficha {ficha.numero} - {ficha.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="input-label">Día</label>
+            <select
+              className="input-field"
+              value={formCrearMateria.dia}
+              onChange={(e) => setFormCrearMateria(p => ({ ...p, dia: e.target.value }))}
+            >
+              {DIAS.map(d => <option key={d}>{d}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="input-label">Hora Inicio</label>
+              <input
+                type="time"
+                required
+                className="input-field"
+                value={formCrearMateria.horaInicio}
+                onChange={(e) => setFormCrearMateria(p => ({ ...p, horaInicio: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="input-label">Hora Fin</label>
+              <input
+                type="time"
+                required
+                className="input-field"
+                value={formCrearMateria.horaFin}
+                onChange={(e) => setFormCrearMateria(p => ({ ...p, horaFin: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={handleCloseCrearMateria} className="btn-secondary flex-1">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">
+              {saving ? 'Creando...' : 'Crear Materia'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal para agregar materia existente */}
+      <Modal open={modalAgregarMateria} onClose={handleCloseAgregarMateria} title="Agregar Materia al Horario">
+        <form onSubmit={handleAgregarMateria} className="space-y-4">
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl">
+              {error}
+            </p>
+          )}
+
+          <div>
+            <label className="input-label">Materia</label>
+            <select
+              required
+              className="input-field"
+              value={formAgregarMateria.materiaId}
+              onChange={(e) => setFormAgregarMateria(p => ({ ...p, materiaId: e.target.value }))}
+            >
+              <option value="">Seleccionar materia...</option>
+              {materias.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre} {viewMode === 'ficha' ? `(${m.instructor?.fullName})` : ''}
+                </option>
+              ))}
+            </select>
+            {viewMode === 'ficha' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Se muestran todas las materias de esta ficha
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="input-label">Día</label>
+            <select
+              className="input-field"
+              value={formAgregarMateria.dia}
+              onChange={(e) => setFormAgregarMateria(p => ({ ...p, dia: e.target.value }))}
+            >
+              {DIAS.map(d => <option key={d}>{d}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="input-label">Hora Inicio</label>
+              <input
+                type="time"
+                required
+                className="input-field"
+                value={formAgregarMateria.horaInicio}
+                onChange={(e) => setFormAgregarMateria(p => ({ ...p, horaInicio: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="input-label">Hora Fin</label>
+              <input
+                type="time"
+                required
+                className="input-field"
+                value={formAgregarMateria.horaFin}
+                onChange={(e) => setFormAgregarMateria(p => ({ ...p, horaFin: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={handleCloseAgregarMateria} className="btn-secondary flex-1">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">
+              {saving ? 'Agregando...' : 'Agregar al Horario'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de confirmación para eliminar */}
+      <ConfirmModal
+        isOpen={confirmEliminar.isOpen}
+        onClose={() => setConfirmEliminar({ isOpen: false, count: 0 })}
+        onConfirm={confirmEliminarHorarios}
+        title="¿Enviar clases a papelera?"
+        message={`¿Estás seguro de enviar ${confirmEliminar.count} clase(s) a la papelera? Podrán ser recuperadas desde la sección de papelera.`}
+        confirmText="Enviar a Papelera"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+
+      {/* Modal de confirmación para descartar cambios (crear) */}
+      <ConfirmModal
+        isOpen={confirmDescartarCrear}
+        onClose={() => setConfirmDescartarCrear(false)}
+        onConfirm={() => {
+          setConfirmDescartarCrear(false);
+          setModalCrearMateria(false);
+        }}
+        title="¿Descartar cambios?"
+        message="Tienes cambios sin guardar. ¿Deseas descartarlos?"
+        confirmText="Descartar"
+        cancelText="Seguir Editando"
+        variant="danger"
+      />
+
+      {/* Modal de confirmación para descartar cambios (agregar) */}
+      <ConfirmModal
+        isOpen={confirmDescartarAgregar}
+        onClose={() => setConfirmDescartarAgregar(false)}
+        onConfirm={() => {
+          setConfirmDescartarAgregar(false);
+          setModalAgregarMateria(false);
+        }}
+        title="¿Descartar cambios?"
+        message="Tienes cambios sin guardar. ¿Deseas descartarlos?"
+        confirmText="Descartar"
+        cancelText="Seguir Editando"
+        variant="danger"
+      />
     </div>
   );
 }

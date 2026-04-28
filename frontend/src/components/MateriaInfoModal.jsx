@@ -79,6 +79,7 @@ export default function MateriaInfoModal({
     try {
       setDeleting(true);
       setError('');
+      setConfirmModal({ isOpen: false }); // Cerrar modal de confirmación
 
       await fetchApi(`/materias/${materia.id}`, {
         method: 'DELETE'
@@ -89,7 +90,7 @@ export default function MateriaInfoModal({
       }
       onClose();
     } catch (err) {
-      setError(err.message || 'Error al eliminar la materia');
+      setError(err.message || 'Error al enviar la materia a papelera');
       setDeleting(false);
     }
   };
@@ -258,7 +259,7 @@ export default function MateriaInfoModal({
                   ) : (
                     <>
                       <Trash2 size={16} />
-                      Eliminar
+                      Enviar a Papelera
                     </>
                   )}
                 </button>
@@ -273,9 +274,9 @@ export default function MateriaInfoModal({
       isOpen={confirmModal.isOpen}
       onClose={() => setConfirmModal({ isOpen: false })}
       onConfirm={confirmDelete}
-      title="¿Eliminar materia?"
-      message={`¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`}
-      confirmText="Eliminar"
+      title="¿Enviar materia a papelera?"
+      message={`¿Estás seguro de enviar la materia "${materia.nombre}" a la papelera? Podrá ser recuperada desde la sección de papelera.`}
+      confirmText="Enviar a Papelera"
       cancelText="Cancelar"
       variant="danger"
     />
@@ -294,9 +295,9 @@ function MateriaInfoModalWithConfirm(props) {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false })}
         onConfirm={() => {}}
-        title="¿Eliminar materia?"
-        message="Esta acción no se puede deshacer."
-        confirmText="Eliminar"
+        title="¿Enviar materia a papelera?"
+        message="Podrá ser recuperada desde la sección de papelera."
+        confirmText="Enviar a Papelera"
         cancelText="Cancelar"
         variant="danger"
       />

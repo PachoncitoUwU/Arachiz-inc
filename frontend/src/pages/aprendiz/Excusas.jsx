@@ -387,7 +387,7 @@ export default function AprendizExcusas() {
                     </p>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">{excusa.motivo}</p>
                     <p className="text-xs text-gray-400 mt-2">
-                      Enviada: {new Date(excusa.createdAt).toLocaleDateString('es-CO')}
+                      Enviada: {excusa.createdAt ? new Date(excusa.createdAt).toLocaleDateString('es-CO') : 'N/A'}
                       {excusa.respondedAt && ` · Respondida: ${new Date(excusa.respondedAt).toLocaleDateString('es-CO')}`}
                     </p>
                     {excusa.respuesta && (
@@ -716,7 +716,7 @@ export default function AprendizExcusas() {
             )}
             
             <div className="text-xs text-gray-400 space-y-0.5">
-              <p>Enviada: {new Date(modalDetalle.createdAt).toLocaleDateString('es-CO')}</p>
+              <p>Enviada: {modalDetalle.createdAt ? new Date(modalDetalle.createdAt).toLocaleDateString('es-CO') : 'N/A'}</p>
               {modalDetalle.respondedAt && <p>Respondida: {new Date(modalDetalle.respondedAt).toLocaleDateString('es-CO')}</p>}
             </div>
             

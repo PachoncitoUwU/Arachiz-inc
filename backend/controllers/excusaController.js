@@ -337,11 +337,76 @@ const getMateriasConHorarios = async (req, res) => {
   }
 };
 
+// Eliminar excusa (enviar a papelera)
+const deleteExcusa = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userType = req.user.userType;
+  
+  try {
+    const excusa = await prisma.excusa.findUnique({
+      where: { id },
+      include: {
+        materia: {
+          include: {
+            ficha: true,
+            instructor: { select: { fullName: true } }
+          }
+        },
+        aprendiz: { select: { fullName: true } }
+      }
+    });
+    
+    if (!excusa) {
+      return res.status(404).json({ error: 'Excusa no encontrada' });
+    }
+    
+    // Verificar permisos
+    const isInstructor = excusa.materia.instructorId === userId;
+    const isAdmin = userType === 'administrador' && excusa.materia.ficha.administradorId === userId;
+    
+    if (!isInstructor && !isAdmin) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar esta excusa' });
+    }
+    
+    // Importar funciones de papelera
+    const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController');
+    
+    // Enviar a papelera
+    await enviarAPapelera(
+      'excusa',
+      id,
+      excusa.materia.fichaId,
+      userId,
+      userType,
+      `Excusa de ${excusa.aprendiz.fullName} eliminada`
+    );
+    
+    // Eliminar excusa
+    await prisma.excusa.delete({ where: { id } });
+    
+    // Registrar en historial
+    await crearHistorialCambio(
+      excusa.materia.fichaId,
+      userId,
+      'enviar_papelera',
+      'excusa',
+      id,
+      `Envió la excusa de ${excusa.aprendiz.fullName} a la papelera`
+    );
+    
+    res.json({ message: 'Excusa enviada a la papelera exitosamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar excusa: ' + err.message });
+  }
+};
+
 module.exports = {
   createExcusa,
   getMyExcusas,
   getExcusasInstructor,
   updateExcusaEstado,
   updateExcusa,
+  deleteExcusa,
   getMateriasConHorarios
 };
