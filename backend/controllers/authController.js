@@ -91,12 +91,27 @@ const getMe = async (req, res) => {
         id: true, fullName: true, email: true, document: true,
         userType: true, createdAt: true, avatarUrl: true,
         fichasApr: { select: { id: true }, take: 1 },
+        fichasInst: { select: { fichaId: true }, take: 1 },
       }
     });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const { fichasApr, ...rest } = user;
-    res.json({ user: { ...rest, fichaId: fichasApr?.[0]?.id || null } });
+    const { fichasApr, fichasInst, ...rest } = user;
+    
+    // Obtener fichaId: primero de aprendiz, si no existe, de instructor
+    const fichaId = fichasApr?.[0]?.id || fichasInst?.[0]?.fichaId || null;
+    
+    console.log('👤 User Profile:', { 
+      userId: user.id, 
+      fullName: user.fullName, 
+      userType: user.userType,
+      fichasApr: fichasApr,
+      fichasInst: fichasInst,
+      finalFichaId: fichaId 
+    });
+    
+    res.json({ user: { ...rest, fichaId } });
   } catch (err) {
+    console.error('❌ GetMe Error:', err);
     res.status(500).json({ error: 'Error: ' + err.message });
   }
 };

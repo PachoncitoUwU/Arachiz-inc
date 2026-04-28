@@ -7,16 +7,35 @@ const authMiddleware = require('../middlewares/authMiddleware');
 router.get('/leaderboard', async (req, res) => {
   const { fichaId } = req.query;
   try {
-    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
+    // Incluir tanto aprendices como instructores de la ficha
+    const where = fichaId 
+      ? { 
+          user: { 
+            OR: [
+              { fichasApr: { some: { id: fichaId } } },
+              { fichasInst: { some: { fichaId: fichaId } } }
+            ]
+          } 
+        } 
+      : undefined;
+    
+    console.log('🔍 Snake Leaderboard Query:', { fichaId, where: JSON.stringify(where, null, 2) });
+    
     const scores = await prisma.snakeScore.findMany({
       where, orderBy: { score: 'desc' }, take: 10,
-      include: { user: { select: { fullName: true, avatarUrl: true } } }
+      include: { user: { select: { fullName: true, avatarUrl: true, userType: true } } }
     });
+    
+    console.log('✅ Snake Scores Found:', scores.length, scores.map(s => ({ name: s.user.fullName, type: s.user.userType, score: s.score })));
+    
     res.json({ scores: scores.map(s => ({
       name: s.user.fullName, avatar: s.user.avatarUrl || null,
       score: s.score, date: s.updatedAt.toLocaleDateString('es-CO'),
     }))});
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('❌ Snake Leaderboard Error:', err);
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 // POST /api/snake/score — guardar mejor score Snake
@@ -38,16 +57,35 @@ router.post('/score', authMiddleware, async (req, res) => {
 router.get('/breakout/leaderboard', async (req, res) => {
   const { fichaId } = req.query;
   try {
-    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
+    // Incluir tanto aprendices como instructores de la ficha
+    const where = fichaId 
+      ? { 
+          user: { 
+            OR: [
+              { fichasApr: { some: { id: fichaId } } },
+              { fichasInst: { some: { fichaId: fichaId } } }
+            ]
+          } 
+        } 
+      : undefined;
+    
+    console.log('🔍 Breakout Leaderboard Query:', { fichaId, where: JSON.stringify(where, null, 2) });
+    
     const scores = await prisma.breakoutScore.findMany({
       where, orderBy: { score: 'desc' }, take: 10,
-      include: { user: { select: { fullName: true, avatarUrl: true } } }
+      include: { user: { select: { fullName: true, avatarUrl: true, userType: true } } }
     });
+    
+    console.log('✅ Breakout Scores Found:', scores.length, scores.map(s => ({ name: s.user.fullName, type: s.user.userType, score: s.score })));
+    
     res.json({ scores: scores.map(s => ({
       name: s.user.fullName, avatar: s.user.avatarUrl || null,
       score: s.score, date: s.updatedAt.toLocaleDateString('es-CO'),
     }))});
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('❌ Breakout Leaderboard Error:', err);
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 // POST /api/snake/breakout/score — guardar mejor score Breakout
@@ -65,22 +103,39 @@ router.post('/breakout/score', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-module.exports = router;
-
 // GET /api/snake/flappy/leaderboard
 router.get('/flappy/leaderboard', async (req, res) => {
   const { fichaId } = req.query;
   try {
-    const where = fichaId ? { user: { fichasApr: { some: { id: fichaId } } } } : undefined;
+    // Incluir tanto aprendices como instructores de la ficha
+    const where = fichaId 
+      ? { 
+          user: { 
+            OR: [
+              { fichasApr: { some: { id: fichaId } } },
+              { fichasInst: { some: { fichaId: fichaId } } }
+            ]
+          } 
+        } 
+      : undefined;
+    
+    console.log('🔍 Flappy Leaderboard Query:', { fichaId, where: JSON.stringify(where, null, 2) });
+    
     const scores = await prisma.flappyScore.findMany({
       where, orderBy: { score: 'desc' }, take: 10,
-      include: { user: { select: { fullName: true, avatarUrl: true } } }
+      include: { user: { select: { fullName: true, avatarUrl: true, userType: true } } }
     });
+    
+    console.log('✅ Flappy Scores Found:', scores.length, scores.map(s => ({ name: s.user.fullName, type: s.user.userType, score: s.score })));
+    
     res.json({ scores: scores.map(s => ({
       name: s.user.fullName, avatar: s.user.avatarUrl || null,
       score: s.score, date: s.updatedAt.toLocaleDateString('es-CO'),
     }))});
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('❌ Flappy Leaderboard Error:', err);
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 // POST /api/snake/flappy/score

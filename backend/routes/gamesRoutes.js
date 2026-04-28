@@ -26,17 +26,28 @@ router.get('/:game/leaderboard', async (req, res) => {
   try {
     const orderBy = game === 'wordle' ? { score: 'asc' } : { score: 'desc' };
 
-    // Si viene fichaId, filtrar solo usuarios de esa ficha
+    // Si viene fichaId, filtrar usuarios de esa ficha (aprendices e instructores)
     const whereClause = fichaId
-      ? { user: { fichasApr: { some: { id: fichaId } } } }
+      ? { 
+          user: { 
+            OR: [
+              { fichasApr: { some: { id: fichaId } } },
+              { fichasInst: { some: { fichaId: fichaId } } }
+            ]
+          } 
+        }
       : undefined;
+
+    console.log(`🔍 ${game.toUpperCase()} Leaderboard Query:`, { fichaId, where: JSON.stringify(whereClause, null, 2) });
 
     const scores = await prisma[model].findMany({
       where: whereClause,
       orderBy,
       take: 10,
-      include: { user: { select: { fullName: true, avatarUrl: true } } }
+      include: { user: { select: { fullName: true, avatarUrl: true, userType: true } } }
     });
+
+    console.log(`✅ ${game.toUpperCase()} Scores Found:`, scores.length, scores.map(s => ({ name: s.user.fullName, type: s.user.userType, score: s.score })));
 
     res.json({
       scores: scores.map(s => ({
@@ -47,6 +58,7 @@ router.get('/:game/leaderboard', async (req, res) => {
       }))
     });
   } catch (err) {
+    console.error(`❌ ${game.toUpperCase()} Leaderboard Error:`, err);
     res.status(500).json({ error: err.message });
   }
 });

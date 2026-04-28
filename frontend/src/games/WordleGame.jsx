@@ -109,7 +109,26 @@ export default function WordleGame({ onClose }) {
 
   const submit = useCallback(() => {
     if (phase !== 'playing') return;
-    if (current.length !== WORD.length) { setShake(true); setTimeout(() => setShake(false), 500); return; }
+    if (current.length !== WORD.length) { 
+      setShake(true); 
+      setTimeout(() => setShake(false), 500); 
+      return; 
+    }
+    
+    // Validar que la palabra existe en el diccionario
+    const validWords = WORD_LISTS[wordLength] || WORD_LISTS[5];
+    if (!validWords.includes(current)) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      // Mostrar mensaje de error temporal
+      const errorMsg = document.createElement('div');
+      errorMsg.textContent = '❌ Palabra no válida';
+      errorMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(234,67,53,0.95);color:white;padding:12px 24px;borderRadius:12px;fontSize:14px;fontWeight:700;zIndex:9999;boxShadow:0 4px 20px rgba(0,0,0,0.3);';
+      document.body.appendChild(errorMsg);
+      setTimeout(() => errorMsg.remove(), 1500);
+      return;
+    }
+    
     const result = evaluate(current, WORD);
     const newGuesses = [...guesses, result];
     setGuesses(newGuesses);
