@@ -292,19 +292,20 @@ export default function EnrollModal({ open, onClose, aprendiz }) {
           </button>
         )}
       </div>
-
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, action: null, data: null })}
-        onConfirm={confirmDialog.action}
-        title={confirmDialog.data?.id ? "Eliminar Huella" : "Eliminar Reconocimiento Facial"}
-        message={confirmDialog.data?.id 
-          ? `¿Estás seguro de eliminar la huella ${confirmDialog.data.id}? Esta acción no se puede deshacer.`
-          : "¿Eliminar el reconocimiento facial de este aprendiz? Esta acción no se puede deshacer."}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        danger={true}
-      />
     </Modal>
+    
+    <ConfirmDialog
+      open={confirmDialog.open}
+      onClose={() => setConfirmDialog({ open: false, action: null, data: null })}
+      onConfirm={confirmDialog.action}
+      title={confirmDialog.data?.id ? "Eliminar Huella" : "Eliminar Reconocimiento Facial"}
+      message={confirmDialog.data?.id 
+        ? `¿Estás seguro de eliminar la huella ${confirmDialog.data.id}? Esta acción no se puede deshacer.`
+        : "¿Eliminar el reconocimiento facial de este aprendiz? Esta acción no se puede deshacer."}
+      confirmText="Eliminar"
+      cancelText="Cancelar"
+      danger={true}
+    />
+  </>
   );
 }
