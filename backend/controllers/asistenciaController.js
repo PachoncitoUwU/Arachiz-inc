@@ -86,23 +86,44 @@ const getMyAttendance = async (req, res) => {
   }
 };
 
-// Get all sessions for a specific materia
+// Get all sessions for a specific materia with filters
 const getSessionsByMateria = async (req, res) => {
   const { materiaId } = req.params;
+  const { fechaDesde, fechaHasta, estado, metodo } = req.query;
+  
   try {
-    const sessions = await prisma.asistencia.findMany({
-      where: { materiaId },
+    let whereClause = { materiaId };
+    
+    // Filtro por rango de fechas
+    if (fechaDesde || fechaHasta) {
+      whereClause.fecha = {};
+      if (fechaDesde) whereClause.fecha.gte = fechaDesde;
+      if (fechaHasta) whereClause.fecha.lte = fechaHasta;
+    }
+    
+    // Filtro por estado (activa/inactiva)
+    if (estado === 'activa') {
+      whereClause.activa = true;
+    } else if (estado === 'finalizada') {
+      whereClause.activa = false;
+    }
+
+    const asistencias = await prisma.asistencia.findMany({
+      where: whereClause,
       include: {
         registros: { 
+          where: metodo ? { metodo } : {},
           include: { 
             aprendiz: { select: { fullName: true, document: true } } 
           } 
         },
-        instructor: { select: { fullName: true } }
+        instructor: { select: { fullName: true } },
+        materia: { select: { nombre: true, tipo: true } }
       },
       orderBy: { fecha: 'desc' }
     });
-    res.json({ sessions });
+    
+    res.json({ asistencias });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
   }

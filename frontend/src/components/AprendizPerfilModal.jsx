@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import EnrollModal from './EnrollModal';
 import MateriasEvitadasModal from './MateriasEvitadasModal';
+import fetchApi from '../services/api';
 import { User, Mail, CreditCard, Fingerprint, ScanFace, BookOpen, Trash2, UserMinus } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -65,6 +66,35 @@ export default function AprendizPerfilModal({
   const handleRemove = () => {
     if (onRemoveAprendiz) {
       onRemoveAprendiz(localAprendiz.id);
+    }
+  };
+
+  const handleDeleteNfc = async () => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar el NFC de este aprendiz?')) {
+      return;
+    }
+
+    try {
+      await fetchApi(`/admin/fichas/${fichaId}/aprendices/${localAprendiz.id}/nfc`, {
+        method: 'DELETE'
+      });
+      
+      // Actualizar estado local
+      setLocalAprendiz(prev => ({ ...prev, nfcUid: null }));
+      
+      if (onBiometricUpdate) {
+        onBiometricUpdate();
+      }
+      
+      // Mostrar toast de éxito (asumiendo que hay un contexto de toast)
+      if (window.showToast) {
+        window.showToast('NFC eliminado exitosamente', 'success');
+      }
+    } catch (err) {
+      console.error('Error eliminando NFC:', err);
+      if (window.showToast) {
+        window.showToast(err.message || 'Error eliminando NFC', 'error');
+      }
     }
   };
 
@@ -133,6 +163,15 @@ export default function AprendizPerfilModal({
                   <span className={`text-xs ${hasNfc ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
                     {hasNfc ? '✓ Registrado' : 'No registrado'}
                   </span>
+                  {hasNfc && isAdmin && (
+                    <button
+                      onClick={handleDeleteNfc}
+                      className="text-xs text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                      title="Eliminar NFC"
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
 

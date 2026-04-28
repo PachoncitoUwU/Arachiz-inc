@@ -656,7 +656,8 @@ const crearFicha = async (req, res) => {
     // Generar código único
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Crear la ficha SIN líder (el admin no puede ser líder)
+    // Crear la ficha con el admin como líder temporal
+    // El admin puede ser líder hasta que se asigne un instructor
     const nuevaFicha = await prisma.ficha.create({
       data: {
         numero,
@@ -667,8 +668,8 @@ const crearFicha = async (req, res) => {
         duracion: duracion || 0,
         nombre: nombre || 'Programa sin nombre',
         code,
-        administradorId: req.user.id // El admin es el administrador
-        // instructorAdminId se deja null hasta que se asigne un líder
+        administradorId: req.user.id,
+        instructorAdminId: req.user.id // Admin como líder temporal
       },
       include: {
         instructorAdmin: {
@@ -1196,6 +1197,71 @@ const eliminarFicha = async (req, res) => {
     res.status(500).json({ error: 'Error eliminando ficha: ' + err.message });
   }
 };
+
+/**
+ * Eliminar NFC de un aprendiz
+ */
+const eliminarNfcAprendiz = async (req, res) => {
+  try {
+    const { fichaId, aprendizId } = req.params;
+    const userId = req.user.id;
+    const userType = req.user.userType;
+
+    // Verificar que la ficha existe
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        aprendices: {
+          where: { id: aprendizId },
+          select: { id: true, fullName: true, nfcUid: true }
+        }
+      }
+    });
+
+    if (!ficha) {
+      return res.status(404).json({ error: 'Ficha no encontrada' });
+    }
+
+    if (ficha.aprendices.length === 0) {
+      return res.status(404).json({ error: 'El aprendiz no pertenece a esta ficha' });
+    }
+
+    // Verificar permisos: líder de la ficha o administrador
+    const isLider = ficha.instructorAdminId === userId;
+    const isAdmin = userType === 'administrador' && ficha.administradorId === userId;
+
+    if (!isLider && !isAdmin) {
+      return res.status(403).json({ error: 'Solo el líder de la ficha o el administrador pueden eliminar el NFC' });
+    }
+
+    const aprendiz = ficha.aprendices[0];
+
+    if (!aprendiz.nfcUid) {
+      return res.status(400).json({ error: 'Este aprendiz no tiene NFC registrado' });
+    }
+
+    // Eliminar NFC del aprendiz
+    await prisma.user.update({
+      where: { id: aprendizId },
+      data: { nfcUid: null }
+    });
+
+    // Registrar en historial
+    await crearHistorialCambio(
+      fichaId,
+      userId,
+      'eliminar_nfc',
+      'aprendiz',
+      aprendizId,
+      `Eliminó el NFC del aprendiz ${aprendiz.fullName}`
+    );
+
+    res.json({ message: 'NFC eliminado exitosamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error eliminando NFC: ' + err.message });
+  }
+};
+
 const getExcusasAdmin = async (req, res) => {
   try {
     const adminId = req.user.id;
@@ -1531,6 +1597,7 @@ module.exports = {
   eliminarFicha,
   eliminarAprendizDeFicha,
   eliminarInstructorDeFicha,
+  eliminarNfcAprendiz,
   salirDeFicha,
   cambiarLiderFicha,
   cambiarInstructorMateria,

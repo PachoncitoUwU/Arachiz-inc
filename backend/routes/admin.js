@@ -78,6 +78,9 @@ router.get('/instructores/:instructorId/horarios', adminController.getHorariosDe
 // Obtener materias de un instructor
 router.get('/instructores/:instructorId/materias', adminController.getMateriasDeInstructor);
 
+// Eliminar NFC de un aprendiz
+router.delete('/fichas/:fichaId/aprendices/:aprendizId/nfc', isAdminDeFicha, adminController.eliminarNfcAprendiz);
+
 // =====================================================
 // RUTAS DE EXCUSAS
 // =====================================================

@@ -64,7 +64,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
         const materia = await prisma.materia.findUnique({
           where: { id: elementoId },
           include: {
-            instructor: { select: { fullName: true } },
+            instructor: { select: { id: true, fullName: true } },
             ficha: { select: { numero: true, nombre: true } },
             _count: {
               select: {
@@ -77,6 +77,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
         datosOriginales = {
           nombre: materia.nombre,
           tipo: materia.tipo,
+          instructorId: materia.instructorId, // Necesario para recuperación
           instructor: materia.instructor.fullName,
           ficha: `${materia.ficha.numero} - ${materia.ficha.nombre}`,
           contadores: materia._count
@@ -123,6 +124,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           include: {
             materia: {
               select: {
+                id: true,
                 nombre: true,
                 instructor: { select: { fullName: true } }
               }
@@ -133,6 +135,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           dia: horario.dia,
           horaInicio: horario.horaInicio,
           horaFin: horario.horaFin,
+          materiaId: horario.materiaId, // Necesario para recuperación
           materia: horario.materia.nombre,
           instructor: horario.materia.instructor.fullName
         };
@@ -185,7 +188,7 @@ const getPapelera = async (req, res) => {
     const adminId = req.user.id;
     const { tipo } = req.query;
 
-    // Obtener fichas del admin
+    // Obtener todas las fichas del admin (incluyendo las que ya no administra pero eliminó)
     const fichasAdmin = await prisma.ficha.findMany({
       where: { administradorId: adminId },
       select: { id: true }
@@ -193,16 +196,31 @@ const getPapelera = async (req, res) => {
 
     const fichasIds = fichasAdmin.map(f => f.id);
 
-    if (fichasIds.length === 0) {
-      return res.json({ items: [] });
-    }
-
-    const where = {
-      fichaId: { in: fichasIds }
-    };
-
-    if (tipo && tipo !== 'all') {
-      where.tipoElemento = tipo;
+    let where = {};
+    
+    if (tipo === 'ficha' || tipo === 'ficha_anterior') {
+      // Para fichas eliminadas, buscar por quien las eliminó
+      where = {
+        tipoElemento: tipo,
+        eliminadoPor: adminId
+      };
+    } else if (tipo && tipo !== 'all') {
+      // Para un tipo específico de elemento
+      where = {
+        tipoElemento: tipo,
+        OR: [
+          { fichaId: { in: fichasIds } }, // Elementos de sus fichas actuales
+          { eliminadoPor: adminId } // O elementos que él eliminó
+        ]
+      };
+    } else {
+      // Para todos los elementos
+      where = {
+        OR: [
+          { fichaId: { in: fichasIds } }, // Elementos de sus fichas actuales
+          { eliminadoPor: adminId } // O elementos que él eliminó
+        ]
+      };
     }
 
     const items = await prisma.papelera.findMany({
@@ -226,6 +244,7 @@ const getPapelera = async (req, res) => {
 
     res.json({ items });
   } catch (err) {
+    console.error('Error obteniendo papelera:', err);
     res.status(500).json({ error: 'Error obteniendo papelera: ' + err.message });
   }
 };
@@ -261,21 +280,72 @@ const recuperarElemento = async (req, res) => {
     
     switch (item.tipoElemento) {
       case 'ficha':
-        // Las fichas no se pueden recuperar automáticamente (requiere recreación manual)
+        // Las fichas eliminadas no se pueden recuperar automáticamente
         return res.status(400).json({ error: 'Las fichas eliminadas no se pueden recuperar automáticamente' });
         
+      case 'ficha_anterior':
+        // Las fichas anteriores tampoco se pueden recuperar automáticamente
+        return res.status(400).json({ error: 'Las fichas anteriores no se pueden recuperar automáticamente. El usuario debe volver a unirse a la ficha.' });
+        
       case 'materia':
+        // Verificar que la ficha aún existe
+        if (!item.ficha) {
+          return res.status(400).json({ error: 'No se puede recuperar la materia: la ficha ya no existe' });
+        }
+        
+        // Para materias, necesitamos el instructorId de los datos originales
+        const instructorId = item.datosOriginales?.instructorId;
+        if (!instructorId) {
+          return res.status(400).json({ error: 'No se puede recuperar la materia: falta información del instructor' });
+        }
+        
+        // Verificar que el instructor aún existe y está en la ficha
+        const instructor = await prisma.user.findUnique({
+          where: { id: instructorId }
+        });
+        
+        if (!instructor) {
+          return res.status(400).json({ error: 'No se puede recuperar la materia: el instructor ya no existe' });
+        }
+        
+        const fichaInstructor = await prisma.fichaInstructor.findUnique({
+          where: {
+            fichaId_instructorId: {
+              fichaId: item.fichaId,
+              instructorId: instructorId
+            }
+          }
+        });
+        
+        if (!fichaInstructor) {
+          return res.status(400).json({ error: 'No se puede recuperar la materia: el instructor ya no pertenece a la ficha' });
+        }
+        
         elementoRecuperado = await prisma.materia.create({
           data: {
             nombre: item.datosOriginales.nombre,
             tipo: item.datosOriginales.tipo,
             fichaId: item.fichaId,
-            instructorId: item.elementoId // Asumiendo que elementoId es el instructorId
+            instructorId: instructorId
           }
         });
         break;
         
       case 'aprendiz':
+        // Verificar que la ficha aún existe
+        if (!item.ficha) {
+          return res.status(400).json({ error: 'No se puede recuperar el aprendiz: la ficha ya no existe' });
+        }
+        
+        // Verificar que el aprendiz aún existe
+        const aprendiz = await prisma.user.findUnique({
+          where: { id: item.elementoId }
+        });
+        
+        if (!aprendiz) {
+          return res.status(400).json({ error: 'No se puede recuperar el aprendiz: el usuario ya no existe' });
+        }
+        
         // Reconectar aprendiz a la ficha
         await prisma.ficha.update({
           where: { id: item.fichaId },
@@ -289,6 +359,34 @@ const recuperarElemento = async (req, res) => {
         break;
         
       case 'instructor':
+        // Verificar que la ficha aún existe
+        if (!item.ficha) {
+          return res.status(400).json({ error: 'No se puede recuperar el instructor: la ficha ya no existe' });
+        }
+        
+        // Verificar que el instructor aún existe
+        const instructorUsuario = await prisma.user.findUnique({
+          where: { id: item.elementoId }
+        });
+        
+        if (!instructorUsuario) {
+          return res.status(400).json({ error: 'No se puede recuperar el instructor: el usuario ya no existe' });
+        }
+        
+        // Verificar que no esté ya en la ficha
+        const yaEnFicha = await prisma.fichaInstructor.findUnique({
+          where: {
+            fichaId_instructorId: {
+              fichaId: item.fichaId,
+              instructorId: item.elementoId
+            }
+          }
+        });
+        
+        if (yaEnFicha) {
+          return res.status(400).json({ error: 'El instructor ya está en la ficha' });
+        }
+        
         // Reconectar instructor a la ficha
         await prisma.fichaInstructor.create({
           data: {
@@ -301,13 +399,33 @@ const recuperarElemento = async (req, res) => {
         break;
         
       case 'horario':
+        // Verificar que la ficha aún existe
+        if (!item.ficha) {
+          return res.status(400).json({ error: 'No se puede recuperar el horario: la ficha ya no existe' });
+        }
+        
+        // Para horarios, necesitamos la materiaId de los datos originales
+        const materiaId = item.datosOriginales?.materiaId;
+        if (!materiaId) {
+          return res.status(400).json({ error: 'No se puede recuperar el horario: falta información de la materia' });
+        }
+        
+        // Verificar que la materia aún existe
+        const materia = await prisma.materia.findUnique({
+          where: { id: materiaId }
+        });
+        
+        if (!materia) {
+          return res.status(400).json({ error: 'No se puede recuperar el horario: la materia ya no existe' });
+        }
+        
         elementoRecuperado = await prisma.horario.create({
           data: {
             dia: item.datosOriginales.dia,
             horaInicio: item.datosOriginales.horaInicio,
             horaFin: item.datosOriginales.horaFin,
             fichaId: item.fichaId,
-            materiaId: item.elementoId // Asumiendo que elementoId es materiaId
+            materiaId: materiaId
           }
         });
         break;
@@ -315,6 +433,9 @@ const recuperarElemento = async (req, res) => {
       case 'excusa':
         // Las excusas eliminadas no se pueden recuperar (son históricas)
         return res.status(400).json({ error: 'Las excusas eliminadas no se pueden recuperar' });
+        
+      default:
+        return res.status(400).json({ error: 'Tipo de elemento no soportado para recuperación' });
     }
 
     // Eliminar de papelera
@@ -330,6 +451,7 @@ const recuperarElemento = async (req, res) => {
       elemento: elementoRecuperado 
     });
   } catch (err) {
+    console.error('Error recuperando elemento:', err);
     res.status(500).json({ error: 'Error recuperando elemento: ' + err.message });
   }
 };

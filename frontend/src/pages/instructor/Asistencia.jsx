@@ -83,6 +83,13 @@ export default function InstructorAsistencia() {
   const [qrTimeLeft, setQrTimeLeft] = useState(30);
   const qrTimerRef = useRef(null);
 
+  // Estados para filtros
+  const [filtros, setFiltros] = useState({
+    fechaDesde: '',
+    fechaHasta: '',
+    estado: ''
+  });
+
   const THRESHOLD = 0.45; // Más sensible para mejor detección
   const COOLDOWN_MS = 2000; // Reducido a 2 segundos
 
@@ -127,12 +134,39 @@ export default function InstructorAsistencia() {
   const loadSessions = async () => {
     if (!selectedMateria) return;
     try {
-      const d = await fetchApi(`/asistencias/materia/${selectedMateria}`);
+      let url = `/asistencias/materia/${selectedMateria}`;
+      const params = new URLSearchParams();
+      
+      if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
+      if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
+      if (filtros.estado) params.append('estado', filtros.estado);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const d = await fetchApi(url);
       setSessions(d.asistencias || []);
     } catch (error) {
       console.error('Error loading sessions:', error);
       setSessions([]);
     }
+  };
+
+  const aplicarFiltros = () => {
+    loadSessions();
+  };
+
+  const limpiarFiltros = () => {
+    setFiltros({
+      fechaDesde: '',
+      fechaHasta: '',
+      estado: ''
+    });
+    // Recargar sin filtros
+    setTimeout(() => {
+      loadSessions();
+    }, 100);
   };
 
   const checkActiveSession = async () => {
@@ -979,8 +1013,8 @@ export default function InstructorAsistencia() {
         </>
       )}
 
-      {/* Historial de Sesiones - Mejorado */}
-      {!activeSession && closedSessions.length > 0 && (
+      {/* Historial de Sesiones - Mejorado con Filtros */}
+      {!activeSession && (
         <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-fade-in-up">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
@@ -991,60 +1025,125 @@ export default function InstructorAsistencia() {
             </h2>
             <span className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">{closedSessions.length} sesiones</span>
           </div>
-          
-          <div className="space-y-3">
-            {closedSessions.slice(0, 5).map((s, idx) => {
-              const p = s.registros?.filter(r => r.presente).length || 0;
-              const t = s.registros?.length || 0;
-              const pct = t > 0 ? Math.round((p / t) * 100) : 0;
-              
-              return (
-                <div 
-                  key={s.id} 
-                  className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer animate-slide-in-right border border-transparent hover:border-blue-200 dark:hover:border-blue-700 group"
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                  onClick={() => setSelectedSessionDetail(s)}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.fecha}</p>
-                      <p className="text-xs text-gray-400">{s.materia?.nombre}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                        pct >= 90 ? 'bg-green-100 text-[#34A853] dark:bg-green-900/30' :
-                        pct >= 70 ? 'bg-yellow-100 text-[#FBBC05] dark:bg-yellow-900/30' :
-                        'bg-red-100 text-[#EA4335] dark:bg-red-900/30'
-                      }`}>
-                        {pct}%
-                      </span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); exportSession(s.id, s.fecha); }} 
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all transform hover:scale-110 active:scale-95" 
-                        title="Exportar">
-                        <Download size={14} className="text-[#34A853]"/>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-xs mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      <strong className="text-gray-800 dark:text-gray-200">{p}</strong> presentes
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      <strong className="text-gray-800 dark:text-gray-200">{t - p}</strong> ausentes
-                    </span>
-                  </div>
 
-                  <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          {/* Filtros */}
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Desde</label>
+                <input
+                  type="date"
+                  value={filtros.fechaDesde}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, fechaDesde: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Hasta</label>
+                <input
+                  type="date"
+                  value={filtros.fechaHasta}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, fechaHasta: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Estado</label>
+                <select
+                  value={filtros.estado}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, estado: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Todas las sesiones</option>
+                  <option value="finalizada">Solo finalizadas</option>
+                  <option value="activa">Solo activas</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={aplicarFiltros}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <Activity size={16} />
+                Aplicar Filtros
+              </button>
+              <button
+                onClick={limpiarFiltros}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Limpiar
+              </button>
+            </div>
           </div>
+          
+          {closedSessions.length > 0 ? (
+            <div className="space-y-3">
+              {closedSessions.slice(0, 10).map((s, idx) => {
+                const p = s.registros?.filter(r => r.presente).length || 0;
+                const t = s.registros?.length || 0;
+                const pct = t > 0 ? Math.round((p / t) * 100) : 0;
+                
+                return (
+                  <div 
+                    key={s.id} 
+                    className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer animate-slide-in-right border border-transparent hover:border-blue-200 dark:hover:border-blue-700 group"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                    onClick={() => setSelectedSessionDetail(s)}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.fecha}</p>
+                        <p className="text-xs text-gray-400">{s.materia?.nombre}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                          pct >= 90 ? 'bg-green-100 text-[#34A853] dark:bg-green-900/30' :
+                          pct >= 70 ? 'bg-yellow-100 text-[#FBBC05] dark:bg-yellow-900/30' :
+                          'bg-red-100 text-[#EA4335] dark:bg-red-900/30'
+                        }`}>
+                          {pct}%
+                        </span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); exportSession(s.id, s.fecha); }} 
+                          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all transform hover:scale-110 active:scale-95" 
+                          title="Exportar">
+                          <Download size={14} className="text-[#34A853]"/>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-xs mb-2">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        <strong className="text-gray-800 dark:text-gray-200">{p}</strong> presentes
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        <strong className="text-gray-800 dark:text-gray-200">{t - p}</strong> ausentes
+                      </span>
+                      {s.activa && (
+                        <span className="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-semibold">
+                          Activa
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<BarChart2 size={48} className="text-gray-400" />}
+              title="Sin sesiones"
+              description={selectedMateria ? "No hay sesiones registradas para esta materia" : "Selecciona una materia para ver el historial"}
+            />
+          )}
         </div>
       )}
 
