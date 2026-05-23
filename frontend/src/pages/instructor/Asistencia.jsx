@@ -18,13 +18,17 @@ function Timer({ startTime }) {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     const start = new Date(startTime).getTime();
-    const iv = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    const iv = setInterval(() => setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000))), 1000);
     return () => clearInterval(iv);
   }, [startTime]);
   const h = Math.floor(elapsed / 3600);
   const m = Math.floor((elapsed % 3600) / 60);
   const s = elapsed % 60;
-  return <span className="font-mono tabular-nums">{h > 0 ? `${h}:` : ''}{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}</span>;
+  
+  if (h > 0) {
+    return <span className="font-mono tabular-nums">{h}h {String(m).padStart(2,'0')}m {String(s).padStart(2,'0')}s</span>;
+  }
+  return <span className="font-mono tabular-nums">{String(m).padStart(2,'0')}m {String(s).padStart(2,'0')}s</span>;
 }
 
 // ─── Tooltip personalizado ────────────────────────────────────────────────────
@@ -820,73 +824,6 @@ export default function InstructorAsistencia() {
             )}
           </div>
 
-          {/* Lector de Huella y NFC */}
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-slide-in-left">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                <Fingerprint size={18} className="text-white" />
-              </div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Lector de Huella y NFC</h3>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Puerto COM</label>
-                <select 
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-[#4285F4] transition-all"
-                  value={comPort}
-                  onChange={e => setComPort(e.target.value)}
-                  disabled={hardwareConnected || connecting}>
-                  <option value="">Seleccionar puerto...</option>
-                  {availablePorts.length === 0 ? (
-                    <option value="" disabled>No hay puertos disponibles</option>
-                  ) : (
-                    availablePorts.map(port => (
-                      <option key={port.path} value={port.path}>
-                        {port.path} - {port.manufacturer || 'Desconocido'}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={loadAvailablePorts}
-                  disabled={connecting}
-                  className="px-3 py-2.5 rounded-xl bg-gray-500 hover:bg-gray-600 text-white text-sm font-semibold transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
-                  title="Actualizar lista de puertos">
-                  <RefreshCw size={14} className={connecting ? 'animate-spin' : ''} />
-                </button>
-                <button 
-                  onClick={toggleHardware}
-                  disabled={connecting || !comPort}
-                  className={`px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center gap-2 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    hardwareConnected 
-                      ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' 
-                      : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
-                  }`}>
-                  {connecting ? (
-                    <><RefreshCw size={14} className="animate-spin"/> Conectando...</>
-                  ) : hardwareConnected ? (
-                    <><X size={14}/> Desconectar</>
-                  ) : (
-                    <><Wifi size={14}/> Conectar</>
-                  )}
-                </button>
-              </div>
-            </div>
-            {hardwareConnected && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-[#34A853] bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg animate-fade-in">
-                <Wifi size={12} />
-                <span>Hardware conectado en {comPort} - Listo para recibir datos</span>
-              </div>
-            )}
-            {!hardwareConnected && availablePorts.length === 0 && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 rounded-lg">
-                <RefreshCw size={12} />
-                <span>No se encontraron puertos COM. Conecta el hardware y actualiza la lista.</span>
-              </div>
-            )}
-          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between mb-3">
@@ -1607,40 +1544,45 @@ export default function InstructorAsistencia() {
         </div>
       )}
 
-      {/* Modal Configuración de Sesión */}
+      {/* Modal Configuración de Sesión (Diseño Premium Liquid Glass de Arachiz) */}
       {showConfigModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-700/60" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
+          <div className="relative bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_-12px_rgba(16,185,129,0.3)] max-w-lg w-full overflow-hidden animate-scale-in border border-white/10 dark:border-white/5" onClick={e => e.stopPropagation()}>
+            
+            {/* Destello decorativo de fondo */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+
             {/* Cabecera */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+            <div className="relative flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg text-white animate-pulse-glow">
-                  <Play size={24} />
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white animate-pulse-glow">
+                  <Play size={22} className="drop-shadow-[0_2px_8px_rgba(255,255,255,0.4)]" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white text-lg">Configurar Sesión</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Define los parámetros antes de iniciar la asistencia</p>
+                  <h2 className="font-extrabold text-white text-lg bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">Configurar Sesión</h2>
+                  <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Define los parámetros de Arachiz</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowConfigModal(false)} 
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all hover:rotate-90 text-gray-500 dark:text-gray-400"
+                className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all hover:rotate-90 text-slate-300 hover:text-white"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Formulario */}
-            <div className="p-6 space-y-5">
+            <div className="relative p-6 space-y-6">
               {/* Sliders de Tiempo de Tolerancia y Duración */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
-                      <Clock size={14} className="text-yellow-500" />
+              <div className="space-y-5">
+                <div className="bg-black/20 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock size={14} className="text-yellow-400" />
                       Tolerancia de llegada tarde
                     </label>
-                    <span className="text-xs font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100/50 dark:bg-yellow-950/30 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-extrabold text-yellow-400 bg-yellow-400/10 px-2.5 py-1 rounded-lg border border-yellow-400/20">
                       {llegadaTarde} minutos
                     </span>
                   </div>
@@ -1651,24 +1593,24 @@ export default function InstructorAsistencia() {
                     step="5"
                     value={llegadaTarde} 
                     onChange={e => setLlegadaTarde(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-400 focus:outline-none"
                   />
-                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-semibold">
                     <span>5 min</span>
-                    <span>15 min (Ref)</span>
+                    <span className="text-emerald-400">15 min (Ref)</span>
                     <span>30 min</span>
                     <span>60 min</span>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
-                      <Hourglass size={14} className="text-blue-500" />
+                <div className="bg-black/20 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Hourglass size={14} className="text-emerald-400" />
                       Duración de la Clase
                     </label>
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-950/30 px-2 py-0.5 rounded-md">
-                      {duracion} minutos ({Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''})
+                    <span className="text-xs font-extrabold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20">
+                      {Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''} ({duracion} min)
                     </span>
                   </div>
                   <input 
@@ -1678,11 +1620,11 @@ export default function InstructorAsistencia() {
                     step="15"
                     value={duracion} 
                     onChange={e => setDuracion(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-400 focus:outline-none"
                   />
-                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-semibold">
                     <span>30 min</span>
-                    <span>2h (120m)</span>
+                    <span className="text-emerald-400">2h (120m)</span>
                     <span>3h (180m)</span>
                     <span>4h (240m)</span>
                   </div>
@@ -1692,8 +1634,8 @@ export default function InstructorAsistencia() {
               {/* Input de Aula y Tema */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-emerald-500" />
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <MapPin size={14} className="text-emerald-400" />
                     Aula / Ubicación
                   </label>
                   <input 
@@ -1701,39 +1643,39 @@ export default function InstructorAsistencia() {
                     placeholder="Ej. Aula 104, Lab 3..." 
                     value={aula} 
                     onChange={e => setAula(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/25 focus:bg-black/40 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all placeholder:text-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                    <BookOpen size={14} className="text-purple-500" />
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <BookOpen size={14} className="text-purple-400" />
                     Tema de la Clase
                   </label>
                   <input 
                     type="text" 
-                    placeholder="Ej. Taller Práctico de APIs..." 
+                    placeholder="Ej. Taller de APIs..." 
                     value={descripcion} 
                     onChange={e => setDescripcion(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/25 focus:bg-black/40 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all placeholder:text-slate-500"
                   />
                 </div>
               </div>
 
               {/* Botones de acción */}
-              <div className="flex gap-3 pt-3">
+              <div className="flex gap-4 pt-3">
                 <button 
                   onClick={() => setShowConfigModal(false)}
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                  className="flex-1 px-4 py-3.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-slate-200 text-sm font-bold transition-all transform active:scale-95"
                 >
                   Cancelar
                 </button>
                 <button 
                   onClick={startSession}
                   disabled={starting}
-                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600 hover:from-green-600 hover:via-emerald-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3.5 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-slate-950 text-sm font-extrabold shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Play size={16} />
+                  <Play size={16} fill="currentColor" />
                   {starting ? 'Iniciando...' : 'Iniciar Sesión'}
                 </button>
               </div>
