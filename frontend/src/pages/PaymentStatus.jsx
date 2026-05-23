@@ -118,7 +118,7 @@ export default function PaymentStatus() {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
 
           {/* Header con color según estado */}
-          <div className={`${config.bg} ${config.border} border-b px-8 py-10 text-center`}>
+          <div className={`${config.bg} ${config.border} border-b px-6 sm:px-8 py-8 sm:py-10 text-center`}>
             {loadingTx ? (
               <Loader size={64} className="text-gray-400 animate-spin mx-auto" />
             ) : (
@@ -129,7 +129,7 @@ export default function PaymentStatus() {
           </div>
 
           {/* Cuerpo */}
-          <div className="px-8 py-6 space-y-5">
+          <div className="px-6 sm:px-8 py-6 space-y-5">
 
             {/* Badge de estado */}
             <div className="flex justify-center">

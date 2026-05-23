@@ -92,26 +92,25 @@ export default function Landing() {
             </Link>
           </motion.div>
         </motion.div>
-
         {/* Right Content - Mockup Device (Responsive & Themed) */}
         <motion.div 
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
-          className="flex-1 w-full flex justify-center items-center relative min-h-[400px] lg:min-h-[600px] z-10"
+          className="flex-1 w-full flex justify-center items-center relative min-h-[320px] sm:min-h-[400px] lg:min-h-[600px] z-10"
         >
            {/* Center Mockup */}
            <motion.div 
              variants={floatVariants}
              animate="animate"
-             className="relative z-20 w-[260px] md:w-[320px] h-[400px] md:h-[500px] bg-white dark:bg-gray-800 rounded-[35px] md:rounded-[45px] shadow-2xl border-8 border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center transform rotate-6 hover:rotate-3 transition-transform duration-500"
+             className="relative z-20 w-[200px] sm:w-[260px] md:w-[320px] h-[300px] sm:h-[400px] md:h-[500px] bg-white dark:bg-gray-800 rounded-[25px] sm:rounded-[35px] md:rounded-[45px] shadow-2xl border-4 sm:border-8 border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center transform rotate-6 hover:rotate-3 transition-transform duration-500"
            >
-              <div className="absolute inset-2 bg-[#F8FAFC] dark:bg-gray-900 rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-6 overflow-hidden border border-gray-200 dark:border-gray-800 transition-colors duration-500">
-                <div className="w-24 md:w-32 h-32 md:h-40 rounded-3xl flex items-center justify-center opacity-80 mb-6 bg-white dark:bg-gray-800 shadow-md transition-colors duration-500">
-                   <Fingerprint size={80} strokeWidth={1.5} className="text-[#4285F4] drop-shadow-sm" />
+              <div className="absolute inset-1 sm:inset-2 bg-[#F8FAFC] dark:bg-gray-900 rounded-[18px] sm:rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden border border-gray-200 dark:border-gray-800 transition-colors duration-500">
+                <div className="w-16 sm:w-24 md:w-32 h-20 sm:h-32 md:h-40 rounded-2xl sm:rounded-3xl flex items-center justify-center opacity-80 mb-4 sm:mb-6 bg-white dark:bg-gray-800 shadow-md transition-colors duration-500">
+                   <Fingerprint strokeWidth={1.5} className="text-[#4285F4] drop-shadow-sm w-12 h-12 sm:w-20 sm:h-20" />
                 </div>
-                <div className="mt-auto w-full h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center px-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-500">
-                   <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Reconocimiento...</span>
+                <div className="mt-auto w-full h-8 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-lg sm:rounded-xl flex items-center px-3 sm:px-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-500">
+                   <span className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-medium">Reconocimiento...</span>
                 </div>
               </div>
            </motion.div>
@@ -120,7 +119,7 @@ export default function Landing() {
            <motion.div 
              animate={{ y: [0, 20, 0] }}
              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-             className="absolute top-[5%] md:top-[10%] left-[0%] md:left-[5%] z-30 w-32 md:w-40 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 transform -rotate-[12deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
+             className="hidden sm:block absolute top-[5%] md:top-[10%] left-[0%] md:left-[5%] z-30 w-32 md:w-40 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 transform -rotate-[12deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
            >
               <div className="w-full h-24 md:h-32 bg-gray-50 dark:bg-gray-900 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative shadow-inner transition-colors duration-500">
                  <ScanFace size={48} className="text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
@@ -131,8 +130,8 @@ export default function Landing() {
                     <ShieldCheck size={20} />
                  </div>
                  <div className="flex-1 space-y-1.5">
-                   <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
-                   <div className="w-2/3 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
+                    <div className="w-2/3 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
                  </div>
               </div>
            </motion.div>
@@ -141,13 +140,13 @@ export default function Landing() {
            <motion.div 
              animate={{ y: [0, -15, 0] }}
              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-             className="absolute top-[10%] md:top-[5%] right-[0%] md:right-[5%] z-20 w-24 md:w-32 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 md:p-4 transform rotate-[15deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
+             className="hidden sm:block absolute top-[10%] md:top-[5%] right-[0%] md:right-[5%] z-20 w-24 md:w-32 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 md:p-4 transform rotate-[15deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
            >
              <div className="w-full aspect-square border-2 border-gray-800 dark:border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-500">
                <QrCode size={40} className="text-gray-800 dark:text-gray-200" />
              </div>
            </motion.div>
-        </motion.div>
+         </motion.div>
 
       </div>
     </div>

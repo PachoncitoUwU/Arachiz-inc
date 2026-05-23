@@ -3,7 +3,7 @@ const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/tim
 
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
-  const { materiaId } = req.body;
+  const { materiaId, llegadaTarde, duracion, aula, descripcion } = req.body;
   const instructorId = req.user.id;
   if (!materiaId) return res.status(400).json({ error: 'Falta la materia' });
   try {
@@ -15,11 +15,20 @@ const createSession = async (req, res) => {
 
     // Obtener fecha actual de Colombia
     const autoFecha = await getCurrentColombiaDate();
+    const colombiaTime = await getCurrentColombiaTime();
     console.log(`[Asistencia] Creando sesión con fecha de Colombia: ${autoFecha}`);
+
+    const parsedLlegadaTarde = llegadaTarde !== undefined ? parseInt(llegadaTarde, 10) : 15;
+    const parsedDuracion = duracion !== undefined ? parseInt(duracion, 10) : 120;
 
     const newAsistencia = await prisma.asistencia.create({
       data: {
         fecha: autoFecha,
+        timestamp: colombiaTime,
+        llegadaTarde: parsedLlegadaTarde,
+        duracion: parsedDuracion,
+        aula: aula || null,
+        descripcion: descripcion || null,
         materia: { connect: { id: materiaId } },
         instructor: { connect: { id: instructorId } },
         activa: true
@@ -168,25 +177,39 @@ const registerAttendance = async (req, res) => {
     // Obtener hora actual de Colombia
     const colombiaTime = await getCurrentColombiaTime();
 
+    // Calcular si llegó tarde
+    const sessionStart = new Date(asistencia.timestamp);
+    const registerTime = new Date(colombiaTime);
+    const diffMs = registerTime.getTime() - sessionStart.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const tarde = diffMins > (asistencia.llegadaTarde || 15);
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: metodo || 'codigo',
         timestamp: colombiaTime,
+        tarde: tarde,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: targetAprendizId } }
       },
-      include: { aprendiz: { select: { fullName: true, document: true } } }
+      include: { aprendiz: { select: { id: true, fullName: true, document: true } } }
     });
 
     const io = req.app.get('io');
     if (io) {
       io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+        id: registro.id,
         aprendizId: targetAprendizId,
-        fullName: registro.aprendiz.fullName,
+        aprendiz: {
+          id: targetAprendizId,
+          fullName: registro.aprendiz.fullName,
+          document: registro.aprendiz.document
+        },
         presente: true,
         metodo: registro.metodo,
-        timestamp: registro.timestamp
+        timestamp: registro.timestamp,
+        tarde: registro.tarde
       });
     }
     res.json({ message: 'Asistencia registrada', registro });
@@ -247,25 +270,39 @@ const registerHardwareAttendance = async (req, res) => {
     // Obtener hora actual de Colombia
     const colombiaTime = await getCurrentColombiaTime();
 
+    // Calcular si llegó tarde
+    const sessionStart = new Date(asistencia.timestamp);
+    const registerTime = new Date(colombiaTime);
+    const diffMs = registerTime.getTime() - sessionStart.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const tarde = diffMins > (asistencia.llegadaTarde || 15);
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: nfcUid ? 'nfc' : 'huella',
         timestamp: colombiaTime,
+        tarde: tarde,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendiz.id } }
       },
-      include: { aprendiz: { select: { fullName: true, document: true } } }
+      include: { aprendiz: { select: { id: true, fullName: true, document: true } } }
     });
 
     const io = req.app.get('io');
     if (io) {
       io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+        id: registro.id,
         aprendizId: aprendiz.id,
-        fullName: registro.aprendiz.fullName,
+        aprendiz: {
+          id: aprendiz.id,
+          fullName: registro.aprendiz.fullName,
+          document: registro.aprendiz.document
+        },
         presente: true,
         metodo: registro.metodo,
-        timestamp: registro.timestamp
+        timestamp: registro.timestamp,
+        tarde: registro.tarde
       });
     }
 
@@ -519,25 +556,39 @@ const registerFacialAttendance = async (req, res) => {
     // Obtener hora actual de Colombia, Bogotá
     const colombiaTime = await getCurrentColombiaTime();
 
+    // Calcular si llegó tarde
+    const sessionStart = new Date(asistencia.timestamp);
+    const registerTime = new Date(colombiaTime);
+    const diffMs = registerTime.getTime() - sessionStart.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const tarde = diffMins > (asistencia.llegadaTarde || 15);
+
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: 'facial',
         timestamp: colombiaTime,
+        tarde: tarde,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendizId } }
       },
-      include: { aprendiz: { select: { fullName: true, document: true } } }
+      include: { aprendiz: { select: { id: true, fullName: true, document: true } } }
     });
 
     const io = req.app.get('io');
     if (io) {
       io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
-        aprendizId,
-        fullName: registro.aprendiz.fullName,
+        id: registro.id,
+        aprendizId: aprendizId,
+        aprendiz: {
+          id: aprendizId,
+          fullName: registro.aprendiz.fullName,
+          document: registro.aprendiz.document
+        },
         presente: true,
         metodo: 'facial',
-        timestamp: registro.timestamp
+        timestamp: registro.timestamp,
+        tarde: registro.tarde
       });
     }
 
@@ -615,12 +666,20 @@ const registerManualAttendance = async (req, res) => {
     // Obtener hora actual de Colombia
     const colombiaTime = await getCurrentColombiaTime();
 
+    // Calcular si llegó tarde
+    const sessionStart = new Date(session.timestamp);
+    const registerTime = new Date(colombiaTime);
+    const diffMs = registerTime.getTime() - sessionStart.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const tarde = diffMins > (session.llegadaTarde || 15);
+
     // Registrar asistencia
     const registro = await prisma.registroAsistencia.create({
       data: {
         presente: true,
         metodo: 'manual',
         timestamp: colombiaTime,
+        tarde: tarde,
         asistencia: { connect: { id: asistenciaId } },
         aprendiz: { connect: { id: aprendizId } }
       },
@@ -645,7 +704,8 @@ const registerManualAttendance = async (req, res) => {
         aprendiz: registro.aprendiz,
         presente: true,
         metodo: 'manual',
-        timestamp: registro.timestamp
+        timestamp: registro.timestamp,
+        tarde: registro.tarde
       });
     }
 

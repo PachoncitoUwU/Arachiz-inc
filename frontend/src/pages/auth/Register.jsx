@@ -81,12 +81,12 @@ export default function Register() {
           <h1 className="text-3xl font-bold text-gray-900">{t('register', 'create')}</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-8 space-y-4">
+        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 space-y-4">
           {/* Tipo de usuario */}
           <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-xl">
             {['aprendiz', 'instructor', 'administrador'].map(type => (
               <button key={type} type="button" onClick={() => setUserType(type)}
-                className={`py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
+                className={`py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all capitalize ${
                   userType === type
                     ? 'bg-white shadow-sm text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'

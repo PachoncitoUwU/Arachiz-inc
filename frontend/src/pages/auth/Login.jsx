@@ -202,7 +202,7 @@ export default function Login() {
       `}</style>
 
       {/* Botones Flotantes Donación */}
-      <div className="absolute bottom-6 left-6 flex flex-col gap-3 z-50">
+      <div className="hidden sm:flex absolute bottom-6 left-6 flex-col gap-3 z-50">
         {/* Botón Wompi */}
         <button
           onClick={() => handleDonate('wompi')}
@@ -405,7 +405,7 @@ export default function Login() {
           <h2 className="text-2xl font-bold text-gray-900 mt-4">Bienvenido de vuelta</h2>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-8 space-y-5 animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 space-y-5 animate-fade-in">
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm animate-shake">
               {error}
@@ -504,6 +504,30 @@ export default function Login() {
           >
             ¿No tienes cuenta? Regístrate aquí
           </Link>
+
+          {/* Donaciones en Móvil */}
+          <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100">
+            <span className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Apoyar el proyecto</span>
+            <div className="flex gap-4 w-full justify-center">
+              <button
+                type="button"
+                onClick={() => handleDonate('wompi')}
+                className="flex items-center gap-1 text-xs font-bold text-[#FF6B35] hover:underline"
+              >
+                <Coffee size={13} className="fill-current" />
+                Wompi
+              </button>
+              <span className="text-gray-300 text-xs">|</span>
+              <button
+                type="button"
+                onClick={() => handleDonate('epayco')}
+                className="flex items-center gap-1 text-xs font-bold text-[#FF9D00] hover:underline"
+              >
+                <Coffee size={13} className="fill-current" />
+                Epayco
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
