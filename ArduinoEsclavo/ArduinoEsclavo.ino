@@ -11,6 +11,7 @@ SoftwareSerial mySerial(2, 3);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 const int PIN_BUZZER = 6;
+const int PIN_BUZZER2 = 5;  // Segundo pin para modo puente (mas volumen)
 const int PIN_SWITCH = 7;
 const int PIN_RX_ESP = 8;
 const int PIN_TX_ESP = 9;
@@ -31,6 +32,8 @@ void setup() {
   Serial.begin(9600);
   espSerial.begin(9600);
   pinMode(PIN_BUZZER, OUTPUT);
+  pinMode(PIN_BUZZER2, OUTPUT);
+  digitalWrite(PIN_BUZZER2, LOW);
   pinMode(PIN_SWITCH, INPUT_PULLUP);
 
   Serial.println(F("\n-------------------------------------------"));
@@ -156,7 +159,7 @@ bool enrolar(int id) {
     }
   }
 
-  tone(PIN_BUZZER, 2000, 150);
+  bridgeTone(1200, 150);
   Serial.println(F("DEBUG: QUITE EL DEDO..."));
   delay(1000);
   start = millis();
@@ -207,30 +210,51 @@ String hexUID(uint8_t* uid, uint8_t len) {
   return s;
 }
 
+// --- FUNCION DE TONO EN MODO PUENTE (2x VOLUMEN) ---
+// Genera el tono manualmente alternando 2 pines en fase opuesta
+// Esto duplica el voltaje efectivo en el altavoz (10Vpp vs 5Vpp)
+void bridgeTone(int freq, unsigned long duracion) {
+  unsigned long periodo = 1000000UL / freq;  // microsegundos
+  unsigned long mitad = periodo / 2;
+  unsigned long inicio = millis();
+
+  while (millis() - inicio < duracion) {
+    digitalWrite(PIN_BUZZER, HIGH);
+    digitalWrite(PIN_BUZZER2, LOW);
+    delayMicroseconds(mitad);
+    digitalWrite(PIN_BUZZER, LOW);
+    digitalWrite(PIN_BUZZER2, HIGH);
+    delayMicroseconds(mitad);
+  }
+  // Apagar ambos pines al terminar
+  digitalWrite(PIN_BUZZER, LOW);
+  digitalWrite(PIN_BUZZER2, LOW);
+}
+
 void sonidoNFC() {
-  tone(PIN_BUZZER, 2000, 150);
-  delay(200);
-  tone(PIN_BUZZER, 2500, 150);
+  bridgeTone(1000, 250);
+  delay(50);
+  bridgeTone(1400, 250);
 }
 
 void sonidoHuella() {
-  tone(PIN_BUZZER, 1800, 100);
-  delay(150);
-  tone(PIN_BUZZER, 2200, 100);
-  delay(150);
-  tone(PIN_BUZZER, 2500, 100);
+  bridgeTone(900, 200);
+  delay(50);
+  bridgeTone(1200, 200);
+  delay(50);
+  bridgeTone(1500, 200);
 }
 
 void sonidoEnrolamiento() {
-  tone(PIN_BUZZER, 2000, 100);
-  delay(120);
-  tone(PIN_BUZZER, 2400, 100);
-  delay(120);
-  tone(PIN_BUZZER, 2800, 200);
+  bridgeTone(1000, 200);
+  delay(50);
+  bridgeTone(1300, 200);
+  delay(50);
+  bridgeTone(1600, 300);
 }
 
 void sonidoError() {
-  tone(PIN_BUZZER, 500, 300);
+  bridgeTone(400, 400);
   delay(100);
-  tone(PIN_BUZZER, 500, 300);
+  bridgeTone(400, 400);
 }
