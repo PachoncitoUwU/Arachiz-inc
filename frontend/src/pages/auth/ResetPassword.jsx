@@ -72,7 +72,7 @@ export default function ResetPassword() {
   if (verifying) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center">
           <Loader size={48} className="animate-spin text-[#4285F4] mx-auto mb-4" />
           <p className="text-gray-600">Verificando token...</p>
         </div>
@@ -83,7 +83,7 @@ export default function ResetPassword() {
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center animate-scale-in">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center animate-scale-in">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-500" />
           </div>
@@ -100,7 +100,7 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center animate-scale-in">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center animate-scale-in">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-[#34A853]" />
           </div>
@@ -116,7 +116,7 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-fade-in">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Lock size={32} className="text-[#34A853]" />

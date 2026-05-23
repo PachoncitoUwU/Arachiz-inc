@@ -67,7 +67,7 @@ export default function JoinFicha() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-8 text-center space-y-4">
+        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 text-center space-y-4">
           {status === 'loading' && (
             <>
               <Loader size={40} className="text-[#4285F4] animate-spin mx-auto"/>

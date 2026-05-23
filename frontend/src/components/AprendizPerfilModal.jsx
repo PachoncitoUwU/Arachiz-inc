@@ -142,14 +142,12 @@ export default function AprendizPerfilModal({
               <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Métodos de Registro
               </h4>
-              {isAdmin && (
-                <button 
-                  onClick={handleOpenEnroll}
-                  className="btn-primary text-xs py-1.5 px-3"
-                >
-                  Gestionar
-                </button>
-              )}
+              <button 
+                onClick={handleOpenEnroll}
+                className="btn-primary text-xs py-1.5 px-3"
+              >
+                Gestionar
+              </button>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -258,7 +256,7 @@ export default function AprendizPerfilModal({
           open={modalEnroll} 
           onClose={handleCloseEnroll} 
           aprendiz={{...localAprendiz, fichaId}}
-          onUpdate={onUpdate}
+          onUpdate={onBiometricUpdate}
         />
       )}
 

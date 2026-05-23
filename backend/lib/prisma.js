@@ -1,5 +1,14 @@
 const { PrismaClient } = require('@prisma/client');
 
+const databaseUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
+if (!databaseUrl) {
+  throw new Error('Falta DATABASE_URL o DIRECT_URL en variables de entorno');
+}
+
+if (!process.env.DATABASE_URL && process.env.DIRECT_URL) {
+  console.warn('⚠️ Usando DIRECT_URL como respaldo. En producción debes configurar DATABASE_URL con el pooler de Supabase.');
+}
+
 // Singleton para evitar múltiples instancias de Prisma Client
 let prisma;
 
@@ -7,7 +16,7 @@ if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL
+        url: databaseUrl
       }
     },
     log: ['error', 'warn']
@@ -18,7 +27,7 @@ if (process.env.NODE_ENV === 'production') {
     global.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL
+          url: databaseUrl
         }
       },
       log: ['error', 'warn']

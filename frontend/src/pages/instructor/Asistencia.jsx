@@ -6,7 +6,7 @@ import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, Fingerprint, Wifi, RefreshCw, TrendingUp, Award, X, Camera, UserPlus, Zap, Activity, Eye, EyeOff } from 'lucide-react';
+import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, Fingerprint, Wifi, RefreshCw, TrendingUp, Award, X, Camera, UserPlus, Zap, Activity, Eye, EyeOff, MapPin, Hourglass } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { loadFaceModels, faceDistance, arrayToDescriptor } from '../../utils/faceApi';
 import * as faceapi from 'face-api.js';
@@ -54,6 +54,13 @@ export default function InstructorAsistencia() {
   const [manualRegisterOpen, setManualRegisterOpen] = useState(false);
   const [selectedSessionDetail, setSelectedSessionDetail] = useState(null);
   const socketRef = useRef(null);
+
+  // Configuración de sesión
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [llegadaTarde, setLlegadaTarde] = useState(15);
+  const [duracion, setDuracion] = useState(120);
+  const [aula, setAula] = useState('');
+  const [descripcion, setDescripcion] = useState('');
 
   // Estados para hardware
   const [comPort, setComPort] = useState('');
@@ -199,12 +206,16 @@ export default function InstructorAsistencia() {
       console.log('[Socket] Nueva asistencia recibida:', data);
       setActiveSession(prev => {
         if (!prev) return prev;
-        if (prev.registros?.some(r => r.aprendizId === data.aprendizId)) {
-          console.log('[Socket] Registro duplicado, ignorando');
-          return prev;
+        const alreadyExists = prev.registros?.some(r => r.aprendizId === data.aprendizId);
+        if (alreadyExists) {
+          console.log('[Socket] Registro ya existente en la UI, actualizando datos del servidor');
+          return {
+            ...prev,
+            registros: prev.registros.map(r => r.aprendizId === data.aprendizId ? data : r)
+          };
         }
         showToast(`✓ ${data.aprendiz?.fullName || 'Aprendiz'} registrado`, 'success');
-        return { ...prev, registros: [...(prev.registros || []), { ...data, id: data.id || Date.now() }] };
+        return { ...prev, registros: [...(prev.registros || []), data] };
       });
     });
 
@@ -286,12 +297,18 @@ export default function InstructorAsistencia() {
     try {
       const d = await fetchApi('/asistencias', {
         method: 'POST',
-        // Backend ya genera su propia fecha inquebrantable
-        body: JSON.stringify({ materiaId: selectedMateria })
+        body: JSON.stringify({ 
+          materiaId: selectedMateria,
+          llegadaTarde,
+          duracion,
+          aula,
+          descripcion
+        })
       });
       setActiveSession({ ...d.asistencia, registros: [] });
       connectSocket(d.asistencia.id);
       showToast('Sesión iniciada', 'success');
+      setShowConfigModal(false);
     } catch (err) { showToast(err.message, 'error'); }
     finally { setStarting(false); }
   };
@@ -635,8 +652,8 @@ export default function InstructorAsistencia() {
 
       showToast(`✅ ${aprendiz?.fullName} registrado`, 'success');
 
-      // Enviar al servidor
-      await fetchApi('/asistencias/manual-register', {
+      // Enviar al servidor y obtener la respuesta para persistir datos del servidor
+      const serverRes = await fetchApi('/asistencias/manual-register', {
         method: 'POST',
         body: JSON.stringify({ 
           asistenciaId: activeSession.id, 
@@ -650,7 +667,7 @@ export default function InstructorAsistencia() {
         ...prev,
         registros: prev.registros?.map(r => 
           r.id === tempId 
-            ? { ...r, id: `manual-${aprendizId}-${Date.now()}` } // ID más permanente
+            ? serverRes.registro
             : r
         ) || []
       }));
@@ -659,7 +676,7 @@ export default function InstructorAsistencia() {
       // Revertir la UI si falla el servidor
       setActiveSession(prev => ({
         ...prev,
-        registros: prev.registros?.filter(r => r.id !== `temp-manual-${aprendizId}-${Date.now()}`) || []
+        registros: prev.registros?.filter(r => r.id !== tempId) || []
       }));
       showToast(`Error: ${err.message}`, 'error');
     } finally {
@@ -708,7 +725,7 @@ export default function InstructorAsistencia() {
           <div>
             {!activeSession ? (
               <button 
-                onClick={startSession} 
+                onClick={() => setShowConfigModal(true)} 
                 disabled={!selectedMateria || starting} 
                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600 hover:from-green-600 hover:via-emerald-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform hover:scale-105 active:scale-95 animate-pulse-glow">
                 <Play size={18}/> {starting ? 'Iniciando...' : 'Iniciar Sesión'}
@@ -771,6 +788,38 @@ export default function InstructorAsistencia() {
 
       {activeSession && (
         <>
+          {/* Detalles de configuración de la sesión activa */}
+          <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/20 dark:border-gray-800/60 shadow-sm flex flex-wrap gap-4 items-center justify-between animate-fade-in-up">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <Clock size={14} className="text-yellow-500" />
+                Tolerancia Tarde: <strong className="text-gray-900 dark:text-white">{activeSession.llegadaTarde} min</strong>
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <Hourglass size={14} className="text-blue-500" />
+                Duración: <strong className="text-gray-900 dark:text-white">{activeSession.duracion} min</strong>
+              </span>
+              {activeSession.aula && (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  <MapPin size={14} className="text-emerald-500" />
+                  Aula: <strong className="text-gray-900 dark:text-white">{activeSession.aula}</strong>
+                </span>
+              )}
+              {activeSession.descripcion && (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  <BookOpen size={14} className="text-purple-500" />
+                  Tema: <strong className="text-gray-900 dark:text-white">{activeSession.descripcion}</strong>
+                </span>
+              )}
+            </div>
+            {activeSession.timestamp && (
+              <div className="flex items-center gap-2 text-xs font-bold bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full border border-green-500/20 shadow-sm">
+                <Activity size={12} className="animate-pulse" />
+                <span>Tiempo transcurrido: <Timer startTime={activeSession.timestamp} /></span>
+              </div>
+            )}
+          </div>
+
           {/* Lector de Huella y NFC */}
           <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-slide-in-left">
             <div className="flex items-center gap-2 mb-3">
@@ -999,6 +1048,11 @@ export default function InstructorAsistencia() {
                           <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 font-medium">
                             {reg.metodo || 'manual'}
                           </span>
+                          {reg.tarde && (
+                            <span className="ml-1.5 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-semibold animate-pulse">
+                              Tarde
+                            </span>
+                          )}
                           {' • '}
                           {new Date(reg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -1314,7 +1368,13 @@ export default function InstructorAsistencia() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-bold text-gray-900 dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
-                  <p className="text-sm text-gray-400">{selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}</p>
+                  <p className="text-sm text-gray-400">
+                    {selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}
+                    {selectedSessionDetail.aula && ` • Aula: ${selectedSessionDetail.aula}`}
+                    {selectedSessionDetail.duracion && ` • Duración: ${selectedSessionDetail.duracion} min`}
+                    {selectedSessionDetail.llegadaTarde && ` • Tolerancia Tarde: ${selectedSessionDetail.llegadaTarde} min`}
+                    {selectedSessionDetail.descripcion && ` • Tema: ${selectedSessionDetail.descripcion}`}
+                  </p>
                 </div>
                 <button onClick={() => setSelectedSessionDetail(null)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
                   <X size={20} />
@@ -1325,7 +1385,7 @@ export default function InstructorAsistencia() {
             <div className="p-6">{/* Contenido del modal */}
 
             {/* Estadísticas principales */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
               {[
                 { 
                   label: 'Total Estudiantes', 
@@ -1340,6 +1400,13 @@ export default function InstructorAsistencia() {
                   color: 'green', 
                   icon: CheckCircle,
                   bg: 'from-green-500 to-emerald-600'
+                },
+                { 
+                  label: 'Llegadas Tarde', 
+                  value: selectedSessionDetail.registros?.filter(r => r.presente && r.tarde).length || 0, 
+                  color: 'yellow', 
+                  icon: Clock,
+                  bg: 'from-amber-500 to-yellow-600'
                 },
                 { 
                   label: 'Ausentes', 
@@ -1486,6 +1553,11 @@ export default function InstructorAsistencia() {
                           <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 font-medium">
                             {reg.metodo || 'manual'}
                           </span>
+                          {reg.tarde && (
+                            <span className="px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-semibold animate-pulse">
+                              Tarde
+                            </span>
+                          )}
                           <span>{new Date(reg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
@@ -1530,6 +1602,141 @@ export default function InstructorAsistencia() {
                 Exportar Sesión Completa
               </button>
             </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Configuración de Sesión */}
+      {showConfigModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
+          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-700/60" onClick={e => e.stopPropagation()}>
+            {/* Cabecera */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 via-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg text-white animate-pulse-glow">
+                  <Play size={24} />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900 dark:text-white text-lg">Configurar Sesión</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Define los parámetros antes de iniciar la asistencia</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowConfigModal(false)} 
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all hover:rotate-90 text-gray-500 dark:text-gray-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <div className="p-6 space-y-5">
+              {/* Sliders de Tiempo de Tolerancia y Duración */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <Clock size={14} className="text-yellow-500" />
+                      Tolerancia de llegada tarde
+                    </label>
+                    <span className="text-xs font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100/50 dark:bg-yellow-950/30 px-2 py-0.5 rounded-md">
+                      {llegadaTarde} minutos
+                    </span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="5" 
+                    max="60" 
+                    step="5"
+                    value={llegadaTarde} 
+                    onChange={e => setLlegadaTarde(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
+                    <span>5 min</span>
+                    <span>15 min (Ref)</span>
+                    <span>30 min</span>
+                    <span>60 min</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <Hourglass size={14} className="text-blue-500" />
+                      Duración de la Clase
+                    </label>
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-950/30 px-2 py-0.5 rounded-md">
+                      {duracion} minutos ({Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''})
+                    </span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="30" 
+                    max="240" 
+                    step="15"
+                    value={duracion} 
+                    onChange={e => setDuracion(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
+                    <span>30 min</span>
+                    <span>2h (120m)</span>
+                    <span>3h (180m)</span>
+                    <span>4h (240m)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Input de Aula y Tema */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                    <MapPin size={14} className="text-emerald-500" />
+                    Aula / Ubicación
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej. Aula 104, Lab 3..." 
+                    value={aula} 
+                    onChange={e => setAula(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                    <BookOpen size={14} className="text-purple-500" />
+                    Tema de la Clase
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej. Taller Práctico de APIs..." 
+                    value={descripcion} 
+                    onChange={e => setDescripcion(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  />
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 pt-3">
+                <button 
+                  onClick={() => setShowConfigModal(false)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={startSession}
+                  disabled={starting}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600 hover:from-green-600 hover:via-emerald-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-green-500/50 transition-all flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Play size={16} />
+                  {starting ? 'Iniciando...' : 'Iniciar Sesión'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

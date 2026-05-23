@@ -116,6 +116,10 @@ model Asistencia {
   instructor   User                 @relation("InstructorAsistencia", fields: [instructorId], references: [id])
   materia      Materia              @relation(fields: [materiaId], references: [id], onDelete: Cascade)
   registros    RegistroAsistencia[]
+  llegadaTarde Int                  @default(15)
+  duracion     Int                  @default(120)
+  aula         String?
+  descripcion  String?
 }
 
 model RegistroAsistencia {
@@ -124,6 +128,7 @@ model RegistroAsistencia {
   metodo       String     @default("manual")
   timestamp    DateTime   @default(now())
   justificado  Boolean    @default(false)
+  tarde        Boolean    @default(false)
   asistenciaId String
   aprendizId   String
   aprendiz     User       @relation(fields: [aprendizId], references: [id], onDelete: Cascade)

@@ -70,8 +70,7 @@ exports.clearFingerprints = async (req, res) => {
   }
 };
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient({ datasources: { db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL } } });
+const prisma = require('../lib/prisma');
 
 exports.bindHardware = async (req, res) => {
   const { userId, nfcUid, huellaId } = req.body;
