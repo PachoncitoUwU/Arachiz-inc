@@ -54,7 +54,7 @@ export default function App() {
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/about" element={<AboutUs />} />
+              <Route path="/about-us" element={<AboutUs />} />
               <Route path="/login"    element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

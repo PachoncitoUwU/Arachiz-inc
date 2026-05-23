@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import fetchApi from '../services/api';
-import { BookOpen, User, Clock, Edit2, Trash2, Loader } from 'lucide-react';
+import { BookOpen, User, Clock, Edit2, Trash2, Loader, UserPlus, UserMinus } from 'lucide-react';
 
 export default function MateriaInfoModal({ 
   open, 
@@ -11,6 +11,7 @@ export default function MateriaInfoModal({
   isCreatorOrAdmin,
   isAdmin = false,
   instructores = [],
+  currentUserId = null,
   onUpdate,
   onDelete,
   isAprendizView = false
@@ -23,8 +24,14 @@ export default function MateriaInfoModal({
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [takingMateria, setTakingMateria] = useState(false);
+  const [leavingMateria, setLeavingMateria] = useState(false);
   const [error, setError] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null });
+  const [confirmDialog, setConfirmDialog] = useState({ 
+    open: false, 
+    action: null,
+    type: null // 'delete', 'take', 'leave'
+  });
 
   if (!materia) return null;
 
@@ -99,7 +106,66 @@ export default function MateriaInfoModal({
           setError(err.message || 'Error al eliminar la materia');
           setDeleting(false);
         }
-      }
+      },
+      type: 'delete'
+    });
+  };
+
+  const handleTakeMateria = async () => {
+    setConfirmDialog({
+      open: true,
+      action: async () => {
+        try {
+          setTakingMateria(true);
+          setError('');
+
+          await fetchApi(`/materias/${materia.id}/tomar`, {
+            method: 'PUT'
+          });
+
+          // Actualizar el objeto materia localmente
+          materia.instructorId = currentUserId;
+          materia.instructor = { id: currentUserId, fullName: 'Tú' }; // Se actualizará con la respuesta real
+
+          if (onUpdate) {
+            onUpdate();
+          }
+          onClose();
+        } catch (err) {
+          setError(err.message || 'Error al tomar la materia');
+          setTakingMateria(false);
+        }
+      },
+      type: 'take'
+    });
+  };
+
+  const handleLeaveMateria = async () => {
+    setConfirmDialog({
+      open: true,
+      action: async () => {
+        try {
+          setLeavingMateria(true);
+          setError('');
+
+          await fetchApi(`/materias/${materia.id}/dejar`, {
+            method: 'PUT'
+          });
+
+          // Actualizar el objeto materia localmente
+          materia.instructorId = null;
+          materia.instructor = null;
+
+          if (onUpdate) {
+            onUpdate();
+          }
+          onClose();
+        } catch (err) {
+          setError(err.message || 'Error al dejar la materia');
+          setLeavingMateria(false);
+        }
+      },
+      type: 'leave'
     });
   };
 
@@ -225,15 +291,15 @@ export default function MateriaInfoModal({
               </div>
 
               {/* Instructor */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <div className={`p-4 rounded-xl ${!materia.instructor ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800' : 'bg-gray-50 dark:bg-gray-800'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-gray-500" />
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  <User size={16} className={!materia.instructor ? "text-orange-500" : "text-gray-500"} />
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${!materia.instructor ? 'text-orange-500 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400'}`}>
                     Instructor
                   </p>
                 </div>
-                <p className="text-base font-medium text-gray-900 dark:text-gray-100">
-                  {materia.instructor?.fullName || 'No asignado'}
+                <p className={`text-base font-medium ${!materia.instructor ? 'text-orange-700 dark:text-orange-300' : 'text-gray-900 dark:text-gray-100'}`}>
+                  {materia.instructor?.fullName || 'Sin instructor a cargo'}
                 </p>
               </div>
 
@@ -267,33 +333,81 @@ export default function MateriaInfoModal({
             </div>
 
             {/* Botones de acción */}
-            {isCreatorOrAdmin && (
-              <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <button 
-                  onClick={handleEdit}
-                  className="btn-secondary flex-1 flex items-center justify-center gap-2"
-                  disabled={deleting}
-                >
-                  <Edit2 size={16} />
-                  Editar
-                </button>
-                <button 
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="btn-secondary flex-1 flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
-                >
-                  {deleting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                      Eliminando...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={16} />
-                      Enviar a Papelera
-                    </>
-                  )}
-                </button>
+            {(isCreatorOrAdmin || (!isAprendizView && currentUserId)) && (
+              <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Botones para instructores (tomar/dejar materia) */}
+                {!isAprendizView && currentUserId && !isAdmin && (
+                  <div className="flex gap-3">
+                    {!materia.instructor ? (
+                      <button 
+                        onClick={handleTakeMateria}
+                        disabled={takingMateria}
+                        className="btn-primary flex-1 flex items-center justify-center gap-2"
+                      >
+                        {takingMateria ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Tomando...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={16} />
+                            Tomar a Cargo
+                          </>
+                        )}
+                      </button>
+                    ) : materia.instructorId === currentUserId ? (
+                      <button 
+                        onClick={handleLeaveMateria}
+                        disabled={leavingMateria}
+                        className="btn-secondary flex-1 flex items-center justify-center gap-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 border-orange-200"
+                      >
+                        {leavingMateria ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                            Dejando...
+                          </>
+                        ) : (
+                          <>
+                            <UserMinus size={16} />
+                            Dejar Materia
+                          </>
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+
+                {/* Botones de edición/eliminación para creadores y admins */}
+                {isCreatorOrAdmin && (
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={handleEdit}
+                      className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                      disabled={deleting || takingMateria || leavingMateria}
+                    >
+                      <Edit2 size={16} />
+                      Editar
+                    </button>
+                    <button 
+                      onClick={handleDelete}
+                      disabled={deleting || takingMateria || leavingMateria}
+                      className="btn-secondary flex-1 flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+                    >
+                      {deleting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                          Eliminando...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={16} />
+                          Enviar a Papelera
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -303,13 +417,25 @@ export default function MateriaInfoModal({
 
     <ConfirmDialog
       open={confirmDialog.open}
-      onClose={() => setConfirmDialog({ open: false, action: null })}
+      onClose={() => setConfirmDialog({ open: false, action: null, type: null })}
       onConfirm={confirmDialog.action}
-      title="Eliminar Materia"
-      message={`¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`}
-      confirmText="Eliminar"
+      title={
+        confirmDialog.type === 'take' ? "Tomar Materia" :
+        confirmDialog.type === 'leave' ? "Dejar Materia" :
+        "Eliminar Materia"
+      }
+      message={
+        confirmDialog.type === 'take' ? `¿Estás seguro de tomar a cargo la materia "${materia.nombre}"?` :
+        confirmDialog.type === 'leave' ? `¿Estás seguro de dejar de estar a cargo de la materia "${materia.nombre}"?` :
+        `¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`
+      }
+      confirmText={
+        confirmDialog.type === 'take' ? "Tomar" :
+        confirmDialog.type === 'leave' ? "Dejar" :
+        "Eliminar"
+      }
       cancelText="Cancelar"
-      danger={true}
+      danger={confirmDialog.type === 'delete'}
     />
   </>
   );

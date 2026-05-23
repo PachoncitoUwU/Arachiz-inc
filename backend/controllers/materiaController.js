@@ -201,6 +201,128 @@ const updateMateria = async (req, res) => {
   }
 };
 
+// Tomar a cargo una materia (para instructores)
+const tomarMateria = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userType = req.user.userType;
+  
+  if (userType !== 'instructor') {
+    return res.status(403).json({ error: 'Solo los instructores pueden tomar materias' });
+  }
+  
+  try {
+    const materia = await prisma.materia.findUnique({
+      where: { id },
+      include: { 
+        ficha: true,
+        instructor: { select: { fullName: true } }
+      }
+    });
+    
+    if (!materia) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+    
+    // Verificar que el instructor pertenece a la ficha
+    const fichaInstructor = await prisma.fichaInstructor.findUnique({
+      where: {
+        fichaId_instructorId: {
+          fichaId: materia.fichaId,
+          instructorId: userId
+        }
+      }
+    });
+    
+    if (!fichaInstructor) {
+      return res.status(403).json({ error: 'No perteneces a esta ficha' });
+    }
+    
+    // Verificar que la materia no tiene instructor asignado
+    if (materia.instructorId) {
+      return res.status(400).json({ error: 'Esta materia ya tiene un instructor asignado' });
+    }
+    
+    // Asignar el instructor a la materia
+    const updatedMateria = await prisma.materia.update({
+      where: { id },
+      data: { instructorId: userId },
+      include: {
+        instructor: { select: { id: true, fullName: true } },
+        ficha: { select: { numero: true } }
+      }
+    });
+    
+    // Registrar en historial
+    await crearHistorialCambio(
+      materia.fichaId,
+      userId,
+      'instructor_materia_tomada',
+      'materia',
+      id,
+      `Tomó a cargo la materia "${materia.nombre}"`
+    );
+    
+    res.json({ message: 'Materia tomada exitosamente', materia: updatedMateria });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al tomar materia: ' + err.message });
+  }
+};
+
+// Dejar de estar a cargo de una materia (para instructores)
+const dejarMateria = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userType = req.user.userType;
+  
+  if (userType !== 'instructor') {
+    return res.status(403).json({ error: 'Solo los instructores pueden dejar materias' });
+  }
+  
+  try {
+    const materia = await prisma.materia.findUnique({
+      where: { id },
+      include: { 
+        ficha: true,
+        instructor: { select: { fullName: true } }
+      }
+    });
+    
+    if (!materia) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+    
+    // Verificar que el instructor es quien está a cargo
+    if (materia.instructorId !== userId) {
+      return res.status(403).json({ error: 'No estás a cargo de esta materia' });
+    }
+    
+    // Quitar el instructor de la materia
+    const updatedMateria = await prisma.materia.update({
+      where: { id },
+      data: { instructorId: null },
+      include: {
+        instructor: { select: { id: true, fullName: true } },
+        ficha: { select: { numero: true } }
+      }
+    });
+    
+    // Registrar en historial
+    await crearHistorialCambio(
+      materia.fichaId,
+      userId,
+      'instructor_materia_dejada',
+      'materia',
+      id,
+      `Dejó de estar a cargo de la materia "${materia.nombre}"`
+    );
+    
+    res.json({ message: 'Has dejado de estar a cargo de la materia', materia: updatedMateria });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al dejar materia: ' + err.message });
+  }
+};
+
 // RF71 - Materias por ficha
 const getMateriasByFicha = async (req, res) => {
   const { fichaId } = req.params;
@@ -287,4 +409,4 @@ const getUserMaterias = async (req, res) => {
   }
 };
 
-module.exports = { createMateria, deleteMateria, updateMateria, getMateriasByFicha, getUserMaterias };
+module.exports = { createMateria, deleteMateria, updateMateria, tomarMateria, dejarMateria, getMateriasByFicha, getUserMaterias };

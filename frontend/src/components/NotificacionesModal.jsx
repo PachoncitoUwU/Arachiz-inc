@@ -67,6 +67,10 @@ const getEventIcon = (tipoEvento) => {
       return <BookOpen size={16} className="text-red-500" />;
     case 'instructor_materia_cambiado':
       return <UserCheck size={16} className="text-indigo-500" />;
+    case 'instructor_materia_tomada':
+      return <UserCheck size={16} className="text-green-600" />;
+    case 'instructor_materia_dejada':
+      return <UserMinus size={16} className="text-orange-600" />;
     case 'ficha_creada':
       return <AlertCircle size={16} className="text-green-500" />;
     case 'ficha_actualizada':

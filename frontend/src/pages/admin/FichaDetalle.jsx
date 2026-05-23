@@ -1006,10 +1006,15 @@ export default function FichaDetalle() {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredMaterias.map(materia => {
+                  const sinInstructor = !materia.instructor;
                   return (
                     <div 
                       key={materia.id} 
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700 cursor-pointer"
+                      className={`flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border cursor-pointer ${
+                        sinInstructor 
+                          ? 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20' 
+                          : 'border-gray-100 dark:border-gray-700'
+                      }`}
                       onClick={() => handleOpenMateriaInfo(materia)}
                     >
                       <div className="flex-1 min-w-0">
@@ -1018,8 +1023,12 @@ export default function FichaDetalle() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
-                          {materia.instructor?.fullName}
+                        <p className={`text-sm font-medium truncate max-w-[150px] ${
+                          sinInstructor 
+                            ? 'text-orange-600 dark:text-orange-400' 
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}>
+                          {materia.instructor?.fullName || 'Sin instructor a cargo'}
                         </p>
                       </div>
                     </div>
@@ -1360,6 +1369,7 @@ export default function FichaDetalle() {
           isCreatorOrAdmin={selectedMateria.instructorId === user?.id || isAdmin}
           isAdmin={isAdmin}
           instructores={ficha.instructores?.map(fi => fi.instructor) || []}
+          currentUserId={user?.id}
           onUpdate={handleMateriaUpdate}
           onDelete={handleMateriaDelete}
         />

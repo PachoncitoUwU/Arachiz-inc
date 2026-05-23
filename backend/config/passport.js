@@ -3,41 +3,46 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      // Buscar usuario por email de Google
-      let user = await prisma.user.findUnique({
-        where: { email: profile.emails[0].value }
-      });
+// Solo configurar Google OAuth si las credenciales están disponibles
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Buscar usuario por email de Google
+        let user = await prisma.user.findUnique({
+          where: { email: profile.emails[0].value }
+        });
 
-      if (user) {
-        // Usuario existe, retornar
-        return done(null, user);
-      }
-
-      // Usuario no existe, crear nuevo
-      user = await prisma.user.create({
-        data: {
-          email: profile.emails[0].value,
-          fullName: profile.displayName,
-          document: `GOOGLE-${profile.id}`, // Documento temporal
-          password: '', // Sin contraseña para OAuth
-          userType: 'aprendiz', // Por defecto aprendiz
-          avatarUrl: profile.photos?.[0]?.value || null
+        if (user) {
+          // Usuario existe, retornar
+          return done(null, user);
         }
-      });
 
-      return done(null, user);
-    } catch (error) {
-      return done(error, null);
+        // Usuario no existe, crear nuevo
+        user = await prisma.user.create({
+          data: {
+            email: profile.emails[0].value,
+            fullName: profile.displayName,
+            document: `GOOGLE-${profile.id}`, // Documento temporal
+            password: '', // Sin contraseña para OAuth
+            userType: 'aprendiz', // Por defecto aprendiz
+            avatarUrl: profile.photos?.[0]?.value || null
+          }
+        });
+
+        return done(null, user);
+      } catch (error) {
+        return done(error, null);
+      }
     }
-  }
-));
+  ));
+} else {
+  console.log('⚠️  Google OAuth no configurado - Las credenciales no están disponibles');
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.id);

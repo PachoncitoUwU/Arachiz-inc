@@ -9,6 +9,8 @@ router.use(authMiddleware);
 router.post('/', roleMiddleware(['instructor', 'administrador']), materiaController.createMateria);
 router.put('/:id', roleMiddleware(['instructor', 'administrador']), materiaController.updateMateria);
 router.delete('/:id', roleMiddleware(['instructor', 'administrador']), materiaController.deleteMateria);
+router.put('/:id/tomar', roleMiddleware(['instructor']), materiaController.tomarMateria);
+router.put('/:id/dejar', roleMiddleware(['instructor']), materiaController.dejarMateria);
 router.get('/ficha/:fichaId', materiaController.getMateriasByFicha);
 router.get('/my-materias', materiaController.getUserMaterias);
 

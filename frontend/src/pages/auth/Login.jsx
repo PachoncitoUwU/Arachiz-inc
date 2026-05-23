@@ -57,9 +57,7 @@ export default function Login() {
   };
 
   const handleConfirmDonation = async () => {
-    if (selectedPaymentMethod === 'epayco') {
-      openEpayco();
-    } else if (selectedPaymentMethod === 'wompi') {
+    if (selectedPaymentMethod === 'wompi') {
       await openWompi();
     }
     setShowConfirmModal(false);
@@ -213,20 +211,6 @@ export default function Login() {
           </div>
           <div className="flex flex-col items-start">
             <span className="text-sm font-bold text-gray-900 leading-none">Wompi</span>
-            <span className="text-xs text-gray-500 font-medium mt-0.5">Apoyar proyecto</span>
-          </div>
-        </button>
-
-        {/* Botón Epayco */}
-        <button
-          onClick={() => handleDonate('epayco')}
-          className="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#4285F4] transition-all flex items-center gap-3 group animate-fade-in"
-        >
-          <div className="bg-[#FFF4E5] p-2 rounded-full group-hover:scale-110 transition-transform">
-            <Coffee size={20} className="text-[#FF9D00] fill-current" />
-          </div>
-          <div className="flex flex-col items-start">
-            <span className="text-sm font-bold text-gray-900 leading-none">Epayco</span>
             <span className="text-xs text-gray-500 font-medium mt-0.5">Apoyar proyecto</span>
           </div>
         </button>
