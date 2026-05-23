@@ -116,9 +116,16 @@ export default function AprendizAsistencia() {
                        </p>
                     </div>
                   </div>
-                  <span className={`badge ${r.presente ? 'badge-success' : 'badge-danger'}`}>
-                    {r.presente ? 'Presente' : 'Ausente'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {r.presente && r.tarde && (
+                      <span className="px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold border border-yellow-200 dark:border-yellow-800/50">
+                        Llegada Tarde
+                      </span>
+                    )}
+                    <span className={`badge ${r.presente ? 'badge-success' : 'badge-danger'}`}>
+                      {r.presente ? 'Presente' : 'Ausente'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
