@@ -213,6 +213,25 @@ export default function InstructorHorario() {
     loadConflictos();
   }, []);
 
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [materiasRes, fichasRes, horariosRes] = await Promise.all([
+        fetchApi('/materias/my-materias'),
+        fetchApi('/fichas/my-fichas'),
+        fetchApi('/horarios/my-horarios')
+      ]);
+      setMaterias(materiasRes.materias || []);
+      setFichas(fichasRes.fichas || []);
+      setHorarios(horariosRes.horarios || []);
+    } catch (err) {
+      console.error('Error cargando datos de horarios:', err);
+      showToast('Error al cargar datos del horario', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadConflictos = async () => {
     try {
       const data = await fetchApi('/horarios/conflictos');
