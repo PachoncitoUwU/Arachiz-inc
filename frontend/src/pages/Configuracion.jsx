@@ -5,11 +5,9 @@ import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SerialConnect from '../components/SerialConnect';
-import { Moon, Sun, Globe, Bell, User, Shield, Palette, Save, Camera, Loader, Usb } from 'lucide-react';
+import { Moon, Sun, Globe, Bell, Shield, Palette, Loader, Usb } from 'lucide-react';
 import TowerStack   from '../games/TowerStack';
 import MemoryFlash  from '../games/MemoryFlash';
-import ReactionTime from '../games/ReactionTime';
-import WordleGame   from '../games/WordleGame';
 import SnakeShop    from '../components/SnakeShop';
 import { drawPremiumEyes, getRainbowColor, drawSegment3D, applyNeonGlow, clearGlow } from '../utils/snakeSkinRenderer';
 
@@ -1429,30 +1427,14 @@ const translations = {
 };
 
 export default function Configuracion() {
-  const { user, updateUser } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
   const { showToast } = useToast();
-  const fileInputRef = useRef(null);
 
   const t = (key) => {
     const lang = settings?.language || 'es';
     return translations[lang]?.[key] || translations['es'][key] || key;
   };
-
-  const [fullName, setFullName]           = useState(user?.fullName || '');
-  const [avatarPreview, setAvatarPreview] = useState(
-    user?.avatarUrl ? (user.avatarUrl.startsWith('data:')||user.avatarUrl.startsWith('http') ? user.avatarUrl : `${API_BASE}${user.avatarUrl}`) : null
-  );
-  const [avatarFile, setAvatarFile]       = useState(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-
-  // Sincronizar avatarPreview cuando el user se actualiza (ej: al cargar /auth/me)
-  useEffect(() => {
-    if (user?.avatarUrl && !avatarFile) {
-      const url = user.avatarUrl;
-      setAvatarPreview(url.startsWith('data:') || url.startsWith('http') || url.startsWith('blob:') ? url : `${API_BASE}${url}`);
-    }
-  }, [user?.avatarUrl]);
 
   // Snake — 7 clicks en "Seguridad"
   const [secClicks, setSecClicks] = useState(0);
@@ -1554,43 +1536,7 @@ export default function Configuracion() {
     });
   };
 
-  // Reaction Time — 7 clicks en "Perfil"
-  const [perfilClicks, setPerfilClicks] = useState(0);
-  const [showReaction, setShowReaction] = useState(false);
-  const perfilTimer = useRef(null);
-  const handlePerfilClick = () => {
-    if (showReaction) return; // Evitar clics adicionales cuando el juego está abierto
-    setPerfilClicks(n => {
-      const next = n + 1;
-      if (next >= 7) { 
-        setShowReaction(true); 
-        clearTimeout(perfilTimer.current); // Limpiar timer al abrir
-        return 0; 
-      }
-      clearTimeout(perfilTimer.current);
-      perfilTimer.current = setTimeout(() => setPerfilClicks(0), 2000);
-      return next;
-    });
-  };
 
-  // Wordle — 7 clicks en "Cambiar Contraseña" (si existe) o en el email
-  const [wordleClicks, setWordleClicks] = useState(0);
-  const [showWordle,   setShowWordle]   = useState(false);
-  const wordleTimer = useRef(null);
-  const handleWordleClick = () => {
-    if (showWordle) return; // Evitar clics adicionales cuando el juego está abierto
-    setWordleClicks(n => {
-      const next = n + 1;
-      if (next >= 7) { 
-        setShowWordle(true); 
-        clearTimeout(wordleTimer.current); // Limpiar timer al abrir
-        return 0; 
-      }
-      clearTimeout(wordleTimer.current);
-      wordleTimer.current = setTimeout(() => setWordleClicks(0), 2000);
-      return next;
-    });
-  };
 
   // Botón oculto instructor — 10 clicks en el rol para borrar huellas
   const [instClicks, setInstClicks] = useState(0);
@@ -1631,57 +1577,9 @@ export default function Configuracion() {
       clearTimeout(idiomaTimer.current);
       clearTimeout(notiTimer.current);
       clearTimeout(espanolTimer.current);
-      clearTimeout(perfilTimer.current);
-      clearTimeout(wordleTimer.current);
       clearTimeout(instTimer.current);
     };
   }, []);
-
-  const initials  = user?.fullName ? user.fullName.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : '?';
-  const roleColor = user?.userType === 'instructor' ? 'bg-[#4285F4]' : 'bg-[#34A853]';
-
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5*1024*1024) { showToast('Máx. 5MB','error'); return; }
-    // Comprimir a máx 400x400 y calidad 0.75 antes de base64
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const MAX = 400;
-      let w = img.width, h = img.height;
-      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
-      else        { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b64 = canvas.toDataURL('image/jpeg', 0.75);
-      URL.revokeObjectURL(url);
-      setAvatarPreview(b64);
-      setAvatarFile(b64);
-    };
-    img.src = url;
-  };
-
-  const handleSaveProfile = async (e) => {
-    e.preventDefault(); setSavingProfile(true);
-    try {
-      const body = {};
-      if (fullName.trim() && fullName !== user?.fullName) body.fullName = fullName.trim();
-      if (avatarFile) body.avatarBase64 = avatarFile; // base64 string
-      const d    = await fetch(`${API_BASE}/api/auth/profile`, {
-        method:'PUT',
-        headers:{ Authorization:`Bearer ${localStorage.getItem('token')}`, 'Content-Type':'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await d.json();
-      if (!d.ok) throw new Error(json.error || 'Error');
-      if (updateUser) updateUser(json.user);
-      setAvatarFile(null);
-      showToast('Perfil actualizado','success');
-    } catch(err) { showToast(err.message,'error'); }
-    finally { setSavingProfile(false); }
-  };
 
   const LANGUAGES = [{ code:'es', label:'Español', flag:'🇨🇴' }, { code:'en', label:'English', flag:'🇺🇸' }];
 
@@ -1692,65 +1590,8 @@ export default function Configuracion() {
       {showFlappy && <FlappyGame   onClose={() => setShowFlappy(false)}  currentUser={user}/>}
       {showTower  && <TowerStack   onClose={() => setShowTower(false)}   currentUser={user}/>}
       {showMemory && <MemoryFlash  onClose={() => setShowMemory(false)}  currentUser={user}/>}
-      {showReaction && <ReactionTime onClose={() => setShowReaction(false)} currentUser={user}/>}
-      {showWordle && <WordleGame   onClose={() => setShowWordle(false)}  currentUser={user}/>}
 
       <PageHeader title="Configuración" subtitle="Personaliza tu experiencia en Arachiz" />
-
-      {/* Perfil */}
-      <Section icon={User} title="Perfil" onTitleClick={handlePerfilClick}>
-        <form onSubmit={handleSaveProfile} className="space-y-4">
-          <div className="flex items-center gap-5 mb-2">
-            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              {avatarPreview
-                ? <img src={avatarPreview} alt="Avatar" className="w-20 h-20 rounded-2xl object-cover shadow-md"/>
-                : <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-md ${roleColor}`}>{initials}</div>
-              }
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera size={20} className="text-white"/>
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange}/>
-            </div>
-            <div>
-              <p className="font-bold text-gray-900">{user?.fullName}</p>
-              <p className="text-sm text-gray-400">{user?.email}</p>
-              <span className={`badge mt-1 ${user?.userType==='instructor'?'badge-info':'badge-success'}`}>
-                {user?.userType==='instructor'?'Instructor':'Aprendiz'}
-              </span>
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="block text-xs text-[#4285F4] hover:underline mt-1">
-                Cambiar foto
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="input-label">Nombre completo</label>
-            <input className="input-field" value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Tu nombre completo"/>
-          </div>
-          <div>
-            <label className="input-label">Correo electrónico</label>
-            <input type="email" className="input-field opacity-60 cursor-not-allowed" value={user?.email||''} disabled/>
-            <p className="text-xs text-gray-400 mt-1 cursor-default select-none" onClick={handleWordleClick}>El correo no puede modificarse</p>
-            {wordleClicks > 0 && wordleClicks < 7 && (
-              <div className="mt-2 text-center">
-                <p className="text-xs font-medium text-yellow-500 animate-pulse">
-                  📝 {7 - wordleClicks} {7 - wordleClicks === 1 ? 'clic más' : 'clics más'}...
-                </p>
-              </div>
-            )}
-          </div>
-          <button type="submit" disabled={savingProfile} className="btn-primary flex items-center gap-2">
-            {savingProfile ? <Loader size={15} className="animate-spin"/> : <Save size={15}/>}
-            {savingProfile ? 'Guardando...' : 'Guardar perfil'}
-          </button>
-        </form>
-        {perfilClicks > 0 && perfilClicks < 7 && (
-          <div className="mt-3 text-center">
-            <p className="text-xs font-medium text-blue-500 animate-pulse">
-              🎮 {7 - perfilClicks} {7 - perfilClicks === 1 ? 'clic más' : 'clics más'}...
-            </p>
-          </div>
-        )}
-      </Section>
 
       {/* Apariencia */}
       <Section icon={Palette} title={t('appearance')} onTitleClick={handleArkClick}>
