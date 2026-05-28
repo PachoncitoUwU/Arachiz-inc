@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import fetchApi from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import {
   ArrowLeft, Users, BookOpen, Star, History, Loader
 } from 'lucide-react';
@@ -41,6 +42,9 @@ export default function AprendizFichaDetalle() {
   const [historial, setHistorial] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
+  
+  // Estado para salir de ficha
+  const [showSalirDialog, setShowSalirDialog] = useState(false);
 
   useEffect(() => {
     loadFicha();
@@ -97,8 +101,8 @@ export default function AprendizFichaDetalle() {
     }
   };
 
-  const handleOpenMateriaInfo = (materia) => {
-    setSelectedMateria(materia);
+  const handleOpenMateriaInfo = (materia, isEvitada = false) => {
+    setSelectedMateria({ ...materia, isEvitada });
     setModalMateriaInfo(true);
   };
 
@@ -123,6 +127,16 @@ export default function AprendizFichaDetalle() {
     
     localStorage.setItem(`pinnedFichas_${user.id}`, JSON.stringify(newPinnedFichas));
     setIsPinned(!isPinned);
+  };
+
+  const handleSalirDeFicha = async () => {
+    try {
+      await fetchApi(`/fichas/${id}/salir`, { method: 'POST' });
+      showToast('Has salido de la ficha exitosamente', 'success');
+      navigate('/aprendiz/fichas');
+    } catch (err) {
+      showToast(err.message || 'Error al salir de la ficha', 'error');
+    }
   };
 
   if (loading) {
@@ -246,6 +260,15 @@ export default function AprendizFichaDetalle() {
             </p>
           </div>
         </div>
+        
+        <button 
+          onClick={() => setShowSalirDialog(true)} 
+          className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+          title="Salir de esta ficha"
+        >
+          <ArrowLeft size={16} />
+          Salir de ficha
+        </button>
       </div>
 
       {/* Estadísticas */}
@@ -498,7 +521,7 @@ export default function AprendizFichaDetalle() {
                           ? 'border-red-200 dark:border-red-800 opacity-60' 
                           : 'border-gray-100 dark:border-gray-700'
                       }`}
-                      onClick={() => handleOpenMateriaInfo(materia)}
+                      onClick={() => handleOpenMateriaInfo(materia, isEvitada)}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -707,8 +730,26 @@ export default function AprendizFichaDetalle() {
           materia={selectedMateria}
           isCreatorOrAdmin={false}
           isAprendizView={true}
+          isMateriaEvitada={selectedMateria.isEvitada || false}
+          onUpdate={() => {
+            handleCloseMateriaInfo();
+            loadFicha();
+            loadMateriasEvitadas();
+          }}
         />
       )}
+
+      {/* Diálogo de confirmación para salir de ficha */}
+      <ConfirmDialog
+        open={showSalirDialog}
+        onClose={() => setShowSalirDialog(false)}
+        onConfirm={handleSalirDeFicha}
+        title="Salir de la Ficha"
+        message="¿Estás seguro de que deseas salir de esta ficha? Esta acción no se puede deshacer."
+        confirmText="Salir"
+        cancelText="Cancelar"
+        danger={true}
+      />
     </div>
   );
 }

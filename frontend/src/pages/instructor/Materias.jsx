@@ -162,10 +162,18 @@ export default function InstructorMaterias() {
                       onClick={() => handleMateriaClick(m, ficha)}
                       className={`p-3 rounded-xl border hover:shadow-soft transition-all cursor-pointer ${mCol.card}`}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-gray-800 truncate">{m.nombre}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{m.instructor?.fullName}</p>
+                          
+                          {/* Información de la ficha */}
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                            <BookOpen size={10}/>
+                            <span className="font-medium">Ficha {ficha.numero}</span>
+                            {ficha.nombre && <span className="truncate">· {ficha.nombre}</span>}
+                          </div>
+                          
+                          <p className="text-xs text-gray-400 mt-1">{m.instructor?.fullName}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-2">

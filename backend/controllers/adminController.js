@@ -526,7 +526,8 @@ const getFichasDeInstructor = async (req, res) => {
             nivel: true,
             centro: true,
             jornada: true,
-            createdAt: true
+            createdAt: true,
+            instructorAdminId: true
           }
         }
       }
@@ -1127,9 +1128,14 @@ const salirDeFicha = async (req, res) => {
         return res.status(404).json({ error: 'No perteneces a esta ficha' });
       }
 
-      // Instructores no pueden salir si son líderes (solo administradores pueden)
+      // Instructores líderes pueden salir, pero la ficha quedará sin líder
+      // Se debe advertir al usuario en el frontend
       if (userType === 'instructor' && ficha.instructorAdminId === userId) {
-        return res.status(400).json({ error: 'No puedes salir de una ficha donde eres líder. Primero cambia el líder o elimina la ficha.' });
+        // Remover el líder de la ficha
+        await prisma.ficha.update({
+          where: { id: fichaId },
+          data: { instructorAdminId: null }
+        });
       }
 
       // Administradores SÍ pueden salir sin restricciones

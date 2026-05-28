@@ -360,22 +360,33 @@ export default function AdminUsuarios() {
             </div>
           ) : (
             <div className="space-y-2">
-              {fichasInstructor.map(ficha => (
-                <div 
-                  key={ficha.id} 
-                  className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">Ficha {ficha.numero}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{ficha.nombre}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {ficha.nivel} · {ficha.centro}
-                      </p>
+              {fichasInstructor.map(ficha => {
+                const isLider = ficha.instructorAdminId === selectedInstructor.id;
+                
+                return (
+                  <div 
+                    key={ficha.id} 
+                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900 dark:text-white">Ficha {ficha.numero}</p>
+                          {isLider && (
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-semibold">
+                              Líder
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{ficha.nombre}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {ficha.nivel} · {ficha.centro}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Modal>

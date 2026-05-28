@@ -980,6 +980,7 @@ export default function AdminHorarios() {
                 <option value="">Seleccionar instructor...</option>
                 {materias
                   .map(m => m.instructor)
+                  .filter(inst => inst !== null) // Filtrar instructores nulos
                   .filter((inst, idx, arr) => arr.findIndex(i => i.id === inst.id) === idx)
                   .map(instructor => (
                     <option key={instructor.id} value={instructor.id}>

@@ -12,6 +12,22 @@ router.get(
   materiaEvitadaController.getMyMateriasEvitadas
 );
 
+// Evitar una materia (aprendiz se evita a sí mismo)
+router.post(
+  '/materias-evitadas/materias/:materiaId/evitar',
+  authMiddleware,
+  roleMiddleware(['aprendiz']),
+  materiaEvitadaController.evitarMateria
+);
+
+// Volver a tomar una materia (aprendiz deja de evitarla)
+router.delete(
+  '/materias-evitadas/materias/:materiaId/volver-a-tomar',
+  authMiddleware,
+  roleMiddleware(['aprendiz']),
+  materiaEvitadaController.volverATomarMateria
+);
+
 // Obtener materias evitadas de un aprendiz en una ficha
 router.get(
   '/materias-evitadas/fichas/:fichaId/aprendices/:aprendizId/materias-evitadas',
