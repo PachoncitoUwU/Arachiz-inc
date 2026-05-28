@@ -5,7 +5,9 @@ import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SerialConnect from '../components/SerialConnect';
-import { Moon, Sun, Globe, Bell, Shield, Palette, Loader, Usb } from 'lucide-react';
+import ReleaseNotesModal from '../components/ReleaseNotesModal';
+import { Moon, Sun, Globe, Bell, Shield, Palette, Loader, Usb, Info } from 'lucide-react';
+import { VERSION } from '../config/version';
 import TowerStack   from '../games/TowerStack';
 import MemoryFlash  from '../games/MemoryFlash';
 import SnakeShop    from '../components/SnakeShop';
@@ -1430,6 +1432,7 @@ export default function Configuracion() {
   const { user } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
   const { showToast } = useToast();
+  const [showReleaseNotes, setShowReleaseNotes] = useState(false);
 
   const t = (key) => {
     const lang = settings?.language || 'es';
@@ -1708,10 +1711,13 @@ export default function Configuracion() {
         </div>
       </Section>
 
-      <div className="flex items-center justify-center gap-2 pt-8 pb-12 cursor-default select-none opacity-50">
-        <img src="/mi-logo.png" alt="Arachiz Logo" className="w-5 h-5 object-contain" />
-        <p className="text-gray-500 text-xs font-medium">Arachiz Version 1.3.2</p>
+      <div className="flex items-center justify-center gap-2 pt-8 pb-12 cursor-pointer select-none hover:opacity-75 transition-opacity" onClick={() => setShowReleaseNotes(true)}>
+        <img src="/ArachizLogoPNG.png" alt="Arachiz Logo" className="w-5 h-5 object-contain dark:invert" />
+        <p className="text-gray-500 dark:text-gray-400 text-xs font-medium hover:text-gray-700 dark:hover:text-gray-300">Arachiz Version {VERSION}</p>
+        <Info size={12} className="text-gray-400 dark:text-gray-500" />
       </div>
+
+      <ReleaseNotesModal open={showReleaseNotes} onClose={() => setShowReleaseNotes(false)} />
 
       <ConfirmDialog
         open={confirmDialog.open}
