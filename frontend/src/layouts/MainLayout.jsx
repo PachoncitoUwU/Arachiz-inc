@@ -154,7 +154,10 @@ export default function MainLayout({ allowedRoles }) {
   }
 
   const links = user?.userType === 'instructor' ? INSTRUCTOR_LINKS : user?.userType === 'administrador' ? ADMIN_LINKS : APRENDIZ_LINKS;
-  const configPath = `/${user?.userType}/configuracion`;
+  
+  // Mapear el userType a la ruta correcta
+  const routePrefix = user?.userType === 'administrador' ? 'admin' : user?.userType;
+  const configPath = `/${routePrefix}/configuracion`;
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
