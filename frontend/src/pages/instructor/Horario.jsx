@@ -130,13 +130,13 @@ function HorarioBloque({ horario, onEdit, isDragging, color, modoEditar, modoEli
 }
 
 // ─── Columna droppable ────────────────────────────────────────────────────────
-function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, horariosSeleccionados, onToggleSelect, tieneConflicto }) {
+function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, horariosSeleccionados, onToggleSelect, tieneConflicto, isLoading }) {
   const { setNodeRef, isOver } = useDroppable({ id: dia });
 
   return (
     <div
       ref={setNodeRef}
-      className={`card dark:bg-gray-900 dark:border-gray-800 transition-all min-h-[160px] ${
+      className={`card dark:bg-gray-900 dark:border-gray-800 transition-all min-h-[160px] relative ${
         isOver ? 'ring-2 ring-[#4285F4] ring-offset-1 bg-blue-50/50 dark:bg-blue-900/10' : ''
       } ${tieneConflicto ? 'border-2 border-red-400 dark:border-red-600' : ''}`}
     >
@@ -151,6 +151,16 @@ function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, h
         <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{dia}</span>
         <span className="ml-auto badge badge-gray">{clases.length}</span>
       </div>
+
+      {/* Spinner de carga */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-3 border-[#4285F4] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Moviendo...</p>
+          </div>
+        </div>
+      )}
 
       {clases.length === 0 ? (
         <div className={`flex items-center justify-center h-16 rounded-xl border-2 border-dashed transition-colors ${
@@ -203,6 +213,8 @@ export default function InstructorHorario() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, data: null });
   const [conflictos, setConflictos] = useState([]);
   const [diasConConflicto, setDiasConConflicto] = useState([]);
+  const [movingHorarioId, setMovingHorarioId] = useState(null); // ID del horario que se está moviendo
+  const [targetDia, setTargetDia] = useState(null); // Día de destino
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -317,7 +329,15 @@ export default function InstructorHorario() {
       });
       setHorarios(prev => prev.map(h => h.id === formEdit.id ? response.horario : h));
       setModalEdit(false);
-      showToast('Horario actualizado', 'success');
+      
+      if (response.conflictos) {
+        showToast(`Horario actualizado. ${response.conflictos.message}`, 'warning');
+        // Recargar conflictos
+        await loadConflictos();
+      } else {
+        showToast('Horario actualizado', 'success');
+      }
+      
       loadData(); // Recargar para obtener datos actualizados
     } catch (err) {
       setError(err.message);
@@ -389,6 +409,10 @@ export default function InstructorHorario() {
 
       if (!horario || horario.dia === newDia) return;
 
+      // Mostrar spinner
+      setMovingHorarioId(active.id);
+      setTargetDia(newDia);
+
       // Optimistic update
       setHorarios(prev => prev.map(h => h.id === active.id ? { ...h, dia: newDia } : h));
 
@@ -398,9 +422,14 @@ export default function InstructorHorario() {
           body: JSON.stringify({ dia: newDia })
         });
         showToast(`Clase movida a ${newDia}`, 'success');
+        // Recargar conflictos por si se generaron o resolvieron
+        await loadConflictos();
       } catch (err) {
         showToast(err.message, 'error');
         loadData(); // Revertir si falla
+      } finally {
+        setMovingHorarioId(null);
+        setTargetDia(null);
       }
     }
   };
@@ -564,6 +593,7 @@ export default function InstructorHorario() {
                 horariosSeleccionados={horariosSeleccionados}
                 onToggleSelect={toggleSeleccionHorario}
                 tieneConflicto={diasConConflicto.includes(dia)}
+                isLoading={movingHorarioId && targetDia === dia}
               />
             ))}
           </div>

@@ -63,41 +63,6 @@ export default function Login() {
     setShowConfirmModal(false);
   };
 
-  const openEpayco = () => {
-    if (window.ePayco) {
-      proceedWithEpayco();
-      return;
-    }
-    
-    const script = document.createElement('script');
-    script.src = 'https://checkout.epayco.co/checkout.js';
-    script.async = true;
-    script.onload = proceedWithEpayco;
-    document.body.appendChild(script);
-  };
-
-  const proceedWithEpayco = () => {
-    const handler = window.ePayco.checkout.configure({
-      key: '0e0c3a0fb392af79b26ab1d6c49de2b7',
-      test: false
-    });
-    
-    handler.open({
-      external: "false",
-      amount: parsedAmount.toString(),
-      tax: '0',
-      tax_base: '0',
-      name: 'Donacion - Invitame un cafe',
-      description: 'Apoyo voluntario al mantenimiento de Arachiz',
-      currency: 'cop',
-      country: 'co',
-      lang: 'es',
-      invoice: 'DON-' + Date.now(),
-      response: window.location.origin + '/login',
-      methodsDisable: []
-    });
-  };
-
   const loadWompiScript = () => {
     return new Promise((resolve) => {
       if (typeof window.WidgetCheckout !== 'undefined') {
@@ -500,15 +465,6 @@ export default function Login() {
               >
                 <Coffee size={13} className="fill-current" />
                 Wompi
-              </button>
-              <span className="text-gray-300 text-xs">|</span>
-              <button
-                type="button"
-                onClick={() => handleDonate('epayco')}
-                className="flex items-center gap-1 text-xs font-bold text-[#FF9D00] hover:underline"
-              >
-                <Coffee size={13} className="fill-current" />
-                Epayco
               </button>
             </div>
           </div>

@@ -31,6 +31,7 @@ export default function AdminHorarios() {
   // Estados principales
   const [viewMode, setViewMode] = useState('ficha'); // 'ficha' | 'instructor'
   const [loading, setLoading] = useState(false);
+  const [loadingCards, setLoadingCards] = useState(true); // Nuevo: para cargar tarjetas iniciales
   
   // Estados para fichas
   const [fichas, setFichas] = useState([]);
@@ -93,15 +94,19 @@ export default function AdminHorarios() {
 
   const loadFichas = async () => {
     try {
+      setLoadingCards(true);
       const data = await fetchApi('/admin/fichas');
       setFichas(data.fichas || []);
     } catch (err) {
       showToast(err.message || 'Error al cargar fichas', 'error');
+    } finally {
+      setLoadingCards(false);
     }
   };
 
   const loadInstructores = async () => {
     try {
+      setLoadingCards(true);
       const data = await fetchApi('/admin/instructores');
       
       // Eliminar duplicados usando Map
@@ -121,6 +126,8 @@ export default function AdminHorarios() {
       setInstructores(Array.from(instructoresMap.values()));
     } catch (err) {
       showToast(err.message || 'Error al cargar instructores', 'error');
+    } finally {
+      setLoadingCards(false);
     }
   };
 
@@ -477,6 +484,9 @@ export default function AdminHorarios() {
               setSelectedInstructor(null);
               setHorarios([]);
               setModoEditar(false);
+              if (fichas.length === 0) {
+                loadFichas();
+              }
             }}
             className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
               viewMode === 'ficha' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
@@ -492,6 +502,9 @@ export default function AdminHorarios() {
               setSelectedInstructor(null);
               setHorarios([]);
               setModoEditar(false);
+              if (instructores.length === 0) {
+                loadInstructores();
+              }
             }}
             className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
               viewMode === 'instructor' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
@@ -548,8 +561,25 @@ export default function AdminHorarios() {
 
       {/* Grid de fichas o instructores */}
       {!selectedFicha && !selectedInstructor && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
-          {viewMode === 'ficha' ? (
+        <>
+          {loadingCards ? (
+            // Spinner de carga inicial
+            <div className="card mb-5">
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-[#EA4335] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {viewMode === 'ficha' ? 'Cargando fichas...' : 'Cargando instructores...'}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Por favor espera un momento
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+              {viewMode === 'ficha' ? (
             filteredFichas.length === 0 ? (
               <div className="col-span-full">
                 <EmptyState
@@ -649,7 +679,9 @@ export default function AdminHorarios() {
               ))
             )
           )}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Información de la selección actual */}
@@ -774,8 +806,34 @@ export default function AdminHorarios() {
 
           {/* Calendario de horarios */}
           {loading ? (
-            <div className="card animate-pulse">
-              <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+            <div className="space-y-4">
+              {/* Skeleton de carga */}
+              <div className="card">
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-[#4285F4] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Cargando horarios...
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {selectedFicha ? `Ficha ${selectedFicha.numero}` : selectedInstructor?.fullName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Skeleton del calendario */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                {DIAS.map((dia) => (
+                  <div key={dia} className="card animate-pulse">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-3" />
+                    <div className="space-y-2">
+                      <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                      <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : horarios.length === 0 ? (
             <div className="card">

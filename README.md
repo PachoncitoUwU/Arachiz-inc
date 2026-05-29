@@ -29,7 +29,7 @@ Sistema completo de gestión de asistencia para el SENA con reconocimiento facia
 - ✅ 7 minijuegos integrados (Snake, Flappy Bird, Breakout, Memory, etc.)
 - ✅ Sistema de skins desbloqueables
 - ✅ Rankings y puntuaciones
-- ✅ Tienda de skins con pagos (MercadoPago/ePayco)
+- ✅ Tienda de skins con pagos (MercadoPago/Wompi)
 
 ### 🔧 Hardware Integrado
 - ✅ Soporte para ESP8266
@@ -112,7 +112,7 @@ Abre tu navegador en `http://localhost:5173`
 
 - **[Guía de Inicio Rápido](docs/QUICK_START.md)** - Instalación y configuración detallada
 - **[Configurar Google OAuth](docs/CONFIGURAR_GOOGLE_OAUTH.md)** - Login con Google
-- **[Configurar Pagos](docs/CONFIGURAR_MERCADOPAGO.md)** - MercadoPago/ePayco
+- **[Configurar Pagos](docs/CONFIGURAR_MERCADOPAGO.md)** - MercadoPago/Wompi
 - **[Despliegue](docs/DEPLOY.md)** - Guía de despliegue a producción
 - **[Sistema de Asistencia](docs/SISTEMA_ASISTENCIA_INTELIGENTE.md)** - Cómo funciona
 - **[Hardware ESP8266](docs/CONFIGURACION_WIFI_ESP.md)** - Configurar hardware
