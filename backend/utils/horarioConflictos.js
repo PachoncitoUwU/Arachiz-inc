@@ -51,38 +51,44 @@ async function detectarConflictos(instructorId, dia, horaInicio, horaFin, horari
  * @returns {Promise<Object>} - Conflicto creado
  */
 async function crearConflicto(instructorId, dia, horariosConflicto, adminId) {
-  // Verificar si ya existe un conflicto no resuelto para este instructor en este día
-  const conflictoExistente = await prisma.conflictoHorario.findFirst({
-    where: {
-      instructorId,
-      dia,
-      resuelto: false
-    }
-  });
-
-  if (conflictoExistente) {
-    // Actualizar el conflicto existente
-    return await prisma.conflictoHorario.update({
-      where: { id: conflictoExistente.id },
-      data: {
-        horarioIds: horariosConflicto.map(h => h.id),
-        descripcion: generarDescripcionConflicto(horariosConflicto),
-        creadoPor: adminId,
-        createdAt: new Date()
+  try {
+    // Verificar si ya existe un conflicto no resuelto para este instructor en este día
+    const conflictoExistente = await prisma.conflictoHorario.findFirst({
+      where: {
+        instructorId,
+        dia,
+        resuelto: false
       }
     });
-  }
 
-  // Crear nuevo conflicto
-  return await prisma.conflictoHorario.create({
-    data: {
-      instructorId,
-      dia,
-      horarioIds: horariosConflicto.map(h => h.id),
-      descripcion: generarDescripcionConflicto(horariosConflicto),
-      creadoPor: adminId
+    if (conflictoExistente) {
+      // Actualizar el conflicto existente
+      return await prisma.conflictoHorario.update({
+        where: { id: conflictoExistente.id },
+        data: {
+          horarioIds: horariosConflicto.map(h => h.id),
+          descripcion: generarDescripcionConflicto(horariosConflicto),
+          creadoPor: adminId,
+          createdAt: new Date()
+        }
+      });
     }
-  });
+
+    // Crear nuevo conflicto
+    return await prisma.conflictoHorario.create({
+      data: {
+        instructorId,
+        dia,
+        horarioIds: horariosConflicto.map(h => h.id),
+        descripcion: generarDescripcionConflicto(horariosConflicto),
+        creadoPor: adminId
+      }
+    });
+  } catch (error) {
+    console.error('Error al crear conflicto:', error);
+    // No lanzar el error para no bloquear la creación del horario
+    return null;
+  }
 }
 
 /**
@@ -93,9 +99,11 @@ async function crearConflicto(instructorId, dia, horariosConflicto, adminId) {
 function generarDescripcionConflicto(horariosConflicto) {
   if (horariosConflicto.length === 0) return 'Sin conflictos';
   
-  const descripciones = horariosConflicto.map(h => 
-    `${h.materia.nombre} (${h.horaInicio} - ${h.horaFin}) en Ficha ${h.materia.ficha.numero}`
-  );
+  const descripciones = horariosConflicto.map(h => {
+    const fichaInfo = h.ficha || h.materia?.ficha;
+    const fichaNumero = fichaInfo?.numero || 'N/A';
+    return `${h.materia.nombre} (${h.horaInicio} - ${h.horaFin}) en Ficha ${fichaNumero}`;
+  });
   
   return `Conflicto de horario: ${descripciones.join(' y ')}`;
 }

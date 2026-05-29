@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController');
+const { detectarConflictos, crearConflicto } = require('../utils/horarioConflictos');
 
 // RF06 - Crear materia
 const createMateria = async (req, res) => {
@@ -183,6 +184,63 @@ const updateMateria = async (req, res) => {
         if (!fichaInstructor) {
           return res.status(400).json({ error: 'El instructor no pertenece a esta ficha' });
         }
+
+        // Detectar conflictos de horario si la materia ya tiene horarios asignados
+        const horariosMateria = await prisma.horario.findMany({
+          where: { materiaId: id },
+          select: { dia: true, horaInicio: true, horaFin: true }
+        });
+
+        let todosLosConflictos = [];
+        
+        // Verificar conflictos para cada horario de la materia
+        for (const horario of horariosMateria) {
+          const conflictos = await detectarConflictos(
+            instructorId,
+            horario.dia,
+            horario.horaInicio,
+            horario.horaFin
+          );
+          
+          if (conflictos.length > 0) {
+            todosLosConflictos.push(...conflictos);
+            
+            // Crear registro de conflicto
+            await crearConflicto(
+              instructorId,
+              horario.dia,
+              conflictos,
+              userId
+            );
+          }
+        }
+
+        // Si hay conflictos, informar al admin pero permitir la asignación
+        if (todosLosConflictos.length > 0) {
+          const updatedMateria = await prisma.materia.update({
+            where: { id },
+            data: updateData,
+            include: {
+              instructor: { select: { id: true, fullName: true } },
+              ficha: { select: { numero: true } }
+            }
+          });
+          
+          return res.json({ 
+            message: 'Materia actualizada con conflictos de horario', 
+            materia: updatedMateria,
+            conflictos: {
+              count: todosLosConflictos.length,
+              message: `Se detectaron ${todosLosConflictos.length} conflicto(s) de horario para el instructor asignado`,
+              detalles: todosLosConflictos.map(c => ({
+                dia: c.dia,
+                materia: c.materia.nombre,
+                horario: `${c.horaInicio} - ${c.horaFin}`,
+                ficha: c.ficha?.numero || c.materia?.ficha?.numero
+              }))
+            }
+          });
+        }
       }
     }
     
@@ -243,7 +301,37 @@ const tomarMateria = async (req, res) => {
       return res.status(400).json({ error: 'Esta materia ya tiene un instructor asignado' });
     }
     
-    // Asignar el instructor a la materia
+    // Detectar conflictos de horario si la materia ya tiene horarios asignados
+    const horariosMateria = await prisma.horario.findMany({
+      where: { materiaId: id },
+      select: { dia: true, horaInicio: true, horaFin: true }
+    });
+
+    let todosLosConflictos = [];
+    
+    // Verificar conflictos para cada horario de la materia
+    for (const horario of horariosMateria) {
+      const conflictos = await detectarConflictos(
+        userId,
+        horario.dia,
+        horario.horaInicio,
+        horario.horaFin
+      );
+      
+      if (conflictos.length > 0) {
+        todosLosConflictos.push(...conflictos);
+        
+        // Crear registro de conflicto
+        await crearConflicto(
+          userId,
+          horario.dia,
+          conflictos,
+          userId // El instructor genera su propio conflicto
+        );
+      }
+    }
+    
+    // Asignar el instructor a la materia (permitir aunque haya conflictos)
     const updatedMateria = await prisma.materia.update({
       where: { id },
       data: { instructorId: userId },
@@ -260,10 +348,23 @@ const tomarMateria = async (req, res) => {
       'instructor_materia_tomada',
       'materia',
       id,
-      `Tomó a cargo la materia "${materia.nombre}"`
+      `Tomó a cargo la materia "${materia.nombre}"${todosLosConflictos.length > 0 ? ` (generó ${todosLosConflictos.length} conflicto(s))` : ''}`
     );
     
-    res.json({ message: 'Materia tomada exitosamente', materia: updatedMateria });
+    res.json({ 
+      message: 'Materia tomada exitosamente', 
+      materia: updatedMateria,
+      conflictos: todosLosConflictos.length > 0 ? {
+        count: todosLosConflictos.length,
+        message: `Se generaron ${todosLosConflictos.length} conflicto(s) de horario. Puedes resolverlos en tu pestaña de horarios.`,
+        detalles: todosLosConflictos.map(c => ({
+          dia: c.dia,
+          materia: c.materia.nombre,
+          horario: `${c.horaInicio} - ${c.horaFin}`,
+          ficha: c.ficha?.numero || c.materia?.ficha?.numero
+        }))
+      } : null
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error al tomar materia: ' + err.message });
   }

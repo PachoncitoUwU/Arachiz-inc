@@ -70,17 +70,29 @@ export default function MateriaInfoModal({
       setSaving(true);
       setError('');
 
-      const updatedMateria = await fetchApi(`/materias/${materia.id}`, {
+      const response = await fetchApi(`/materias/${materia.id}`, {
         method: 'PUT',
         body: JSON.stringify(formData)
       });
 
       // Actualizar el objeto materia localmente
-      Object.assign(materia, updatedMateria.materia);
+      Object.assign(materia, response.materia);
 
       setIsEditing(false);
-      if (onUpdate) {
-        onUpdate();
+      
+      // Mostrar advertencia si hay conflictos
+      if (response.conflictos) {
+        setError(`⚠️ Materia actualizada con conflictos: ${response.conflictos.message}`);
+        // Mantener el error visible pero permitir cerrar
+        setTimeout(() => {
+          if (onUpdate) {
+            onUpdate();
+          }
+        }, 2000);
+      } else {
+        if (onUpdate) {
+          onUpdate();
+        }
       }
     } catch (err) {
       setError(err.message || 'Error al actualizar la materia');
@@ -122,21 +134,37 @@ export default function MateriaInfoModal({
           setTakingMateria(true);
           setError('');
 
-          await fetchApi(`/materias/${materia.id}/tomar`, {
+          const response = await fetchApi(`/materias/${materia.id}/tomar`, {
             method: 'PUT'
           });
 
           // Actualizar el objeto materia localmente
           materia.instructorId = currentUserId;
-          materia.instructor = { id: currentUserId, fullName: 'Tú' }; // Se actualizará con la respuesta real
+          materia.instructor = response.materia?.instructor || { id: currentUserId, fullName: 'Tú' };
 
-          if (onUpdate) {
-            onUpdate();
+          // Mostrar advertencia si hay conflictos
+          if (response.conflictos) {
+            setError(`⚠️ ${response.conflictos.message}`);
+            setTakingMateria(false);
+            setConfirmDialog({ open: false, action: null, type: null });
+            // Mantener el modal abierto para que vean la advertencia
+            setTimeout(() => {
+              if (onUpdate) {
+                onUpdate();
+              }
+            }, 3000);
+          } else {
+            if (onUpdate) {
+              onUpdate();
+            }
+            onClose();
           }
-          onClose();
         } catch (err) {
-          setError(err.message || 'Error al tomar la materia');
+          // Mostrar error detallado si hay conflictos
+          const errorMsg = err.message || 'Error al tomar la materia';
+          setError(errorMsg);
           setTakingMateria(false);
+          setConfirmDialog({ open: false, action: null, type: null });
         }
       },
       type: 'take'

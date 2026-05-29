@@ -311,9 +311,41 @@ const cambiarInstructorMateria = async (req, res) => {
       include: {
         instructor: {
           select: { id: true, fullName: true, email: true }
-        }
+        },
+        horarios: true
       }
     });
+
+    // Detectar conflictos de horario para el nuevo instructor
+    const { detectarConflictos, crearConflicto } = require('../utils/horarioConflictos');
+    let conflictosGenerados = [];
+    
+    if (materiaActualizada.horarios && materiaActualizada.horarios.length > 0) {
+      for (const horario of materiaActualizada.horarios) {
+        const conflictos = await detectarConflictos(
+          nuevoInstructorId,
+          horario.dia,
+          horario.horaInicio,
+          horario.horaFin,
+          horario.id
+        );
+        
+        if (conflictos.length > 0) {
+          await crearConflicto(
+            nuevoInstructorId,
+            horario.dia,
+            conflictos,
+            req.user.id
+          );
+          conflictosGenerados.push({
+            dia: horario.dia,
+            horaInicio: horario.horaInicio,
+            horaFin: horario.horaFin,
+            conflictos: conflictos.length
+          });
+        }
+      }
+    }
 
     // Registrar en historial
     await prisma.historialCambios.create({
@@ -323,7 +355,7 @@ const cambiarInstructorMateria = async (req, res) => {
         tipoEvento: 'cambio_instructor',
         entidad: 'materia',
         entidadId: materiaId,
-        descripcion: `Cambió el instructor de la materia "${materia.nombre}" de "${materia.instructor.fullName}" a "${nuevoInstructor.fullName}"`,
+        descripcion: `Cambió el instructor de la materia "${materia.nombre}" de "${materia.instructor?.fullName || 'Sin instructor'}" a "${nuevoInstructor.fullName}"${conflictosGenerados.length > 0 ? ` (generó ${conflictosGenerados.length} conflicto(s))` : ''}`,
         datosAnteriores: { instructorId: materia.instructorId },
         datosNuevos: { instructorId: nuevoInstructorId }
       }
@@ -331,7 +363,12 @@ const cambiarInstructorMateria = async (req, res) => {
 
     res.json({ 
       message: 'Instructor de materia actualizado correctamente',
-      materia: materiaActualizada 
+      materia: materiaActualizada,
+      conflictos: conflictosGenerados.length > 0 ? {
+        count: conflictosGenerados.length,
+        message: `Se generaron ${conflictosGenerados.length} conflicto(s) de horario para el instructor`,
+        detalles: conflictosGenerados
+      } : null
     });
   } catch (err) {
     res.status(500).json({ error: 'Error cambiando instructor: ' + err.message });
@@ -1599,6 +1636,9 @@ const getEstadisticasExcusas = async (req, res) => {
     // Top 5 instructores con más excusas recibidas
     const instructoresMap = {};
     excusas.forEach(e => {
+      // Validar que la materia tenga instructor asignado
+      if (!e.materia.instructor) return;
+      
       const key = e.materia.instructor.id;
       if (!instructoresMap[key]) {
         instructoresMap[key] = {
