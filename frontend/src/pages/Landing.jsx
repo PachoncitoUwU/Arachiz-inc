@@ -35,7 +35,7 @@ export default function Landing() {
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-50">
         <Link 
           to="/about" 
-          className="px-4 py-2 md:px-8 md:py-3.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-bold text-sm md:text-base lg:text-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95 border-2 border-gray-300 dark:border-gray-600 flex items-center gap-2"
+          className="px-4 py-2 md:px-6 md:py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm hover:shadow-lg hover:scale-105 transition-all active:scale-95 border border-gray-300 dark:border-gray-600 flex items-center gap-2"
         >
           Sobre Nosotros
         </Link>
