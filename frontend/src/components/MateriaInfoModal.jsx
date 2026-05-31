@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import fetchApi from '../services/api';
-import { BookOpen, User, Clock, Edit2, Trash2, Loader, UserPlus, UserMinus } from 'lucide-react';
+import { BookOpen, User, Clock, Edit2, Trash2, Loader, UserPlus, UserMinus, EyeOff, Eye } from 'lucide-react';
 
 export default function MateriaInfoModal({ 
   open, 
@@ -14,7 +14,8 @@ export default function MateriaInfoModal({
   currentUserId = null,
   onUpdate,
   onDelete,
-  isAprendizView = false
+  isAprendizView = false,
+  isMateriaEvitada = false
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,11 +27,13 @@ export default function MateriaInfoModal({
   const [deleting, setDeleting] = useState(false);
   const [takingMateria, setTakingMateria] = useState(false);
   const [leavingMateria, setLeavingMateria] = useState(false);
+  const [evitandoMateria, setEvitandoMateria] = useState(false);
+  const [volviendoATomarMateria, setVolviendoATomarMateria] = useState(false);
   const [error, setError] = useState('');
   const [confirmDialog, setConfirmDialog] = useState({ 
     open: false, 
     action: null,
-    type: null // 'delete', 'take', 'leave'
+    type: null // 'delete', 'take', 'leave', 'evitar', 'volver'
   });
 
   if (!materia) return null;
@@ -67,17 +70,29 @@ export default function MateriaInfoModal({
       setSaving(true);
       setError('');
 
-      const updatedMateria = await fetchApi(`/materias/${materia.id}`, {
+      const response = await fetchApi(`/materias/${materia.id}`, {
         method: 'PUT',
         body: JSON.stringify(formData)
       });
 
       // Actualizar el objeto materia localmente
-      Object.assign(materia, updatedMateria.materia);
+      Object.assign(materia, response.materia);
 
       setIsEditing(false);
-      if (onUpdate) {
-        onUpdate();
+      
+      // Mostrar advertencia si hay conflictos
+      if (response.conflictos) {
+        setError(`⚠️ Materia actualizada con conflictos: ${response.conflictos.message}`);
+        // Mantener el error visible pero permitir cerrar
+        setTimeout(() => {
+          if (onUpdate) {
+            onUpdate();
+          }
+        }, 2000);
+      } else {
+        if (onUpdate) {
+          onUpdate();
+        }
       }
     } catch (err) {
       setError(err.message || 'Error al actualizar la materia');
@@ -119,21 +134,37 @@ export default function MateriaInfoModal({
           setTakingMateria(true);
           setError('');
 
-          await fetchApi(`/materias/${materia.id}/tomar`, {
+          const response = await fetchApi(`/materias/${materia.id}/tomar`, {
             method: 'PUT'
           });
 
           // Actualizar el objeto materia localmente
           materia.instructorId = currentUserId;
-          materia.instructor = { id: currentUserId, fullName: 'Tú' }; // Se actualizará con la respuesta real
+          materia.instructor = response.materia?.instructor || { id: currentUserId, fullName: 'Tú' };
 
-          if (onUpdate) {
-            onUpdate();
+          // Mostrar advertencia si hay conflictos
+          if (response.conflictos) {
+            setError(`⚠️ ${response.conflictos.message}`);
+            setTakingMateria(false);
+            setConfirmDialog({ open: false, action: null, type: null });
+            // Mantener el modal abierto para que vean la advertencia
+            setTimeout(() => {
+              if (onUpdate) {
+                onUpdate();
+              }
+            }, 3000);
+          } else {
+            if (onUpdate) {
+              onUpdate();
+            }
+            onClose();
           }
-          onClose();
         } catch (err) {
-          setError(err.message || 'Error al tomar la materia');
+          // Mostrar error detallado si hay conflictos
+          const errorMsg = err.message || 'Error al tomar la materia';
+          setError(errorMsg);
           setTakingMateria(false);
+          setConfirmDialog({ open: false, action: null, type: null });
         }
       },
       type: 'take'
@@ -166,6 +197,56 @@ export default function MateriaInfoModal({
         }
       },
       type: 'leave'
+    });
+  };
+
+  const handleEvitarMateria = async () => {
+    setConfirmDialog({
+      open: true,
+      action: async () => {
+        try {
+          setEvitandoMateria(true);
+          setError('');
+
+          await fetchApi(`/materias-evitadas/materias/${materia.id}/evitar`, {
+            method: 'POST'
+          });
+
+          if (onUpdate) {
+            onUpdate();
+          }
+          onClose();
+        } catch (err) {
+          setError(err.message || 'Error al evitar la materia');
+          setEvitandoMateria(false);
+        }
+      },
+      type: 'evitar'
+    });
+  };
+
+  const handleVolverATomarMateria = async () => {
+    setConfirmDialog({
+      open: true,
+      action: async () => {
+        try {
+          setVolviendoATomarMateria(true);
+          setError('');
+
+          await fetchApi(`/materias-evitadas/materias/${materia.id}/volver-a-tomar`, {
+            method: 'DELETE'
+          });
+
+          if (onUpdate) {
+            onUpdate();
+          }
+          onClose();
+        } catch (err) {
+          setError(err.message || 'Error al volver a tomar la materia');
+          setVolviendoATomarMateria(false);
+        }
+      },
+      type: 'volver'
     });
   };
 
@@ -333,8 +414,51 @@ export default function MateriaInfoModal({
             </div>
 
             {/* Botones de acción */}
-            {(isCreatorOrAdmin || (!isAprendizView && currentUserId)) && (
+            {(isCreatorOrAdmin || (!isAprendizView && currentUserId) || isAprendizView) && (
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Botones para aprendices (evitar/volver a tomar materia) */}
+                {isAprendizView && (
+                  <div className="flex gap-3">
+                    {isMateriaEvitada ? (
+                      <button 
+                        onClick={handleVolverATomarMateria}
+                        disabled={volviendoATomarMateria}
+                        className="btn-primary flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        {volviendoATomarMateria ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={16} />
+                            Volver a tomar materia
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleEvitarMateria}
+                        disabled={evitandoMateria}
+                        className="btn-secondary flex-1 flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        {evitandoMateria ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff size={16} />
+                            Evitar esta materia
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Botones para instructores (tomar/dejar materia) */}
                 {!isAprendizView && currentUserId && !isAdmin && (
                   <div className="flex gap-3">
@@ -422,20 +546,26 @@ export default function MateriaInfoModal({
       title={
         confirmDialog.type === 'take' ? "Tomar Materia" :
         confirmDialog.type === 'leave' ? "Dejar Materia" :
+        confirmDialog.type === 'evitar' ? "Evitar Materia" :
+        confirmDialog.type === 'volver' ? "Volver a Tomar Materia" :
         "Eliminar Materia"
       }
       message={
         confirmDialog.type === 'take' ? `¿Estás seguro de tomar a cargo la materia "${materia.nombre}"?` :
         confirmDialog.type === 'leave' ? `¿Estás seguro de dejar de estar a cargo de la materia "${materia.nombre}"?` :
+        confirmDialog.type === 'evitar' ? `¿Estás seguro de que deseas evitar "${materia.nombre}"? No recibirás asistencia en esta materia.` :
+        confirmDialog.type === 'volver' ? `¿Estás seguro de que deseas volver a tomar "${materia.nombre}"? Volverás a recibir asistencia en esta materia.` :
         `¿Estás seguro de eliminar la materia "${materia.nombre}"? Esta acción no se puede deshacer.`
       }
       confirmText={
         confirmDialog.type === 'take' ? "Tomar" :
         confirmDialog.type === 'leave' ? "Dejar" :
+        confirmDialog.type === 'evitar' ? "Evitar materia" :
+        confirmDialog.type === 'volver' ? "Volver a tomar" :
         "Eliminar"
       }
       cancelText="Cancelar"
-      danger={confirmDialog.type === 'delete'}
+      danger={confirmDialog.type === 'delete' || confirmDialog.type === 'evitar'}
     />
   </>
   );

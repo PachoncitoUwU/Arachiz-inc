@@ -100,7 +100,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg font-bold text-gray-900">Ficha {ficha.numero}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</span>
             {isPinned && (
               <Star size={16} fill="currentColor" className="text-yellow-500" />
             )}
@@ -109,17 +109,6 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
           <p className="text-xs text-gray-400">{ficha.nivel} · {ficha.centro}</p>
           <p className="text-xs text-gray-400">{ficha.jornada}{ficha.region ? ` · ${ficha.region}` : ''}</p>
         </div>
-      </div>
-
-      {/* Código de invitación */}
-      <div className={`flex items-center gap-2 p-2.5 ${color.bg} rounded-xl mb-3`}>
-        <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Código:</span>
-        <span className={`font-mono font-bold ${color.text} tracking-widest text-sm flex-1 select-all`}>
-          {ficha.code}
-        </span>
-        <button onClick={copyCode} className="btn-icon text-gray-400 hover:bg-white/60 w-7 h-7" title="Copiar código">
-          {copied ? <Check size={14} className="text-[#34A853]"/> : <Copy size={14}/>}
-        </button>
       </div>
 
       {/* Stats rápidas */}

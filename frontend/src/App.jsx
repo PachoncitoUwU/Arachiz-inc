@@ -30,6 +30,7 @@ import AdminHorarios from './pages/admin/Horarios';
 import AdminExcusas from './pages/admin/Excusas';
 import AdminReportes from './pages/admin/Reportes';
 import AdminPapelera from './pages/admin/Papelera';
+import AdminConfiguracion from './pages/admin/Configuracion';
 
 import AprendizDashboard  from './pages/aprendiz/Dashboard';
 import AprendizFichas     from './pages/aprendiz/Fichas';
@@ -86,7 +87,7 @@ export default function App() {
                 <Route path="excusas"        element={<AdminExcusas />} />
                 <Route path="reportes"       element={<AdminReportes />} />
                 <Route path="papelera"       element={<AdminPapelera />} />
-                <Route path="configuracion"  element={<Configuracion />} />
+                <Route path="configuracion"  element={<AdminConfiguracion />} />
               </Route>
 
               <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>

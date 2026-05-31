@@ -3,6 +3,7 @@ import { Outlet, Navigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
+import PerfilPropioModal from '../components/PerfilPropioModal';
 import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
@@ -37,7 +38,7 @@ const APRENDIZ_LINKS = [
   { to: '/aprendiz/excusas', icon: FileText, labelKey: 'excusas' },
 ];
 
-function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClick }) {
+function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClick, onProfileClick }) {
   const { settings, toggleDark, t } = useSettings();
 
   const initials = user?.fullName
@@ -103,7 +104,10 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
           <ChevronRight size={14} className="ml-auto opacity-30" />
         </NavLink>
 
-        <div className="flex items-center gap-3 px-2 py-2 mt-1">
+        <button
+          onClick={onProfileClick}
+          className="w-full flex items-center gap-3 px-2 py-2 mt-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+        >
           {avatarSrc ? (
             <img src={avatarSrc} alt="avatar" className={`w-9 h-9 rounded-xl object-cover shrink-0`} />
           ) : (
@@ -111,11 +115,11 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
               {initials}
             </div>
           )}
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 text-left">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{user?.fullName || user?.email}</p>
             <p className="text-xs text-gray-400 capitalize">{user?.userType}</p>
           </div>
-        </div>
+        </button>
 
         <button
           onClick={onLogoutClick}
@@ -130,10 +134,19 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
 }
 
 export default function MainLayout({ allowedRoles }) {
-  const { user, isAuthenticated, logout } = useContext(AuthContext);
+  const { user, isAuthenticated, logout, updateUser, loading } = useContext(AuthContext);
   const { settings } = useSettings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4285F4]"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(user?.userType)) {
@@ -141,7 +154,10 @@ export default function MainLayout({ allowedRoles }) {
   }
 
   const links = user?.userType === 'instructor' ? INSTRUCTOR_LINKS : user?.userType === 'administrador' ? ADMIN_LINKS : APRENDIZ_LINKS;
-  const configPath = `/${user?.userType}/configuracion`;
+  
+  // Mapear el userType a la ruta correcta
+  const routePrefix = user?.userType === 'administrador' ? 'admin' : user?.userType;
+  const configPath = `/${routePrefix}/configuracion`;
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -152,13 +168,24 @@ export default function MainLayout({ allowedRoles }) {
     logout();
   };
 
+  const handleProfileClick = () => {
+    setShowProfileModal(true);
+    setSidebarOpen(false);
+  };
+
+  const handleProfileUpdate = (updatedUser) => {
+    if (updateUser) {
+      updateUser(updatedUser);
+    }
+  };
+
   return (
     <>
       <div className="flex h-screen overflow-hidden">
         <div className="flex h-full w-full bg-[#F5F5F5] dark:bg-gray-950">
           {/* Desktop Sidebar */}
           <aside className="hidden md:flex w-60 flex-col shrink-0">
-            <SidebarContent links={links} user={user} logout={logout} configPath={configPath} onLogoutClick={handleLogoutClick} />
+            <SidebarContent links={links} user={user} logout={logout} configPath={configPath} onLogoutClick={handleLogoutClick} onProfileClick={handleProfileClick} />
           </aside>
 
           {/* Mobile Sidebar Overlay */}
@@ -166,7 +193,7 @@ export default function MainLayout({ allowedRoles }) {
             <div className="fixed inset-0 z-40 md:hidden">
               <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
               <aside className="absolute left-0 top-0 h-full w-64 shadow-xl z-50">
-                <SidebarContent links={links} user={user} logout={logout} onClose={() => setSidebarOpen(false)} configPath={configPath} onLogoutClick={handleLogoutClick} />
+                <SidebarContent links={links} user={user} logout={logout} onClose={() => setSidebarOpen(false)} configPath={configPath} onLogoutClick={handleLogoutClick} onProfileClick={handleProfileClick} />
               </aside>
             </div>
           )}
@@ -201,6 +228,14 @@ export default function MainLayout({ allowedRoles }) {
         confirmText="Cerrar sesión"
         cancelText="Cancelar"
         danger={true}
+      />
+
+      {/* Modal de perfil propio */}
+      <PerfilPropioModal
+        open={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={user}
+        onUpdate={handleProfileUpdate}
       />
     </>
   );

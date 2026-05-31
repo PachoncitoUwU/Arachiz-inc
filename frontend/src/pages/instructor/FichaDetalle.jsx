@@ -62,6 +62,9 @@ export default function FichaDetalle() {
   
   // Estados para notificaciones
   const [showNotificaciones, setShowNotificaciones] = useState(false);
+  
+  // Estado para salir de ficha
+  const [showSalirDialog, setShowSalirDialog] = useState(false);
 
   useEffect(() => {
     loadFicha();
@@ -297,6 +300,16 @@ export default function FichaDetalle() {
     }
   };
 
+  const handleSalirDeFicha = async () => {
+    try {
+      await fetchApi(`/fichas/${id}/salir`, { method: 'POST' });
+      showToast('Has salido de la ficha exitosamente', 'success');
+      navigate('/instructor/fichas');
+    } catch (err) {
+      showToast(err.message || 'Error al salir de la ficha', 'error');
+    }
+  };
+
   const handleMateriaDelete = async () => {
     // Recargar solo los datos sin mostrar loading completo
     try {
@@ -497,6 +510,15 @@ export default function FichaDetalle() {
           >
             {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
             Exportar Info
+          </button>
+          
+          <button 
+            onClick={() => setShowSalirDialog(true)} 
+            className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="Salir de esta ficha"
+          >
+            <ArrowLeft size={16} />
+            Salir de ficha
           </button>
         </div>
       </div>
@@ -1287,6 +1309,20 @@ export default function FichaDetalle() {
         onClose={() => setShowNotificaciones(false)}
         fichaId={id}
         userRole="instructor"
+      />
+
+      {/* Diálogo de confirmación para salir de ficha */}
+      <ConfirmDialog
+        open={showSalirDialog}
+        onClose={() => setShowSalirDialog(false)}
+        onConfirm={handleSalirDeFicha}
+        title="Salir de la Ficha"
+        message={isLider 
+          ? "Eres el líder de esta ficha. Si sales, la ficha quedará sin líder. ¿Estás seguro de que deseas salir?"
+          : "¿Estás seguro de que deseas salir de esta ficha? Esta acción no se puede deshacer."}
+        confirmText="Salir"
+        cancelText="Cancelar"
+        danger={true}
       />
     </div>
   );

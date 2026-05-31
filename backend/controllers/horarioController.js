@@ -58,29 +58,44 @@ const createHorario = async (req, res) => {
       return res.status(404).json({ error: 'Materia no encontrada' });
     }
     
-    // Validar conflictos de horario para el instructor de la materia
-    const conflictos = await prisma.horario.findMany({
-      where: {
-        dia,
-        materia: { instructorId: materia.instructorId },
-        OR: [
-          // Caso 1: El nuevo horario empieza durante una clase existente
-          { AND: [{ horaInicio: { lte: horaInicio } }, { horaFin: { gt: horaInicio } }] },
-          // Caso 2: El nuevo horario termina durante una clase existente
-          { AND: [{ horaInicio: { lt: horaFin } }, { horaFin: { gte: horaFin } }] },
-          // Caso 3: El nuevo horario envuelve completamente una clase existente
-          { AND: [{ horaInicio: { gte: horaInicio } }, { horaFin: { lte: horaFin } }] }
-        ]
-      },
-      include: { materia: { select: { nombre: true } } }
-    });
+    // Si la materia no tiene instructor asignado, no se pueden validar conflictos
+    // pero se permite crear el horario
+    let conflictos = [];
     
-    // Si es instructor, bloquear si hay conflictos
-    // Si es admin, permitir pero crear registro de conflicto
-    if (conflictos.length > 0 && userType === 'instructor') {
-      return res.status(400).json({ 
-        error: `Ya tienes una clase programada en ese horario: ${conflictos[0].materia.nombre} (${conflictos[0].horaInicio} - ${conflictos[0].horaFin})` 
+    if (materia.instructorId) {
+      // Validar conflictos de horario para el instructor de la materia (en TODAS las fichas)
+      conflictos = await prisma.horario.findMany({
+        where: {
+          dia,
+          materia: { instructorId: materia.instructorId },
+          OR: [
+            // Caso 1: El nuevo horario empieza durante una clase existente
+            { AND: [{ horaInicio: { lte: horaInicio } }, { horaFin: { gt: horaInicio } }] },
+            // Caso 2: El nuevo horario termina durante una clase existente
+            { AND: [{ horaInicio: { lt: horaFin } }, { horaFin: { gte: horaFin } }] },
+            // Caso 3: El nuevo horario envuelve completamente una clase existente
+            { AND: [{ horaInicio: { gte: horaInicio } }, { horaFin: { lte: horaFin } }] }
+          ]
+        },
+        include: { 
+          materia: { 
+            select: { 
+              nombre: true,
+              ficha: { select: { numero: true, nombre: true } }
+            } 
+          },
+          ficha: { select: { numero: true, nombre: true } }
+        }
       });
+      
+      // Si es instructor, bloquear si hay conflictos
+      if (conflictos.length > 0 && userType === 'instructor') {
+        const conflictoInfo = conflictos[0];
+        const fichaConflicto = conflictoInfo.ficha || conflictoInfo.materia.ficha;
+        return res.status(400).json({ 
+          error: `Ya tienes una clase programada en ese horario: ${conflictoInfo.materia.nombre} (${conflictoInfo.horaInicio} - ${conflictoInfo.horaFin}) en Ficha ${fichaConflicto.numero}` 
+        });
+      }
     }
     
     const horario = await prisma.horario.create({
@@ -91,12 +106,13 @@ const createHorario = async (req, res) => {
             instructor: { select: { fullName: true } },
             ficha: { select: { numero: true, nombre: true } }
           } 
-        } 
+        },
+        ficha: { select: { numero: true, nombre: true } }
       }
     });
     
-    // Si es admin y hay conflictos, crear registro de conflicto
-    if (conflictos.length > 0 && userType === 'administrador') {
+    // Si es admin, hay conflictos y la materia tiene instructor, crear registro de conflicto
+    if (conflictos.length > 0 && userType === 'administrador' && materia.instructorId) {
       await crearConflicto(
         materia.instructorId,
         dia,
@@ -108,13 +124,14 @@ const createHorario = async (req, res) => {
     res.status(201).json({ 
       message: 'Clase agregada al horario', 
       horario,
-      conflictos: conflictos.length > 0 && userType === 'administrador' ? {
+      conflictos: conflictos.length > 0 && userType === 'administrador' && materia.instructorId ? {
         count: conflictos.length,
         message: `Se generaron ${conflictos.length} conflicto(s) de horario para el instructor`
       } : null
     });
   } catch (err) {
-    res.status(500).json({ error: 'Error: ' + err.message });
+    console.error('Error en createHorario:', err);
+    res.status(500).json({ error: 'Error al crear horario: ' + err.message });
   }
 };
 
@@ -321,15 +338,18 @@ const updateHorario = async (req, res) => {
           { AND: [{ horaInicio: { gte: finalHoraInicio } }, { horaFin: { lte: finalHoraFin } }] }
         ]
       },
-      include: { materia: { select: { nombre: true } } }
+      include: { 
+        materia: { 
+          select: { 
+            nombre: true,
+            ficha: { select: { numero: true, nombre: true } }
+          } 
+        },
+        ficha: { select: { numero: true, nombre: true } }
+      }
     });
     
-    if (conflictos.length > 0) {
-      return res.status(400).json({ 
-        error: `Ya tienes una clase programada en ese horario: ${conflictos[0].materia.nombre} (${conflictos[0].horaInicio} - ${conflictos[0].horaFin})` 
-      });
-    }
-    
+    // Actualizar el horario (permitir aunque haya conflictos)
     const updated = await prisma.horario.update({
       where: { id },
       data: {
@@ -343,9 +363,20 @@ const updateHorario = async (req, res) => {
             instructor: { select: { fullName: true } },
             ficha: { select: { numero: true, nombre: true } }
           } 
-        } 
+        },
+        ficha: { select: { numero: true, nombre: true } }
       }
     });
+    
+    // Si hay conflictos, crear registro de conflicto
+    if (conflictos.length > 0) {
+      await crearConflicto(
+        instructorId,
+        finalDia,
+        conflictos,
+        instructorId // El instructor genera su propio conflicto
+      );
+    }
     
     // Verificar si se resolvieron conflictos
     const conflictosActuales = await detectarConflictos(
@@ -371,7 +402,20 @@ const updateHorario = async (req, res) => {
       });
     }
     
-    res.json({ message: 'Horario actualizado', horario: updated });
+    res.json({ 
+      message: 'Horario actualizado', 
+      horario: updated,
+      conflictos: conflictos.length > 0 ? {
+        count: conflictos.length,
+        message: `Se generaron ${conflictos.length} conflicto(s) de horario. Puedes resolverlos ajustando tus horarios.`,
+        detalles: conflictos.map(c => ({
+          dia: c.dia,
+          materia: c.materia.nombre,
+          horario: `${c.horaInicio} - ${c.horaFin}`,
+          ficha: c.ficha?.numero || c.materia?.ficha?.numero
+        }))
+      } : null
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
   }

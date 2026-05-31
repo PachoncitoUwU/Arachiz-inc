@@ -522,7 +522,7 @@ export default function AdminExcusas() {
                           </td>
                           <td className="px-4 py-3">
                             <p className="text-sm text-gray-900 dark:text-gray-100">
-                              {excusa.materia.instructor.fullName}
+                              {excusa.materia.instructor?.fullName || 'Sin instructor'}
                             </p>
                           </td>
                           <td className="px-4 py-3">

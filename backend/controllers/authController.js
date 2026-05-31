@@ -108,19 +108,23 @@ const getMe = async (req, res) => {
 
 // RF81 - Actualizar perfil (nombre + avatar)
 const updateProfile = async (req, res) => {
-  const { fullName, avatarBase64 } = req.body;
+  const { fullName, document, avatarBase64, deleteAvatar } = req.body;
   
   try {
     const data = {};
     if (fullName && fullName.trim()) data.fullName = fullName.trim();
+    if (document && document.trim()) data.document = document.trim();
     
+    // Si solicitan eliminar el avatar
+    if (deleteAvatar === 'true') {
+      data.avatarUrl = null;
+    }
     // Si envían la imagen en base64 (ya redimensionada desde el frontend)
-    if (avatarBase64) {
+    else if (avatarBase64) {
       data.avatarUrl = avatarBase64;
     }
-    
     // Si usan archivo local/Supabase tradicional (multer)
-    if (req.file) {
+    else if (req.file) {
       if (!isSupabaseConfigured) {
         return res.status(500).json({ error: 'Faltan las variables SUPABASE_URL y SUPABASE_ANON_KEY en backend/.env' });
       }

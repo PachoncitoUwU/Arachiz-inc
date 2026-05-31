@@ -153,3 +153,124 @@ exports.updateMateriasEvitadas = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar materias evitadas' });
   }
 };
+
+// Evitar una materia (aprendiz se evita a sí mismo)
+exports.evitarMateria = async (req, res) => {
+  try {
+    const aprendizId = req.user.id;
+    const { materiaId } = req.params;
+
+    // Verificar que la materia existe
+    const materia = await prisma.materia.findUnique({
+      where: { id: materiaId },
+      include: {
+        ficha: {
+          include: {
+            aprendices: { where: { id: aprendizId } },
+            materias: true
+          }
+        }
+      }
+    });
+
+    if (!materia) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+
+    // Verificar que el aprendiz pertenece a la ficha
+    if (materia.ficha.aprendices.length === 0) {
+      return res.status(403).json({ error: 'No perteneces a esta ficha' });
+    }
+
+    // Verificar que ya no está evitada
+    const yaEvitada = await prisma.materiaEvitada.findFirst({
+      where: {
+        aprendizId,
+        materiaId
+      }
+    });
+
+    if (yaEvitada) {
+      return res.status(400).json({ error: 'Ya has evitado esta materia' });
+    }
+
+    // Contar cuántas materias tiene evitadas en esta ficha
+    const materiasEvitadasCount = await prisma.materiaEvitada.count({
+      where: {
+        aprendizId,
+        materia: { fichaId: materia.fichaId }
+      }
+    });
+
+    // Validar que al menos una materia quede activa
+    const totalMaterias = materia.ficha.materias.length;
+    if (materiasEvitadasCount + 1 >= totalMaterias) {
+      return res.status(400).json({ error: 'Debes participar en al menos una materia' });
+    }
+
+    // Crear la materia evitada
+    await prisma.materiaEvitada.create({
+      data: {
+        aprendizId,
+        materiaId
+      }
+    });
+
+    res.json({ 
+      message: 'Materia evitada exitosamente',
+      materiaId 
+    });
+  } catch (error) {
+    console.error('Error al evitar materia:', error);
+    res.status(500).json({ error: 'Error al evitar materia' });
+  }
+};
+
+// Volver a tomar una materia (aprendiz deja de evitarla)
+exports.volverATomarMateria = async (req, res) => {
+  try {
+    const aprendizId = req.user.id;
+    const { materiaId } = req.params;
+
+    // Verificar que la materia existe y está evitada
+    const materiaEvitada = await prisma.materiaEvitada.findFirst({
+      where: {
+        aprendizId,
+        materiaId
+      },
+      include: {
+        materia: {
+          include: {
+            ficha: {
+              include: {
+                aprendices: { where: { id: aprendizId } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!materiaEvitada) {
+      return res.status(404).json({ error: 'No has evitado esta materia' });
+    }
+
+    // Verificar que el aprendiz aún pertenece a la ficha
+    if (materiaEvitada.materia.ficha.aprendices.length === 0) {
+      return res.status(403).json({ error: 'No perteneces a esta ficha' });
+    }
+
+    // Eliminar la materia evitada
+    await prisma.materiaEvitada.delete({
+      where: { id: materiaEvitada.id }
+    });
+
+    res.json({ 
+      message: 'Ahora puedes tomar esta materia nuevamente',
+      materiaId 
+    });
+  } catch (error) {
+    console.error('Error al volver a tomar materia:', error);
+    res.status(500).json({ error: 'Error al volver a tomar materia' });
+  }
+};
