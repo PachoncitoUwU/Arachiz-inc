@@ -19,16 +19,21 @@ export default function Register() {
   const [showTc, setShowTc]                   = useState(false);
   const [particles, setParticles] = useState([]);
   const [bubbles, setBubbles] = useState([
-    { id: 1, left: '10%', size: 20, color: '#4285F4', duration: 20, delay: 0 },
-    { id: 2, left: '20%', size: 12, color: '#EA4335', duration: 18, delay: 2 },
-    { id: 3, left: '30%', size: 32, color: '#FBBC05', duration: 25, delay: 4 },
-    { id: 4, left: '40%', size: 16, color: '#34A853', duration: 22, delay: 0 },
-    { id: 5, left: '50%', size: 28, color: '#4285F4', duration: 20, delay: 3 },
-    { id: 6, left: '60%', size: 14, color: '#EA4335', duration: 23, delay: 1 },
-    { id: 7, left: '70%', size: 24, color: '#FBBC05', duration: 19, delay: 5 },
-    { id: 8, left: '80%', size: 10, color: '#34A853', duration: 21, delay: 2 },
-    { id: 9, left: '85%', size: 36, color: '#4285F4', duration: 24, delay: 0 },
-    { id: 10, left: '15%', size: 12, color: '#EA4335', duration: 22, delay: 4 },
+    { id: 1, left: '10%', size: 48, color: '#4285F4', duration: 12, delay: 0 },
+    { id: 2, left: '20%', size: 64, color: '#EA4335', duration: 10, delay: 1 },
+    { id: 3, left: '30%', size: 72, color: '#FBBC05', duration: 14, delay: 2 },
+    { id: 4, left: '40%', size: 56, color: '#34A853', duration: 11, delay: 0 },
+    { id: 5, left: '50%', size: 80, color: '#4285F4', duration: 13, delay: 1.5 },
+    { id: 6, left: '60%', size: 52, color: '#EA4335', duration: 12, delay: 0.5 },
+    { id: 7, left: '70%', size: 68, color: '#FBBC05', duration: 10, delay: 2.5 },
+    { id: 8, left: '80%', size: 60, color: '#34A853', duration: 11, delay: 1 },
+    { id: 9, left: '85%', size: 76, color: '#4285F4', duration: 13, delay: 0 },
+    { id: 10, left: '15%', size: 44, color: '#EA4335', duration: 12, delay: 2 },
+    { id: 11, left: '25%', size: 88, color: '#34A853', duration: 14, delay: 0.5 },
+    { id: 12, left: '45%', size: 70, color: '#FBBC05', duration: 11, delay: 1.5 },
+    { id: 13, left: '65%', size: 58, color: '#4285F4', duration: 12, delay: 2 },
+    { id: 14, left: '75%', size: 84, color: '#EA4335', duration: 13, delay: 0.5 },
+    { id: 15, left: '90%', size: 66, color: '#34A853', duration: 10, delay: 1 },
   ]);
 
   const handleBubbleClick = (bubble, event) => {
@@ -169,7 +174,9 @@ export default function Register() {
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
+            <Link to="/" className="hover:scale-105 transition-transform active:scale-95">
+              <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
+            </Link>
           </div>
           <h1 className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">{t('register', 'create')}</h1>
         </div>
