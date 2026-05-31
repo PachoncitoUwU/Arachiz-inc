@@ -82,7 +82,7 @@ export default function Register() {
   const accentColor = userType === 'instructor' ? '#4285F4' : userType === 'administrador' ? '#EA4335' : '#34A853';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
         @keyframes float-up {
           0% {
@@ -171,18 +171,18 @@ export default function Register() {
           <div className="flex justify-center mb-6">
             <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('register', 'create')}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('register', 'create')}</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 space-y-4">
+        <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-card p-6 sm:p-8 space-y-4 border border-gray-100 dark:border-zinc-700">
           {/* Tipo de usuario */}
-          <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-xl">
+          <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-zinc-700 rounded-xl">
             {['aprendiz', 'instructor', 'administrador'].map(type => (
               <button key={type} type="button" onClick={() => setUserType(type)}
                 className={`py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all capitalize ${
                   userType === type
-                    ? 'bg-white shadow-sm text-gray-900'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white dark:bg-zinc-600 shadow-sm text-gray-900 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}>
                 {type === 'aprendiz' ? t('register', 'learner') : 
                  type === 'instructor' ? t('register', 'instructor') : 
@@ -192,7 +192,7 @@ export default function Register() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -203,7 +203,7 @@ export default function Register() {
                 <User size={16}/>
               </div>
               <input type="text" required placeholder={t('register', 'fullName')}
-                className="input-field pl-11"
+                className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
                 value={fullName} onChange={e => setFullName(e.target.value)} />
             </div>
 
@@ -212,7 +212,7 @@ export default function Register() {
                 <IdCard size={16}/>
               </div>
               <input type="text" required placeholder={t('register', 'document')}
-                className="input-field pl-11"
+                className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
                 value={document} onChange={e => setDocument(e.target.value)} />
             </div>
 
@@ -221,7 +221,7 @@ export default function Register() {
                 <Mail size={16}/>
               </div>
               <input type="email" required placeholder={t('register', 'email')}
-                className="input-field pl-11"
+                className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
                 value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 
@@ -230,7 +230,7 @@ export default function Register() {
                 <Lock size={16}/>
               </div>
               <input type="password" required placeholder={t('register', 'password')}
-                className="input-field pl-11"
+                className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
                 value={password} onChange={e => setPassword(e.target.value)} />
             </div>
 
@@ -239,14 +239,14 @@ export default function Register() {
                 <Lock size={16}/>
               </div>
               <input type="password" required placeholder={t('register', 'confirmPassword')}
-                className="input-field pl-11"
+                className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
                 value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
 
             <div className="flex items-start gap-2 pt-1">
-              <input type="checkbox" id="tc" className="mt-1 w-4 h-4 rounded border-gray-300 text-[#4285F4] focus:ring-[#4285F4]"
+              <input type="checkbox" id="tc" className="mt-1 w-4 h-4 rounded border-gray-300 dark:border-zinc-600 text-[#4285F4] focus:ring-[#4285F4] dark:bg-zinc-700"
                 checked={acceptedTc} onChange={e => setAcceptedTc(e.target.checked)} />
-              <label htmlFor="tc" className="text-xs text-gray-600 leading-tight">
+              <label htmlFor="tc" className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
                 {t('register', 'terms')} <span className="text-[#4285F4] font-semibold cursor-pointer hover:underline" onClick={(e)=>{e.preventDefault(); setShowTc(true);}}>{t('register', 'termsLink')}</span> {t('register', 'termsEnd')}
               </label>
             </div>
@@ -271,9 +271,9 @@ export default function Register() {
         </div>
       {showTc && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',display:'flex',justifyContent:'center',alignItems:'center',zIndex:50,padding:16}}>
-          <div style={{background:'white',borderRadius:20,padding:24,maxWidth:500,maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h2 className="text-xl font-bold mb-4">Términos y Condiciones</h2>
-            <div className="overflow-y-auto pr-2 text-sm text-gray-600 space-y-3">
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl p-6 max-w-md w-full max-h-[80vh] flex flex-col border border-gray-200 dark:border-zinc-700">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Términos y Condiciones</h2>
+            <div className="overflow-y-auto pr-2 text-sm text-gray-600 dark:text-gray-400 space-y-3">
               {/* === INSTRUCTOR: EDITA ESTOS TÉRMINOS AQUÍ === */}
               <p>Al registrarte en Arachiz, aceptas el tratamiento de tus datos personales con fines únicamente académicos y de registro de asistencia.</p>
               <p><strong>Datos recopilados:</strong> Documento de identidad, Nombre completo, Correo electrónico, y credenciales biométricas (como Huella dactilar o UID de tarjetas de proximidad NFC).</p>
@@ -281,7 +281,7 @@ export default function Register() {
               {/* ============================================= */}
             </div>
             <div className="mt-6 flex justify-end">
-              <button type="button" onClick={() => { setAcceptedTc(true); setShowTc(false); }} className="bg-[#4285F4] text-white px-6 py-2 rounded-xl font-bold text-sm">
+              <button type="button" onClick={() => { setAcceptedTc(true); setShowTc(false); }} className="bg-[#4285F4] text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-[#3367d6] transition-colors">
                 Aceptar y Cerrar
               </button>
             </div>
