@@ -80,7 +80,7 @@ export default function AprendizDashboard() {
       {/* Welcome */}
       <div className="card bg-gradient-to-r from-[#34A853] to-green-500 text-white border-0 shadow-card">
         <p className="text-green-100 text-sm font-medium">{t('dashboard', 'welcome')}</p>
-        <h1 className="text-2xl font-bold mt-1">{user?.fullName || user?.email}</h1>
+        <h1 className="text-xl md:text-2xl  font-bold mt-1">{user?.fullName || user?.email}</h1>
         <p className="text-green-100 text-sm mt-1">
           {t('register', 'learner')} · {new Date().toLocaleDateString(settings.language === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
@@ -103,7 +103,7 @@ export default function AprendizDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
             <StatCard icon={<BookOpen size={22}/>}    label={t('dashboard', 'subjects')}           value={materias.length}  color="blue" />
             <StatCard icon={<CheckCircle size={22}/>} label={t('dashboard', 'attendances')}        value={presentes}        color="green" />
             <StatCard icon={<XCircle size={22}/>}     label={t('dashboard', 'absences')}           value={ausentes}         color="red" />
@@ -152,7 +152,7 @@ export default function AprendizDashboard() {
             {/* Acciones rápidas */}
             <div className="card dark:bg-gray-900 dark:border-gray-800">
               <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4">{t('dashboard', 'quickActions')}</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
                 {[
                   { to: '/aprendiz/asistencia', icon: Clock,    label: t('dashboard', 'actionViewAttendances'),  color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
                   { to: '/aprendiz/horario',    icon: Clock,    label: t('dashboard', 'actionSchedule'),          color: 'bg-blue-50 dark:bg-blue-900/20 text-[#4285F4]' },

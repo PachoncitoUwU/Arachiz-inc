@@ -43,14 +43,14 @@ export default function ConfirmModal({
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-4 md:p-6 ">
           <p className="text-gray-700 dark:text-gray-300">
             {message}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+        <div className="flex flex-wrap gap-3  p-4 border-t border-gray-200 dark:border-zinc-700  dark:border-gray-700">
           <button
             onClick={onClose}
             disabled={loading}

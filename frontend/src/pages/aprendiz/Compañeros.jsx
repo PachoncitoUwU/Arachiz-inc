@@ -82,7 +82,7 @@ export default function Compañeros() {
               className="input-field pl-10 w-full"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 ">
             <button
               onClick={() => setViewMode('grid')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -133,7 +133,7 @@ export default function Compañeros() {
                     className="w-20 h-20 rounded-full object-cover mb-3 border-4 border-gray-100 dark:border-zinc-700  group-hover:border-[#4285F4] transition-all"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4285F4] to-[#34A853] flex items-center justify-center text-white font-bold text-2xl mb-3 group-hover:scale-110 transition-transform">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4285F4] to-[#34A853] flex items-center justify-center text-white font-bold text-xl md:text-2xl  mb-3 group-hover:scale-110 transition-transform">
                     {compañero.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                   </div>
                 )}

@@ -86,7 +86,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Acciones rápidas */}
-      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-6">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-4 md:p-6 ">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white  mb-4">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Lista de fichas */}
-      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-6">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-4 md:p-6 ">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white ">Mis Fichas</h2>
           <Link

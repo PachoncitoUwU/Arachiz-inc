@@ -290,7 +290,7 @@ export default function ImprovedManualAttendance({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
       <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
+        <div className="flex items-center justify-between p-4 sm:p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
               <UserCheck size={16} className="text-white sm:w-5 sm:h-5" />

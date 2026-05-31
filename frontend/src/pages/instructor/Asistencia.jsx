@@ -748,7 +748,7 @@ export default function InstructorAsistencia() {
       {/* Vista cuando NO hay sesión activa */}
       {!activeSession && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '100ms' }}>
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-4 md:p-8  hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '100ms' }}>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:rotate-6">
               <Camera size={32} className="text-white" />
             </div>
@@ -756,7 +756,7 @@ export default function InstructorAsistencia() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Detecta automáticamente con IA</p>
           </div>
 
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '150ms' }}>
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-4 md:p-8  hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '150ms' }}>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-indigo-500/50 transition-all duration-300 group-hover:rotate-6">
               <Wifi size={32} className="text-white" />
             </div>
@@ -764,7 +764,7 @@ export default function InstructorAsistencia() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Tarjeta o llavero NFC</p>
           </div>
 
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '200ms' }}>
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-4 md:p-8  hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '200ms' }}>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-yellow-500/50 transition-all duration-300 group-hover:rotate-6">
               <QrCode size={32} className="text-white" />
             </div>
@@ -772,7 +772,7 @@ export default function InstructorAsistencia() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Escanea desde el celular</p>
           </div>
 
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '250ms' }}>
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-4 md:p-8  hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '250ms' }}>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:rotate-6">
               <Fingerprint size={32} className="text-white" />
             </div>
@@ -780,7 +780,7 @@ export default function InstructorAsistencia() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Sensor biométrico rápido</p>
           </div>
 
-          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-8 hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '300ms' }}>
+          <div className="card-hover dark:bg-gray-900 dark:border-gray-800 text-center p-4 md:p-8  hover:shadow-2xl transition-all duration-300 group animate-scale-in" style={{ animationDelay: '300ms' }}>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:rotate-6">
               <UserPlus size={32} className="text-white" />
             </div>
@@ -824,14 +824,14 @@ export default function InstructorAsistencia() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Users size={24} className="text-gray-600 dark:text-gray-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{totalAprendices}</p>
+              <p className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{totalAprendices}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
             </div>
 
@@ -841,7 +841,7 @@ export default function InstructorAsistencia() {
                   <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1 animate-pulse-number">{presentes}</p>
+              <p className="text-2xl md:text-3xl  font-bold text-green-600 dark:text-green-400 mb-1 animate-pulse-number">{presentes}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Presentes</p>
             </div>
 
@@ -851,7 +851,7 @@ export default function InstructorAsistencia() {
                   <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{pendientes}</p>
+              <p className="text-2xl md:text-3xl  font-bold text-yellow-600 dark:text-yellow-400 mb-1">{pendientes}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Ausentes</p>
             </div>
 
@@ -861,7 +861,7 @@ export default function InstructorAsistencia() {
                   <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">{porcentajeCompletado}%</p>
+              <p className="text-2xl md:text-3xl  font-bold text-blue-600 dark:text-blue-400 mb-1">{porcentajeCompletado}%</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Completado</p>
             </div>
           </div>
@@ -900,7 +900,7 @@ export default function InstructorAsistencia() {
 
                   {/* Nombre detectado */}
                   {lastDetectedName && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 animate-slide-in-up">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 md:p-6  animate-slide-in-up">
                       <div className="flex items-center justify-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-lg animate-pulse-glow">
                           {lastDetectedName.charAt(0)}
@@ -935,7 +935,7 @@ export default function InstructorAsistencia() {
               )}
 
               {/* Botones de métodos de registro - Horizontal */}
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2  gap-3">
                 <button 
                   onClick={toggleQR}
                   className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 active:scale-95 ${
@@ -1097,7 +1097,7 @@ export default function InstructorAsistencia() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2  mt-4">
               <button
                 onClick={aplicarFiltros}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -1187,7 +1187,7 @@ export default function InstructorAsistencia() {
       {/* Modal QR */}
       {qrActive && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 md:p-6  animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FBBC05] to-yellow-600 flex items-center justify-center shadow-lg animate-pulse-glow">
@@ -1205,7 +1205,7 @@ export default function InstructorAsistencia() {
 
             {qrCode && (
               <>
-                <div className="relative bg-white dark:bg-zinc-800  p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg animate-fade-in">
+                <div className="relative bg-white dark:bg-zinc-800  p-4 md:p-6  rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg animate-fade-in">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/scan-qr?code=${qrCode}`)}`}
                     alt="QR Code"
@@ -1230,7 +1230,7 @@ export default function InstructorAsistencia() {
 
                 <button 
                   onClick={generateQR}
-                  className="w-full btn-primary flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/50 transition-all">
+                  className="w-full btn-primary text-sm md:text-base  flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/50 transition-all">
                   <RefreshCw size={16} />
                   Generar nuevo código
                 </button>
@@ -1244,7 +1244,7 @@ export default function InstructorAsistencia() {
       {manualRegisterOpen && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+            <div className="flex items-center justify-between p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg animate-pulse-glow">
                   <UserPlus size={24} className="text-white" />
@@ -1259,7 +1259,7 @@ export default function InstructorAsistencia() {
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6 ">
               {(() => {
                 const pendingStudents = activeSession.materia?.ficha?.aprendices
                   ?.filter(a => !activeSession.registros?.some(r => r.aprendizId === a.id))
@@ -1347,10 +1347,10 @@ export default function InstructorAsistencia() {
       {selectedSessionDetail && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white dark:bg-zinc-800  dark:bg-gray-900 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-6 z-10">
+            <div className="sticky top-0 bg-white dark:bg-zinc-800  dark:bg-gray-900 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-4 md:p-6  z-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
+                  <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-xl md:text-2xl ">Análisis Detallado de Sesión</h2>
                   <p className="text-sm text-gray-400">
                     {selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}
                     {selectedSessionDetail.aula && ` • Aula: ${selectedSessionDetail.aula}`}
@@ -1365,10 +1365,10 @@ export default function InstructorAsistencia() {
               </div>
             </div>
 
-            <div className="p-6">{/* Contenido del modal */}
+            <div className="p-4 md:p-6 ">{/* Contenido del modal */}
 
             {/* Estadísticas principales */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2  md:grid-cols-5 gap-4 mb-6">
               {[
                 { 
                   label: 'Total Estudiantes', 
@@ -1413,14 +1413,14 @@ export default function InstructorAsistencia() {
                       <stat.icon size={20} />
                     </div>
                   </div>
-                  <p className="text-3xl font-bold mb-1">{stat.value}</p>
+                  <p className="text-2xl md:text-3xl  font-bold mb-1">{stat.value}</p>
                   <p className="text-xs opacity-90">{stat.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Gráficas */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2  gap-6 mb-6">
               {/* Gráfica de Torta */}
               <div className="card dark:bg-gray-800">
                 <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-4">Distribución de Asistencia</h3>
@@ -1514,7 +1514,7 @@ export default function InstructorAsistencia() {
             </div>
 
             {/* Listas de estudiantes */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2  gap-6">
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-3 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
@@ -1580,7 +1580,7 @@ export default function InstructorAsistencia() {
             <div className="mt-6 flex justify-end">
               <button 
                 onClick={() => exportSession(selectedSessionDetail.id, selectedSessionDetail.fecha)}
-                className="btn-primary flex items-center gap-2">
+                className="btn-primary text-sm md:text-base  flex items-center gap-2">
                 <Download size={16} />
                 Exportar Sesión Completa
               </button>
@@ -1600,7 +1600,7 @@ export default function InstructorAsistencia() {
             <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-[#4285F4]/8 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Cabecera */}
-            <div className="relative flex items-center justify-between p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
+            <div className="relative flex items-center justify-between p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#34A853] to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white">
                   <Play size={22} />
@@ -1619,7 +1619,7 @@ export default function InstructorAsistencia() {
             </div>
 
             {/* Formulario */}
-            <div className="relative p-6 space-y-5">
+            <div className="relative p-4 md:p-6  space-y-5">
               {/* Sliders de Tiempo de Tolerancia y Duración */}
               <div className="space-y-4">
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-gray-200 dark:border-zinc-700  dark:hover:border-gray-600 transition-colors">
@@ -1709,7 +1709,7 @@ export default function InstructorAsistencia() {
               </div>
 
               {/* Botones de acción */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-wrap gap-3  pt-2">
                 <button 
                   onClick={() => setShowConfigModal(false)}
                   className="flex-1 px-4 py-3.5 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold transition-all transform active:scale-95"

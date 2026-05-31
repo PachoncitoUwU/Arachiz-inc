@@ -419,7 +419,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
         )}
 
         {/* Botones de acción */}
-        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-zinc-700 ">
+        <div className="flex flex-wrap gap-3  pt-4 border-t border-gray-100 dark:border-zinc-700 ">
           {!isEditing ? (
             <>
               <button

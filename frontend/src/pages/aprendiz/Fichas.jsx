@@ -49,7 +49,7 @@ function FichaCard({ ficha, color, onViewDetails, isPinned }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2">
         {[
           { label: 'Aprendices', value: ficha.aprendices?.length || 0 },
           { label: 'Materias', value: ficha.materias?.length || 0 },
@@ -131,7 +131,7 @@ export default function AprendizFichas() {
         action={
           <button 
             onClick={() => { setModalJoin(true); setError(''); setJoinCode(''); }} 
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary text-sm md:text-base  flex items-center gap-2"
           >
             <Plus size={16} /> Unirse a Ficha
           </button>
@@ -144,7 +144,7 @@ export default function AprendizFichas() {
             <div key={i} className="card animate-pulse">
               <div className="h-5 bg-gray-100 rounded w-1/2 mb-3"/>
               <div className="h-10 bg-gray-100 rounded-xl mb-3"/>
-              <div className="grid grid-cols-3 gap-2">{[1,2,3].map(j => <div key={j} className="h-12 bg-gray-100 rounded-lg"/>)}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2">{[1,2,3].map(j => <div key={j} className="h-12 bg-gray-100 rounded-lg"/>)}</div>
             </div>
           ))}
         </div>
@@ -157,7 +157,7 @@ export default function AprendizFichas() {
             action={
               <button 
                 onClick={() => { setModalJoin(true); setError(''); setJoinCode(''); }} 
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary text-sm md:text-base  flex items-center gap-2"
               >
                 <Plus size={16} /> Unirse a Ficha
               </button>
@@ -203,11 +203,11 @@ export default function AprendizFichas() {
             maxLength={6}
             disabled={saving}
           />
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 ">
             <button 
               type="button" 
               onClick={() => setModalJoin(false)} 
-              className="btn-secondary flex-1"
+              className="btn-secondary text-sm md:text-base  flex-1"
               disabled={saving}
             >
               Cancelar
@@ -215,7 +215,7 @@ export default function AprendizFichas() {
             <button 
               type="submit" 
               disabled={saving} 
-              className="btn-primary flex-1"
+              className="btn-primary text-sm md:text-base  flex-1"
             >
               {saving ? 'Uniéndose...' : 'Unirse'}
             </button>

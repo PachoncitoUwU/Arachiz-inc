@@ -31,7 +31,7 @@ export default function GoogleCallback() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-800  rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+      <div className="bg-white dark:bg-zinc-800  rounded-3xl shadow-2xl p-4 md:p-8  max-w-md w-full text-center">
         <Loader size={48} className="animate-spin text-[#4285F4] mx-auto mb-4" />
         <h2 className="text-xl font-bold text-gray-900 dark:text-white  mb-2">Iniciando sesión...</h2>
         <p className="text-gray-600">Espera un momento</p>

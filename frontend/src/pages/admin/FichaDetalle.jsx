@@ -440,7 +440,7 @@ export default function FichaDetalle() {
         </div>
         
         {/* Estadísticas horizontales skeleton */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
           {[1, 2, 3].map(i => (
             <div key={i} className="card animate-pulse">
               <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
@@ -489,7 +489,7 @@ export default function FichaDetalle() {
         {/* Horario skeleton */}
         <div className="card animate-pulse">
           <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl" />
             ))}
@@ -588,7 +588,7 @@ export default function FichaDetalle() {
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
+              <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
               <button
                 onClick={togglePin}
                 className={`p-1.5 rounded-lg transition-all ${
@@ -611,7 +611,7 @@ export default function FichaDetalle() {
           {isAdmin && (
             <button 
               onClick={() => setConfirmModal({ isOpen: true, action: 'eliminarFicha', data: null })}
-              className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+              className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
               title="Eliminar ficha permanentemente"
             >
               <UserMinus size={16} />
@@ -620,7 +620,7 @@ export default function FichaDetalle() {
           )}
           <button 
             onClick={() => setConfirmModal({ isOpen: true, action: 'salirFicha', data: null })}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary text-sm md:text-base  flex items-center gap-2"
             title="Salir de esta ficha"
           >
             <ArrowLeft size={16} />
@@ -629,7 +629,7 @@ export default function FichaDetalle() {
           <button 
             onClick={handleExport} 
             disabled={exporting} 
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary text-sm md:text-base  flex items-center gap-2"
             title="Exportar información completa de la ficha"
           >
             {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
@@ -639,14 +639,14 @@ export default function FichaDetalle() {
       </div>
 
       {/* Estadísticas horizontales */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Instructores
               </p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <p className="text-xl md:text-2xl  font-bold text-purple-600 dark:text-purple-400">
                 {ficha.instructores?.length || 0}
               </p>
             </div>
@@ -662,7 +662,7 @@ export default function FichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Aprendices
               </p>
-              <p className="text-2xl font-bold text-[#4285F4]">
+              <p className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                 {ficha.aprendices?.length || 0}
               </p>
             </div>
@@ -678,7 +678,7 @@ export default function FichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Materias
               </p>
-              <p className="text-2xl font-bold text-[#34A853]">
+              <p className="text-xl md:text-2xl  font-bold text-[#34A853]">
                 {ficha.materias?.length || 0}
               </p>
             </div>
@@ -701,7 +701,7 @@ export default function FichaDetalle() {
             )}
           </div>
           
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Número</p>
               <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.numero}</p>
@@ -792,7 +792,7 @@ export default function FichaDetalle() {
           <div className="space-y-2">
             <button 
               onClick={copyCode} 
-              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+              className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2"
             >
               {copied ? <Check size={14} className="text-[#34A853]" /> : <Copy size={14} />}
               {copied ? 'Copiado' : 'Copiar código'}
@@ -800,7 +800,7 @@ export default function FichaDetalle() {
             
             <button 
               onClick={copyLink} 
-              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+              className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2"
             >
               {copiedLink ? <Check size={14} className="text-[#34A853]" /> : <Link size={14} />}
               {copiedLink ? 'Link copiado' : 'Copiar link'}
@@ -809,7 +809,7 @@ export default function FichaDetalle() {
             {isAdmin && (
               <button 
                 onClick={handleRegenerate} 
-                className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2 text-orange-600 hover:bg-orange-50"
+                className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2 text-orange-600 hover:bg-orange-50"
               >
                 <RefreshCw size={14} />
                 Regenerar
@@ -824,7 +824,7 @@ export default function FichaDetalle() {
       <div className="card mb-6">
         {/* Tabs */}
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 mb-4">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1 ">
             <button
               onClick={() => {
                 setActiveTab('aprendices');
@@ -878,7 +878,7 @@ export default function FichaDetalle() {
                 setErrorMateria('');
                 setFormMateria({ nombre: '', tipo: 'Técnica' });
               }}
-              className="btn-primary flex items-center gap-2 text-sm"
+              className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
             >
               <Plus size={16} />
               Agregar
@@ -996,7 +996,7 @@ export default function FichaDetalle() {
                       setErrorMateria('');
                       setFormMateria({ nombre: '', tipo: 'Técnica' });
                     }}
-                    className="btn-primary mt-4 text-sm"
+                    className="btn-primary text-sm md:text-base  mt-4 text-sm"
                   >
                     <Plus size={16} className="inline mr-2" />
                     Crear primera materia
@@ -1221,11 +1221,11 @@ export default function FichaDetalle() {
             </select>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalMateria(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalMateria(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={savingMateria} className="btn-primary flex-1">
+            <button type="submit" disabled={savingMateria} className="btn-primary text-sm md:text-base  flex-1">
               {savingMateria ? 'Creando...' : 'Crear Materia'}
             </button>
           </div>
@@ -1261,7 +1261,7 @@ export default function FichaDetalle() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Nivel</label>
               <select 
@@ -1298,7 +1298,7 @@ export default function FichaDetalle() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Región</label>
               <input 
@@ -1325,11 +1325,11 @@ export default function FichaDetalle() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={savingEdit} className="btn-primary flex-1">
+            <button type="submit" disabled={savingEdit} className="btn-primary text-sm md:text-base  flex-1">
               {savingEdit ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
@@ -1433,7 +1433,7 @@ export default function FichaDetalle() {
                       handleCloseInstructorPerfil();
                       setTimeout(() => handleRemoveLider(selectedInstructor.id, selectedInstructor.fullName), 100);
                     }}
-                    className="btn-secondary w-full flex items-center justify-center gap-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 border-orange-200"
+                    className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 border-orange-200"
                   >
                     <Star size={16} className="fill-current" />
                     Quitar como Líder
@@ -1443,7 +1443,7 @@ export default function FichaDetalle() {
                       handleCloseInstructorPerfil();
                       setTimeout(() => handleRemoveInstructor(selectedInstructor.id, selectedInstructor.fullName), 100);
                     }}
-                    className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+                    className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
                   >
                     <UserMinus size={16} />
                     Enviar a Papelera
@@ -1453,7 +1453,7 @@ export default function FichaDetalle() {
                 <>
                   <button
                     onClick={() => handleDesignarLider(selectedInstructor.id)}
-                    className="btn-primary w-full"
+                    className="btn-primary text-sm md:text-base  w-full"
                   >
                     Designar como Líder
                   </button>
@@ -1462,7 +1462,7 @@ export default function FichaDetalle() {
                       handleCloseInstructorPerfil();
                       setTimeout(() => handleRemoveInstructor(selectedInstructor.id, selectedInstructor.fullName), 100);
                     }}
-                    className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+                    className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
                   >
                     <UserMinus size={16} />
                     Enviar a Papelera

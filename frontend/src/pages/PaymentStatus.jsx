@@ -124,7 +124,7 @@ export default function PaymentStatus() {
             ) : (
               <div className="flex justify-center mb-4">{config.icon}</div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mt-2">{config.title}</h1>
+            <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mt-2">{config.title}</h1>
             <p className={`text-sm font-medium mt-1 ${config.color}`}>{config.subtitle}</p>
           </div>
 

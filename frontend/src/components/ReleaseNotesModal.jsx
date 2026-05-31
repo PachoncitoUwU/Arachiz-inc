@@ -17,9 +17,9 @@ export default function ReleaseNotesModal({ open, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-800 shrink-0">
+        <div className="flex items-center justify-between p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-800 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white">Notas de Actualización</h2>
+            <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Notas de Actualización</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Historial de cambios y mejoras</p>
           </div>
           <button
@@ -31,7 +31,7 @@ export default function ReleaseNotesModal({ open, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 p-6 space-y-4">
+        <div className="overflow-y-auto flex-1 p-4 md:p-6  space-y-4">
           {RELEASE_NOTES.map((release) => (
             <div
               key={release.version}

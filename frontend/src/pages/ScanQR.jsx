@@ -35,7 +35,7 @@ export default function ScanQR() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-xl p-4 md:p-8  max-w-md w-full text-center border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
         {error ? (
           <>
             <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -45,7 +45,7 @@ export default function ScanQR() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
             <button 
               onClick={() => navigate('/')}
-              className="btn-primary w-full"
+              className="btn-primary text-sm md:text-base  w-full"
             >
               Volver al inicio
             </button>

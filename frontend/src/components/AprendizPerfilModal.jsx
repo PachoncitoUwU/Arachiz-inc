@@ -150,7 +150,7 @@ export default function AprendizPerfilModal({
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
               {/* NFC */}
               <div className={`p-4 rounded-xl border-2 ${hasNfc ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'}`}>
                 <div className="flex flex-col items-center gap-2">

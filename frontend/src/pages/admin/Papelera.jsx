@@ -232,7 +232,7 @@ export default function AdminPapelera() {
       {/* Modal de confirmación de eliminación permanente */}
       {showDeleteModal && selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-xl max-w-md w-full p-4 md:p-6 ">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <AlertTriangle className="text-red-600" size={24} />
@@ -252,7 +252,7 @@ export default function AdminPapelera() {
               </p>
             </div>
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex flex-wrap gap-2  justify-end">
               <button
                 onClick={() => {
                   setShowDeleteModal(false);

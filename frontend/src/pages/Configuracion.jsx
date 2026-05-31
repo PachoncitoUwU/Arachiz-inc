@@ -1599,7 +1599,7 @@ export default function Configuracion() {
       {/* Apariencia */}
       <Section icon={Palette} title={t('appearance')} onTitleClick={handleArkClick}>
         <p className="text-sm font-medium text-gray-700 mb-3">{t('theme')}</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
           {[{id:'light',label:t('light'),icon:Sun},{id:'dark',label:t('dark'),icon:Moon}].map(({id,label,icon:Icon}) => {
             const active = id==='dark' ? settings.darkMode : !settings.darkMode;
             return (
@@ -1623,7 +1623,7 @@ export default function Configuracion() {
 
       {/* Idioma */}
       <Section icon={Globe} title={t('language')} onTitleClick={handleIdiomaClick}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
           {LANGUAGES.map(({code,label,flag}) => (
             <button key={code} type="button"
               onClick={() => { 
@@ -1632,7 +1632,7 @@ export default function Configuracion() {
                 if (code === 'es') handleEspanolClick(); // Solo trigger en Español
               }}
               className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${settings.language===code?'border-[#4285F4] bg-blue-50':'border-gray-200 hover:border-gray-300'}`}>
-              <span className="text-2xl">{flag}</span>
+              <span className="text-xl md:text-2xl ">{flag}</span>
               <div className="text-left">
                 <p className={`text-sm font-semibold ${settings.language===code?'text-[#4285F4]':'text-gray-700'}`}>{label}</p>
                 <p className="text-xs text-gray-400">{code.toUpperCase()}</p>

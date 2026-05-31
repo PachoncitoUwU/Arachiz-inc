@@ -171,12 +171,12 @@ export default function Register() {
           <div className="flex justify-center mb-6">
             <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">{t('register', 'create')}</h1>
+          <h1 className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">{t('register', 'create')}</h1>
         </div>
 
-        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-6 sm:p-8 space-y-4 border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-4 md:p-6  sm:p-4 md:p-8  space-y-4 border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           {/* Tipo de usuario */}
-          <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-zinc-700 rounded-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2 p-1 bg-gray-100 dark:bg-zinc-700 rounded-xl">
             {['aprendiz', 'instructor', 'administrador'].map(type => (
               <button key={type} type="button" onClick={() => setUserType(type)}
                 className={`py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all capitalize ${
@@ -271,7 +271,7 @@ export default function Register() {
         </div>
       {showTc && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',display:'flex',justifyContent:'center',alignItems:'center',zIndex:50,padding:16}}>
-          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl p-6 max-w-md w-full max-h-[80vh] flex flex-col border border-gray-200 dark:border-zinc-700  dark:border-zinc-700">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl p-4 md:p-6  max-w-md w-full max-h-[80vh] flex flex-col border border-gray-200 dark:border-zinc-700  dark:border-zinc-700">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white  dark:text-white">Términos y Condiciones</h2>
             <div className="overflow-y-auto pr-2 text-sm text-gray-600 dark:text-gray-400 space-y-3">
               {/* === INSTRUCTOR: EDITA ESTOS TÉRMINOS AQUÍ === */}

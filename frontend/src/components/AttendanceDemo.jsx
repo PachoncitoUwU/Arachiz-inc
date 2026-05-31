@@ -105,7 +105,7 @@ export default function AttendanceDemo() {
     
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-4 md:p-6 ">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className={`w-12 h-12 rounded-xl ${scenario.color} flex items-center justify-center`}>
@@ -136,7 +136,7 @@ export default function AttendanceDemo() {
           </div>
 
           {/* Current Step */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 md:p-6  mb-6">
             <div className="flex items-start gap-3">
               <div className={`w-8 h-8 rounded-full ${scenario.color} flex items-center justify-center flex-shrink-0 mt-1`}>
                 <span className="text-white font-bold text-sm">{demoStep + 1}</span>
@@ -219,12 +219,12 @@ export default function AttendanceDemo() {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-4 md:p-6 ">
       <div className="text-center mb-6">
         <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Zap size={32} className="text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mb-2">
+        <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-2">
           Sistema de Asistencia Inteligente
         </h2>
         <p className="text-gray-600 dark:text-gray-400">

@@ -254,7 +254,7 @@ export default function Login() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             {/* Header */}
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -309,7 +309,7 @@ export default function Login() {
             </div>
 
             {/* Atajos de monto */}
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4  gap-2 mb-6">
               {[2000, 5000, 10000, 20000].map((amount) => (
                 <button
                   key={amount}
@@ -326,7 +326,7 @@ export default function Login() {
             </div>
 
             {/* Botones */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowDonationModal(false); setAmountError(''); }}
                 className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
@@ -351,10 +351,10 @@ export default function Login() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🎉</span>
+                <span className="text-2xl md:text-3xl ">🎉</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">¿Confirmas la donación?</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
@@ -364,7 +364,7 @@ export default function Login() {
             <div className="bg-gray-50 dark:bg-zinc-700 rounded-xl p-5 mb-6 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Monto</span>
-                <span className="text-2xl font-bold text-[#4285F4]">
+                <span className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
@@ -381,7 +381,7 @@ export default function Login() {
             </p>
 
             {/* Botones */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowConfirmModal(false); setShowDonationModal(true); }}
                 className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
@@ -447,14 +447,14 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white  dark:text-white flex items-center justify-center gap-2">
+            <h1 className="text-3xl md:text-4xl  font-bold text-gray-900 dark:text-white  dark:text-white flex items-center justify-center gap-2">
                <span className="text-black dark:text-white">Arachiz</span>
             </h1>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mt-4">Bienvenido de vuelta</h2>
+          <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mt-4">Bienvenido de vuelta</h2>
         </div>
 
-        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-6 sm:p-8 space-y-5 animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-4 md:p-6  sm:p-4 md:p-8  space-y-5 animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm animate-shake">
               {error}
@@ -557,7 +557,7 @@ export default function Login() {
           {/* Donaciones en Móvil */}
           <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100 dark:border-zinc-700 ">
             <span className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Apoyar el proyecto</span>
-            <div className="flex gap-4 w-full justify-center">
+            <div className="flex flex-wrap gap-4  w-full justify-center">
               <button
                 type="button"
                 onClick={() => handleDonate('wompi')}

@@ -43,7 +43,7 @@ export default function InstructorDashboard() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-white dark:bg-zinc-800 /10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative z-10">
           <p className="text-blue-100 text-sm font-medium animate-fade-in">{t('dashboard', 'welcome')}</p>
-          <h1 className="text-3xl font-bold mt-1 animate-slide-in-left" style={{ animationDelay: '100ms' }}>{user?.fullName || user?.email}</h1>
+          <h1 className="text-2xl md:text-3xl  font-bold mt-1 animate-slide-in-left" style={{ animationDelay: '100ms' }}>{user?.fullName || user?.email}</h1>
           <p className="text-blue-100 text-sm mt-2 animate-fade-in" style={{ animationDelay: '200ms' }}>{t('dashboard', 'instructor')} · {new Date().toLocaleDateString(settings.language === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function InstructorDashboard() {
       <ConflictosAlert userType={user?.userType} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
         <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <StatCard icon={<Users size={22}/>}    label={t('dashboard', 'activeGroups')}   value={fichas.length}        color="blue" />
         </div>
@@ -101,7 +101,7 @@ export default function InstructorDashboard() {
         {/* Acciones rápidas */}
         <div className="card-hover animate-slide-in-right" style={{ animationDelay: '500ms' }}>
           <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4 text-lg">{t('dashboard', 'quickActions')}</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             {[
               { to: '/instructor/fichas',     icon: Plus,     label: t('dashboard', 'actionNewGroup'),      color: 'bg-blue-50 text-[#4285F4] dark:bg-blue-900/20', hoverColor: 'hover:bg-blue-100 dark:hover:bg-blue-900/30' },
               { to: '/instructor/asistencia', icon: Clock,    label: t('dashboard', 'actionStartSession'),   color: 'bg-green-50 text-[#34A853] dark:bg-green-900/20', hoverColor: 'hover:bg-green-100 dark:hover:bg-green-900/30' },

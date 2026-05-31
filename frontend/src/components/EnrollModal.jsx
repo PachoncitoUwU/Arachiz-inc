@@ -283,7 +283,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
             </div>
 
             {/* Botones de registro */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
               <button onClick={startNfc}
                 className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-[#4285F4] hover:bg-blue-50/50 transition-all group">
                 <div className="w-10 h-10 rounded-full bg-blue-100 text-[#4285F4] flex items-center justify-center group-hover:scale-110 transition-transform">

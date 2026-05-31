@@ -216,7 +216,7 @@ export default function AdminExcusas() {
 
       {/* Toggle entre Lista y Estadísticas */}
       <div className="card mb-5">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => setVistaActual('lista')}
             className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
@@ -377,14 +377,14 @@ export default function AdminExcusas() {
           </div>
 
           {/* Resumen rápido */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2  md:grid-cols-4 gap-4 mb-5">
             <div className="card bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/40 rounded-xl flex items-center justify-center">
                   <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
+                  <p className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Pendiente').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Pendientes</p>
@@ -398,7 +398,7 @@ export default function AdminExcusas() {
                   <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
+                  <p className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Aprobada').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Aprobadas</p>
@@ -412,7 +412,7 @@ export default function AdminExcusas() {
                   <XCircle size={24} className="text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
+                  <p className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Rechazada').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Rechazadas</p>
@@ -426,7 +426,7 @@ export default function AdminExcusas() {
                   <FileText size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
+                  <p className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
@@ -659,7 +659,7 @@ export default function AdminExcusas() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
                 <div className="card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <p className="text-2xl md:text-3xl  font-bold text-blue-600 dark:text-blue-400">
                       {estadisticas.total}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Excusas</p>
@@ -668,7 +668,7 @@ export default function AdminExcusas() {
 
                 <div className="card bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                    <p className="text-2xl md:text-3xl  font-bold text-yellow-600 dark:text-yellow-400">
                       {estadisticas.pendientes}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Pendientes</p>
@@ -677,7 +677,7 @@ export default function AdminExcusas() {
 
                 <div className="card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    <p className="text-2xl md:text-3xl  font-bold text-green-600 dark:text-green-400">
                       {estadisticas.aprobadas}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aprobadas</p>
@@ -686,7 +686,7 @@ export default function AdminExcusas() {
 
                 <div className="card bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                    <p className="text-2xl md:text-3xl  font-bold text-red-600 dark:text-red-400">
                       {estadisticas.rechazadas}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Rechazadas</p>
@@ -695,7 +695,7 @@ export default function AdminExcusas() {
 
                 <div className="card bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-2xl md:text-3xl  font-bold text-purple-600 dark:text-purple-400">
                       {estadisticas.porcentajeAprobacion}%
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aprobación</p>
@@ -728,7 +728,7 @@ export default function AdminExcusas() {
                             <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                               {aprendiz.nombre}
                             </p>
-                            <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <div className="flex flex-wrap gap-2  text-xs text-gray-500 dark:text-gray-400 mt-1">
                               <span className="text-green-600 dark:text-green-400">✓ {aprendiz.aprobadas}</span>
                               <span className="text-red-600 dark:text-red-400">✗ {aprendiz.rechazadas}</span>
                               <span className="text-yellow-600 dark:text-yellow-400">⏱ {aprendiz.pendientes}</span>
@@ -768,7 +768,7 @@ export default function AdminExcusas() {
                             <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                               {materia.nombre}
                             </p>
-                            <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <div className="flex flex-wrap gap-2  text-xs text-gray-500 dark:text-gray-400 mt-1">
                               <span className="text-green-600 dark:text-green-400">✓ {materia.aprobadas}</span>
                               <span className="text-red-600 dark:text-red-400">✗ {materia.rechazadas}</span>
                               <span className="text-yellow-600 dark:text-yellow-400">⏱ {materia.pendientes}</span>
@@ -808,7 +808,7 @@ export default function AdminExcusas() {
                         <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                           {instructor.nombre}
                         </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100 mt-2">
+                        <p className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100 mt-2">
                           {instructor.total}
                         </p>
                         <div className="flex justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -838,7 +838,7 @@ export default function AdminExcusas() {
                           {mes.total} excusas
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 ">
                         <div className="flex-1 h-2 bg-green-200 dark:bg-green-900/30 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-green-500 dark:bg-green-600"
@@ -858,7 +858,7 @@ export default function AdminExcusas() {
                           />
                         </div>
                       </div>
-                      <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      <div className="flex flex-wrap gap-4  text-xs text-gray-500 dark:text-gray-400 mt-2">
                         <span className="text-green-600 dark:text-green-400">Aprobadas: {mes.aprobadas}</span>
                         <span className="text-red-600 dark:text-red-400">Rechazadas: {mes.rechazadas}</span>
                         <span className="text-yellow-600 dark:text-yellow-400">Pendientes: {mes.pendientes}</span>
@@ -903,7 +903,7 @@ export default function AdminExcusas() {
             </div>
 
             {/* Ficha y Materia */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
               <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                   Ficha
@@ -1007,7 +1007,7 @@ export default function AdminExcusas() {
             </div>
 
             {/* Fechas */}
-            <div className="grid grid-cols-2 gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="grid grid-cols-1 sm:grid-cols-2  gap-3 text-xs text-gray-500 dark:text-gray-400">
               <div>
                 <p className="font-semibold">Enviada:</p>
                 <p>{formatearFechaHora(modalDetalle.createdAt)}</p>
@@ -1023,7 +1023,7 @@ export default function AdminExcusas() {
             <div className="pt-2">
               <button
                 onClick={() => setModalDetalle(null)}
-                className="btn-secondary w-full"
+                className="btn-secondary text-sm md:text-base  w-full"
               >
                 Cerrar
               </button>

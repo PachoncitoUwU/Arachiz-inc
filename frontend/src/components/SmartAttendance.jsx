@@ -281,7 +281,7 @@ export default function SmartAttendance({
       
       case 'hardware':
         return (
-          <div className="mt-6 p-6 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+          <div className="mt-6 p-4 md:p-6  bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
             <div className="text-center">
               <Fingerprint size={48} className="text-purple-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white  dark:text-white mb-2">
@@ -345,7 +345,7 @@ export default function SmartAttendance({
   if (capabilities.loading) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm w-full mx-4">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-sm w-full mx-4">
           <div className="text-center">
             <Loader2 size={40} className="text-blue-500 animate-spin mx-auto mb-4 sm:w-12 sm:h-12" />
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white  dark:text-white mb-2">
@@ -368,7 +368,7 @@ export default function SmartAttendance({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
+            <div className="flex items-center justify-between p-4 sm:p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white  dark:text-white truncate">
                   Registro de Asistencia
@@ -403,7 +403,7 @@ export default function SmartAttendance({
 
             {/* Hardware Status */}
             {showSettings && (
-              <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+              <div className="p-4 sm:p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                 <HardwareStatus 
                   compact={true} 
                   onStatusChange={(newStatus) => {
@@ -421,7 +421,7 @@ export default function SmartAttendance({
             )}
 
             {/* Methods Grid */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-4 md:p-6 ">
               <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 {availableMethods.map(renderMethodCard)}
               </div>

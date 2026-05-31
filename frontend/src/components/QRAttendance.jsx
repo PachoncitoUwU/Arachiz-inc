@@ -76,7 +76,7 @@ export default function QRAttendance({ asistenciaId, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 md:p-6  animate-scale-in">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#4285F4] flex items-center justify-center">
@@ -100,7 +100,7 @@ export default function QRAttendance({ asistenciaId, onClose }) {
         ) : (
           <>
             {/* QR Code Display */}
-            <div className="relative bg-white dark:bg-zinc-800  p-6 rounded-2xl border-4 border-[#4285F4] mb-4">
+            <div className="relative bg-white dark:bg-zinc-800  p-4 md:p-6  rounded-2xl border-4 border-[#4285F4] mb-4">
               <div className="flex items-center justify-center">
                 {qrCode && (
                   <img 
