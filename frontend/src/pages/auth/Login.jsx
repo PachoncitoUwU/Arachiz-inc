@@ -143,8 +143,56 @@ export default function Login() {
 
   const setField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
+  const [particles, setParticles] = useState([]);
+  const [bubbles, setBubbles] = useState([
+    { id: 1, left: '10%', size: 20, color: '#4285F4', duration: 20, delay: 0 },
+    { id: 2, left: '20%', size: 12, color: '#EA4335', duration: 18, delay: 2 },
+    { id: 3, left: '30%', size: 32, color: '#FBBC05', duration: 25, delay: 4 },
+    { id: 4, left: '40%', size: 16, color: '#34A853', duration: 22, delay: 0 },
+    { id: 5, left: '50%', size: 28, color: '#4285F4', duration: 20, delay: 3 },
+    { id: 6, left: '60%', size: 14, color: '#EA4335', duration: 23, delay: 1 },
+    { id: 7, left: '70%', size: 24, color: '#FBBC05', duration: 19, delay: 5 },
+    { id: 8, left: '80%', size: 10, color: '#34A853', duration: 21, delay: 2 },
+    { id: 9, left: '85%', size: 36, color: '#4285F4', duration: 24, delay: 0 },
+    { id: 10, left: '15%', size: 12, color: '#EA4335', duration: 22, delay: 4 },
+  ]);
+
+  const handleBubbleClick = (bubble, event) => {
+    event.stopPropagation();
+    
+    // Obtener posición del click
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    
+    // Crear partículas
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: `particle-${Date.now()}-${i}`,
+      x,
+      y,
+      color: bubble.color,
+      angle: (i * 360) / 12,
+      size: Math.random() * 6 + 3,
+    }));
+    
+    setParticles(prev => [...prev, ...newParticles]);
+    
+    // Eliminar burbuja
+    setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+    
+    // Limpiar partículas después de la animación
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 800);
+    
+    // Recrear burbuja después de 2 segundos
+    setTimeout(() => {
+      setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+    }, 2000);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
         @keyframes float-up {
           0% {
@@ -161,6 +209,28 @@ export default function Login() {
           bottom: -150px;
           border-radius: 50%;
           animation: float-up linear infinite;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+        .circle-float:hover {
+          transform: scale(1.2);
+        }
+        @keyframes particle-burst {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 0;
+          }
+        }
+        .particle {
+          position: fixed;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: particle-burst 0.8s ease-out forwards;
+          z-index: 9999;
         }
       `}</style>
 
@@ -330,18 +400,48 @@ export default function Login() {
       )}
 
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="circle-float w-20 h-20 bg-[#4285F4] opacity-10" style={{left: '10%', animationDuration: '20s', animationDelay: '0s'}}/>
-        <div className="circle-float w-12 h-12 bg-[#EA4335] opacity-10" style={{left: '20%', animationDuration: '18s', animationDelay: '2s'}}/>
-        <div className="circle-float w-32 h-32 bg-[#FBBC05] opacity-10" style={{left: '30%', animationDuration: '25s', animationDelay: '4s'}}/>
-        <div className="circle-float w-16 h-16 bg-[#34A853] opacity-10" style={{left: '40%', animationDuration: '22s', animationDelay: '0s'}}/>
-        <div className="circle-float w-28 h-28 bg-[#4285F4] opacity-10" style={{left: '50%', animationDuration: '20s', animationDelay: '3s'}}/>
-        <div className="circle-float w-14 h-14 bg-[#EA4335] opacity-10" style={{left: '60%', animationDuration: '23s', animationDelay: '1s'}}/>
-        <div className="circle-float w-24 h-24 bg-[#FBBC05] opacity-10" style={{left: '70%', animationDuration: '19s', animationDelay: '5s'}}/>
-        <div className="circle-float w-10 h-10 bg-[#34A853] opacity-10" style={{left: '80%', animationDuration: '21s', animationDelay: '2s'}}/>
-        <div className="circle-float w-36 h-36 bg-[#4285F4] opacity-10" style={{left: '85%', animationDuration: '24s', animationDelay: '0s'}}/>
-        <div className="circle-float w-12 h-12 bg-[#EA4335] opacity-10" style={{left: '15%', animationDuration: '22s', animationDelay: '4s'}}/>
+      {/* Burbujas flotantes interactivas */}
+      <div className="absolute inset-0 overflow-hidden">
+        {bubbles.map(bubble => (
+          <div
+            key={bubble.id}
+            className="circle-float opacity-10 hover:opacity-20"
+            style={{
+              left: bubble.left,
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              backgroundColor: bubble.color,
+              animationDuration: `${bubble.duration}s`,
+              animationDelay: `${bubble.delay}s`,
+              pointerEvents: 'auto',
+            }}
+            onClick={(e) => handleBubbleClick(bubble, e)}
+          />
+        ))}
       </div>
+
+      {/* Partículas de explosión */}
+      {particles.map(particle => {
+        const distance = 80 + Math.random() * 40;
+        const tx = Math.cos((particle.angle * Math.PI) / 180) * distance;
+        const ty = Math.sin((particle.angle * Math.PI) / 180) * distance;
+        
+        return (
+          <div
+            key={particle.id}
+            className="particle"
+            style={{
+              left: `${particle.x}px`,
+              top: `${particle.y}px`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: particle.color,
+              '--tx': `${tx}px`,
+              '--ty': `${ty}px`,
+            }}
+          />
+        );
+      })}
 
       <div className="w-full max-w-sm relative">
         {/* Logo */}
