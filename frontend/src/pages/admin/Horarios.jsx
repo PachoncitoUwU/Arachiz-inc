@@ -848,23 +848,23 @@ export default function AdminHorarios() {
               />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
               {horariosPorDia.map(({ dia, clases }) => (
-                <div key={dia} className="card dark:bg-gray-900 dark:border-gray-800 min-h-[160px]">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
+                <div key={dia} className="card dark:bg-zinc-900 dark:border-zinc-800 min-h-[160px]">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-zinc-700">
                     <div className="w-7 h-7 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                       <Calendar size={14} className="text-[#EA4335]" />
                     </div>
                     <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{dia}</span>
-                    <span className="ml-auto badge badge-gray">{clases.length}</span>
+                    <span className="ml-auto badge badge-gray text-xs">{clases.length}</span>
                   </div>
 
                   {clases.length === 0 ? (
-                    <div className="flex items-center justify-center h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                    <div className="flex items-center justify-center h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700">
                       <p className="text-xs text-gray-400">Sin clases</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
                       {clases.map((c) => {
                         const color = COLORES[getColorForMateria(c.materiaId || c.materia?.id || c.materia?.nombre)];
                         const isSelected = horariosSeleccionados.includes(c.id);
@@ -904,7 +904,7 @@ export default function AdminHorarios() {
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                                   isSelected 
                                     ? 'bg-red-500 border-red-500' 
-                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800'
                                 }`}>
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
