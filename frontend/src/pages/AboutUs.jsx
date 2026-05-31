@@ -170,7 +170,7 @@ export default function AboutUs() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-950 relative overflow-hidden font-sans transition-colors duration-500">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-zinc-950 relative overflow-hidden font-sans transition-colors duration-500">
       
       {/* Background Decor */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -190,7 +190,7 @@ export default function AboutUs() {
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-50">
         <Link 
           to="/" 
-          className="px-3 py-2 md:px-4 md:py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-sm hover:shadow-lg transition-all active:scale-95 border border-gray-200 dark:border-gray-700 flex items-center gap-2"
+          className="px-3 py-2 md:px-4 md:py-2.5 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-sm hover:shadow-lg transition-all active:scale-95 border border-gray-200 dark:border-zinc-700 flex items-center gap-2"
         >
           <ArrowLeft size={16} className="md:w-[18px] md:h-[18px]" />
           <span className="hidden sm:inline">Volver</span>
@@ -224,7 +224,7 @@ export default function AboutUs() {
           {/* ¿Qué es Arachiz? */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
@@ -247,7 +247,7 @@ export default function AboutUs() {
           {/* Enfoque del Software */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
@@ -300,7 +300,7 @@ export default function AboutUs() {
           {/* Colaboradores */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
@@ -318,7 +318,7 @@ export default function AboutUs() {
                   variants={itemVariants}
                   onHoverStart={() => setHoveredCard(index)}
                   onHoverEnd={() => setHoveredCard(null)}
-                  className={`${colaborador.bgColor} rounded-xl md:rounded-2xl p-5 md:p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl relative overflow-hidden cursor-pointer`}
+                  className={`${colaborador.bgColor} rounded-xl md:rounded-2xl p-5 md:p-6 border border-gray-200 dark:border-zinc-700 transition-all duration-300 hover:shadow-xl relative overflow-hidden cursor-pointer`}
                   style={{ minHeight: '180px' }}
                 >
                   {/* Contenido Principal */}
@@ -415,7 +415,7 @@ export default function AboutUs() {
 
               {/* Beneficios de donar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-orange-200 dark:border-orange-700">
+                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-orange-200 dark:border-orange-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Sparkles className="text-white" size={20} />
                   </div>
@@ -425,7 +425,7 @@ export default function AboutUs() {
                   </p>
                 </div>
                 
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-pink-200 dark:border-pink-700">
+                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-pink-200 dark:border-pink-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Heart className="text-white" size={20} />
                   </div>
@@ -435,7 +435,7 @@ export default function AboutUs() {
                   </p>
                 </div>
                 
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200 dark:border-purple-700">
+                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200 dark:border-purple-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Code className="text-white" size={20} />
                   </div>
@@ -470,7 +470,7 @@ export default function AboutUs() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Coffee size={28} className="text-amber-500" />
@@ -492,12 +492,12 @@ export default function AboutUs() {
                   value={donationAmount === '' ? '' : parseInt(donationAmount).toLocaleString('es-CO')}
                   onChange={handleAmountChange}
                   placeholder="5.000"
-                  className={`w-full border-2 rounded-xl pl-9 pr-16 py-4 text-xl font-bold focus:outline-none transition-all dark:bg-gray-700 dark:text-white ${
+                  className={`w-full border-2 rounded-xl pl-9 pr-16 py-4 text-xl font-bold focus:outline-none transition-all dark:bg-zinc-700 dark:text-white ${
                     amountError
                       ? 'border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 focus:border-red-500'
                       : isAmountValid
                       ? 'border-green-400 bg-green-50 dark:bg-green-900/20 text-gray-900 dark:text-white focus:border-green-500'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-[#4285F4]'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-gray-900 dark:text-white focus:border-[#4285F4]'
                   }`}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-medium">COP</span>
@@ -526,7 +526,7 @@ export default function AboutUs() {
                   className={`py-2 rounded-lg text-xs font-semibold transition-all border ${
                     parsedAmount === amount
                       ? 'bg-[#4285F4] text-white border-[#4285F4]'
-                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-[#4285F4] hover:text-[#4285F4]'
+                      : 'bg-gray-50 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-zinc-600 hover:border-[#4285F4] hover:text-[#4285F4]'
                   }`}
                 >
                   ${(amount / 1000).toFixed(0)}K
@@ -537,7 +537,7 @@ export default function AboutUs() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowDonationModal(false); setAmountError(''); }}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancelar
               </button>
@@ -546,7 +546,7 @@ export default function AboutUs() {
                 className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all ${
                   isAmountValid
                     ? 'bg-[#4285F4] text-white hover:bg-[#3367d6] active:scale-95'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
               >
                 Continuar →
@@ -559,7 +559,7 @@ export default function AboutUs() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🎉</span>
@@ -568,16 +568,16 @@ export default function AboutUs() {
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 mb-6 space-y-3">
+            <div className="bg-gray-50 dark:bg-zinc-700 rounded-xl p-5 mb-6 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Monto</span>
                 <span className="text-2xl font-bold text-[#4285F4]">
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
-              <div className="border-t border-gray-200 dark:border-gray-600 pt-3 flex justify-between items-center">
+              <div className="border-t border-gray-200 dark:border-zinc-600 pt-3 flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Método de pago</span>
-                <span className="font-semibold text-gray-900 dark:text-white bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 px-3 py-1 rounded-full text-sm">
+                <span className="font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-600 border border-gray-200 dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
                   Wompi
                 </span>
               </div>
@@ -590,7 +590,7 @@ export default function AboutUs() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowConfirmModal(false); setShowDonationModal(true); }}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 ← Atrás
               </button>

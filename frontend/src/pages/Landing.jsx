@@ -29,13 +29,13 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-950 relative overflow-hidden flex flex-col font-sans transition-colors duration-500">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-zinc-950 relative overflow-hidden flex flex-col font-sans transition-colors duration-500">
       
       {/* Botón Sobre Nosotros - Esquina Superior Derecha */}
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-50">
         <Link 
           to="/about" 
-          className="px-4 py-2 md:px-6 md:py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm hover:shadow-lg hover:scale-105 transition-all active:scale-95 border border-gray-300 dark:border-gray-600 flex items-center gap-2"
+          className="px-4 py-2 md:px-6 md:py-2.5 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm hover:shadow-lg hover:scale-105 transition-all active:scale-95 border border-gray-300 dark:border-zinc-600 flex items-center gap-2"
         >
           Sobre Nosotros
         </Link>
@@ -113,13 +113,13 @@ export default function Landing() {
            <motion.div 
              variants={floatVariants}
              animate="animate"
-             className="relative z-20 w-[200px] sm:w-[260px] md:w-[320px] h-[300px] sm:h-[400px] md:h-[500px] bg-white dark:bg-gray-800 rounded-[25px] sm:rounded-[35px] md:rounded-[45px] shadow-2xl border-4 sm:border-8 border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center transform rotate-6 hover:rotate-3 transition-transform duration-500"
+             className="relative z-20 w-[200px] sm:w-[260px] md:w-[320px] h-[300px] sm:h-[400px] md:h-[500px] bg-white dark:bg-zinc-800 rounded-[25px] sm:rounded-[35px] md:rounded-[45px] shadow-2xl border-4 sm:border-8 border-gray-100 dark:border-zinc-700 flex flex-col items-center justify-center transform rotate-6 hover:rotate-3 transition-transform duration-500"
            >
-              <div className="absolute inset-1 sm:inset-2 bg-[#F8FAFC] dark:bg-gray-900 rounded-[18px] sm:rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden border border-gray-200 dark:border-gray-800 transition-colors duration-500">
-                <div className="w-16 sm:w-24 md:w-32 h-20 sm:h-32 md:h-40 rounded-2xl sm:rounded-3xl flex items-center justify-center opacity-80 mb-4 sm:mb-6 bg-white dark:bg-gray-800 shadow-md transition-colors duration-500">
+              <div className="absolute inset-1 sm:inset-2 bg-[#F8FAFC] dark:bg-zinc-900 rounded-[18px] sm:rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden border border-gray-200 dark:border-zinc-800 transition-colors duration-500">
+                <div className="w-16 sm:w-24 md:w-32 h-20 sm:h-32 md:h-40 rounded-2xl sm:rounded-3xl flex items-center justify-center opacity-80 mb-4 sm:mb-6 bg-white dark:bg-zinc-800 shadow-md transition-colors duration-500">
                    <Fingerprint strokeWidth={1.5} className="text-[#4285F4] drop-shadow-sm w-12 h-12 sm:w-20 sm:h-20" />
                 </div>
-                <div className="mt-auto w-full h-8 sm:h-12 bg-gray-100 dark:bg-gray-800 rounded-lg sm:rounded-xl flex items-center px-3 sm:px-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-500">
+                <div className="mt-auto w-full h-8 sm:h-12 bg-gray-100 dark:bg-zinc-800 rounded-lg sm:rounded-xl flex items-center px-3 sm:px-4 shadow-sm border border-gray-200 dark:border-zinc-700 transition-colors duration-500">
                    <span className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-medium">Reconocimiento...</span>
                 </div>
               </div>
@@ -129,9 +129,9 @@ export default function Landing() {
            <motion.div 
              animate={{ y: [0, 20, 0] }}
              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-             className="hidden sm:block absolute top-[5%] md:top-[10%] left-[0%] md:left-[5%] z-30 w-32 md:w-40 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 transform -rotate-[12deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
+             className="hidden sm:block absolute top-[5%] md:top-[10%] left-[0%] md:left-[5%] z-30 w-32 md:w-40 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-3 transform -rotate-[12deg] border border-gray-100 dark:border-zinc-700 transition-colors duration-500"
            >
-              <div className="w-full h-24 md:h-32 bg-gray-50 dark:bg-gray-900 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative shadow-inner transition-colors duration-500">
+              <div className="w-full h-24 md:h-32 bg-gray-50 dark:bg-zinc-900 rounded-xl mb-3 overflow-hidden flex items-center justify-center relative shadow-inner transition-colors duration-500">
                  <ScanFace size={48} className="text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
                  <div className="absolute top-0 left-0 w-full h-1 bg-[#34A853]/50 blur-[2px] animate-pulse"></div>
               </div>
@@ -140,8 +140,8 @@ export default function Landing() {
                     <ShieldCheck size={20} />
                  </div>
                  <div className="flex-1 space-y-1.5">
-                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
-                    <div className="w-2/3 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full transition-colors duration-500"></div>
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-full transition-colors duration-500"></div>
+                    <div className="w-2/3 h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-full transition-colors duration-500"></div>
                  </div>
               </div>
            </motion.div>
@@ -150,9 +150,9 @@ export default function Landing() {
            <motion.div 
              animate={{ y: [0, -15, 0] }}
              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-             className="hidden sm:block absolute top-[10%] md:top-[5%] right-[0%] md:right-[5%] z-20 w-24 md:w-32 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-3 md:p-4 transform rotate-[15deg] border border-gray-100 dark:border-gray-700 transition-colors duration-500"
+             className="hidden sm:block absolute top-[10%] md:top-[5%] right-[0%] md:right-[5%] z-20 w-24 md:w-32 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-3 md:p-4 transform rotate-[15deg] border border-gray-100 dark:border-zinc-700 transition-colors duration-500"
            >
-             <div className="w-full aspect-square border-2 border-gray-800 dark:border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-500">
+             <div className="w-full aspect-square border-2 border-gray-800 dark:border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-zinc-900 transition-colors duration-500">
                <QrCode size={40} className="text-gray-800 dark:text-gray-200" />
              </div>
            </motion.div>
