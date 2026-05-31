@@ -384,7 +384,7 @@ export default function AdminExcusas() {
                   <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Pendiente').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Pendientes</p>
@@ -398,7 +398,7 @@ export default function AdminExcusas() {
                   <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Aprobada').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Aprobadas</p>
@@ -412,7 +412,7 @@ export default function AdminExcusas() {
                   <XCircle size={24} className="text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.filter(e => e.estado === 'Rechazada').length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Rechazadas</p>
@@ -426,7 +426,7 @@ export default function AdminExcusas() {
                   <FileText size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {excusas.length}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
@@ -452,7 +452,7 @@ export default function AdminExcusas() {
             <div className="card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         Aprendiz
@@ -498,7 +498,7 @@ export default function AdminExcusas() {
                                 </span>
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                                   {excusa.aprendiz.fullName}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -508,7 +508,7 @@ export default function AdminExcusas() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm text-gray-900 dark:text-gray-100">
+                            <p className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               Ficha {excusa.materia.ficha.numero}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
@@ -516,17 +516,17 @@ export default function AdminExcusas() {
                             </p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                               {excusa.materia.nombre}
                             </p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm text-gray-900 dark:text-gray-100">
+                            <p className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {excusa.materia.instructor?.fullName || 'Sin instructor'}
                             </p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm text-gray-900 dark:text-gray-100">
+                            <p className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {fechas.length} día{fechas.length !== 1 ? 's' : ''}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -725,7 +725,7 @@ export default function AdminExcusas() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                               {aprendiz.nombre}
                             </p>
                             <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -735,7 +735,7 @@ export default function AdminExcusas() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            <p className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                               {aprendiz.total}
                             </p>
                           </div>
@@ -765,7 +765,7 @@ export default function AdminExcusas() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                               {materia.nombre}
                             </p>
                             <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -775,7 +775,7 @@ export default function AdminExcusas() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            <p className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                               {materia.total}
                             </p>
                           </div>
@@ -805,10 +805,10 @@ export default function AdminExcusas() {
                             {idx + 1}
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                           {instructor.nombre}
                         </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100 mt-2">
                           {instructor.total}
                         </p>
                         <div className="flex justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -831,10 +831,10 @@ export default function AdminExcusas() {
                   {estadisticas.excusasPorMes.map((mes) => (
                     <div key={mes.mes} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                           {mes.mes}
                         </p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                           {mes.total} excusas
                         </p>
                       </div>
@@ -892,7 +892,7 @@ export default function AdminExcusas() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {modalDetalle.aprendiz.fullName}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -908,7 +908,7 @@ export default function AdminExcusas() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                   Ficha
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                   Ficha {modalDetalle.materia.ficha.numero}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -920,7 +920,7 @@ export default function AdminExcusas() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                   Materia
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                   {modalDetalle.materia.nombre}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -948,7 +948,7 @@ export default function AdminExcusas() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-2">
                 Motivo
               </p>
-              <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+              <p className="text-sm text-gray-900 dark:text-white  dark:text-gray-100 whitespace-pre-wrap">
                 {modalDetalle.motivo}
               </p>
             </div>
@@ -994,7 +994,7 @@ export default function AdminExcusas() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1 mt-3">
                     Respuesta del Instructor
                   </p>
-                  <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                  <p className="text-sm text-gray-900 dark:text-white  dark:text-gray-100 whitespace-pre-wrap">
                     {modalDetalle.respuesta}
                   </p>
                   {modalDetalle.respondedAt && (

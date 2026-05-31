@@ -86,8 +86,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Acciones rápidas */}
-      <div className="bg-white rounded-xl shadow-card p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h2>
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white  mb-4">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
             to="/admin/fichas"
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           >
             <FolderOpen className="text-blue-600" size={24} />
             <div>
-              <div className="font-semibold text-gray-900">Ver Fichas</div>
+              <div className="font-semibold text-gray-900 dark:text-white ">Ver Fichas</div>
               <div className="text-sm text-gray-600">Gestionar fichas</div>
             </div>
           </Link>
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
           >
             <Users className="text-green-600" size={24} />
             <div>
-              <div className="font-semibold text-gray-900">Usuarios</div>
+              <div className="font-semibold text-gray-900 dark:text-white ">Usuarios</div>
               <div className="text-sm text-gray-600">Instructores y aprendices</div>
             </div>
           </Link>
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
           >
             <FileText className="text-purple-600" size={24} />
             <div>
-              <div className="font-semibold text-gray-900">Excusas</div>
+              <div className="font-semibold text-gray-900 dark:text-white ">Excusas</div>
               <div className="text-sm text-gray-600">Gestionar excusas</div>
             </div>
           </Link>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           >
             <BarChart3 className="text-orange-600" size={24} />
             <div>
-              <div className="font-semibold text-gray-900">Reportes</div>
+              <div className="font-semibold text-gray-900 dark:text-white ">Reportes</div>
               <div className="text-sm text-gray-600">Exportar datos</div>
             </div>
           </Link>
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
           >
             <Trash2 className="text-red-600" size={24} />
             <div>
-              <div className="font-semibold text-gray-900">Papelera</div>
+              <div className="font-semibold text-gray-900 dark:text-white ">Papelera</div>
               <div className="text-sm text-gray-600">Elementos eliminados</div>
             </div>
           </Link>
@@ -147,9 +147,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Lista de fichas */}
-      <div className="bg-white rounded-xl shadow-card p-6">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Mis Fichas</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white ">Mis Fichas</h2>
           <Link
             to="/admin/fichas"
             className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-gray-900 dark:text-white ">
                       Ficha {ficha.numero}
                     </div>
                     <div className="text-sm text-gray-600">{ficha.nombre}</div>

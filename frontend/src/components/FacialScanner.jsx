@@ -190,7 +190,7 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
             )}
             {errorMsg && (
               <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl p-3 text-center">
+                <div className="bg-white dark:bg-zinc-800  rounded-xl p-3 text-center">
                   <AlertCircle size={22} className="text-red-500 mx-auto mb-1" />
                   <p className="text-xs text-red-700">{errorMsg}</p>
                 </div>
@@ -235,9 +235,9 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
           </div>
 
           {history.length > 0 && (
-            <div className="max-h-28 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50">
+            <div className="max-h-28 overflow-y-auto rounded-xl border border-gray-100 dark:border-zinc-700  bg-gray-50">
               {history.map((h, i) => (
-                <div key={h.id + i} className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 last:border-0">
+                <div key={h.id + i} className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-zinc-700  last:border-0">
                   <CheckCircle2 size={11} className="text-[#34A853] flex-shrink-0" />
                   <span className="text-xs text-gray-700 flex-1 truncate">{h.name}</span>
                   <span className="text-xs text-gray-400">

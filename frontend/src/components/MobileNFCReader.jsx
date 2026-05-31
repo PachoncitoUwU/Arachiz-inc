@@ -89,7 +89,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-6 animate-scale-in mx-2">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-6 animate-scale-in mx-2">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -97,7 +97,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
               <Wifi size={16} className="text-white sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">NFC Móvil</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-base sm:text-lg truncate">NFC Móvil</h2>
               <p className="text-xs text-gray-400">Lector NFC del navegador</p>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
           {!nfcSupported ? (
             <div className="text-center py-6 sm:py-8">
               <AlertCircle size={40} className="text-red-500 mx-auto mb-4 sm:w-12 sm:h-12" />
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
+              <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-2 text-base sm:text-lg">
                 NFC No Disponible
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -133,7 +133,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
               {!nfcEnabled ? (
                 <>
                   <Smartphone size={48} className="text-green-500 mx-auto mb-4 sm:w-16 sm:h-16" />
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
+                  <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-2 text-base sm:text-lg">
                     Activar Lector NFC
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
@@ -157,7 +157,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
                     <div className="absolute inset-0 rounded-full border-4 border-green-500 animate-ping opacity-30"></div>
                   </div>
                   
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
+                  <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-2 text-base sm:text-lg">
                     Lector NFC Activo
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
@@ -189,7 +189,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
 
         {/* Instructions */}
         <div className="mt-4 sm:mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
+          <h4 className="font-medium text-gray-900 dark:text-white  dark:text-white mb-2 text-sm">
             Instrucciones:
           </h4>
           <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">

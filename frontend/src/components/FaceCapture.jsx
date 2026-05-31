@@ -195,12 +195,12 @@ export default function FaceCapture({
         {/* Detected overlay */}
         {status === 'detected' && (
           <div className="absolute inset-0 bg-[#34A853]/10 flex items-center justify-center">
-            <div className="bg-white/90 backdrop-blur rounded-2xl px-6 py-4 text-center shadow-xl">
+            <div className="bg-white dark:bg-zinc-800 /90 backdrop-blur rounded-2xl px-6 py-4 text-center shadow-xl">
               <CheckCircle2 size={40} className="text-[#34A853] mx-auto mb-2" />
               {continuousMode && detectedName ? (
-                <p className="font-bold text-gray-900 text-lg">{detectedName}</p>
+                <p className="font-bold text-gray-900 dark:text-white  text-lg">{detectedName}</p>
               ) : (
-                <p className="font-bold text-gray-900">¡Cara capturada!</p>
+                <p className="font-bold text-gray-900 dark:text-white ">¡Cara capturada!</p>
               )}
             </div>
           </div>

@@ -43,7 +43,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         onClick={e => e.stopPropagation()}
       >
         <div 
-          className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+          className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-700  dark:border-zinc-700 bg-white dark:bg-zinc-800  dark:bg-zinc-800"
           style={{
             position: 'sticky',
             top: 0,
@@ -52,7 +52,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
             borderTopRightRadius: '16px'
           }}
         >
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-0">{title}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-0">{title}</h2>
           <button onClick={onClose} className="btn-icon text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-700">
             <X size={18} />
           </button>

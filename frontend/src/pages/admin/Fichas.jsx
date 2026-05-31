@@ -100,7 +100,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</span>
             {isPinned && (
               <Star size={16} fill="currentColor" className="text-yellow-500" />
             )}

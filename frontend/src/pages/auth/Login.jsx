@@ -239,13 +239,13 @@ export default function Login() {
         {/* Botón Wompi */}
         <button
           onClick={() => handleDonate('wompi')}
-          className="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#FF6B35] transition-all flex items-center gap-3 group animate-fade-in"
+          className="bg-white dark:bg-zinc-800  border border-gray-200 dark:border-zinc-700  text-gray-700 px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#FF6B35] transition-all flex items-center gap-3 group animate-fade-in"
         >
           <div className="bg-[#FFF4E5] p-2 rounded-full group-hover:scale-110 transition-transform">
             <Coffee size={20} className="text-[#FF6B35] fill-current" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-sm font-bold text-gray-900 leading-none">Wompi</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white  leading-none">Wompi</span>
             <span className="text-xs text-gray-500 font-medium mt-0.5">Apoyar proyecto</span>
           </div>
         </button>
@@ -254,13 +254,13 @@ export default function Login() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             {/* Header */}
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Coffee size={28} className="text-amber-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Invítame un café ☕</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">Invítame un café ☕</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Vía <span className="font-semibold capitalize">{selectedPaymentMethod}</span>
               </p>
@@ -351,12 +351,12 @@ export default function Login() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🎉</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">¿Confirmas la donación?</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">¿Confirmas la donación?</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
             </div>
 
@@ -368,9 +368,9 @@ export default function Login() {
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
-              <div className="border-t border-gray-200 dark:border-zinc-600 pt-3 flex justify-between items-center">
+              <div className="border-t border-gray-200 dark:border-zinc-700  dark:border-zinc-600 pt-3 flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Método de pago</span>
-                <span className="font-semibold capitalize text-gray-900 dark:text-white bg-white dark:bg-zinc-600 border border-gray-200 dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
+                <span className="font-semibold capitalize text-gray-900 dark:text-white  dark:text-white bg-white dark:bg-zinc-800  dark:bg-zinc-600 border border-gray-200 dark:border-zinc-700  dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
                   {selectedPaymentMethod}
                 </span>
               </div>
@@ -447,14 +447,14 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white  dark:text-white flex items-center justify-center gap-2">
                <span className="text-black dark:text-white">Arachiz</span>
             </h1>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">Bienvenido de vuelta</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mt-4">Bienvenido de vuelta</h2>
         </div>
 
-        <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-card p-6 sm:p-8 space-y-5 animate-fade-in border border-gray-100 dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-6 sm:p-8 space-y-5 animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm animate-shake">
               {error}
@@ -465,7 +465,7 @@ export default function Login() {
           <button
             onClick={handleGoogleLogin}
             type="button"
-            className="w-full bg-white dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 text-gray-700 dark:text-gray-200 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-600 hover:border-gray-300 dark:hover:border-zinc-500 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-3 group"
+            className="w-full bg-white dark:bg-zinc-800  dark:bg-zinc-700 border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 text-gray-700 dark:text-gray-200 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-600 hover:border-gray-300 dark:hover:border-zinc-500 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-3 group"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" className="group-hover:scale-110 transition-transform">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
@@ -479,7 +479,7 @@ export default function Login() {
           {/* Separador O */}
           <div className="relative flex items-center gap-3">
             <div className="flex-1 h-px bg-gray-200"/>
-            <span className="text-xs text-gray-400 font-medium bg-white px-2">o</span>
+            <span className="text-xs text-gray-400 font-medium bg-white dark:bg-zinc-800  px-2">o</span>
             <div className="flex-1 h-px bg-gray-200"/>
           </div>
 
@@ -493,7 +493,7 @@ export default function Login() {
                 type="email" 
                 required 
                 placeholder="Correo electrónico"
-                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:focus:bg-zinc-600"
+                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:bg-zinc-800  dark:focus:bg-zinc-600"
                 value={form.email} 
                 onChange={setField('email')} 
               />
@@ -508,7 +508,7 @@ export default function Login() {
                 type="password" 
                 required 
                 placeholder="Contraseña"
-                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:focus:bg-zinc-600"
+                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:bg-zinc-800  dark:focus:bg-zinc-600"
                 value={form.password} 
                 onChange={setField('password')} 
               />
@@ -555,7 +555,7 @@ export default function Login() {
           </Link>
 
           {/* Donaciones en Móvil */}
-          <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100">
+          <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100 dark:border-zinc-700 ">
             <span className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Apoyar el proyecto</span>
             <div className="flex gap-4 w-full justify-center">
               <button

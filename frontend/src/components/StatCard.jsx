@@ -13,7 +13,7 @@ export default function StatCard({ icon, label, value, color = 'blue', sub }) {
       <div className={`stat-icon ${colors[color] || colors.blue}`}>{icon}</div>
       <div>
         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{value}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white leading-tight">{value}</p>
         {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
       </div>
     </div>

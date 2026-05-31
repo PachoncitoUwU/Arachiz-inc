@@ -106,16 +106,16 @@ export default function PaymentStatus() {
   const finalReference = transaction?.reference || reference;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-zinc-900 flex items-center justify-center p-4">
       {/* Decoración fondo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-100 rounded-full opacity-30" />
-        <div className="absolute -top-16 -left-16 w-64 h-64 bg-green-100 rounded-full opacity-20" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-100 dark:bg-blue-900/20 rounded-full opacity-30" />
+        <div className="absolute -top-16 -left-16 w-64 h-64 bg-green-100 dark:bg-green-900/20 rounded-full opacity-20" />
       </div>
 
       <div className="w-full max-w-md relative">
         {/* Card principal */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
 
           {/* Header con color según estado */}
           <div className={`${config.bg} ${config.border} border-b px-6 sm:px-8 py-8 sm:py-10 text-center`}>
@@ -124,7 +124,7 @@ export default function PaymentStatus() {
             ) : (
               <div className="flex justify-center mb-4">{config.icon}</div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900 mt-2">{config.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mt-2">{config.title}</h1>
             <p className={`text-sm font-medium mt-1 ${config.color}`}>{config.subtitle}</p>
           </div>
 
@@ -145,27 +145,27 @@ export default function PaymentStatus() {
 
             {/* Detalles de la transacción */}
             {(amountCOP || finalReference || transactionId) && (
-              <div className="bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
+              <div className="bg-gray-50 dark:bg-zinc-700 rounded-xl p-5 space-y-3 text-sm">
                 {amountCOP && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Monto donado</span>
-                    <span className="font-bold text-gray-900 text-lg">
+                    <span className="text-gray-500 dark:text-gray-400">Monto donado</span>
+                    <span className="font-bold text-gray-900 dark:text-white  dark:text-white text-lg">
                       ${amountCOP.toLocaleString('es-CO')} COP
                     </span>
                   </div>
                 )}
                 {finalReference && (
-                  <div className="flex justify-between items-center border-t border-gray-200 pt-3">
-                    <span className="text-gray-500">Referencia</span>
-                    <span className="font-mono text-xs text-gray-700 bg-gray-200 px-2 py-1 rounded">
+                  <div className="flex justify-between items-center border-t border-gray-200 dark:border-zinc-700  dark:border-zinc-600 pt-3">
+                    <span className="text-gray-500 dark:text-gray-400">Referencia</span>
+                    <span className="font-mono text-xs text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-zinc-600 px-2 py-1 rounded">
                       {finalReference}
                     </span>
                   </div>
                 )}
                 {transactionId && (
-                  <div className="flex justify-between items-center border-t border-gray-200 pt-3">
-                    <span className="text-gray-500">ID Transacción</span>
-                    <span className="font-mono text-xs text-gray-700 bg-gray-200 px-2 py-1 rounded">
+                  <div className="flex justify-between items-center border-t border-gray-200 dark:border-zinc-700  dark:border-zinc-600 pt-3">
+                    <span className="text-gray-500 dark:text-gray-400">ID Transacción</span>
+                    <span className="font-mono text-xs text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-zinc-600 px-2 py-1 rounded">
                       {transactionId}
                     </span>
                   </div>
@@ -174,15 +174,15 @@ export default function PaymentStatus() {
             )}
 
             {/* Mensaje */}
-            <p className="text-gray-600 text-sm text-center leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-400 text-sm text-center leading-relaxed">
               {config.message}
             </p>
 
             {/* Mensaje especial para APPROVED */}
             {finalStatus === 'APPROVED' && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-                <Coffee size={24} className="text-amber-500 shrink-0" />
-                <p className="text-sm text-amber-800 font-medium">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center gap-3">
+                <Coffee size={24} className="text-amber-500 dark:text-amber-400 shrink-0" />
+                <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
                   ¡Recibí tu café! Gracias por apoyar el proyecto Arachiz ☕
                 </p>
               </div>
@@ -201,7 +201,7 @@ export default function PaymentStatus() {
 
               <Link
                 to="/login"
-                className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
               >
                 <ArrowLeft size={16} />
                 Volver al inicio
@@ -211,9 +211,9 @@ export default function PaymentStatus() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
           Pago procesado de forma segura por{' '}
-          <span className="font-semibold text-gray-500">Wompi</span>
+          <span className="font-semibold text-gray-500 dark:text-gray-400">Wompi</span>
         </p>
       </div>
     </div>

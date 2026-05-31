@@ -35,7 +35,7 @@ function Timer({ startTime }) {
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-card border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs">
+    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-xl shadow-card border border-gray-100 dark:border-zinc-700  dark:border-gray-700 px-3 py-2 text-xs">
       <p className="font-bold text-gray-700 dark:text-gray-200 mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
@@ -716,7 +716,7 @@ export default function InstructorAsistencia() {
               Selecciona una Materia
             </label>
             <select 
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all hover:border-gray-300 dark:hover:border-gray-600"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all hover:border-gray-300 dark:hover:border-gray-600"
               value={selectedMateria}
               onChange={e => setSelectedMateria(e.target.value)}
               disabled={!!activeSession || materias.length === 0}>
@@ -752,7 +752,7 @@ export default function InstructorAsistencia() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:rotate-6">
               <Camera size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-500 transition-colors">Reconocimiento Facial</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-2 group-hover:text-blue-500 transition-colors">Reconocimiento Facial</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Detecta automáticamente con IA</p>
           </div>
 
@@ -760,7 +760,7 @@ export default function InstructorAsistencia() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-indigo-500/50 transition-all duration-300 group-hover:rotate-6">
               <Wifi size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-500 transition-colors">Lector NFC</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-2 group-hover:text-indigo-500 transition-colors">Lector NFC</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Tarjeta o llavero NFC</p>
           </div>
 
@@ -768,7 +768,7 @@ export default function InstructorAsistencia() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-yellow-500/50 transition-all duration-300 group-hover:rotate-6">
               <QrCode size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-yellow-500 transition-colors">Código QR</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-2 group-hover:text-yellow-500 transition-colors">Código QR</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Escanea desde el celular</p>
           </div>
 
@@ -776,7 +776,7 @@ export default function InstructorAsistencia() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:rotate-6">
               <Fingerprint size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-500 transition-colors">Huella Digital</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-2 group-hover:text-green-500 transition-colors">Huella Digital</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Sensor biométrico rápido</p>
           </div>
 
@@ -784,7 +784,7 @@ export default function InstructorAsistencia() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:rotate-6">
               <UserPlus size={32} className="text-white" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-500 transition-colors">Registro Manual</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-2 group-hover:text-purple-500 transition-colors">Registro Manual</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Marca manualmente si es necesario</p>
           </div>
         </div>
@@ -793,26 +793,26 @@ export default function InstructorAsistencia() {
       {activeSession && (
         <>
           {/* Detalles de configuración de la sesión activa */}
-          <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/20 dark:border-gray-800/60 shadow-sm flex flex-wrap gap-4 items-center justify-between animate-fade-in-up">
+          <div className="bg-white dark:bg-zinc-800 /40 dark:bg-gray-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/20 dark:border-gray-800/60 shadow-sm flex flex-wrap gap-4 items-center justify-between animate-fade-in-up">
             <div className="flex flex-wrap gap-x-6 gap-y-3">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
                 <Clock size={14} className="text-yellow-500" />
-                Tolerancia Tarde: <strong className="text-gray-900 dark:text-white">{activeSession.llegadaTarde} min</strong>
+                Tolerancia Tarde: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.llegadaTarde} min</strong>
               </span>
               <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
                 <Hourglass size={14} className="text-blue-500" />
-                Duración: <strong className="text-gray-900 dark:text-white">{activeSession.duracion} min</strong>
+                Duración: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.duracion} min</strong>
               </span>
               {activeSession.aula && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
                   <MapPin size={14} className="text-emerald-500" />
-                  Aula: <strong className="text-gray-900 dark:text-white">{activeSession.aula}</strong>
+                  Aula: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.aula}</strong>
                 </span>
               )}
               {activeSession.descripcion && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
                   <BookOpen size={14} className="text-purple-500" />
-                  Tema: <strong className="text-gray-900 dark:text-white">{activeSession.descripcion}</strong>
+                  Tema: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.descripcion}</strong>
                 </span>
               )}
             </div>
@@ -825,17 +825,17 @@ export default function InstructorAsistencia() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Users size={24} className="text-gray-600 dark:text-gray-400" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{totalAprendices}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{totalAprendices}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-green-500 shadow-sm hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-green-500 shadow-sm hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
@@ -845,7 +845,7 @@ export default function InstructorAsistencia() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Presentes</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '300ms' }}>
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '300ms' }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
@@ -855,7 +855,7 @@ export default function InstructorAsistencia() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Ausentes</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '400ms' }}>
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '400ms' }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
@@ -915,7 +915,7 @@ export default function InstructorAsistencia() {
 
                   {/* Indicador de estado */}
                   <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg animate-fade-in">
-                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-white dark:bg-zinc-800  animate-pulse" />
                     <span className="text-white text-xs font-semibold">EN VIVO</span>
                   </div>
                 </div>
@@ -963,7 +963,7 @@ export default function InstructorAsistencia() {
                 <span className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold shadow-md">{presentes} presentes</span>
               </div>
               {totalAprendices === 0 ? (
-                <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl animate-fade-in">
+                <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 dark:border-zinc-700  dark:border-gray-700 rounded-xl animate-fade-in">
                   <Users size={32} className="mx-auto mb-2 opacity-30 animate-pulse"/>
                   <p className="text-sm">Sin aprendices en esta ficha</p>
                 </div>
@@ -1054,7 +1054,7 @@ export default function InstructorAsistencia() {
       {!activeSession && (
         <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 animate-fade-in-up">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
+            <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-lg flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
                 <BarChart2 size={18} className="text-white" />
               </div>
@@ -1064,7 +1064,7 @@ export default function InstructorAsistencia() {
           </div>
 
           {/* Filtros */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Desde</label>
@@ -1072,7 +1072,7 @@ export default function InstructorAsistencia() {
                   type="date"
                   value={filtros.fechaDesde}
                   onChange={(e) => setFiltros(prev => ({ ...prev, fechaDesde: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-700 text-gray-900 dark:text-white  dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -1081,7 +1081,7 @@ export default function InstructorAsistencia() {
                   type="date"
                   value={filtros.fechaHasta}
                   onChange={(e) => setFiltros(prev => ({ ...prev, fechaHasta: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-700 text-gray-900 dark:text-white  dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -1089,7 +1089,7 @@ export default function InstructorAsistencia() {
                 <select
                   value={filtros.estado}
                   onChange={(e) => setFiltros(prev => ({ ...prev, estado: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-700 text-gray-900 dark:text-white  dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Todas las sesiones</option>
                   <option value="finalizada">Solo finalizadas</option>
@@ -1187,14 +1187,14 @@ export default function InstructorAsistencia() {
       {/* Modal QR */}
       {qrActive && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FBBC05] to-yellow-600 flex items-center justify-center shadow-lg animate-pulse-glow">
                   <QrCode size={24} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white">Código QR</h2>
+                  <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white">Código QR</h2>
                   <p className="text-xs text-gray-400">Escanea para registrar</p>
                 </div>
               </div>
@@ -1205,7 +1205,7 @@ export default function InstructorAsistencia() {
 
             {qrCode && (
               <>
-                <div className="relative bg-white p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg animate-fade-in">
+                <div className="relative bg-white dark:bg-zinc-800  p-6 rounded-2xl border-4 border-[#FBBC05] mb-4 shadow-lg animate-fade-in">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/scan-qr?code=${qrCode}`)}`}
                     alt="QR Code"
@@ -1243,18 +1243,18 @@ export default function InstructorAsistencia() {
       {/* Modal Registro Manual - Lista Clickeable */}
       {manualRegisterOpen && activeSession && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg animate-pulse-glow">
                   <UserPlus size={24} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white">Registro Manual de Asistencia</h2>
+                  <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white">Registro Manual de Asistencia</h2>
                   <p className="text-xs text-gray-400">Haz clic en un estudiante para registrar su asistencia</p>
                 </div>
               </div>
-              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-white dark:hover:bg-gray-800 transition-all hover:rotate-90">
+              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-white dark:bg-zinc-800  dark:hover:bg-gray-800 transition-all hover:rotate-90">
                 <X size={18} />
               </button>
             </div>
@@ -1346,11 +1346,11 @@ export default function InstructorAsistencia() {
       {/* Modal Detalle de Sesión con GRÁFICAS */}
       {selectedSessionDetail && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white dark:bg-zinc-800  dark:bg-gray-900 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-6 z-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
+                  <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-2xl">Análisis Detallado de Sesión</h2>
                   <p className="text-sm text-gray-400">
                     {selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}
                     {selectedSessionDetail.aula && ` • Aula: ${selectedSessionDetail.aula}`}
@@ -1409,7 +1409,7 @@ export default function InstructorAsistencia() {
                 <div key={stat.label} className={`bg-gradient-to-br ${stat.bg} rounded-xl p-4 text-white shadow-lg transform hover:scale-105 transition-all`}>
                   <div className="flex items-center justify-between mb-2">
                     <stat.icon size={24} className="opacity-80" />
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-white dark:bg-zinc-800 /20 rounded-lg flex items-center justify-center">
                       <stat.icon size={20} />
                     </div>
                   </div>
@@ -1423,7 +1423,7 @@ export default function InstructorAsistencia() {
             <div className="grid grid-cols-2 gap-6 mb-6">
               {/* Gráfica de Torta */}
               <div className="card dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Distribución de Asistencia</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-4">Distribución de Asistencia</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie 
@@ -1453,7 +1453,7 @@ export default function InstructorAsistencia() {
 
               {/* Gráfica de Métodos de Registro */}
               <div className="card dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Métodos de Registro</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-4">Métodos de Registro</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart 
                     data={(() => {
@@ -1492,7 +1492,7 @@ export default function InstructorAsistencia() {
 
             {/* Gráfica de Línea de Tiempo */}
             <div className="card dark:bg-gray-800 mb-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Línea de Tiempo de Registros</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-4">Línea de Tiempo de Registros</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart 
                   data={(() => {
@@ -1516,7 +1516,7 @@ export default function InstructorAsistencia() {
             {/* Listas de estudiantes */}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-3 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
                     <CheckCircle size={16} className="text-[#34A853]" />
                   </div>
@@ -1551,7 +1551,7 @@ export default function InstructorAsistencia() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-3 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
                     <X size={16} className="text-[#EA4335]" />
                   </div>
@@ -1593,26 +1593,26 @@ export default function InstructorAsistencia() {
       {/* Modal Configuración de Sesión — Estilo Arachiz adaptativo claro/oscuro */}
       {showConfigModal && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
-          <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700" onClick={e => e.stopPropagation()}>
             
             {/* Destello decorativo sutil */}
             <div className="absolute -top-16 -left-16 w-40 h-40 bg-[#34A853]/8 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-[#4285F4]/8 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Cabecera */}
-            <div className="relative flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="relative flex items-center justify-between p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#34A853] to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white">
                   <Play size={22} />
                 </div>
                 <div>
-                  <h2 className="font-extrabold text-gray-900 dark:text-white text-lg">Configurar Sesión</h2>
+                  <h2 className="font-extrabold text-gray-900 dark:text-white  dark:text-white text-lg">Configurar Sesión</h2>
                   <p className="text-xs text-[#34A853] font-semibold uppercase tracking-wider">Parámetros de asistencia</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowConfigModal(false)} 
-                className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all hover:rotate-90 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all hover:rotate-90 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white  dark:hover:text-white"
               >
                 <X size={18} />
               </button>
@@ -1622,7 +1622,7 @@ export default function InstructorAsistencia() {
             <div className="relative p-6 space-y-5">
               {/* Sliders de Tiempo de Tolerancia y Duración */}
               <div className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-gray-200 dark:border-zinc-700  dark:hover:border-gray-600 transition-colors">
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Clock size={14} className="text-yellow-500" />
@@ -1649,7 +1649,7 @@ export default function InstructorAsistencia() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-gray-200 dark:border-zinc-700  dark:hover:border-gray-600 transition-colors">
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Hourglass size={14} className="text-[#34A853]" />
@@ -1689,7 +1689,7 @@ export default function InstructorAsistencia() {
                     placeholder="Ej. Aula 104, Lab 3..." 
                     value={aula} 
                     onChange={e => setAula(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
 
@@ -1703,7 +1703,7 @@ export default function InstructorAsistencia() {
                     placeholder="Ej. Taller de APIs..." 
                     value={descripcion} 
                     onChange={e => setDescripcion(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -1712,7 +1712,7 @@ export default function InstructorAsistencia() {
               <div className="flex gap-3 pt-2">
                 <button 
                   onClick={() => setShowConfigModal(false)}
-                  className="flex-1 px-4 py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold transition-all transform active:scale-95"
+                  className="flex-1 px-4 py-3.5 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold transition-all transform active:scale-95"
                 >
                   Cancelar
                 </button>

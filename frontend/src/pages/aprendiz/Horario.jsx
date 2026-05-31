@@ -129,7 +129,7 @@ export default function AprendizHorario() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {byDia.map(({ dia, clases }) => (
                 <div key={dia} className="card">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-zinc-700 ">
                     <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center">
                       <Calendar size={14} className="text-[#34A853]"/>
                     </div>

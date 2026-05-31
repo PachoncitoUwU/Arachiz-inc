@@ -136,7 +136,7 @@ export default function HardwareStatus({ compact = false, onStatusChange }) {
   if (compact) {
     return (
       <div className="space-y-3">
-        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+        <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white text-sm">
           Estado del Hardware
         </h3>
         
@@ -156,7 +156,7 @@ export default function HardwareStatus({ compact = false, onStatusChange }) {
                 <div className="flex items-center gap-3">
                   <Icon size={16} className={device.available ? 'text-green-600' : 'text-gray-400'} />
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">
+                    <p className="font-medium text-gray-900 dark:text-white  dark:text-white text-sm">
                       {device.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -193,9 +193,9 @@ export default function HardwareStatus({ compact = false, onStatusChange }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white flex items-center gap-2">
           <Settings size={18} />
           Estado del Hardware
         </h3>
@@ -223,7 +223,7 @@ export default function HardwareStatus({ compact = false, onStatusChange }) {
                   <Icon size={16} className={device.available ? 'text-green-600' : 'text-gray-400'} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">
+                  <p className="font-medium text-gray-900 dark:text-white  dark:text-white text-sm">
                     {device.name}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">

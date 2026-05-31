@@ -378,7 +378,7 @@ export default function AprendizExcusas() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-bold text-gray-900">{excusa.materia.nombre}</span>
+                      <span className="font-bold text-gray-900 dark:text-white ">{excusa.materia.nombre}</span>
                       <span className="text-xs text-gray-400">Ficha {excusa.materia.ficha.numero}</span>
                       <span className={badge}><Icon size={12}/> {excusa.estado}</span>
                     </div>
@@ -488,15 +488,15 @@ export default function AprendizExcusas() {
             {/* Horario */}
             <div className="lg:block hidden">
               <div className="card bg-gray-50 sticky top-4">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                   <Calendar size={16}/> Horario de la Materia
                 </h3>
                 {materiaSeleccionada ? (
                   materiaSeleccionada.horarios.length > 0 ? (
                     <div className="space-y-2">
                       {materiaSeleccionada.horarios.map((h, i) => (
-                        <div key={i} className="p-2 bg-white rounded-lg">
-                          <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                        <div key={i} className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                           <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                         </div>
                       ))}
@@ -537,7 +537,7 @@ export default function AprendizExcusas() {
             <div className="space-y-2">
               {materiaSeleccionada.horarios.map((h, i) => (
                 <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                   <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                 </div>
               ))}
@@ -627,7 +627,7 @@ export default function AprendizExcusas() {
               {/* Horario */}
               <div className="lg:block hidden">
                 <div className="card bg-gray-50 sticky top-4">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                     <Calendar size={16}/> Horario de la Materia
                   </h3>
                   {(() => {
@@ -636,8 +636,8 @@ export default function AprendizExcusas() {
                       materiaExcusa.horarios && materiaExcusa.horarios.length > 0 ? (
                         <div className="space-y-2">
                           {materiaExcusa.horarios.map((h, i) => (
-                            <div key={i} className="p-2 bg-white rounded-lg">
-                              <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                            <div key={i} className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                               <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                             </div>
                           ))}
@@ -678,7 +678,7 @@ export default function AprendizExcusas() {
         {modalDetalle && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900">{modalDetalle.materia.nombre}</span>
+              <span className="font-bold text-gray-900 dark:text-white ">{modalDetalle.materia.nombre}</span>
               {(() => { 
                 const { badge, icon: Icon } = STATUS_MAP[modalDetalle.estado]; 
                 return <span className={badge}><Icon size={12}/>{modalDetalle.estado}</span>; 

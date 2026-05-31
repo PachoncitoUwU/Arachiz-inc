@@ -140,12 +140,12 @@ export default function InstructorMaterias() {
             const col = COLORES_FICHA[fichaIdx % COLORES_FICHA.length];
             return (
             <div key={ficha.id} className="card" style={{ borderTopWidth: 3, borderTopColor: col.accent }}>
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-zinc-700 ">
                 <div className={`w-8 h-8 ${col.bg} rounded-lg flex items-center justify-center`}>
                   <BookOpen size={16} className={col.icon}/>
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">Ficha {ficha.numero}</p>
+                  <p className="font-bold text-gray-900 dark:text-white  text-sm">Ficha {ficha.numero}</p>
                   <p className="text-xs text-gray-400">{ficha.nivel} · {ficha.jornada}</p>
                 </div>
               </div>

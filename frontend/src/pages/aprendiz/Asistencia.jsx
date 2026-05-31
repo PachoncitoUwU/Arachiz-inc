@@ -68,7 +68,7 @@ export default function AprendizAsistencia() {
             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LogIn size={28} className="text-[#4285F4]"/>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Unirse a una Ficha</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white ">Unirse a una Ficha</h2>
             <p className="text-sm text-gray-500 mt-1">Ingresa el código de invitación de tu instructor.</p>
           </div>
           {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-3">{error}</p>}
@@ -84,7 +84,7 @@ export default function AprendizAsistencia() {
       ) : (
         <div className="card max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Historial Reciente</h2>
+            <h2 className="font-bold text-gray-900 dark:text-white ">Historial Reciente</h2>
             <button 
               onClick={() => setQrScannerOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FBBC05] text-white text-sm font-semibold hover:bg-yellow-600 transition-all shadow-sm">
@@ -96,7 +96,7 @@ export default function AprendizAsistencia() {
           ) : (
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
               {historial.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100/60 hover:shadow-sm transition-all">
+                <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 dark:border-zinc-700 /60 hover:shadow-sm transition-all">
                   <div className="flex items-center gap-3">
                     {r.presente
                       ? <CheckCircle size={20} className="text-[#34A853] shrink-0"/>
