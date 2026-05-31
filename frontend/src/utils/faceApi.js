@@ -51,6 +51,23 @@ export async function detectFaceDescriptor(videoElement) {
 }
 
 /**
+ * Detecta la cara y retorna tanto el descriptor como las coordenadas (caja).
+ * Útil para saber si la cara está centrada.
+ */
+export async function detectFaceWithBox(videoElement) {
+  const detection = await faceapi
+    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+    .withFaceLandmarks(true)
+    .withFaceDescriptor();
+
+  if (!detection) return null;
+  return { 
+    descriptor: detection.descriptor, 
+    box: detection.detection.box 
+  };
+}
+
+/**
  * Calcula la distancia euclidiana entre dos descriptores.
  * Umbral recomendado: < 0.6 = misma persona.
  */

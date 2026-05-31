@@ -55,7 +55,8 @@ const createSession = async (req, res) => {
                     document: true, 
                     nfcUid: true, 
                     huellas: true, 
-                    faceDescriptor: true 
+                    faceDescriptor: true,
+                    avatarUrl: true
                   } 
                 } 
               } 
@@ -449,7 +450,7 @@ const getActiveSession = async (req, res) => {
                       }
                     }
                   },
-                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
             },
@@ -493,7 +494,7 @@ const getSessionById = async (req, res) => {
                       }
                     }
                   },
-                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
             },
@@ -538,7 +539,7 @@ const getMyActiveAnySession = async (req, res) => {
                       }
                     }
                   },
-                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true } 
+                  select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
             },

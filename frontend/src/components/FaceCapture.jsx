@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { loadFaceModels, detectFaceDescriptor } from '../utils/faceApi';
+import { loadFaceModels, detectFaceWithBox } from '../utils/faceApi';
 import { Camera, ScanLine, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 
 /**
@@ -25,11 +25,13 @@ export default function FaceCapture({
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
+  const stabilityRef = useRef(0);
 
   const [status, setStatus] = useState('loading'); // loading | ready | detecting | detected | error
   const [message, setMessage] = useState('Cargando modelos IA...');
   const [detectedName, setDetectedName] = useState('');
-  const [faceBox, setFaceBox] = useState(null); // { x, y, width, height } normalizado
+  const [faceBox, setFaceBox] = useState(null); // { x, y, width, height }
+  const [isCentered, setIsCentered] = useState(false);
 
   // Cargar modelos + cámara
   useEffect(() => {
@@ -96,48 +98,81 @@ export default function FaceCapture({
       setStatus('detecting');
 
       try {
-        const descriptor = await detectFaceDescriptor(videoRef.current);
+        const result = await detectFaceWithBox(videoRef.current);
 
-        if (!descriptor) {
+        if (!result) {
           setFaceBox(null);
+          setIsCentered(false);
+          stabilityRef.current = 0;
+          setMessage(continuousMode ? 'Buscando rostros...' : 'No se detecta rostro. Sitúate frente a la cámara.');
           setStatus('ready');
           return;
         }
 
-        // Dibuja el bounding box aproximado en el canvas
+        const { descriptor, box } = result;
         const vw = videoRef.current.videoWidth;
         const vh = videoRef.current.videoHeight;
-        setFaceBox({ x: vw * 0.2, y: vh * 0.1, width: vw * 0.6, height: vh * 0.8 });
+        
+        // Espejado en eje X (video transform scaleX(-1)), invertimos la caja visualmente:
+        const visualX = vw - box.x - box.width;
+        setFaceBox({ x: visualX, y: box.y, width: box.width, height: box.height });
 
-        if (continuousMode && knownDescriptors.length > 0) {
+        if (continuousMode) {
           // Modo asistencia: identificar quién es
-          let best = null;
-          let bestDist = Infinity;
-          const { faceDistance } = await import('../utils/faceApi');
+          if (knownDescriptors.length > 0) {
+            let best = null;
+            let bestDist = Infinity;
+            const { faceDistance } = await import('../utils/faceApi');
 
-          for (const known of knownDescriptors) {
-            const dist = faceDistance(descriptor, known.descriptor);
-            if (dist < bestDist) { bestDist = dist; best = known; }
-          }
+            for (const known of knownDescriptors) {
+              const dist = faceDistance(descriptor, known.descriptor);
+              if (dist < bestDist) { bestDist = dist; best = known; }
+            }
 
-          if (bestDist < 0.55 && best) {
-            setDetectedName(best.fullName);
-            setStatus('detected');
-            onIdentified?.(best);
+            if (bestDist < 0.55 && best) {
+              setDetectedName(best.fullName);
+              setStatus('detected');
+              onIdentified?.(best);
+            } else {
+              setStatus('ready');
+            }
           } else {
             setStatus('ready');
           }
         } else {
-          // Modo enrolamiento: capturar UNA vez y detener
-          setStatus('detected');
-          setMessage('¡Cara detectada! Guardando...');
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          onDescriptor?.(descriptor);
+          // Modo enrolamiento: Validar encuadre y estabilidad
+          // La caja debe ocupar al menos el 25% del ancho del video
+          const isBoxBigEnough = box.width > vw * 0.25; 
+          const centerX = box.x + box.width / 2;
+          const centerY = box.y + box.height / 2;
+          // El centro de la cara debe estar en el tercio central
+          const isBoxCentered = 
+            centerX > vw * 0.35 && centerX < vw * 0.65 &&
+            centerY > vh * 0.3 && centerY < vh * 0.7;
+
+          if (isBoxBigEnough && isBoxCentered) {
+            setIsCentered(true);
+            stabilityRef.current += 1;
+            setMessage(`Mantente estable... (${stabilityRef.current}/3)`);
+            
+            if (stabilityRef.current >= 3) {
+              setStatus('detected');
+              setMessage('¡Rostro perfecto! Guardando...');
+              if (intervalRef.current) clearInterval(intervalRef.current);
+              onDescriptor?.(descriptor);
+            }
+          } else {
+            setIsCentered(false);
+            stabilityRef.current = 0;
+            setMessage(
+              !isBoxBigEnough ? 'Acércate un poco más a la cámara.' : 'Centra tu rostro en el círculo.'
+            );
+          }
         }
       } catch (e) {
         // Silenciar errores de detección durante el stream
       }
-    }, continuousMode ? 1800 : 600);
+    }, continuousMode ? 1800 : 500); // 500ms es rápido para capturar los 3 frames estables pronto
   }, [continuousMode, knownDescriptors, onDescriptor, onIdentified]);
 
   const statusIcon = () => {
@@ -162,33 +197,62 @@ export default function FaceCapture({
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Video container */}
-      <div className={`relative rounded-2xl overflow-hidden border-2 transition-colors duration-300 bg-black ${statusColor}`}
-        style={{ width: '100%', maxWidth: 380, aspectRatio: '4/3' }}>
+      <div className={`relative rounded-3xl overflow-hidden border-4 transition-colors duration-500 bg-black shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] ${
+          status === 'detected' ? 'border-[#34A853]' : 
+          !continuousMode && isCentered ? 'border-[#4285F4]' : 'border-gray-800'
+        }`}
+        style={{ width: '100%', maxWidth: 480, aspectRatio: '3/4' }}>
 
         <video
           ref={videoRef}
           muted
           playsInline
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{ transform: 'scaleX(-1)' /* espejo natural */ }}
         />
-        <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+        <canvas ref={canvasRef} className="hidden" />
 
-        {/* Overlay del scan */}
-        {status === 'detecting' && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-[#4285F4]/5 animate-pulse" />
-            {/* Línea de escaneo */}
-            <div className="absolute left-4 right-4 h-0.5 bg-[#4285F4]/60 rounded-full"
-              style={{ animation: 'scanline 2s ease-in-out infinite', top: '50%' }} />
+        {/* MÁSCARA CIRCULAR DESENFOCADA (blur exterior) - Ideal para el registro */}
+        {(!continuousMode && status !== 'detected' && status !== 'loading') && (
+          <div 
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              maskImage: 'radial-gradient(circle at center, transparent 30%, black 35%)',
+              WebkitMaskImage: 'radial-gradient(circle at center, transparent 30%, black 35%)'
+            }}
+          />
+        )}
+
+        {/* Guía Circular Central (Solo enrolamiento o si no está detectado) */}
+        {(!continuousMode && status !== 'detected') && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div className={`rounded-full border-4 transition-all duration-500 ${
+              isCentered ? 'border-[#4285F4] scale-105 shadow-[0_0_20px_#4285F4]' : 'border-white/30 border-dashed scale-100'
+            }`} style={{ width: '60%', aspectRatio: '1/1' }} />
           </div>
         )}
 
-        {/* Marco facial guía */}
-        {(status === 'ready' || status === 'detecting') && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className={`w-40 h-48 border-2 rounded-full border-dashed transition-colors
-              ${status === 'detecting' ? 'border-[#4285F4]' : 'border-white/40'}`} />
+        {/* Caja de Rostro Detectado (Para el modo asistencia) */}
+        {(continuousMode && faceBox && status !== 'detected') && (
+          <div className="absolute border-2 border-[#4285F4]/60 rounded-lg pointer-events-none transition-all duration-150 z-20"
+               style={{
+                 left: `${(faceBox.x / videoRef.current.videoWidth) * 100}%`,
+                 top: `${(faceBox.y / videoRef.current.videoHeight) * 100}%`,
+                 width: `${(faceBox.width / videoRef.current.videoWidth) * 100}%`,
+                 height: `${(faceBox.height / videoRef.current.videoHeight) * 100}%`
+               }}
+          />
+        )}
+
+        {/* Overlay del scan - Animación futurista */}
+        {status === 'detecting' && (
+          <div className="absolute inset-0 pointer-events-none z-30">
+            <div className="absolute inset-0 bg-[#4285F4]/5 animate-pulse" />
+            <div className="absolute left-0 right-0 h-1 bg-[#4285F4]/80 shadow-[0_0_15px_#4285F4]"
+              style={{ animation: 'scanline 2s ease-in-out infinite', top: '50%' }} />
           </div>
         )}
 
@@ -216,9 +280,13 @@ export default function FaceCapture({
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
+      <div className={`flex items-center gap-3 px-6 py-3 rounded-full text-sm font-bold shadow-md transition-colors ${
+        status === 'error' ? 'bg-red-50 text-red-600' : 
+        status === 'detected' ? 'bg-green-50 text-[#34A853]' : 
+        isCentered && !continuousMode ? 'bg-blue-50 text-[#4285F4]' : 'bg-gray-100 text-gray-600'
+      }`}>
         {statusIcon()}
-        <span className={status === 'error' ? 'text-red-500' : status === 'detected' ? 'text-[#34A853]' : ''}>
+        <span>
           {status === 'error' ? message : status === 'detected' && continuousMode && detectedName
             ? `Identificado: ${detectedName}`
             : message}

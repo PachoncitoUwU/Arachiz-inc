@@ -1058,8 +1058,12 @@ export default function InstructorAsistencia() {
                         className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 animate-slide-in-right group ${estiloRow}`}
                         style={{ animationDelay: `${i * 40}ms` }}
                       >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-110 transition-transform ${estiloAvatar}`}>
-                          {(aprendiz.fullName || 'A').charAt(0).toUpperCase()}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-110 transition-transform ${estiloAvatar} overflow-hidden`}>
+                          {aprendiz.avatarUrl ? (
+                            <img src={aprendiz.avatarUrl} alt={aprendiz.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            (aprendiz.fullName || 'A').charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-semibold truncate ${estiloNombre}`}>
@@ -1362,9 +1366,11 @@ export default function InstructorAsistencia() {
                               isRegistering 
                                 ? 'bg-gradient-to-br from-green-400 to-emerald-500 animate-pulse-glow'
                                 : 'bg-gradient-to-br from-purple-400 to-pink-500 group-hover:scale-110'
-                            }`}>
+                            } overflow-hidden`}>
                               {isRegistering ? (
                                 <CheckCircle size={20} />
+                              ) : student.avatarUrl ? (
+                                <img src={student.avatarUrl} alt={student.fullName} className="w-full h-full object-cover" />
                               ) : (
                                 student.fullName.charAt(0).toUpperCase()
                               )}
