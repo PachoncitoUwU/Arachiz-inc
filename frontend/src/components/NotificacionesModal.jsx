@@ -132,7 +132,7 @@ export default function NotificacionesModal({ isOpen, onClose, fichaId, userRole
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
               <Bell size={20} className="text-blue-600 dark:text-blue-400" />
@@ -153,7 +153,7 @@ export default function NotificacionesModal({ isOpen, onClose, fichaId, userRole
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 ">
           {loading && notificaciones.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader size={32} className="text-blue-500 animate-spin mb-3" />

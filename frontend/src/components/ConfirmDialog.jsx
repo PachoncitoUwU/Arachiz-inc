@@ -7,7 +7,7 @@ export default function ConfirmDialog({ open, onClose, onConfirm, title, message
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in">
       <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-gray-800">
-        <div className="p-6">
+        <div className="p-4 md:p-6 ">
           <div className="flex items-start gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${danger ? 'bg-red-100 dark:bg-red-900/20' : 'bg-blue-100 dark:bg-blue-900/20'}`}>
               <AlertTriangle size={24} className={danger ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} />
@@ -21,7 +21,7 @@ export default function ConfirmDialog({ open, onClose, onConfirm, title, message
             </button>
           </div>
         </div>
-        <div className="flex gap-3 p-6 pt-0">
+        <div className="flex flex-wrap gap-3  p-4 md:p-6  pt-0">
           <button 
             onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">

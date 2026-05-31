@@ -324,7 +324,7 @@ export default function MateriaInfoModal({
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-wrap gap-3  pt-2">
               <button 
                 type="button" 
                 onClick={handleCancelEdit} 
@@ -418,7 +418,7 @@ export default function MateriaInfoModal({
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700">
                 {/* Botones para aprendices (evitar/volver a tomar materia) */}
                 {isAprendizView && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3 ">
                     {isMateriaEvitada ? (
                       <button 
                         onClick={handleVolverATomarMateria}
@@ -461,7 +461,7 @@ export default function MateriaInfoModal({
 
                 {/* Botones para instructores (tomar/dejar materia) */}
                 {!isAprendizView && currentUserId && !isAdmin && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3 ">
                     {!materia.instructor ? (
                       <button 
                         onClick={handleTakeMateria}
@@ -504,7 +504,7 @@ export default function MateriaInfoModal({
 
                 {/* Botones de edición/eliminación para creadores y admins */}
                 {isCreatorOrAdmin && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3 ">
                     <button 
                       onClick={handleEdit}
                       className="btn-secondary flex-1 flex items-center justify-center gap-2"

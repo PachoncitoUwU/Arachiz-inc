@@ -204,7 +204,7 @@ export default function QRScanner({ onClose, onSuccess }) {
         )}
 
         {/* Instructions */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6  bg-gradient-to-t from-black/80 to-transparent">
           <div className="bg-white dark:bg-zinc-800 /10 backdrop-blur-sm rounded-xl p-4">
             <p className="text-white text-sm text-center">
               Coloca el código QR dentro del marco
