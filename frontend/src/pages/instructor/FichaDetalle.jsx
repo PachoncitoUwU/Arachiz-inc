@@ -481,7 +481,7 @@ export default function FichaDetalle() {
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
               <button
                 onClick={togglePin}
                 className={`p-1.5 rounded-lg transition-all ${
@@ -577,7 +577,7 @@ export default function FichaDetalle() {
         {/* Información General (2 columnas) */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Información General</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">Información General</h2>
             {isLider && (
               <button onClick={handleOpenEdit} className="btn-icon text-gray-400 hover:bg-gray-100" title="Editar">
                 <Edit2 size={16} />
@@ -588,34 +588,34 @@ export default function FichaDetalle() {
           <div className="grid grid-cols-3 gap-3">
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Número</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.numero}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.numero}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Nivel</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nivel}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.nivel}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Jornada</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.jornada}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.jornada}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Programa</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-2">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Centro</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.centro}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.centro}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Duración</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                 {ficha.duracion ? `${ficha.duracion}m` : 'N/A'}
               </p>
             </div>
             {ficha.region && (
               <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Región</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.region}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.region}</p>
               </div>
             )}
           </div>
@@ -634,7 +634,7 @@ export default function FichaDetalle() {
                   <Bell size={20} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white  dark:text-white">
                     Notificaciones
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -707,7 +707,7 @@ export default function FichaDetalle() {
       {/* Tarjeta con pestañas: Aprendices y Materias */}
       <div className="card mb-6">
         {/* Tabs */}
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-4">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 mb-4">
           <div className="flex gap-1">
             <button
               onClick={() => {
@@ -799,7 +799,7 @@ export default function FichaDetalle() {
                   return (
                     <div 
                       key={aprendiz.id} 
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700 cursor-pointer"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-zinc-700  dark:border-gray-700 cursor-pointer"
                       onClick={() => handleOpenPerfil(aprendiz)}
                     >
                       {avatarSrc ? (
@@ -928,7 +928,7 @@ export default function FichaDetalle() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Administrador */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-4">
             Administrador
           </h3>
           {ficha.administrador ? (
@@ -949,7 +949,7 @@ export default function FichaDetalle() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                   {ficha.administrador.fullName}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ficha.administrador.email}</p>
@@ -965,7 +965,7 @@ export default function FichaDetalle() {
 
         {/* Instructores */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-4">
             Instructores ({ficha.instructores?.length || 0})
           </h3>
           {ficha.instructores?.length === 0 ? (
@@ -982,7 +982,7 @@ export default function FichaDetalle() {
                 return (
                   <div 
                     key={fi.id} 
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-zinc-700  dark:border-gray-700"
                   >
                     {avatarSrc ? (
                       <img 
@@ -1020,7 +1020,7 @@ export default function FichaDetalle() {
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
             <Clock size={20} className="text-[#FBBC05]" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">
               Horario Semanal
             </h3>
           </div>
@@ -1073,7 +1073,7 @@ export default function FichaDetalle() {
           
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Ficha</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
               {ficha.numero} - {ficha.nombre}
             </p>
           </div>

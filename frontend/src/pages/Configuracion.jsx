@@ -33,11 +33,11 @@ function ToggleSwitch({ checked, onChange, label, description }) {
 function Section({ icon: Icon, title, children, onTitleClick }) {
   return (
     <div className="card">
-      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-zinc-700 ">
         <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
           <Icon size={16} className="text-[#4285F4]"/>
         </div>
-        <h2 className="font-bold text-gray-900 cursor-default select-none" onClick={onTitleClick}>{title}</h2>
+        <h2 className="font-bold text-gray-900 dark:text-white  cursor-default select-none" onClick={onTitleClick}>{title}</h2>
       </div>
       {children}
     </div>

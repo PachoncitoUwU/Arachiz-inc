@@ -25,11 +25,11 @@ function ToggleSwitch({ checked, onChange, label, description }) {
 function Section({ icon: Icon, title, children }) {
   return (
     <div className="card dark:bg-gray-800 dark:border-gray-700">
-      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-700">
         <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
           <Icon size={16} className="text-[#4285F4]"/>
         </div>
-        <h2 className="font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+        <h2 className="font-bold text-gray-900 dark:text-white  dark:text-gray-100">{title}</h2>
       </div>
       {children}
     </div>
@@ -190,7 +190,7 @@ export default function ConfiguracionAdmin() {
           label={t('twoFactor')}
           description={t('twoFactorDesc')}
         />
-        <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="pt-3 mt-3 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('sessionManagement')}</p>
           <p className="text-xs text-gray-400 mb-3">{t('sessionManagementDesc')}</p>
           <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">

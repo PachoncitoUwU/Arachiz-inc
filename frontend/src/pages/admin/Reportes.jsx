@@ -250,7 +250,7 @@ export default function AdminReportes() {
                   <FileText className="text-red-600 dark:text-red-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{fichas.length}</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">{fichas.length}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Fichas Totales</div>
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default function AdminReportes() {
                   <Users className="text-green-600 dark:text-green-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {fichas.reduce((sum, f) => sum + (f._count?.aprendices || 0), 0)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Aprendices Totales</div>
@@ -276,7 +276,7 @@ export default function AdminReportes() {
                   <BookOpen className="text-purple-600 dark:text-purple-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {fichas.reduce((sum, f) => sum + (f._count?.materias || 0), 0)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Materias Totales</div>
@@ -300,8 +300,8 @@ export default function AdminReportes() {
             </div>
           ) : (
             <div className="card">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Reportes por Ficha</h3>
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100">Reportes por Ficha</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Descarga reportes individuales de cada ficha</p>
               </div>
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -309,7 +309,7 @@ export default function AdminReportes() {
                   <div key={ficha.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 dark:text-gray-100">Ficha {ficha.numero}</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white  dark:text-gray-100">Ficha {ficha.numero}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{ficha.nombre}</p>
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                           <span className="flex items-center gap-1">
@@ -361,8 +361,8 @@ export default function AdminReportes() {
             <>
               {/* Comparativa de Fichas */}
               <div className="card mb-5">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <BarChart3 size={20} />
                     Comparativa de Fichas por Asistencia
                   </h3>
@@ -375,7 +375,7 @@ export default function AdminReportes() {
                     <div className="space-y-4">
                       {estadisticas.comparativaFichas.map((ficha) => (
                         <div key={ficha.numero} className="flex items-center gap-4">
-                          <div className="w-24 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="w-24 text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                             Ficha {ficha.numero}
                           </div>
                           <div className="flex-1">
@@ -383,7 +383,7 @@ export default function AdminReportes() {
                               <span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">
                                 {ficha.nombre}
                               </span>
-                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                                 {ficha.porcentajeAsistencia}%
                               </span>
                             </div>
@@ -409,8 +409,8 @@ export default function AdminReportes() {
 
               {/* Tendencias de Asistencia */}
               <div className="card mb-5">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <TrendingUp size={20} />
                     Tendencias de Asistencia (Últimos 6 Meses)
                   </h3>
@@ -423,7 +423,7 @@ export default function AdminReportes() {
                     <div className="space-y-4">
                       {estadisticas.tendenciasAsistencia.map((mes, idx) => (
                         <div key={mes.mes} className="flex items-center gap-4">
-                          <div className="w-20 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="w-20 text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                             {mes.mes}
                           </div>
                           <div className="flex-1">
@@ -431,7 +431,7 @@ export default function AdminReportes() {
                               <span className="text-sm text-gray-600 dark:text-gray-400">
                                 {mes.totalAsistencias} asistencias promedio
                               </span>
-                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                                 {mes.porcentajeAsistencia}%
                               </span>
                             </div>
@@ -453,8 +453,8 @@ export default function AdminReportes() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
                 {/* Top Materias */}
                 <div className="card">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                       <BookOpen size={20} />
                       Top 5 Materias por Asistencia
                     </h3>
@@ -472,7 +472,7 @@ export default function AdminReportes() {
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                                 {materia.nombre}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -496,8 +496,8 @@ export default function AdminReportes() {
 
                 {/* Aprendices en Riesgo */}
                 <div className="card">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                       <Users size={20} />
                       Aprendices en Riesgo (&lt;70%)
                     </h3>
@@ -525,7 +525,7 @@ export default function AdminReportes() {
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                                 {aprendiz.nombre}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -547,15 +547,15 @@ export default function AdminReportes() {
 
               {/* Resumen de Fichas */}
               <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-6 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <FileText size={20} />
                     Resumen Detallado por Ficha
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                           Ficha
@@ -581,27 +581,27 @@ export default function AdminReportes() {
                       {estadisticas.fichasStats.map((ficha) => (
                         <tr key={ficha.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                           <td className="px-4 py-3">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                            <span className="font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.numero}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[200px] block">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100 truncate max-w-[200px] block">
                               {ficha.nombre}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalAprendices}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalMaterias}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalAsistencias}
                             </span>
                           </td>

@@ -140,7 +140,7 @@ function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, h
         isOver ? 'ring-2 ring-[#4285F4] ring-offset-1 bg-blue-50/50 dark:bg-blue-900/10' : ''
       } ${tieneConflicto ? 'border-2 border-red-400 dark:border-red-600' : ''}`}
     >
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
         <div className={`w-7 h-7 ${tieneConflicto ? 'bg-red-100 dark:bg-red-900/40' : 'bg-blue-50 dark:bg-blue-900/30'} rounded-lg flex items-center justify-center`}>
           {tieneConflicto ? (
             <AlertTriangle size={14} className="text-red-500" />
@@ -154,7 +154,7 @@ function DiaColumna({ dia, clases, onEdit, activeId, modoEditar, modoEliminar, h
 
       {/* Spinner de carga */}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-white dark:bg-zinc-800 /80 dark:bg-gray-900/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-3 border-[#4285F4] border-t-transparent rounded-full animate-spin" />
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Moviendo...</p>
@@ -600,7 +600,7 @@ export default function InstructorHorario() {
 
           <DragOverlay>
             {activeItem && (
-              <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-card border-2 border-blue-300 dark:border-blue-600 opacity-95 rotate-2">
+              <div className="p-3 bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-xl shadow-card border-2 border-blue-300 dark:border-blue-600 opacity-95 rotate-2">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
                   {activeItem.nombre || activeItem.materia?.nombre}
                 </p>
@@ -673,7 +673,7 @@ export default function InstructorHorario() {
           {materiaToAdd && (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Materia</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{materiaToAdd.nombre}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{materiaToAdd.nombre}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ficha {materiaToAdd.ficha?.numero} - {materiaToAdd.ficha?.nombre}</p>
             </div>
           )}

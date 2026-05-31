@@ -140,10 +140,10 @@ export default function AprendizMaterias() {
                     {evitada && <span className="badge badge-warning">Evitada</span>}
                   </div>
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">{m.nombre}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{m.nombre}</h3>
                 
                 {/* Información de la ficha */}
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-700">
                   <BookOpen size={12}/>
                   <span className="font-medium">Ficha {m.ficha?.numero}</span>
                   {m.ficha?.nombre && <span>· {m.ficha.nombre}</span>}
@@ -164,7 +164,7 @@ export default function AprendizMaterias() {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 mb-3">
+                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700 mb-3">
                   <div className="text-center">
                     <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{totalSesiones}</p>
                     <p className="text-xs text-gray-400">{t('subjects.sessions')}</p>

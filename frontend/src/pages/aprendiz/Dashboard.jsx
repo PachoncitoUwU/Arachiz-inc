@@ -11,7 +11,7 @@ import { useSettings } from '../../context/SettingsContext';
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-card border border-gray-100 px-3 py-2 text-xs">
+    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-xl shadow-card border border-gray-100 dark:border-zinc-700  px-3 py-2 text-xs">
       <p className="font-bold text-gray-700 dark:text-gray-200 mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
@@ -115,10 +115,10 @@ export default function AprendizDashboard() {
             <div className="card relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-[#4285F4]/10 to-[#34A853]/10 opacity-50"></div>
               <div className="relative z-10">
-                <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'myGroup')}</h2>
+                <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4">{t('dashboard', 'myGroup')}</h2>
                 
                 {ficha.instructores?.[0]?.instructor && (
-                  <div className="flex items-center gap-3 mb-4 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-3 mb-4 p-3 bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700  dark:border-gray-700">
                     {ficha.instructores[0].instructor.avatarUrl ? (
                       <img src={ficha.instructores[0].instructor.avatarUrl.startsWith('http') || ficha.instructores[0].instructor.avatarUrl.startsWith('data:') ? ficha.instructores[0].instructor.avatarUrl : `${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${ficha.instructores[0].instructor.avatarUrl}`} alt="Instructor" className="w-12 h-12 rounded-xl object-cover" />
                     ) : (
@@ -128,7 +128,7 @@ export default function AprendizDashboard() {
                     )}
                     <div>
                       <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('dashboard', 'leadInstructor')}</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.instructores[0].instructor.fullName}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.instructores[0].instructor.fullName}</p>
                     </div>
                   </div>
                 )}
@@ -151,7 +151,7 @@ export default function AprendizDashboard() {
 
             {/* Acciones rápidas */}
             <div className="card dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'quickActions')}</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4">{t('dashboard', 'quickActions')}</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { to: '/aprendiz/asistencia', icon: Clock,    label: t('dashboard', 'actionViewAttendances'),  color: 'bg-green-50 dark:bg-green-900/20 text-[#34A853]' },
@@ -160,7 +160,7 @@ export default function AprendizDashboard() {
                   { to: '/aprendiz/materias',   icon: BookOpen, label: t('dashboard', 'actionMySubjects'),         color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-500' },
                 ].map(({ to, icon: Icon, label, color }) => (
                   <Link key={to} to={to}
-                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-soft hover:-translate-y-0.5 transition-all">
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 dark:border-zinc-700  dark:border-gray-800 hover:shadow-soft hover:-translate-y-0.5 transition-all">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
                       <Icon size={20}/>
                     </div>
@@ -174,7 +174,7 @@ export default function AprendizDashboard() {
           {/* Gráfica de asistencia por materia */}
           {chartData.length > 0 && (
             <div className="card dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4">{t('dashboard', 'attendanceBySubject')}</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4">{t('dashboard', 'attendanceBySubject')}</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -192,7 +192,7 @@ export default function AprendizDashboard() {
           {historial.length > 0 && (
             <div className="card dark:bg-gray-900 dark:border-gray-800">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-gray-900 dark:text-white">{t('dashboard', 'recentAttendances')}</h2>
+                <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white">{t('dashboard', 'recentAttendances')}</h2>
                 <Link to="/aprendiz/asistencia" className="text-xs text-[#4285F4] hover:underline flex items-center gap-1">
                   {t('dashboard', 'viewHistory')} <ArrowRight size={12}/>
                 </Link>

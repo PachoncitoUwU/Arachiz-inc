@@ -392,7 +392,7 @@ export default function InstructorExcusas() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-bold text-gray-900">{excusa.aprendiz.fullName}</span>
+                      <span className="font-bold text-gray-900 dark:text-white ">{excusa.aprendiz.fullName}</span>
                       <span className="text-gray-400 text-xs">{excusa.aprendiz.document}</span>
                       <span className={badge}><Icon size={12}/> {excusa.estado}</span>
                     </div>
@@ -430,7 +430,7 @@ export default function InstructorExcusas() {
               <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-lg font-bold text-gray-900">{selected.aprendiz.fullName}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white ">{selected.aprendiz.fullName}</p>
                     <p className="text-sm text-gray-600 mt-0.5">Documento: {selected.aprendiz.document}</p>
                   </div>
                   {(() => { 
@@ -444,11 +444,11 @@ export default function InstructorExcusas() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 font-medium mb-1">Materia</p>
-                  <p className="text-sm font-semibold text-gray-900">{selected.materia.nombre}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white ">{selected.materia.nombre}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 font-medium mb-1">Ficha</p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white ">
                     {selected.materia.ficha.numero} - {selected.materia.ficha.nombre}
                   </p>
                 </div>
@@ -467,7 +467,7 @@ export default function InstructorExcusas() {
               </div>
 
               {/* Motivo */}
-              <div className="p-4 bg-white border-2 border-gray-200 rounded-lg">
+              <div className="p-4 bg-white dark:bg-zinc-800  border-2 border-gray-200 dark:border-zinc-700  rounded-lg">
                 <p className="text-xs text-gray-500 font-medium mb-2">Motivo de la excusa:</p>
                 <p className="text-sm text-gray-800 leading-relaxed">{selected.motivo}</p>
               </div>
@@ -606,7 +606,7 @@ export default function InstructorExcusas() {
             {/* Columna derecha: Calendario */}
             <div className="lg:block hidden">
               <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 sticky top-4">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                   <Calendar size={16}/> Fechas de Falta
                 </h3>
                 {(() => {
@@ -637,8 +637,8 @@ export default function InstructorExcusas() {
                         const nombreMes = nombresMeses[parseInt(mes) - 1];
                         
                         return (
-                          <div key={mesAño} className="bg-white rounded-lg p-3">
-                            <p className="font-bold text-gray-900 mb-2">{nombreMes} {año}</p>
+                          <div key={mesAño} className="bg-white dark:bg-zinc-800  rounded-lg p-3">
+                            <p className="font-bold text-gray-900 dark:text-white  mb-2">{nombreMes} {año}</p>
                             <div className="space-y-1">
                               {fechas.map((fecha, i) => {
                                 const date = new Date(fecha + 'T00:00:00');
@@ -651,7 +651,7 @@ export default function InstructorExcusas() {
                                       {dia}
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-sm font-medium text-gray-900">{diaSemana}</p>
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white ">{diaSemana}</p>
                                       <p className="text-xs text-gray-500">{date.toLocaleDateString('es-CO')}</p>
                                     </div>
                                   </div>
@@ -662,7 +662,7 @@ export default function InstructorExcusas() {
                         );
                       })}
                       
-                      <div className="p-2 bg-white rounded-lg">
+                      <div className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
                         <p className="text-xs text-gray-600 flex items-center gap-2">
                           <span className="w-3 h-3 bg-red-500 rounded"></span>
                           Total: {fechasExcusa.length} día{fechasExcusa.length !== 1 ? 's' : ''} de falta
@@ -804,7 +804,7 @@ export default function InstructorExcusas() {
           </div>
 
           {/* Botones de acción */}
-          <div className="pt-4 border-t border-gray-200 space-y-3">
+          <div className="pt-4 border-t border-gray-200 dark:border-zinc-700  space-y-3">
             <div className="flex gap-3">
               <button 
                 onClick={intentarCerrarModal} 

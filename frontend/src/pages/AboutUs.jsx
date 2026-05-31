@@ -190,7 +190,7 @@ export default function AboutUs() {
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-50">
         <Link 
           to="/" 
-          className="px-3 py-2 md:px-4 md:py-2.5 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-sm hover:shadow-lg transition-all active:scale-95 border border-gray-200 dark:border-zinc-700 flex items-center gap-2"
+          className="px-3 py-2 md:px-4 md:py-2.5 bg-white dark:bg-zinc-800  dark:bg-zinc-800 text-gray-800 dark:text-white rounded-lg md:rounded-xl font-semibold text-sm hover:shadow-lg transition-all active:scale-95 border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 flex items-center gap-2"
         >
           <ArrowLeft size={16} className="md:w-[18px] md:h-[18px]" />
           <span className="hidden sm:inline">Volver</span>
@@ -216,7 +216,7 @@ export default function AboutUs() {
                 className="h-12 sm:h-14 md:h-16 lg:h-20 object-contain dark:invert transition-all duration-300" 
               />
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight px-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white  dark:text-white leading-tight px-4">
               Sobre <span className="text-[#4285F4]">Nosotros</span>
             </h1>
           </motion.div>
@@ -224,19 +224,19 @@ export default function AboutUs() {
           {/* ¿Qué es Arachiz? */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                 <Target className="text-[#4285F4]" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
                 ¿Qué es Arachiz?
               </h2>
             </div>
             <div className="space-y-3 md:space-y-4 text-gray-600 dark:text-gray-300 text-base md:text-lg leading-relaxed">
               <p>
-                <strong className="text-gray-900 dark:text-white">Arachiz</strong> es una plataforma integral diseñada para revolucionar la gestión de asistencia en instituciones educativas. Nuestro software combina tecnología de vanguardia con una interfaz intuitiva para facilitar el control y seguimiento de la asistencia de estudiantes e instructores.
+                <strong className="text-gray-900 dark:text-white  dark:text-white">Arachiz</strong> es una plataforma integral diseñada para revolucionar la gestión de asistencia en instituciones educativas. Nuestro software combina tecnología de vanguardia con una interfaz intuitiva para facilitar el control y seguimiento de la asistencia de estudiantes e instructores.
               </p>
               <p>
                 Nos enfocamos en proporcionar múltiples métodos de registro de asistencia, incluyendo reconocimiento facial, códigos QR y huella digital, garantizando flexibilidad y seguridad en cada interacción.
@@ -247,19 +247,19 @@ export default function AboutUs() {
           {/* Enfoque del Software */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
                 <Code className="text-[#34A853]" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
                 Nuestro Enfoque
               </h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-2 md:space-y-3">
-                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white  dark:text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#4285F4]"></span>
                   Eficiencia
                 </h3>
@@ -268,7 +268,7 @@ export default function AboutUs() {
                 </p>
               </div>
               <div className="space-y-2 md:space-y-3">
-                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white  dark:text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#34A853]"></span>
                   Seguridad
                 </h3>
@@ -277,7 +277,7 @@ export default function AboutUs() {
                 </p>
               </div>
               <div className="space-y-2 md:space-y-3">
-                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white  dark:text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#EA4335]"></span>
                   Accesibilidad
                 </h3>
@@ -286,7 +286,7 @@ export default function AboutUs() {
                 </p>
               </div>
               <div className="space-y-2 md:space-y-3">
-                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white  dark:text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#FBBC05]"></span>
                   Innovación
                 </h3>
@@ -300,13 +300,13 @@ export default function AboutUs() {
           {/* Colaboradores */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
                 <Users className="text-purple-500" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
                 Colaboradores y Creadores
               </h2>
             </div>
@@ -334,7 +334,7 @@ export default function AboutUs() {
                       <colaborador.icon className={colaborador.color} size={24} strokeWidth={2} />
                     </div>
                     <div>
-                      <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-1">
+                      <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-1">
                         {colaborador.nombre}
                       </h3>
                       <p className={`text-xs md:text-sm font-semibold ${colaborador.color}`}>
@@ -355,7 +355,7 @@ export default function AboutUs() {
                     style={{ pointerEvents: hoveredCard === index ? 'auto' : 'none' }}
                   >
                     <div className="text-center space-y-3 md:space-y-4">
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white shadow-lg mx-auto">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white dark:bg-zinc-800 /20 backdrop-blur-sm flex items-center justify-center border-2 border-white shadow-lg mx-auto">
                         <Instagram className="text-white" size={24} strokeWidth={2} />
                       </div>
                       <div className="text-white space-y-1 md:space-y-2">
@@ -366,7 +366,7 @@ export default function AboutUs() {
                         href={colaborador.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-white text-gray-900 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-gray-100 transition-all active:scale-95 shadow-lg"
+                        className="inline-flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-white dark:bg-zinc-800  text-gray-900 dark:text-white  rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-gray-100 transition-all active:scale-95 shadow-lg"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Instagram size={18} />
@@ -405,7 +405,7 @@ export default function AboutUs() {
                   <Coffee className="text-white" size={28} strokeWidth={2.5} />
                 </motion.div>
                 
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-3 md:mb-4 px-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white  dark:text-white mb-3 md:mb-4 px-4">
                   ¿Te gusta <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500">Arachiz</span>?
                 </h2>
                 <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
@@ -415,31 +415,31 @@ export default function AboutUs() {
 
               {/* Beneficios de donar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-orange-200 dark:border-orange-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-orange-200 dark:border-orange-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Sparkles className="text-white" size={20} />
                   </div>
-                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white text-center mb-1 md:mb-2">Nuevas Funciones</h3>
+                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white  dark:text-white text-center mb-1 md:mb-2">Nuevas Funciones</h3>
                   <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 text-center">
                     Ayúdanos a desarrollar características innovadoras
                   </p>
                 </div>
                 
-                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-pink-200 dark:border-pink-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-pink-200 dark:border-pink-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Heart className="text-white" size={20} />
                   </div>
-                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white text-center mb-1 md:mb-2">Soporte Continuo</h3>
+                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white  dark:text-white text-center mb-1 md:mb-2">Soporte Continuo</h3>
                   <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 text-center">
                     Mantén la plataforma activa y funcionando
                   </p>
                 </div>
                 
-                <div className="bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200 dark:border-purple-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200 dark:border-purple-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Code className="text-white" size={20} />
                   </div>
-                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white text-center mb-1 md:mb-2">Mejoras Técnicas</h3>
+                  <h3 className="font-bold text-sm md:text-base text-gray-900 dark:text-white  dark:text-white text-center mb-1 md:mb-2">Mejoras Técnicas</h3>
                   <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 text-center">
                     Optimización y corrección de errores
                   </p>
@@ -470,12 +470,12 @@ export default function AboutUs() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Coffee size={28} className="text-amber-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Invítanos un café ☕</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">Invítanos un café ☕</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Vía Wompi</p>
             </div>
 
@@ -559,12 +559,12 @@ export default function AboutUs() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🎉</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">¿Confirmas la donación?</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">¿Confirmas la donación?</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
             </div>
 
@@ -575,9 +575,9 @@ export default function AboutUs() {
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
-              <div className="border-t border-gray-200 dark:border-zinc-600 pt-3 flex justify-between items-center">
+              <div className="border-t border-gray-200 dark:border-zinc-700  dark:border-zinc-600 pt-3 flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Método de pago</span>
-                <span className="font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-600 border border-gray-200 dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
+                <span className="font-semibold text-gray-900 dark:text-white  dark:text-white bg-white dark:bg-zinc-800  dark:bg-zinc-600 border border-gray-200 dark:border-zinc-700  dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
                   Wompi
                 </span>
               </div>
