@@ -255,7 +255,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
       <Modal open={open} onClose={handleClose} title="Mi Perfil">
       <div className="space-y-6">
         {/* Avatar y nombre */}
-        <div className="flex flex-col items-center gap-4 pb-6 border-b border-gray-100">
+        <div className="flex flex-col items-center gap-4 pb-6 border-b border-gray-100 dark:border-zinc-700 ">
           <div className="relative">
             {avatarSrc ? (
               <img 
@@ -303,7 +303,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
             <>
               <div className="text-center">
                 <h3 
-                  className="text-xl font-bold text-gray-900 cursor-default select-none" 
+                  className="text-xl font-bold text-gray-900 dark:text-white  cursor-default select-none" 
                   onClick={handleNameClick}
                 >
                   {user.fullName}
@@ -351,7 +351,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nombre completo</p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5">{user.fullName}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white  mt-0.5">{user.fullName}</p>
               </div>
             </div>
 
@@ -361,7 +361,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Correo electrónico</p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5 break-all">{user.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white  mt-0.5 break-all">{user.email}</p>
               </div>
             </div>
 
@@ -371,7 +371,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Documento</p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5">{user.document}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white  mt-0.5">{user.document}</p>
               </div>
             </div>
           </div>
@@ -385,7 +385,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-zinc-700  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
                 placeholder="Tu nombre completo"
               />
             </div>
@@ -398,7 +398,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
                 type="email"
                 value={user.email}
                 disabled
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-zinc-700  rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
               />
               <p className="text-xs text-gray-400 mt-1">El correo no puede modificarse</p>
             </div>
@@ -411,7 +411,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
                 type="text"
                 value={document}
                 onChange={(e) => setDocument(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-zinc-700  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
                 placeholder="Tu número de documento"
               />
             </div>
@@ -419,7 +419,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
         )}
 
         {/* Botones de acción */}
-        <div className="flex gap-3 pt-4 border-t border-gray-100">
+        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-zinc-700 ">
           {!isEditing ? (
             <>
               <button
@@ -430,7 +430,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
               </button>
               <button
                 onClick={onClose}
-                className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                className="px-6 py-2.5 border border-gray-200 dark:border-zinc-700  text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
               >
                 Cerrar
               </button>
@@ -457,7 +457,7 @@ export default function PerfilPropioModal({ open, onClose, user, onUpdate }) {
               <button
                 onClick={handleCancel}
                 disabled={saving}
-                className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 border border-gray-200 dark:border-zinc-700  text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>

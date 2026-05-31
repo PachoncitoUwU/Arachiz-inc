@@ -105,14 +105,14 @@ export default function AttendanceDemo() {
     
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className={`w-12 h-12 rounded-xl ${scenario.color} flex items-center justify-center`}>
               <Icon size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">
                 {scenario.name}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -142,7 +142,7 @@ export default function AttendanceDemo() {
                 <span className="text-white font-bold text-sm">{demoStep + 1}</span>
               </div>
               <div>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className="text-gray-900 dark:text-white  dark:text-white font-medium">
                   {scenario.steps[demoStep]}
                 </p>
                 
@@ -166,7 +166,7 @@ export default function AttendanceDemo() {
 
           {/* All Steps Preview */}
           <div className="mb-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">
+            <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white mb-3 text-sm">
               Flujo Completo:
             </h3>
             <div className="space-y-2">
@@ -219,12 +219,12 @@ export default function AttendanceDemo() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-6">
       <div className="text-center mb-6">
         <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Zap size={32} className="text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mb-2">
           Sistema de Asistencia Inteligente
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
@@ -239,14 +239,14 @@ export default function AttendanceDemo() {
             <button
               key={scenario.id}
               onClick={() => startDemo(scenario.id)}
-              className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-left group"
+              className="p-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-left group"
             >
               <div className="flex items-start gap-3">
                 <div className={`w-10 h-10 rounded-lg ${scenario.color} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={20} className="text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-white  dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-1">
                     {scenario.name}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">

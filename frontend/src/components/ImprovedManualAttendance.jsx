@@ -188,7 +188,7 @@ export default function ImprovedManualAttendance({
         <button
           onClick={() => handleRegister(aprendiz)}
           disabled={isRegistering}
-          className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left bg-white dark:bg-gray-800"
+          className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left bg-white dark:bg-zinc-800  dark:bg-gray-800"
         >
           {/* Avatar */}
           <div className="relative">
@@ -214,7 +214,7 @@ export default function ImprovedManualAttendance({
           
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-white truncate text-sm sm:text-base">
+            <p className="font-semibold text-gray-900 dark:text-white  dark:text-white truncate text-sm sm:text-base">
               {aprendiz.fullName}
             </p>
             <p className="text-xs sm:text-sm text-gray-500 truncate">{aprendiz.email}</p>
@@ -263,7 +263,7 @@ export default function ImprovedManualAttendance({
         
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 dark:text-white truncate text-sm">
+          <p className="font-medium text-gray-900 dark:text-white  dark:text-white truncate text-sm">
             {aprendiz.fullName}
           </p>
           <p className="text-xs text-gray-500 truncate">{aprendiz.email}</p>
@@ -288,15 +288,15 @@ export default function ImprovedManualAttendance({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-scale-in">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
               <UserCheck size={16} className="text-white sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg truncate">Registro Manual Mejorado</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-base sm:text-lg truncate">Registro Manual Mejorado</h2>
               <p className="text-xs text-gray-400">
                 {availableAprendices.length} pendientes • {selectedIds.size} seleccionados
               </p>
@@ -308,7 +308,7 @@ export default function ImprovedManualAttendance({
         </div>
 
         {/* Controls */}
-        <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
+        <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800 space-y-3">
           {/* Search and filters */}
           <div className="flex flex-col gap-3">
             <div className="relative flex-1">
@@ -325,7 +325,7 @@ export default function ImprovedManualAttendance({
             
             <div className="flex items-center justify-between">
               {/* View mode toggle */}
-              <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="flex rounded-lg border border-gray-200 dark:border-zinc-700  dark:border-gray-700 overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 transition-colors ${
@@ -438,7 +438,7 @@ export default function ImprovedManualAttendance({
         </div>
 
         {/* Footer */}
-        <div className="p-3 sm:p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="p-3 sm:p-4 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-between text-xs sm:text-sm">
             <div className="text-gray-500">
               <span className="font-medium">{availableAprendices.length}</span> pendientes • 
