@@ -40,10 +40,10 @@ export default function InstructorDashboard() {
     <div className="space-y-6 animate-fade-in-up">
       {/* Welcome */}
       <div className="card-hover bg-gradient-to-r from-[#4285F4] via-blue-500 to-blue-600 text-white border-0 shadow-glow-blue animate-slide-in-left overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white dark:bg-zinc-800 /10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative z-10">
           <p className="text-blue-100 text-sm font-medium animate-fade-in">{t('dashboard', 'welcome')}</p>
-          <h1 className="text-3xl font-bold mt-1 animate-slide-in-left" style={{ animationDelay: '100ms' }}>{user?.fullName || user?.email}</h1>
+          <h1 className="text-2xl md:text-3xl  font-bold mt-1 animate-slide-in-left" style={{ animationDelay: '100ms' }}>{user?.fullName || user?.email}</h1>
           <p className="text-blue-100 text-sm mt-2 animate-fade-in" style={{ animationDelay: '200ms' }}>{t('dashboard', 'instructor')} · {new Date().toLocaleDateString(settings.language === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function InstructorDashboard() {
       <ConflictosAlert userType={user?.userType} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
         <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <StatCard icon={<Users size={22}/>}    label={t('dashboard', 'activeGroups')}   value={fichas.length}        color="blue" />
         </div>
@@ -71,7 +71,7 @@ export default function InstructorDashboard() {
         {/* Fichas */}
         <div className="card-hover animate-slide-in-left" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">{t('dashboard', 'myGroups')}</h2>
+            <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-lg">{t('dashboard', 'myGroups')}</h2>
             <Link to="/instructor/fichas" className="text-xs text-[#4285F4] hover:text-blue-600 hover:underline flex items-center gap-1 transition-all">
               {t('dashboard', 'seeAll')} <ArrowRight size={12} className="animate-bounce-x"/>
             </Link>
@@ -100,8 +100,8 @@ export default function InstructorDashboard() {
 
         {/* Acciones rápidas */}
         <div className="card-hover animate-slide-in-right" style={{ animationDelay: '500ms' }}>
-          <h2 className="font-bold text-gray-900 dark:text-white mb-4 text-lg">{t('dashboard', 'quickActions')}</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4 text-lg">{t('dashboard', 'quickActions')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             {[
               { to: '/instructor/fichas',     icon: Plus,     label: t('dashboard', 'actionNewGroup'),      color: 'bg-blue-50 text-[#4285F4] dark:bg-blue-900/20', hoverColor: 'hover:bg-blue-100 dark:hover:bg-blue-900/30' },
               { to: '/instructor/asistencia', icon: Clock,    label: t('dashboard', 'actionStartSession'),   color: 'bg-green-50 text-[#34A853] dark:bg-green-900/20', hoverColor: 'hover:bg-green-100 dark:hover:bg-green-900/30' },
@@ -128,14 +128,14 @@ export default function InstructorDashboard() {
       {materias.length > 0 && (
         <div className="card-hover animate-fade-in-up" style={{ animationDelay: '600ms' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">{t('dashboard', 'mySubjects')}</h2>
+            <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-lg">{t('dashboard', 'mySubjects')}</h2>
             <Link to="/instructor/materias" className="text-xs text-[#4285F4] hover:text-blue-600 hover:underline flex items-center gap-1 transition-all">
               {t('dashboard', 'seeAll')} <ArrowRight size={12} className="animate-bounce-x"/>
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {materias.slice(0, 6).map((m, idx) => (
-              <div key={m.id} className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-scale-in group hover:border-blue-200 dark:hover:border-blue-700" style={{ animationDelay: `${idx * 100}ms` }}>
+              <div key={m.id} className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-scale-in group hover:border-blue-200 dark:hover:border-blue-700" style={{ animationDelay: `${idx * 100}ms` }}>
                 <p className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate group-hover:text-[#4285F4] transition-colors">{m.nombre}</p>
                 <p className="text-xs text-gray-400 mt-1">{t('dashboard', 'groupPrefix')} {m.ficha?.numero}</p>
                 <span className={`badge mt-2 ${m.tipo === 'Técnica' ? 'badge-info' : 'badge-gray'} animate-fade-in`}>{m.tipo}</span>

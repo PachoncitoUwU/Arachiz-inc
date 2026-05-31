@@ -135,7 +135,7 @@ export default function AdminPapelera() {
       />
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-card p-4">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter size={20} className="text-gray-500" />
@@ -167,10 +167,10 @@ export default function AdminPapelera() {
           }
         />
       ) : (
-        <div className="bg-white rounded-xl shadow-card overflow-hidden">
+        <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 dark:border-zinc-700 ">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombre</th>
@@ -188,7 +188,7 @@ export default function AdminPapelera() {
                         {getTipoLabel(item.tipoElemento)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900">
+                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white ">
                       {getNombreElemento(item)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
@@ -232,13 +232,13 @@ export default function AdminPapelera() {
       {/* Modal de confirmación de eliminación permanente */}
       {showDeleteModal && selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-xl max-w-md w-full p-4 md:p-6 ">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <AlertTriangle className="text-red-600" size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Eliminar Permanentemente</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white ">Eliminar Permanentemente</h3>
                 <p className="text-sm text-gray-500">Esta acción no se puede deshacer</p>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function AdminPapelera() {
               </p>
             </div>
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex flex-wrap gap-2  justify-end">
               <button
                 onClick={() => {
                   setShowDeleteModal(false);

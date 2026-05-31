@@ -117,7 +117,7 @@ export default function MateriasEvitadasModal({
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Configurando materias para
             </p>
-            <p className="text-base font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-base font-bold text-gray-900 dark:text-white  dark:text-gray-100">
               {aprendiz.fullName}
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function MateriasEvitadasModal({
           )}
 
           {/* Botones */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3  pt-2">
             <button 
               type="button" 
               onClick={handleClose} 

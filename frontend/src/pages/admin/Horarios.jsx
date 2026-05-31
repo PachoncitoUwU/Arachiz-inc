@@ -476,7 +476,7 @@ export default function AdminHorarios() {
 
       {/* Toggle entre Ficha e Instructor */}
       <div className="card mb-5">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => {
               setViewMode('ficha');
@@ -598,7 +598,7 @@ export default function AdminHorarios() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                         Ficha {ficha.numero}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{ficha.nombre}</p>
@@ -607,7 +607,7 @@ export default function AdminHorarios() {
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2 mt-3">
                     <div className="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <p className="text-base font-bold text-gray-800 dark:text-gray-200">
                         {ficha._count?.instructores || 0}
@@ -654,7 +654,7 @@ export default function AdminHorarios() {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                         {instructor.fullName}
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{instructor.email}</p>
@@ -690,14 +690,14 @@ export default function AdminHorarios() {
           <div className="card mb-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 mb-1">
                   {selectedFicha ? `Ficha ${selectedFicha.numero} - ${selectedFicha.nombre}` : selectedInstructor?.fullName}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedFicha ? `${selectedFicha.nivel} · ${selectedFicha.jornada}` : selectedInstructor?.email}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 ">
                 <button
                   onClick={() => {
                     setSelectedFicha(null);
@@ -707,7 +707,7 @@ export default function AdminHorarios() {
                     setModoEliminar(false);
                     setConflictos([]);
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm md:text-base "
                 >
                   Volver
                 </button>
@@ -747,7 +747,7 @@ export default function AdminHorarios() {
                     {modoEliminar && horariosSeleccionados.length > 0 && (
                       <button
                         onClick={handleEliminarSeleccionados}
-                        className="btn-primary bg-red-500 hover:bg-red-600 flex items-center gap-2"
+                        className="btn-primary text-sm md:text-base  bg-red-500 hover:bg-red-600 flex items-center gap-2"
                       >
                         <Trash2 size={16} />
                         Enviar a Papelera ({horariosSeleccionados.length})
@@ -758,7 +758,7 @@ export default function AdminHorarios() {
                 
                 <button
                   onClick={handleOpenCrearMateria}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary text-sm md:text-base  flex items-center gap-2"
                 >
                   <Plus size={16} />
                   Crear Materia
@@ -766,7 +766,7 @@ export default function AdminHorarios() {
                 
                 <button
                   onClick={handleOpenAgregarMateria}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-secondary text-sm md:text-base  flex items-center gap-2"
                 >
                   <Plus size={16} />
                   Agregar Existente
@@ -788,7 +788,7 @@ export default function AdminHorarios() {
                   </h3>
                   <div className="space-y-2">
                     {conflictos.map(c => (
-                      <div key={c.id} className="p-2 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800">
+                      <div key={c.id} className="p-2 bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800">
                         <div className="flex items-center gap-2 text-xs font-semibold text-red-800 dark:text-red-200">
                           <Calendar size={14} />
                           <span>{c.dia}</span>
@@ -823,7 +823,7 @@ export default function AdminHorarios() {
               </div>
               
               {/* Skeleton del calendario */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 {DIAS.map((dia) => (
                   <div key={dia} className="card animate-pulse">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-3" />
@@ -848,23 +848,23 @@ export default function AdminHorarios() {
               />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
               {horariosPorDia.map(({ dia, clases }) => (
-                <div key={dia} className="card dark:bg-gray-900 dark:border-gray-800 min-h-[160px]">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                <div key={dia} className="card dark:bg-zinc-900 dark:border-zinc-800 min-h-[160px]">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-zinc-700">
                     <div className="w-7 h-7 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                       <Calendar size={14} className="text-[#EA4335]" />
                     </div>
                     <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{dia}</span>
-                    <span className="ml-auto badge badge-gray">{clases.length}</span>
+                    <span className="ml-auto badge badge-gray text-xs">{clases.length}</span>
                   </div>
 
                   {clases.length === 0 ? (
-                    <div className="flex items-center justify-center h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-center h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700">
                       <p className="text-xs text-gray-400">Sin clases</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
                       {clases.map((c) => {
                         const color = COLORES[getColorForMateria(c.materiaId || c.materia?.id || c.materia?.nombre)];
                         const isSelected = horariosSeleccionados.includes(c.id);
@@ -904,7 +904,7 @@ export default function AdminHorarios() {
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                                   isSelected 
                                     ? 'bg-red-500 border-red-500' 
-                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800'
                                 }`}>
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
@@ -935,7 +935,7 @@ export default function AdminHorarios() {
             <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
               Materia
             </p>
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
               {horarios.find(h => h.id === formEdit.id)?.materia?.nombre}
             </p>
           </div>
@@ -953,7 +953,7 @@ export default function AdminHorarios() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Hora Inicio</label>
               <input
@@ -982,11 +982,11 @@ export default function AdminHorarios() {
             </p>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
               {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
@@ -1055,7 +1055,7 @@ export default function AdminHorarios() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                   Instructor a Cargo
                 </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                   {selectedInstructor?.fullName}
                 </p>
               </div>
@@ -1090,7 +1090,7 @@ export default function AdminHorarios() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Hora Inicio</label>
               <input
@@ -1113,11 +1113,11 @@ export default function AdminHorarios() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={handleCloseCrearMateria} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={handleCloseCrearMateria} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
               {saving ? 'Creando...' : 'Crear Materia'}
             </button>
           </div>
@@ -1166,7 +1166,7 @@ export default function AdminHorarios() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Hora Inicio</label>
               <input
@@ -1189,11 +1189,11 @@ export default function AdminHorarios() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={handleCloseAgregarMateria} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={handleCloseAgregarMateria} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
               {saving ? 'Agregando...' : 'Agregar al Horario'}
             </button>
           </div>

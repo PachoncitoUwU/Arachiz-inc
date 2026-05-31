@@ -82,7 +82,7 @@ export default function Compañeros() {
               className="input-field pl-10 w-full"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 ">
             <button
               onClick={() => setViewMode('grid')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -130,15 +130,15 @@ export default function Compañeros() {
                         : `${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${compañero.avatarUrl}`
                     }
                     alt={compañero.fullName}
-                    className="w-20 h-20 rounded-full object-cover mb-3 border-4 border-gray-100 group-hover:border-[#4285F4] transition-all"
+                    className="w-20 h-20 rounded-full object-cover mb-3 border-4 border-gray-100 dark:border-zinc-700  group-hover:border-[#4285F4] transition-all"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4285F4] to-[#34A853] flex items-center justify-center text-white font-bold text-2xl mb-3 group-hover:scale-110 transition-transform">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4285F4] to-[#34A853] flex items-center justify-center text-white font-bold text-xl md:text-2xl  mb-3 group-hover:scale-110 transition-transform">
                     {compañero.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                   </div>
                 )}
                 
-                <h3 className="font-bold text-gray-900 mb-1 group-hover:text-[#4285F4] transition-colors">
+                <h3 className="font-bold text-gray-900 dark:text-white  mb-1 group-hover:text-[#4285F4] transition-colors">
                   {compañero.fullName}
                 </h3>
                 
@@ -147,7 +147,7 @@ export default function Compañeros() {
                   <span>Ficha {compañero.fichaNumero}</span>
                 </div>
 
-                <div className="w-full space-y-2 mt-3 pt-3 border-t border-gray-100">
+                <div className="w-full space-y-2 mt-3 pt-3 border-t border-gray-100 dark:border-zinc-700 ">
                   <div className="flex items-center gap-2 text-xs text-gray-600">
                     <Mail size={12} className="text-gray-400 flex-shrink-0" />
                     <span className="truncate">{compañero.email}</span>
@@ -177,7 +177,7 @@ export default function Compañeros() {
                         : `${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}${compañero.avatarUrl}`
                     }
                     alt={compañero.fullName}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 group-hover:border-[#4285F4] transition-all flex-shrink-0"
+                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 dark:border-zinc-700  group-hover:border-[#4285F4] transition-all flex-shrink-0"
                   />
                 ) : (
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#4285F4] to-[#34A853] flex items-center justify-center text-white font-bold text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -186,7 +186,7 @@ export default function Compañeros() {
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 group-hover:text-[#4285F4] transition-colors">
+                  <h3 className="font-bold text-gray-900 dark:text-white  group-hover:text-[#4285F4] transition-colors">
                     {compañero.fullName}
                   </h3>
                   <div className="flex flex-wrap gap-3 mt-1">

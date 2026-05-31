@@ -292,14 +292,14 @@ export default function AprendizExcusas() {
         subtitle="Justifica tus inasistencias y consulta el estado de tus excusas"
         action={
           <button onClick={() => { setModalNueva(true); setErrorModal(''); setForm({ fechas: [''], motivo: '', materiaId: '' }); setArchivos([]); }} 
-            className="btn-primary flex items-center gap-2">
+            className="btn-primary text-sm md:text-base  flex items-center gap-2">
             <Send size={16}/> Nueva Excusa
           </button>
         }
       />
 
       {/* Resumen */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-4 gap-3">
         {[
           { label: 'Total', value: counts.total, cls: 'bg-gray-50 text-gray-700' },
           { label: 'Pendientes', value: counts.pendientes, cls: 'bg-yellow-50 text-yellow-700' },
@@ -307,7 +307,7 @@ export default function AprendizExcusas() {
           { label: 'Rechazadas', value: counts.rechazadas, cls: 'bg-red-50 text-[#EA4335]' },
         ].map(s => (
           <div key={s.label} className={`card-sm text-center ${s.cls}`}>
-            <p className="text-2xl font-bold">{s.value}</p>
+            <p className="text-xl md:text-2xl  font-bold">{s.value}</p>
             <p className="text-xs font-medium mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -346,7 +346,7 @@ export default function AprendizExcusas() {
           </div>
         </div>
         <div className="mt-3">
-          <button onClick={limpiarFiltros} className="btn-secondary">
+          <button onClick={limpiarFiltros} className="btn-secondary text-sm md:text-base ">
             Limpiar Filtros
           </button>
         </div>
@@ -363,7 +363,7 @@ export default function AprendizExcusas() {
             icon={<FileText size={32}/>}
             title="Sin excusas"
             description="No has enviado ninguna excusa aún"
-            action={<button onClick={() => setModalNueva(true)} className="btn-primary">Enviar Excusa</button>}
+            action={<button onClick={() => setModalNueva(true)} className="btn-primary text-sm md:text-base ">Enviar Excusa</button>}
           />
         </div>
       ) : (
@@ -378,7 +378,7 @@ export default function AprendizExcusas() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-bold text-gray-900">{excusa.materia.nombre}</span>
+                      <span className="font-bold text-gray-900 dark:text-white ">{excusa.materia.nombre}</span>
                       <span className="text-xs text-gray-400">Ficha {excusa.materia.ficha.numero}</span>
                       <span className={badge}><Icon size={12}/> {excusa.estado}</span>
                     </div>
@@ -433,7 +433,7 @@ export default function AprendizExcusas() {
                 </div>
                 <div className="space-y-2">
                   {form.fechas.map((f, i) => (
-                    <div key={i} className="flex gap-2">
+                    <div key={i} className="flex flex-wrap gap-2 ">
                       <input type="date" required className="input-field flex-1" max={maxDate}
                         value={f} onChange={e => updateFecha(i, e.target.value)} />
                       {form.fechas.length > 1 && (
@@ -488,15 +488,15 @@ export default function AprendizExcusas() {
             {/* Horario */}
             <div className="lg:block hidden">
               <div className="card bg-gray-50 sticky top-4">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                   <Calendar size={16}/> Horario de la Materia
                 </h3>
                 {materiaSeleccionada ? (
                   materiaSeleccionada.horarios.length > 0 ? (
                     <div className="space-y-2">
                       {materiaSeleccionada.horarios.map((h, i) => (
-                        <div key={i} className="p-2 bg-white rounded-lg">
-                          <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                        <div key={i} className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                           <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                         </div>
                       ))}
@@ -513,17 +513,17 @@ export default function AprendizExcusas() {
             {/* Botón ver horario en móvil */}
             <div className="lg:hidden">
               <button type="button" onClick={() => setModalHorario(true)}
-                className="btn-secondary w-full flex items-center justify-center gap-2">
+                className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2">
                 <Calendar size={16}/> Ver Horario
               </button>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={handleCloseModal} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={handleCloseModal} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1" style={{ backgroundColor: '#39A900' }}>
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1" style={{ backgroundColor: '#39A900' }}>
               <Send size={14}/> {saving ? 'Enviando...' : 'Enviar Excusa'}
             </button>
           </div>
@@ -537,7 +537,7 @@ export default function AprendizExcusas() {
             <div className="space-y-2">
               {materiaSeleccionada.horarios.map((h, i) => (
                 <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                   <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                 </div>
               ))}
@@ -573,7 +573,7 @@ export default function AprendizExcusas() {
                   </div>
                   <div className="space-y-2">
                     {form.fechas.map((f, i) => (
-                      <div key={i} className="flex gap-2">
+                      <div key={i} className="flex flex-wrap gap-2 ">
                         <input type="date" required className="input-field flex-1" max={maxDate}
                           value={f} onChange={e => updateFecha(i, e.target.value)} />
                         {form.fechas.length > 1 && (
@@ -627,7 +627,7 @@ export default function AprendizExcusas() {
               {/* Horario */}
               <div className="lg:block hidden">
                 <div className="card bg-gray-50 sticky top-4">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                     <Calendar size={16}/> Horario de la Materia
                   </h3>
                   {(() => {
@@ -636,8 +636,8 @@ export default function AprendizExcusas() {
                       materiaExcusa.horarios && materiaExcusa.horarios.length > 0 ? (
                         <div className="space-y-2">
                           {materiaExcusa.horarios.map((h, i) => (
-                            <div key={i} className="p-2 bg-white rounded-lg">
-                              <p className="text-sm font-medium text-gray-900">{h.dia}</p>
+                            <div key={i} className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white ">{h.dia}</p>
                               <p className="text-xs text-gray-500">{h.horaInicio} - {h.horaFin}</p>
                             </div>
                           ))}
@@ -655,17 +655,17 @@ export default function AprendizExcusas() {
               {/* Botón ver horario en móvil */}
               <div className="lg:hidden">
                 <button type="button" onClick={() => setModalHorario(true)}
-                  className="btn-secondary w-full flex items-center justify-center gap-2">
+                  className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2">
                   <Calendar size={16}/> Ver Horario
                 </button>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <button type="button" onClick={() => setModalEditar(null)} className="btn-secondary flex-1">
+            <div className="flex flex-wrap gap-3  pt-2">
+              <button type="button" onClick={() => setModalEditar(null)} className="btn-secondary text-sm md:text-base  flex-1">
                 Cancelar
               </button>
-              <button type="submit" disabled={saving} className="btn-primary flex-1">
+              <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
                 <Edit2 size={14}/> {saving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
@@ -678,7 +678,7 @@ export default function AprendizExcusas() {
         {modalDetalle && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900">{modalDetalle.materia.nombre}</span>
+              <span className="font-bold text-gray-900 dark:text-white ">{modalDetalle.materia.nombre}</span>
               {(() => { 
                 const { badge, icon: Icon } = STATUS_MAP[modalDetalle.estado]; 
                 return <span className={badge}><Icon size={12}/>{modalDetalle.estado}</span>; 
@@ -729,7 +729,7 @@ export default function AprendizExcusas() {
 
             {modalDetalle.estado === 'Pendiente' && (
               <button onClick={() => openEditModal(modalDetalle)} 
-                className="btn-primary w-full flex items-center justify-center gap-2">
+                className="btn-primary text-sm md:text-base  w-full flex items-center justify-center gap-2">
                 <Edit2 size={16}/> Editar Excusa
               </button>
             )}

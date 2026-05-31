@@ -13,13 +13,13 @@ export default function ReleaseNotesModal({ open, onClose }) {
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
+        <div className="flex items-center justify-between p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-800 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Notas de Actualización</h2>
+            <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Notas de Actualización</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Historial de cambios y mejoras</p>
           </div>
           <button
@@ -31,11 +31,11 @@ export default function ReleaseNotesModal({ open, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 p-6 space-y-4">
+        <div className="overflow-y-auto flex-1 p-4 md:p-6  space-y-4">
           {RELEASE_NOTES.map((release) => (
             <div
               key={release.version}
-              className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+              className="border border-gray-200 dark:border-zinc-700  dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
             >
               {/* Release Header */}
               <button
@@ -46,7 +46,7 @@ export default function ReleaseNotesModal({ open, onClose }) {
               >
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-bold text-gray-900 dark:text-white">
+                    <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white">
                       v{release.version}
                     </h3>
                     {release === RELEASE_NOTES[0] && (
@@ -77,7 +77,7 @@ export default function ReleaseNotesModal({ open, onClose }) {
 
               {/* Release Details */}
               {expandedVersion === release.version && (
-                <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                <div className="p-4 bg-white dark:bg-zinc-800  dark:bg-gray-900 border-t border-gray-200 dark:border-zinc-700  dark:border-gray-800">
                   <ul className="space-y-2">
                     {release.changes.map((change, idx) => (
                       <li key={idx} className="flex items-start gap-3">
@@ -95,7 +95,7 @@ export default function ReleaseNotesModal({ open, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 shrink-0">
+        <div className="p-4 border-t border-gray-200 dark:border-zinc-700  dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 shrink-0">
           <button
             onClick={onClose}
             className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"

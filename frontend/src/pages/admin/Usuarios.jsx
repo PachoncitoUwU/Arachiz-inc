@@ -169,8 +169,8 @@ export default function AdminUsuarios() {
       />
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-card p-1">
-        <div className="grid grid-cols-2 gap-1">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-1">
           <button
             onClick={() => {
               setTab('instructores');
@@ -207,7 +207,7 @@ export default function AdminUsuarios() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-card p-4">
+      <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Buscador */}
           <div className="relative md:col-span-2">
@@ -215,7 +215,7 @@ export default function AdminUsuarios() {
             <input
               type="text"
               placeholder="Buscar por nombre, email o documento..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-700  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -225,7 +225,7 @@ export default function AdminUsuarios() {
           <select
             value={filterFicha}
             onChange={(e) => setFilterFicha(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-200 dark:border-zinc-700  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Todas las fichas</option>
             {fichas.map(ficha => (
@@ -239,7 +239,7 @@ export default function AdminUsuarios() {
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="btn-secondary flex items-center justify-center gap-2"
+              className="btn-secondary text-sm md:text-base  flex items-center justify-center gap-2"
             >
               <X size={16} />
               Limpiar filtros
@@ -258,10 +258,10 @@ export default function AdminUsuarios() {
           description={hasActiveFilters ? "No se encontraron usuarios con esos filtros" : `No hay ${tab} registrados`}
         />
       ) : (
-        <div className="bg-white rounded-xl shadow-card overflow-hidden">
+        <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 dark:border-zinc-700 ">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuario</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
@@ -284,7 +284,7 @@ export default function AdminUsuarios() {
                             </div>
                           )}
                           <div>
-                            <div className="font-semibold text-gray-900">{user.fullName}</div>
+                            <div className="font-semibold text-gray-900 dark:text-white ">{user.fullName}</div>
                           </div>
                         </div>
                       </td>
@@ -293,7 +293,7 @@ export default function AdminUsuarios() {
                       <td className="px-6 py-4 text-center">
                         <button
                           onClick={() => tab === 'instructores' ? handleOpenFichasInstructor(user) : handleOpenFichasAprendiz(user)}
-                          className="btn-secondary text-sm"
+                          className="btn-secondary text-sm md:text-base  text-sm"
                         >
                           Ver Fichas
                         </button>
@@ -326,11 +326,11 @@ export default function AdminUsuarios() {
               {fichasAprendiz.map(ficha => (
                 <div 
                   key={ficha.id} 
-                  className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                  className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">Ficha {ficha.numero}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{ficha.nombre}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                         {ficha.nivel} · {ficha.centro}
@@ -366,12 +366,12 @@ export default function AdminUsuarios() {
                 return (
                   <div 
                     key={ficha.id} 
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-900 dark:text-white">Ficha {ficha.numero}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</p>
                           {isLider && (
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-semibold">
                               Líder

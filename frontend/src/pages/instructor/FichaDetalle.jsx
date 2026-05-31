@@ -334,7 +334,7 @@ export default function FichaDetalle() {
         </div>
         
         {/* Estadísticas horizontales skeleton */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
           {[1, 2, 3].map(i => (
             <div key={i} className="card animate-pulse">
               <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
@@ -383,7 +383,7 @@ export default function FichaDetalle() {
         {/* Horario skeleton */}
         <div className="card animate-pulse">
           <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl" />
             ))}
@@ -482,7 +482,7 @@ export default function FichaDetalle() {
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</h1>
+              <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
               <button
                 onClick={togglePin}
                 className={`p-1.5 rounded-lg transition-all ${
@@ -505,7 +505,7 @@ export default function FichaDetalle() {
           <button 
             onClick={handleExport} 
             disabled={exporting} 
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary text-sm md:text-base  flex items-center gap-2"
             title="Exportar información completa de la ficha"
           >
             {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
@@ -514,7 +514,7 @@ export default function FichaDetalle() {
           
           <button 
             onClick={() => setShowSalirDialog(true)} 
-            className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
             title="Salir de esta ficha"
           >
             <ArrowLeft size={16} />
@@ -524,14 +524,14 @@ export default function FichaDetalle() {
       </div>
 
       {/* Estadísticas horizontales */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Instructores
               </p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <p className="text-xl md:text-2xl  font-bold text-purple-600 dark:text-purple-400">
                 {ficha.instructores?.length || 0}
               </p>
             </div>
@@ -547,7 +547,7 @@ export default function FichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Aprendices
               </p>
-              <p className="text-2xl font-bold text-[#4285F4]">
+              <p className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                 {ficha.aprendices?.length || 0}
               </p>
             </div>
@@ -563,7 +563,7 @@ export default function FichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Materias
               </p>
-              <p className="text-2xl font-bold text-[#34A853]">
+              <p className="text-xl md:text-2xl  font-bold text-[#34A853]">
                 {ficha.materias?.length || 0}
               </p>
             </div>
@@ -578,7 +578,7 @@ export default function FichaDetalle() {
         {/* Información General (2 columnas) */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Información General</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">Información General</h2>
             {isLider && (
               <button onClick={handleOpenEdit} className="btn-icon text-gray-400 hover:bg-gray-100" title="Editar">
                 <Edit2 size={16} />
@@ -586,37 +586,37 @@ export default function FichaDetalle() {
             )}
           </div>
           
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Número</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.numero}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.numero}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Nivel</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nivel}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.nivel}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Jornada</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.jornada}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.jornada}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Programa</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.nombre || 'Sin nombre'}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-2">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Centro</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.centro}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.centro}</p>
             </div>
             <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Duración</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                 {ficha.duracion ? `${ficha.duracion}m` : 'N/A'}
               </p>
             </div>
             {ficha.region && (
               <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Región</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{ficha.region}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.region}</p>
               </div>
             )}
           </div>
@@ -635,7 +635,7 @@ export default function FichaDetalle() {
                   <Bell size={20} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white  dark:text-white">
                     Notificaciones
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -677,7 +677,7 @@ export default function FichaDetalle() {
           <div className="space-y-2">
             <button 
               onClick={copyCode} 
-              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+              className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2"
             >
               {copied ? <Check size={14} className="text-[#34A853]" /> : <Copy size={14} />}
               {copied ? 'Copiado' : 'Copiar código'}
@@ -685,7 +685,7 @@ export default function FichaDetalle() {
             
             <button 
               onClick={copyLink} 
-              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+              className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2"
             >
               {copiedLink ? <Check size={14} className="text-[#34A853]" /> : <Link size={14} />}
               {copiedLink ? 'Link copiado' : 'Copiar link'}
@@ -702,7 +702,7 @@ export default function FichaDetalle() {
             {isLider && (
               <button 
                 onClick={handleRegenerate} 
-                className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2 text-orange-600 hover:bg-orange-50"
+                className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-sm py-2 text-orange-600 hover:bg-orange-50"
               >
                 <RefreshCw size={14} />
                 Regenerar
@@ -716,8 +716,8 @@ export default function FichaDetalle() {
       {/* Tarjeta con pestañas: Aprendices y Materias */}
       <div className="card mb-6">
         {/* Tabs */}
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-4">
-          <div className="flex gap-1">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 mb-4">
+          <div className="flex flex-wrap gap-1 ">
             <button
               onClick={() => {
                 setActiveTab('aprendices');
@@ -771,7 +771,7 @@ export default function FichaDetalle() {
                 setErrorMateria('');
                 setFormMateria({ nombre: '', tipo: 'Técnica' });
               }}
-              className="btn-primary flex items-center gap-2 text-sm"
+              className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
             >
               <Plus size={16} />
               Agregar
@@ -808,7 +808,7 @@ export default function FichaDetalle() {
                   return (
                     <div 
                       key={aprendiz.id} 
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-gray-700 cursor-pointer"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-zinc-700  dark:border-gray-700 cursor-pointer"
                       onClick={() => handleOpenPerfil(aprendiz)}
                     >
                       {avatarSrc ? (
@@ -889,7 +889,7 @@ export default function FichaDetalle() {
                       setErrorMateria('');
                       setFormMateria({ nombre: '', tipo: 'Técnica' });
                     }}
-                    className="btn-primary mt-4 text-sm"
+                    className="btn-primary text-sm md:text-base  mt-4 text-sm"
                   >
                     <Plus size={16} className="inline mr-2" />
                     Crear primera materia
@@ -937,7 +937,7 @@ export default function FichaDetalle() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Administrador */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-4">
             Administrador
           </h3>
           {ficha.administrador ? (
@@ -958,7 +958,7 @@ export default function FichaDetalle() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                   {ficha.administrador.fullName}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ficha.administrador.email}</p>
@@ -974,7 +974,7 @@ export default function FichaDetalle() {
 
         {/* Instructores */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-4">
             Instructores ({ficha.instructores?.length || 0})
           </h3>
           {ficha.instructores?.length === 0 ? (
@@ -991,7 +991,7 @@ export default function FichaDetalle() {
                 return (
                   <div 
                     key={fi.id} 
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-zinc-700  dark:border-gray-700"
                   >
                     {avatarSrc ? (
                       <img 
@@ -1029,7 +1029,7 @@ export default function FichaDetalle() {
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
             <Clock size={20} className="text-[#FBBC05]" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">
               Horario Semanal
             </h3>
           </div>
@@ -1082,7 +1082,7 @@ export default function FichaDetalle() {
           
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Ficha</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
               {ficha.numero} - {ficha.nombre}
             </p>
           </div>
@@ -1110,11 +1110,11 @@ export default function FichaDetalle() {
             </select>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalMateria(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalMateria(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={savingMateria} className="btn-primary flex-1">
+            <button type="submit" disabled={savingMateria} className="btn-primary text-sm md:text-base  flex-1">
               {savingMateria ? 'Creando...' : 'Crear Materia'}
             </button>
           </div>
@@ -1150,7 +1150,7 @@ export default function FichaDetalle() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Nivel</label>
               <select 
@@ -1187,7 +1187,7 @@ export default function FichaDetalle() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Región</label>
               <input 
@@ -1214,11 +1214,11 @@ export default function FichaDetalle() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={savingEdit} className="btn-primary flex-1">
+            <button type="submit" disabled={savingEdit} className="btn-primary text-sm md:text-base  flex-1">
               {savingEdit ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>

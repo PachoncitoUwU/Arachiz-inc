@@ -134,16 +134,16 @@ export default function AprendizMaterias() {
                   <div className={`w-10 h-10 ${col.bg} rounded-xl flex items-center justify-center shrink-0`}>
                     <BookOpen size={20} className={col.icon}/>
                   </div>
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex flex-wrap gap-1  flex-wrap">
                     <span className={`badge ${m.tipo === 'Técnica' ? 'badge-info' : 'badge-gray'}`}>{m.tipo}</span>
                     {hasActive && <span className="badge badge-success">{t('subjects.active')}</span>}
                     {evitada && <span className="badge badge-warning">Evitada</span>}
                   </div>
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">{m.nombre}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{m.nombre}</h3>
                 
                 {/* Información de la ficha */}
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-700">
                   <BookOpen size={12}/>
                   <span className="font-medium">Ficha {m.ficha?.numero}</span>
                   {m.ficha?.nombre && <span>· {m.ficha.nombre}</span>}
@@ -164,7 +164,7 @@ export default function AprendizMaterias() {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2  gap-2 pt-3 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700 mb-3">
                   <div className="text-center">
                     <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{totalSesiones}</p>
                     <p className="text-xs text-gray-400">{t('subjects.sessions')}</p>

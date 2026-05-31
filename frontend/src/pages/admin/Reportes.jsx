@@ -197,7 +197,7 @@ export default function AdminReportes() {
             <button
               onClick={handleDownloadReporteConsolidado}
               disabled={downloading === 'consolidado' || fichas.length === 0}
-              className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary text-sm md:text-base  flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={18} />
               <span>{downloading === 'consolidado' ? 'Generando...' : 'Reporte Consolidado'}</span>
@@ -206,7 +206,7 @@ export default function AdminReportes() {
             <button
               onClick={loadEstadisticas}
               disabled={loadingEstadisticas}
-              className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-secondary text-sm md:text-base  flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <TrendingUp size={18} />
               <span>{loadingEstadisticas ? 'Actualizando...' : 'Actualizar Datos'}</span>
@@ -217,7 +217,7 @@ export default function AdminReportes() {
 
       {/* Toggle entre Reportes y Estadísticas */}
       <div className="card mb-5">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => setVistaActual('reportes')}
             className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
@@ -250,7 +250,7 @@ export default function AdminReportes() {
                   <FileText className="text-red-600 dark:text-red-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{fichas.length}</div>
+                  <div className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">{fichas.length}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Fichas Totales</div>
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default function AdminReportes() {
                   <Users className="text-green-600 dark:text-green-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {fichas.reduce((sum, f) => sum + (f._count?.aprendices || 0), 0)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Aprendices Totales</div>
@@ -276,7 +276,7 @@ export default function AdminReportes() {
                   <BookOpen className="text-purple-600 dark:text-purple-400" size={24} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                     {fichas.reduce((sum, f) => sum + (f._count?.materias || 0), 0)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Materias Totales</div>
@@ -300,16 +300,16 @@ export default function AdminReportes() {
             </div>
           ) : (
             <div className="card">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Reportes por Ficha</h3>
+              <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100">Reportes por Ficha</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Descarga reportes individuales de cada ficha</p>
               </div>
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {fichas.map((ficha) => (
-                  <div key={ficha.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div key={ficha.id} className="p-4 md:p-6  hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 dark:text-gray-100">Ficha {ficha.numero}</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white  dark:text-gray-100">Ficha {ficha.numero}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{ficha.nombre}</p>
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                           <span className="flex items-center gap-1">
@@ -322,11 +322,11 @@ export default function AdminReportes() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 ">
                         <button
                           onClick={() => handleDownloadReporteFicha(ficha.id)}
                           disabled={downloading === `ficha-${ficha.id}`}
-                          className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="btn-secondary text-sm md:text-base  flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Descargar información general de la ficha"
                         >
                           <FileText size={16} />
@@ -334,7 +334,7 @@ export default function AdminReportes() {
                         </button>
                         <button
                           onClick={() => handleOpenModalMateria(ficha)}
-                          className="btn-primary flex items-center gap-2"
+                          className="btn-primary text-sm md:text-base  flex items-center gap-2"
                           title="Descargar asistencias de una materia"
                         >
                           <Calendar size={16} />
@@ -361,21 +361,21 @@ export default function AdminReportes() {
             <>
               {/* Comparativa de Fichas */}
               <div className="card mb-5">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <BarChart3 size={20} />
                     Comparativa de Fichas por Asistencia
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Porcentaje de asistencia promedio por ficha</p>
                 </div>
-                <div className="p-6">
+                <div className="p-4 md:p-6 ">
                   {estadisticas.comparativaFichas.length === 0 ? (
                     <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay datos de asistencia disponibles</p>
                   ) : (
                     <div className="space-y-4">
                       {estadisticas.comparativaFichas.map((ficha) => (
                         <div key={ficha.numero} className="flex items-center gap-4">
-                          <div className="w-24 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="w-24 text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                             Ficha {ficha.numero}
                           </div>
                           <div className="flex-1">
@@ -383,7 +383,7 @@ export default function AdminReportes() {
                               <span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">
                                 {ficha.nombre}
                               </span>
-                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                                 {ficha.porcentajeAsistencia}%
                               </span>
                             </div>
@@ -409,21 +409,21 @@ export default function AdminReportes() {
 
               {/* Tendencias de Asistencia */}
               <div className="card mb-5">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <TrendingUp size={20} />
                     Tendencias de Asistencia (Últimos 6 Meses)
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Evolución del porcentaje de asistencia mensual</p>
                 </div>
-                <div className="p-6">
+                <div className="p-4 md:p-6 ">
                   {estadisticas.tendenciasAsistencia.length === 0 ? (
                     <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay datos de tendencias disponibles</p>
                   ) : (
                     <div className="space-y-4">
                       {estadisticas.tendenciasAsistencia.map((mes, idx) => (
                         <div key={mes.mes} className="flex items-center gap-4">
-                          <div className="w-20 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="w-20 text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                             {mes.mes}
                           </div>
                           <div className="flex-1">
@@ -431,7 +431,7 @@ export default function AdminReportes() {
                               <span className="text-sm text-gray-600 dark:text-gray-400">
                                 {mes.totalAsistencias} asistencias promedio
                               </span>
-                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">
                                 {mes.porcentajeAsistencia}%
                               </span>
                             </div>
@@ -453,13 +453,13 @@ export default function AdminReportes() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
                 {/* Top Materias */}
                 <div className="card">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                       <BookOpen size={20} />
                       Top 5 Materias por Asistencia
                     </h3>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 md:p-6 ">
                     {estadisticas.materiasStats.length === 0 ? (
                       <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay datos disponibles</p>
                     ) : (
@@ -472,7 +472,7 @@ export default function AdminReportes() {
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                                 {materia.nombre}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -496,13 +496,13 @@ export default function AdminReportes() {
 
                 {/* Aprendices en Riesgo */}
                 <div className="card">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                       <Users size={20} />
                       Aprendices en Riesgo (&lt;70%)
                     </h3>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 md:p-6 ">
                     {estadisticas.aprendicesRiesgo.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -525,7 +525,7 @@ export default function AdminReportes() {
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
                                 {aprendiz.nombre}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -547,15 +547,15 @@ export default function AdminReportes() {
 
               {/* Resumen de Fichas */}
               <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-gray-100 flex items-center gap-2">
                     <FileText size={20} />
                     Resumen Detallado por Ficha
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                           Ficha
@@ -581,27 +581,27 @@ export default function AdminReportes() {
                       {estadisticas.fichasStats.map((ficha) => (
                         <tr key={ficha.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                           <td className="px-4 py-3">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                            <span className="font-medium text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.numero}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[200px] block">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100 truncate max-w-[200px] block">
                               {ficha.nombre}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalAprendices}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalMaterias}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-sm text-gray-900 dark:text-white  dark:text-gray-100">
                               {ficha.totalAsistencias}
                             </span>
                           </td>
@@ -662,7 +662,7 @@ export default function AdminReportes() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Fecha Desde (opcional)</label>
               <input
@@ -689,17 +689,17 @@ export default function AdminReportes() {
             </p>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3  pt-2">
             <button
               onClick={() => setModalMateria(false)}
-              className="btn-secondary flex-1"
+              className="btn-secondary text-sm md:text-base  flex-1"
             >
               Cancelar
             </button>
             <button
               onClick={handleDownloadReporteMateria}
               disabled={!materiaSeleccionada || downloading === `materia-${materiaSeleccionada}`}
-              className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary text-sm md:text-base  flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloading === `materia-${materiaSeleccionada}` ? 'Generando...' : 'Descargar'}
             </button>

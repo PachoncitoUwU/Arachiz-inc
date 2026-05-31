@@ -143,8 +143,56 @@ export default function Login() {
 
   const setField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
+  const [particles, setParticles] = useState([]);
+  const [bubbles, setBubbles] = useState([
+    { id: 1, left: '10%', size: 20, color: '#4285F4', duration: 20, delay: 0 },
+    { id: 2, left: '20%', size: 12, color: '#EA4335', duration: 18, delay: 2 },
+    { id: 3, left: '30%', size: 32, color: '#FBBC05', duration: 25, delay: 4 },
+    { id: 4, left: '40%', size: 16, color: '#34A853', duration: 22, delay: 0 },
+    { id: 5, left: '50%', size: 28, color: '#4285F4', duration: 20, delay: 3 },
+    { id: 6, left: '60%', size: 14, color: '#EA4335', duration: 23, delay: 1 },
+    { id: 7, left: '70%', size: 24, color: '#FBBC05', duration: 19, delay: 5 },
+    { id: 8, left: '80%', size: 10, color: '#34A853', duration: 21, delay: 2 },
+    { id: 9, left: '85%', size: 36, color: '#4285F4', duration: 24, delay: 0 },
+    { id: 10, left: '15%', size: 12, color: '#EA4335', duration: 22, delay: 4 },
+  ]);
+
+  const handleBubbleClick = (bubble, event) => {
+    event.stopPropagation();
+    
+    // Obtener posición del click
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    
+    // Crear partículas
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: `particle-${Date.now()}-${i}`,
+      x,
+      y,
+      color: bubble.color,
+      angle: (i * 360) / 12,
+      size: Math.random() * 6 + 3,
+    }));
+    
+    setParticles(prev => [...prev, ...newParticles]);
+    
+    // Eliminar burbuja
+    setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+    
+    // Limpiar partículas después de la animación
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 800);
+    
+    // Recrear burbuja después de 2 segundos
+    setTimeout(() => {
+      setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+    }, 2000);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
         @keyframes float-up {
           0% {
@@ -161,6 +209,28 @@ export default function Login() {
           bottom: -150px;
           border-radius: 50%;
           animation: float-up linear infinite;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+        .circle-float:hover {
+          transform: scale(1.2);
+        }
+        @keyframes particle-burst {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 0;
+          }
+        }
+        .particle {
+          position: fixed;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: particle-burst 0.8s ease-out forwards;
+          z-index: 9999;
         }
       `}</style>
 
@@ -169,13 +239,13 @@ export default function Login() {
         {/* Botón Wompi */}
         <button
           onClick={() => handleDonate('wompi')}
-          className="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#FF6B35] transition-all flex items-center gap-3 group animate-fade-in"
+          className="bg-white dark:bg-zinc-800  border border-gray-200 dark:border-zinc-700  text-gray-700 px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#FF6B35] transition-all flex items-center gap-3 group animate-fade-in"
         >
           <div className="bg-[#FFF4E5] p-2 rounded-full group-hover:scale-110 transition-transform">
             <Coffee size={20} className="text-[#FF6B35] fill-current" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-sm font-bold text-gray-900 leading-none">Wompi</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white  leading-none">Wompi</span>
             <span className="text-xs text-gray-500 font-medium mt-0.5">Apoyar proyecto</span>
           </div>
         </button>
@@ -184,25 +254,25 @@ export default function Login() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Coffee size={28} className="text-amber-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Invítame un café ☕</h3>
-              <p className="text-gray-500 text-sm mt-1">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">Invítame un café ☕</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Vía <span className="font-semibold capitalize">{selectedPaymentMethod}</span>
               </p>
             </div>
 
             {/* Input principal */}
             <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 ¿Cuánto quieres donar?
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-bold text-lg">$</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -212,18 +282,18 @@ export default function Login() {
                   placeholder="5.000"
                   className={`w-full border-2 rounded-xl pl-9 pr-16 py-4 text-xl font-bold focus:outline-none transition-all ${
                     amountError
-                      ? 'border-red-400 bg-red-50 text-red-700 focus:border-red-500'
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 focus:border-red-500'
                       : isAmountValid
-                      ? 'border-green-400 bg-green-50 text-gray-900 focus:border-green-500'
-                      : 'border-gray-300 bg-white text-gray-900 focus:border-[#4285F4]'
+                      ? 'border-green-400 bg-green-50 dark:bg-green-900/20 text-gray-900 dark:text-white focus:border-green-500'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-gray-900 dark:text-white focus:border-[#4285F4]'
                   }`}
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">COP</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-medium">COP</span>
               </div>
 
               {/* Mensaje de error */}
               {amountError && (
-                <div className="mt-2 flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div className="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                   <span className="text-base">⚠️</span>
                   <span>{amountError}</span>
                 </div>
@@ -231,7 +301,7 @@ export default function Login() {
 
               {/* Mensaje de éxito */}
               {isAmountValid && !amountError && (
-                <div className="mt-2 flex items-center gap-2 text-green-700 text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <div className="mt-2 flex items-center gap-2 text-green-700 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
                   <span className="text-base">✅</span>
                   <span>Monto válido — ¡gracias por tu apoyo!</span>
                 </div>
@@ -239,7 +309,7 @@ export default function Login() {
             </div>
 
             {/* Atajos de monto */}
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4  gap-2 mb-6">
               {[2000, 5000, 10000, 20000].map((amount) => (
                 <button
                   key={amount}
@@ -247,7 +317,7 @@ export default function Login() {
                   className={`py-2 rounded-lg text-xs font-semibold transition-all border ${
                     parsedAmount === amount
                       ? 'bg-[#4285F4] text-white border-[#4285F4]'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#4285F4] hover:text-[#4285F4]'
+                      : 'bg-gray-50 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-zinc-600 hover:border-[#4285F4] hover:text-[#4285F4]'
                   }`}
                 >
                   ${(amount / 1000).toFixed(0)}K
@@ -256,10 +326,10 @@ export default function Login() {
             </div>
 
             {/* Botones */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowDonationModal(false); setAmountError(''); }}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
               >
                 Cancelar
               </button>
@@ -268,7 +338,7 @@ export default function Login() {
                 className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all ${
                   isAmountValid
                     ? 'bg-[#4285F4] text-white hover:bg-[#3367d6] active:scale-95'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
               >
                 Continuar →
@@ -281,40 +351,40 @@ export default function Login() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🎉</span>
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl md:text-3xl ">🎉</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900">¿Confirmas la donación?</h3>
-              <p className="text-gray-500 text-sm mt-1">Revisa los detalles antes de continuar</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">¿Confirmas la donación?</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
             </div>
 
             {/* Detalles */}
-            <div className="bg-gray-50 rounded-xl p-5 mb-6 space-y-3">
+            <div className="bg-gray-50 dark:bg-zinc-700 rounded-xl p-5 mb-6 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm">Monto</span>
-                <span className="text-2xl font-bold text-[#4285F4]">
+                <span className="text-gray-500 dark:text-gray-400 text-sm">Monto</span>
+                <span className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
-              <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                <span className="text-gray-500 text-sm">Método de pago</span>
-                <span className="font-semibold capitalize text-gray-900 bg-white border border-gray-200 px-3 py-1 rounded-full text-sm">
+              <div className="border-t border-gray-200 dark:border-zinc-700  dark:border-zinc-600 pt-3 flex justify-between items-center">
+                <span className="text-gray-500 dark:text-gray-400 text-sm">Método de pago</span>
+                <span className="font-semibold capitalize text-gray-900 dark:text-white  dark:text-white bg-white dark:bg-zinc-800  dark:bg-zinc-600 border border-gray-200 dark:border-zinc-700  dark:border-zinc-500 px-3 py-1 rounded-full text-sm">
                   {selectedPaymentMethod}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 text-center mb-6">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-6">
               Serás redirigido a <span className="font-semibold capitalize">{selectedPaymentMethod}</span> para completar el pago de forma segura 🔒
             </p>
 
             {/* Botones */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowConfirmModal(false); setShowDonationModal(true); }}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
               >
                 ← Atrás
               </button>
@@ -330,33 +400,63 @@ export default function Login() {
       )}
 
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="circle-float w-20 h-20 bg-[#4285F4] opacity-10" style={{left: '10%', animationDuration: '20s', animationDelay: '0s'}}/>
-        <div className="circle-float w-12 h-12 bg-[#EA4335] opacity-10" style={{left: '20%', animationDuration: '18s', animationDelay: '2s'}}/>
-        <div className="circle-float w-32 h-32 bg-[#FBBC05] opacity-10" style={{left: '30%', animationDuration: '25s', animationDelay: '4s'}}/>
-        <div className="circle-float w-16 h-16 bg-[#34A853] opacity-10" style={{left: '40%', animationDuration: '22s', animationDelay: '0s'}}/>
-        <div className="circle-float w-28 h-28 bg-[#4285F4] opacity-10" style={{left: '50%', animationDuration: '20s', animationDelay: '3s'}}/>
-        <div className="circle-float w-14 h-14 bg-[#EA4335] opacity-10" style={{left: '60%', animationDuration: '23s', animationDelay: '1s'}}/>
-        <div className="circle-float w-24 h-24 bg-[#FBBC05] opacity-10" style={{left: '70%', animationDuration: '19s', animationDelay: '5s'}}/>
-        <div className="circle-float w-10 h-10 bg-[#34A853] opacity-10" style={{left: '80%', animationDuration: '21s', animationDelay: '2s'}}/>
-        <div className="circle-float w-36 h-36 bg-[#4285F4] opacity-10" style={{left: '85%', animationDuration: '24s', animationDelay: '0s'}}/>
-        <div className="circle-float w-12 h-12 bg-[#EA4335] opacity-10" style={{left: '15%', animationDuration: '22s', animationDelay: '4s'}}/>
+      {/* Burbujas flotantes interactivas */}
+      <div className="absolute inset-0 overflow-hidden">
+        {bubbles.map(bubble => (
+          <div
+            key={bubble.id}
+            className="circle-float opacity-10 hover:opacity-20"
+            style={{
+              left: bubble.left,
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              backgroundColor: bubble.color,
+              animationDuration: `${bubble.duration}s`,
+              animationDelay: `${bubble.delay}s`,
+              pointerEvents: 'auto',
+            }}
+            onClick={(e) => handleBubbleClick(bubble, e)}
+          />
+        ))}
       </div>
+
+      {/* Partículas de explosión */}
+      {particles.map(particle => {
+        const distance = 80 + Math.random() * 40;
+        const tx = Math.cos((particle.angle * Math.PI) / 180) * distance;
+        const ty = Math.sin((particle.angle * Math.PI) / 180) * distance;
+        
+        return (
+          <div
+            key={particle.id}
+            className="particle"
+            style={{
+              left: `${particle.x}px`,
+              top: `${particle.y}px`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: particle.color,
+              '--tx': `${tx}px`,
+              '--ty': `${ty}px`,
+            }}
+          />
+        );
+      })}
 
       <div className="w-full max-w-sm relative">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 flex items-center justify-center gap-2">
-               <span className="text-black">Arachiz</span>
+            <h1 className="text-3xl md:text-4xl  font-bold text-gray-900 dark:text-white  dark:text-white flex items-center justify-center gap-2">
+               <span className="text-black dark:text-white">Arachiz</span>
             </h1>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mt-4">Bienvenido de vuelta</h2>
+          <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mt-4">Bienvenido de vuelta</h2>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 space-y-5 animate-fade-in">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-card p-4 md:p-6  sm:p-4 md:p-8  space-y-5 animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm animate-shake">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm animate-shake">
               {error}
             </div>
           )}
@@ -365,7 +465,7 @@ export default function Login() {
           <button
             onClick={handleGoogleLogin}
             type="button"
-            className="w-full bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-3 group"
+            className="w-full bg-white dark:bg-zinc-800  dark:bg-zinc-700 border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 text-gray-700 dark:text-gray-200 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-600 hover:border-gray-300 dark:hover:border-zinc-500 transition-all active:scale-95 shadow-sm flex items-center justify-center gap-3 group"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" className="group-hover:scale-110 transition-transform">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
@@ -379,7 +479,7 @@ export default function Login() {
           {/* Separador O */}
           <div className="relative flex items-center gap-3">
             <div className="flex-1 h-px bg-gray-200"/>
-            <span className="text-xs text-gray-400 font-medium bg-white px-2">o</span>
+            <span className="text-xs text-gray-400 font-medium bg-white dark:bg-zinc-800  px-2">o</span>
             <div className="flex-1 h-px bg-gray-200"/>
           </div>
 
@@ -393,7 +493,7 @@ export default function Login() {
                 type="email" 
                 required 
                 placeholder="Correo electrónico"
-                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 rounded-xl py-2.5 text-sm bg-gray-50 focus:bg-white"
+                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:bg-zinc-800  dark:focus:bg-zinc-600"
                 value={form.email} 
                 onChange={setField('email')} 
               />
@@ -408,7 +508,7 @@ export default function Login() {
                 type="password" 
                 required 
                 placeholder="Contraseña"
-                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 rounded-xl py-2.5 text-sm bg-gray-50 focus:bg-white"
+                className="input-field pl-11 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all w-full border border-gray-200 dark:border-zinc-700  dark:border-zinc-600 rounded-xl py-2.5 text-sm bg-gray-50 dark:bg-zinc-700 dark:text-white focus:bg-white dark:bg-zinc-800  dark:focus:bg-zinc-600"
                 value={form.password} 
                 onChange={setField('password')} 
               />
@@ -455,9 +555,9 @@ export default function Login() {
           </Link>
 
           {/* Donaciones en Móvil */}
-          <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100">
+          <div className="flex sm:hidden flex-col items-center gap-2 pt-2 border-t border-gray-100 dark:border-zinc-700 ">
             <span className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Apoyar el proyecto</span>
-            <div className="flex gap-4 w-full justify-center">
+            <div className="flex flex-wrap gap-4  w-full justify-center">
               <button
                 type="button"
                 onClick={() => handleDonate('wompi')}

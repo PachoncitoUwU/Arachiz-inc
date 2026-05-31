@@ -33,7 +33,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error }) {
         <input required className="input-field" placeholder="Análisis y Desarrollo de Software"
           value={form.nombre} onChange={e => onChange('nombre', e.target.value)}/>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
         <div>
           <label className="input-label">Nivel</label>
           <select className="input-field" value={form.nivel} onChange={e => onChange('nivel', e.target.value)}>
@@ -52,7 +52,7 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error }) {
         <input required className="input-field" placeholder="CTPI Ibagué"
           value={form.centro} onChange={e => onChange('centro', e.target.value)}/>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
         <div>
           <label className="input-label">Región</label>
           <input required className="input-field" placeholder="Tolima"
@@ -65,9 +65,9 @@ function FichaForm({ form, onChange, onSubmit, onCancel, saving, error }) {
           <p className="text-xs text-gray-400 mt-1">Máximo 30 meses</p>
         </div>
       </div>
-      <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="btn-secondary flex-1">Cancelar</button>
-        <button type="submit" disabled={saving} className="btn-primary flex-1">
+      <div className="flex flex-wrap gap-3  pt-2">
+        <button type="button" onClick={onCancel} className="btn-secondary text-sm md:text-base  flex-1">Cancelar</button>
+        <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
           {saving ? 'Guardando...' : 'Crear Ficha'}
         </button>
       </div>
@@ -100,7 +100,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg font-bold text-gray-900 dark:text-white">Ficha {ficha.numero}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</span>
             {isPinned && (
               <Star size={16} fill="currentColor" className="text-yellow-500" />
             )}
@@ -112,7 +112,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
       </div>
 
       {/* Stats rápidas */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2">
         {[
           { label: 'Aprendices', value: ficha._count?.aprendices || 0 },
           { label: 'Materias', value: ficha._count?.materias || 0 },
@@ -229,9 +229,9 @@ export default function AdminFichas() {
         title="Fichas de Formación"
         subtitle="Gestiona tus grupos académicos"
         action={
-          <div className="flex gap-2">
-            <button onClick={() => { setModalJoin(true); setError(''); }} className="btn-secondary">Unirse</button>
-            <button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); setError(''); }} className="btn-primary flex items-center gap-2">
+          <div className="flex flex-wrap gap-2 ">
+            <button onClick={() => { setModalJoin(true); setError(''); }} className="btn-secondary text-sm md:text-base ">Unirse</button>
+            <button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); setError(''); }} className="btn-primary text-sm md:text-base  flex items-center gap-2">
               <Plus size={16}/> Nueva Ficha
             </button>
           </div>
@@ -269,7 +269,7 @@ export default function AdminFichas() {
                 setSearchQuery('');
                 setFilterNivel('all');
               }}
-              className="btn-secondary text-xs mt-3"
+              className="btn-secondary text-sm md:text-base  text-xs mt-3"
             >
               Limpiar filtros
             </button>
@@ -283,7 +283,7 @@ export default function AdminFichas() {
             <div key={i} className="card animate-pulse">
               <div className="h-5 bg-gray-100 rounded w-1/2 mb-3"/>
               <div className="h-10 bg-gray-100 rounded-xl mb-3"/>
-              <div className="grid grid-cols-3 gap-2">{[1,2,3].map(j => <div key={j} className="h-12 bg-gray-100 rounded-lg"/>)}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2">{[1,2,3].map(j => <div key={j} className="h-12 bg-gray-100 rounded-lg"/>)}</div>
             </div>
           ))}
         </div>
@@ -293,7 +293,7 @@ export default function AdminFichas() {
             icon={<Users size={32}/>} 
             title="No tienes fichas aún"
             description="Crea tu primera ficha o únete a una existente con un código de invitación."
-            action={<button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); }} className="btn-primary">Crear Ficha</button>}
+            action={<button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); }} className="btn-primary text-sm md:text-base ">Crear Ficha</button>}
           />
         </div>
       ) : (
@@ -348,9 +348,9 @@ export default function AdminFichas() {
             value={joinCode} 
             onChange={e => setJoinCode(e.target.value.toUpperCase())}
           />
-          <div className="flex gap-3">
-            <button type="button" onClick={() => setModalJoin(false)} className="btn-secondary flex-1">Cancelar</button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Uniéndose...' : 'Unirse'}</button>
+          <div className="flex flex-wrap gap-3 ">
+            <button type="button" onClick={() => setModalJoin(false)} className="btn-secondary text-sm md:text-base  flex-1">Cancelar</button>
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">{saving ? 'Uniéndose...' : 'Unirse'}</button>
           </div>
         </form>
       </Modal>

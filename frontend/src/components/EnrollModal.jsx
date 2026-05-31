@@ -218,9 +218,9 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       <Modal open={open} onClose={onClose} title="Credenciales Biométricas">
       <div className="space-y-4 text-center pb-2">
         {aprendiz && (
-          <p className="text-gray-600 mb-4 pb-4 border-b border-gray-100">
+          <p className="text-gray-600 mb-4 pb-4 border-b border-gray-100 dark:border-zinc-700 ">
             Asignando credenciales a <br/>
-            <strong className="text-gray-900">{aprendiz.fullName}</strong>
+            <strong className="text-gray-900 dark:text-white ">{aprendiz.fullName}</strong>
           </p>
         )}
 
@@ -250,7 +250,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
                   Huellas: {aprendiz?.huellas?.length > 0 ? '' : <strong>No registradas</strong>}
                 </span>
                 {aprendiz?.huellas?.length > 0 && aprendiz.huellas.map(hId => (
-                  <div key={hId} className="flex justify-between items-center bg-white dark:bg-gray-700 px-3 py-1 border border-gray-200 dark:border-gray-600 rounded">
+                  <div key={hId} className="flex justify-between items-center bg-white dark:bg-zinc-800  dark:bg-gray-700 px-3 py-1 border border-gray-200 dark:border-zinc-700  dark:border-gray-600 rounded">
                     <span className="font-mono text-purple-600 dark:text-purple-400">ID: {hId}</span>
                     <button 
                       onClick={() => removeFingerprint(hId)} 
@@ -283,9 +283,9 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
             </div>
 
             {/* Botones de registro */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
               <button onClick={startNfc}
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-[#4285F4] hover:bg-blue-50/50 transition-all group">
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-[#4285F4] hover:bg-blue-50/50 transition-all group">
                 <div className="w-10 h-10 rounded-full bg-blue-100 text-[#4285F4] flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CreditCard size={20} />
                 </div>
@@ -293,7 +293,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
               </button>
 
               <button onClick={startFingerprint}
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-purple-500 hover:bg-purple-50/50 transition-all group">
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-purple-500 hover:bg-purple-50/50 transition-all group">
                 <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Fingerprint size={20} />
                 </div>
@@ -301,7 +301,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
               </button>
 
               <button onClick={startFace}
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-[#34A853] hover:bg-green-50/50 transition-all group">
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-[#34A853] hover:bg-green-50/50 transition-all group">
                 <div className={`w-10 h-10 rounded-full ${hasFace ? 'bg-green-200 text-[#34A853]' : 'bg-green-100 text-[#34A853]'} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <ScanFace size={20} />
                 </div>

@@ -138,15 +138,15 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col animate-scale-in">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between p-4 sm:p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-[#34A853] flex items-center justify-center flex-shrink-0">
               <UserCheck size={20} className="text-white" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-bold text-gray-900 dark:text-white truncate">Registro Manual Mejorado</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white truncate">Registro Manual Mejorado</h2>
               <p className="text-xs text-gray-400">
                 {selected.size > 0 ? `${selected.size} seleccionados` : 'Selecciona aprendices para registrar'}
               </p>
@@ -158,7 +158,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
         </div>
 
         {/* Search and Controls */}
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
+        <div className="p-4 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -171,7 +171,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
                 autoFocus
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 ">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -201,7 +201,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
               <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                 {selected.size} aprendice{selected.size !== 1 ? 's' : ''} seleccionado{selected.size !== 1 ? 's' : ''}
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 ">
                 <button
                   onClick={() => setSelected(new Set())}
                   className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
@@ -267,7 +267,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#34A853] to-[#0F9D58] flex items-center justify-center text-white font-bold text-lg mb-3">
                       {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
-                    <p className="font-semibold text-gray-900 dark:text-white text-center mb-1">
+                    <p className="font-semibold text-gray-900 dark:text-white  dark:text-white text-center mb-1">
                       {aprendiz.fullName}
                     </p>
                     <p className="text-xs text-gray-500 text-center mb-2">{aprendiz.email}</p>
@@ -303,7 +303,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
                       {aprendiz.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white truncate">
+                      <p className="font-semibold text-gray-900 dark:text-white  dark:text-white truncate">
                         {aprendiz.fullName}
                       </p>
                       <p className="text-xs text-gray-500 truncate">{aprendiz.email}</p>
@@ -325,7 +325,7 @@ export default function ImprovedManualAttendance({ asistenciaId, aprendices, alr
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="p-4 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">
               {availableAprendices.length} pendiente{availableAprendices.length !== 1 ? 's' : ''} · {registered.size} registrado{registered.size !== 1 ? 's' : ''}

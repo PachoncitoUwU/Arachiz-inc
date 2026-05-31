@@ -103,7 +103,7 @@ export default function AprendizPerfilModal({
       <Modal open={open} onClose={onClose} title="Perfil del Aprendiz" maxWidth="max-w-2xl">
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
           {/* Información Personal */}
-          <div className="flex items-start gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-start gap-4 pb-4 border-b border-gray-100 dark:border-zinc-700  dark:border-gray-700">
             {avatarSrc ? (
               <img 
                 src={avatarSrc} 
@@ -120,7 +120,7 @@ export default function AprendizPerfilModal({
             )}
             
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-gray-100 mb-1">
                 {localAprendiz.fullName}
               </h3>
               <div className="space-y-1">
@@ -150,7 +150,7 @@ export default function AprendizPerfilModal({
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
               {/* NFC */}
               <div className={`p-4 rounded-xl border-2 ${hasNfc ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'}`}>
                 <div className="flex flex-col items-center gap-2">
@@ -226,7 +226,7 @@ export default function AprendizPerfilModal({
                 ))}
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+              <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-zinc-700  dark:border-gray-700">
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <BookOpen size={16} />
                   <span>Participa en todas las materias de esta ficha</span>
@@ -237,7 +237,7 @@ export default function AprendizPerfilModal({
 
           {/* Acciones de Admin */}
           {isAdmin && (
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="pt-4 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700">
               <button 
                 onClick={handleRemove}
                 className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"

@@ -322,7 +322,7 @@ export default function InstructorExcusas() {
       <PageHeader title="Evaluación de Excusas" subtitle="Revisa y responde las excusas de tus aprendices" />
 
       {/* Filtros de estado */}
-      <div className="flex gap-2 flex-wrap items-center">
+      <div className="flex flex-wrap gap-2  flex-wrap items-center">
         {Object.entries(counts).map(([key, count]) => (
           <button key={key} onClick={() => setFiltroEstado(key)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
@@ -364,7 +364,7 @@ export default function InstructorExcusas() {
           </div>
         </div>
         <div className="mt-3">
-          <button onClick={limpiarFiltros} className="btn-secondary">
+          <button onClick={limpiarFiltros} className="btn-secondary text-sm md:text-base ">
             Limpiar Todos los Filtros
           </button>
         </div>
@@ -392,7 +392,7 @@ export default function InstructorExcusas() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-bold text-gray-900">{excusa.aprendiz.fullName}</span>
+                      <span className="font-bold text-gray-900 dark:text-white ">{excusa.aprendiz.fullName}</span>
                       <span className="text-gray-400 text-xs">{excusa.aprendiz.document}</span>
                       <span className={badge}><Icon size={12}/> {excusa.estado}</span>
                     </div>
@@ -430,7 +430,7 @@ export default function InstructorExcusas() {
               <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-lg font-bold text-gray-900">{selected.aprendiz.fullName}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white ">{selected.aprendiz.fullName}</p>
                     <p className="text-sm text-gray-600 mt-0.5">Documento: {selected.aprendiz.document}</p>
                   </div>
                   {(() => { 
@@ -444,11 +444,11 @@ export default function InstructorExcusas() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 font-medium mb-1">Materia</p>
-                  <p className="text-sm font-semibold text-gray-900">{selected.materia.nombre}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white ">{selected.materia.nombre}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 font-medium mb-1">Ficha</p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white ">
                     {selected.materia.ficha.numero} - {selected.materia.ficha.nombre}
                   </p>
                 </div>
@@ -467,7 +467,7 @@ export default function InstructorExcusas() {
               </div>
 
               {/* Motivo */}
-              <div className="p-4 bg-white border-2 border-gray-200 rounded-lg">
+              <div className="p-4 bg-white dark:bg-zinc-800  border-2 border-gray-200 dark:border-zinc-700  rounded-lg">
                 <p className="text-xs text-gray-500 font-medium mb-2">Motivo de la excusa:</p>
                 <p className="text-sm text-gray-800 leading-relaxed">{selected.motivo}</p>
               </div>
@@ -530,12 +530,12 @@ export default function InstructorExcusas() {
                       value={respuesta} onChange={e => setRespuesta(e.target.value)} />
                   </div>
 
-                  <div className="flex gap-3">
-                    <button onClick={() => setEditMode(false)} className="btn-secondary flex-1">
+                  <div className="flex flex-wrap gap-3 ">
+                    <button onClick={() => setEditMode(false)} className="btn-secondary text-sm md:text-base  flex-1">
                       Cancelar
                     </button>
                     <button onClick={() => openConfirmAction(editEstado)} disabled={saving}
-                      className="btn-primary flex-1">
+                      className="btn-primary text-sm md:text-base  flex-1">
                       <Check size={16}/> Guardar Cambios
                     </button>
                   </div>
@@ -576,7 +576,7 @@ export default function InstructorExcusas() {
                           value={respuesta} onChange={e => setRespuesta(e.target.value)} />
                       </div>
 
-                      <div className="flex gap-3">
+                      <div className="flex flex-wrap gap-3 ">
                         <button onClick={() => openConfirmAction('Rechazada')} disabled={saving}
                           className="btn-danger flex-1">
                           <X size={16}/> Rechazar
@@ -589,13 +589,13 @@ export default function InstructorExcusas() {
                       <button 
                         onClick={() => setConfirmDelete(true)} 
                         disabled={saving}
-                        className="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 border-red-200 mt-2"
+                        className="btn-secondary text-sm md:text-base  w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 border-red-200 mt-2"
                       >
                         <Trash2 size={16}/> Enviar a Papelera
                       </button>
                     </>
                   ) : (
-                    <button onClick={openEditMode} className="btn-primary w-full flex items-center justify-center gap-2">
+                    <button onClick={openEditMode} className="btn-primary text-sm md:text-base  w-full flex items-center justify-center gap-2">
                       <Edit2 size={16}/> Editar Respuesta
                     </button>
                   )}
@@ -606,7 +606,7 @@ export default function InstructorExcusas() {
             {/* Columna derecha: Calendario */}
             <div className="lg:block hidden">
               <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 sticky top-4">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
                   <Calendar size={16}/> Fechas de Falta
                 </h3>
                 {(() => {
@@ -637,8 +637,8 @@ export default function InstructorExcusas() {
                         const nombreMes = nombresMeses[parseInt(mes) - 1];
                         
                         return (
-                          <div key={mesAño} className="bg-white rounded-lg p-3">
-                            <p className="font-bold text-gray-900 mb-2">{nombreMes} {año}</p>
+                          <div key={mesAño} className="bg-white dark:bg-zinc-800  rounded-lg p-3">
+                            <p className="font-bold text-gray-900 dark:text-white  mb-2">{nombreMes} {año}</p>
                             <div className="space-y-1">
                               {fechas.map((fecha, i) => {
                                 const date = new Date(fecha + 'T00:00:00');
@@ -651,7 +651,7 @@ export default function InstructorExcusas() {
                                       {dia}
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-sm font-medium text-gray-900">{diaSemana}</p>
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white ">{diaSemana}</p>
                                       <p className="text-xs text-gray-500">{date.toLocaleDateString('es-CO')}</p>
                                     </div>
                                   </div>
@@ -662,7 +662,7 @@ export default function InstructorExcusas() {
                         );
                       })}
                       
-                      <div className="p-2 bg-white rounded-lg">
+                      <div className="p-2 bg-white dark:bg-zinc-800  rounded-lg">
                         <p className="text-xs text-gray-600 flex items-center gap-2">
                           <span className="w-3 h-3 bg-red-500 rounded"></span>
                           Total: {fechasExcusa.length} día{fechasExcusa.length !== 1 ? 's' : ''} de falta
@@ -708,7 +708,7 @@ export default function InstructorExcusas() {
           {/* Agregar nueva respuesta */}
           <div className="p-4 bg-gray-50 rounded-xl">
             <label className="input-label">Nueva respuesta rápida</label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 ">
               <input 
                 type="text" 
                 className="input-field flex-1" 
@@ -717,7 +717,7 @@ export default function InstructorExcusas() {
                 onChange={e => setNuevaRespuesta(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && agregarRespuesta()}
               />
-              <button onClick={agregarRespuesta} className="btn-primary flex items-center gap-2">
+              <button onClick={agregarRespuesta} className="btn-primary text-sm md:text-base  flex items-center gap-2">
                 <Plus size={16}/> Agregar
               </button>
             </div>
@@ -727,7 +727,7 @@ export default function InstructorExcusas() {
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700">Respuestas guardadas ({respuestasRapidas.length})</p>
             {respuestasRapidas.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-4 md:p-8  text-center text-gray-500">
                 <p className="text-sm">No hay respuestas rápidas guardadas</p>
               </div>
             ) : (
@@ -755,16 +755,16 @@ export default function InstructorExcusas() {
                             setRespuestasRapidas(nuevas);
                           }}
                         />
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 ">
                           <button 
                             onClick={() => actualizarRespuesta(index, respuesta)}
-                            className="btn-primary flex-1"
+                            className="btn-primary text-sm md:text-base  flex-1"
                           >
                             <Check size={14}/> Confirmar
                           </button>
                           <button 
                             onClick={() => setEditandoRespuesta(null)}
-                            className="btn-secondary flex-1"
+                            className="btn-secondary text-sm md:text-base  flex-1"
                           >
                             Cancelar
                           </button>
@@ -779,7 +779,7 @@ export default function InstructorExcusas() {
                           <GripVertical size={16}/>
                         </button>
                         <p className="flex-1 text-sm text-gray-700 break-words overflow-hidden">{respuesta}</p>
-                        <div className="flex gap-1 flex-shrink-0">
+                        <div className="flex flex-wrap gap-1  flex-shrink-0">
                           <button 
                             onClick={() => setEditandoRespuesta(index)}
                             className="btn-icon text-blue-400 hover:bg-blue-50"
@@ -804,18 +804,18 @@ export default function InstructorExcusas() {
           </div>
 
           {/* Botones de acción */}
-          <div className="pt-4 border-t border-gray-200 space-y-3">
-            <div className="flex gap-3">
+          <div className="pt-4 border-t border-gray-200 dark:border-zinc-700  space-y-3">
+            <div className="flex flex-wrap gap-3 ">
               <button 
                 onClick={intentarCerrarModal} 
-                className="btn-secondary flex-1"
+                className="btn-secondary text-sm md:text-base  flex-1"
                 disabled={guardandoRespuestas}
               >
                 Cancelar
               </button>
               <button 
                 onClick={guardarCambiosRespuestas} 
-                className="btn-primary flex-1"
+                className="btn-primary text-sm md:text-base  flex-1"
                 disabled={guardandoRespuestas || !hayCambiosPendientes()}
               >
                 {guardandoRespuestas ? (
@@ -833,7 +833,7 @@ export default function InstructorExcusas() {
             
             <button 
               onClick={() => setConfirmRestaurar(true)} 
-              className="btn-secondary w-full"
+              className="btn-secondary text-sm md:text-base  w-full"
               disabled={guardandoRespuestas}
             >
               Restaurar Respuestas por Defecto

@@ -63,11 +63,11 @@ export default function JoinFicha() {
             <div className="w-10 h-10 bg-[#4285F4] rounded-xl flex items-center justify-center shadow-md">
               <GraduationCap size={22} className="text-white"/>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Arachiz</span>
+            <span className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white ">Arachiz</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-6 sm:p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-zinc-800  rounded-2xl shadow-card p-4 md:p-6  sm:p-4 md:p-8  text-center space-y-4">
           {status === 'loading' && (
             <>
               <Loader size={40} className="text-[#4285F4] animate-spin mx-auto"/>
@@ -79,7 +79,7 @@ export default function JoinFicha() {
           {status === 'success' && (
             <>
               <CheckCircle size={48} className="text-[#34A853] mx-auto"/>
-              <p className="text-lg font-bold text-gray-900">¡Te uniste exitosamente!</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white ">¡Te uniste exitosamente!</p>
               <p className="text-sm text-gray-500">Redirigiendo a tu dashboard...</p>
             </>
           )}
@@ -87,7 +87,7 @@ export default function JoinFicha() {
           {status === 'already' && (
             <>
               <CheckCircle size={48} className="text-[#4285F4] mx-auto"/>
-              <p className="text-lg font-bold text-gray-900">Ya estás en esta ficha</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white ">Ya estás en esta ficha</p>
               <p className="text-sm text-gray-500">Redirigiendo a tu dashboard...</p>
             </>
           )}
@@ -95,9 +95,9 @@ export default function JoinFicha() {
           {status === 'error' && (
             <>
               <XCircle size={48} className="text-[#EA4335] mx-auto"/>
-              <p className="text-lg font-bold text-gray-900">No se pudo unir</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white ">No se pudo unir</p>
               <p className="text-sm text-gray-500">{message}</p>
-              <Link to="/aprendiz/dashboard" className="btn-primary inline-flex mt-2">
+              <Link to="/aprendiz/dashboard" className="btn-primary text-sm md:text-base  inline-flex mt-2">
                 Ir al dashboard
               </Link>
             </>
