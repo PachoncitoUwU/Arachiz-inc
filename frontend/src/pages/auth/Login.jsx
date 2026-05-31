@@ -447,9 +447,13 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <h1 className="text-3xl md:text-4xl  font-bold text-gray-900 dark:text-white  dark:text-white flex items-center justify-center gap-2">
-               <span className="text-black dark:text-white">Arachiz</span>
-            </h1>
+            <Link to="/" className="hover:scale-105 transition-transform active:scale-95">
+              <img 
+                src="/ArachizLogoPNG.png" 
+                alt="Arachiz Logo" 
+                className="h-16 md:h-20 object-contain dark:invert transition-all duration-300" 
+              />
+            </Link>
           </div>
           <h2 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mt-4">Bienvenido de vuelta</h2>
         </div>

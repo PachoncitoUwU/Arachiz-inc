@@ -169,7 +169,9 @@ export default function Register() {
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
+            <Link to="/" className="hover:scale-105 transition-transform active:scale-95">
+              <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
+            </Link>
           </div>
           <h1 className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">{t('register', 'create')}</h1>
         </div>
