@@ -506,7 +506,7 @@ export default function InstructorHorario() {
           {modoEliminar && horariosSeleccionados.length > 0 && (
             <button
               onClick={handleEliminarSeleccionados}
-              className="btn-primary bg-red-500 hover:bg-red-600 flex items-center gap-2"
+              className="btn-primary text-sm md:text-base  bg-red-500 hover:bg-red-600 flex items-center gap-2"
             >
               <Trash2 size={16} />
               Enviar a Papelera ({horariosSeleccionados.length})
@@ -535,7 +535,7 @@ export default function InstructorHorario() {
         <div className="space-y-6">
           <div className="card animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
               ))}
@@ -580,7 +580,7 @@ export default function InstructorHorario() {
           </div>
 
           {/* Calendario semanal */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {byDia.map(({ dia, clases }) => (
               <DiaColumna 
                 key={dia} 
@@ -631,7 +631,7 @@ export default function InstructorHorario() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Hora Inicio</label>
               <input 
@@ -654,11 +654,11 @@ export default function InstructorHorario() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalEdit(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
               {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
@@ -688,7 +688,7 @@ export default function InstructorHorario() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
             <div>
               <label className="input-label">Hora Inicio</label>
               <input 
@@ -713,11 +713,11 @@ export default function InstructorHorario() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModalAddMateria(false)} className="btn-secondary flex-1">
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModalAddMateria(false)} className="btn-secondary text-sm md:text-base  flex-1">
               Cancelar
             </button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
               {saving ? 'Agregando...' : 'Agregar Clase'}
             </button>
           </div>

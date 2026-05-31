@@ -100,7 +100,7 @@ export default function ConfiguracionAdmin() {
       {/* Apariencia */}
       <Section icon={Palette} title={t('appearance')}>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('theme')}</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
           {[
             { id: 'light', label: t('light'), icon: Sun },
             { id: 'dark', label: t('dark'), icon: Moon }
@@ -132,7 +132,7 @@ export default function ConfiguracionAdmin() {
 
       {/* Idioma */}
       <Section icon={Globe} title={t('language')}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
           {LANGUAGES.map(({ code, label, flag }) => (
             <button
               key={code}
@@ -147,7 +147,7 @@ export default function ConfiguracionAdmin() {
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              <span className="text-2xl">{flag}</span>
+              <span className="text-xl md:text-2xl ">{flag}</span>
               <div className="text-left">
                 <p className={`text-sm font-semibold ${settings.language === code ? 'text-[#4285F4]' : 'text-gray-700 dark:text-gray-300'}`}>
                   {label}

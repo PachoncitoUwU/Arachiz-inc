@@ -216,7 +216,7 @@ export default function AboutUs() {
                 className="h-12 sm:h-14 md:h-16 lg:h-20 object-contain dark:invert transition-all duration-300" 
               />
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white  dark:text-white leading-tight px-4">
+            <h1 className="text-2xl md:text-3xl  sm:text-3xl md:text-4xl  md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white  dark:text-white leading-tight px-4">
               Sobre <span className="text-[#4285F4]">Nosotros</span>
             </h1>
           </motion.div>
@@ -224,13 +224,13 @@ export default function AboutUs() {
           {/* ¿Qué es Arachiz? */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-4 md:p-6  sm:p-4 md:p-8  md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                 <Target className="text-[#4285F4]" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
+              <h2 className="text-xl sm:text-xl md:text-2xl  md:text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">
                 ¿Qué es Arachiz?
               </h2>
             </div>
@@ -247,13 +247,13 @@ export default function AboutUs() {
           {/* Enfoque del Software */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-4 md:p-6  sm:p-4 md:p-8  md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
                 <Code className="text-[#34A853]" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
+              <h2 className="text-xl sm:text-xl md:text-2xl  md:text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">
                 Nuestro Enfoque
               </h2>
             </div>
@@ -300,13 +300,13 @@ export default function AboutUs() {
           {/* Colaboradores */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
+            className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl md:rounded-3xl p-4 md:p-6  sm:p-4 md:p-8  md:p-10 shadow-lg border border-gray-200 dark:border-zinc-700  dark:border-zinc-700 transition-colors duration-500"
           >
             <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
                 <Users className="text-purple-500" size={20} />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white  dark:text-white">
+              <h2 className="text-xl sm:text-xl md:text-2xl  md:text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white">
                 Colaboradores y Creadores
               </h2>
             </div>
@@ -345,7 +345,7 @@ export default function AboutUs() {
 
                   {/* Contenido Hover - Instagram */}
                   <motion.div
-                    className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500"
+                    className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-4 md:p-6  bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ 
                       opacity: hoveredCard === index ? 1 : 0,
@@ -382,7 +382,7 @@ export default function AboutUs() {
           {/* Sección de Donaciones */}
           <motion.div 
             variants={itemVariants}
-            className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-900/20 dark:via-pink-900/20 dark:to-purple-900/20 rounded-2xl md:rounded-3xl p-6 sm:p-8 md:p-12 shadow-xl border-2 border-orange-200 dark:border-orange-700 transition-colors duration-500 relative overflow-hidden"
+            className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-900/20 dark:via-pink-900/20 dark:to-purple-900/20 rounded-2xl md:rounded-3xl p-4 md:p-6  sm:p-4 md:p-8  md:p-12 shadow-xl border-2 border-orange-200 dark:border-orange-700 transition-colors duration-500 relative overflow-hidden"
           >
             {/* Decoración de fondo */}
             <div className="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-yellow-200/30 to-orange-200/30 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-full blur-3xl"></div>
@@ -405,7 +405,7 @@ export default function AboutUs() {
                   <Coffee className="text-white" size={28} strokeWidth={2.5} />
                 </motion.div>
                 
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white  dark:text-white mb-3 md:mb-4 px-4">
+                <h2 className="text-xl md:text-2xl  sm:text-2xl md:text-3xl  md:text-3xl md:text-4xl  font-extrabold text-gray-900 dark:text-white  dark:text-white mb-3 md:mb-4 px-4">
                   ¿Te gusta <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500">Arachiz</span>?
                 </h2>
                 <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
@@ -415,7 +415,7 @@ export default function AboutUs() {
 
               {/* Beneficios de donar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-orange-200 dark:border-orange-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-4 md:p-6  border border-orange-200 dark:border-orange-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Sparkles className="text-white" size={20} />
                   </div>
@@ -425,7 +425,7 @@ export default function AboutUs() {
                   </p>
                 </div>
                 
-                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-pink-200 dark:border-pink-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-4 md:p-6  border border-pink-200 dark:border-pink-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Heart className="text-white" size={20} />
                   </div>
@@ -435,7 +435,7 @@ export default function AboutUs() {
                   </p>
                 </div>
                 
-                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200 dark:border-purple-700">
+                <div className="bg-white dark:bg-zinc-800 /60 dark:bg-zinc-800/60 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-4 md:p-6  border border-purple-200 dark:border-purple-700">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center mb-3 md:mb-4 mx-auto">
                     <Code className="text-white" size={20} />
                   </div>
@@ -470,7 +470,7 @@ export default function AboutUs() {
       {/* Modal de Donación */}
       {showDonationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-14 h-14 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Coffee size={28} className="text-amber-500" />
@@ -518,7 +518,7 @@ export default function AboutUs() {
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4  gap-2 mb-6">
               {[2000, 5000, 10000, 20000].map((amount) => (
                 <button
                   key={amount}
@@ -534,7 +534,7 @@ export default function AboutUs() {
               ))}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowDonationModal(false); setAmountError(''); }}
                 className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -559,10 +559,10 @@ export default function AboutUs() {
       {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-2xl shadow-2xl p-4 md:p-8  max-w-sm w-full animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🎉</span>
+                <span className="text-2xl md:text-3xl ">🎉</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white  dark:text-white">¿Confirmas la donación?</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Revisa los detalles antes de continuar</p>
@@ -571,7 +571,7 @@ export default function AboutUs() {
             <div className="bg-gray-50 dark:bg-zinc-700 rounded-xl p-5 mb-6 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400 text-sm">Monto</span>
-                <span className="text-2xl font-bold text-[#4285F4]">
+                <span className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                   ${parsedAmount.toLocaleString('es-CO')} COP
                 </span>
               </div>
@@ -587,7 +587,7 @@ export default function AboutUs() {
               Serás redirigido a Wompi para completar el pago de forma segura 🔒
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 ">
               <button
                 onClick={() => { setShowConfirmModal(false); setShowDonationModal(true); }}
                 className="flex-1 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"

@@ -170,7 +170,7 @@ export default function AdminUsuarios() {
 
       {/* Tabs */}
       <div className="bg-white dark:bg-zinc-800  rounded-xl shadow-card p-1">
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2  gap-1">
           <button
             onClick={() => {
               setTab('instructores');
@@ -239,7 +239,7 @@ export default function AdminUsuarios() {
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="btn-secondary flex items-center justify-center gap-2"
+              className="btn-secondary text-sm md:text-base  flex items-center justify-center gap-2"
             >
               <X size={16} />
               Limpiar filtros
@@ -293,7 +293,7 @@ export default function AdminUsuarios() {
                       <td className="px-6 py-4 text-center">
                         <button
                           onClick={() => tab === 'instructores' ? handleOpenFichasInstructor(user) : handleOpenFichasAprendiz(user)}
-                          className="btn-secondary text-sm"
+                          className="btn-secondary text-sm md:text-base  text-sm"
                         >
                           Ver Fichas
                         </button>

@@ -72,7 +72,7 @@ export default function ResetPassword() {
   if (verifying) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <Loader size={48} className="animate-spin text-[#4285F4] mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Verificando token...</p>
         </div>
@@ -83,13 +83,13 @@ export default function ResetPassword() {
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-500 dark:text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mb-3">Token Inválido</h1>
+          <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-3">Token Inválido</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <Link to="/forgot-password" className="btn-primary w-full">
+          <Link to="/forgot-password" className="btn-primary text-sm md:text-base  w-full">
             Solicitar Nuevo Enlace
           </Link>
         </div>
@@ -100,11 +100,11 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+        <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-[#34A853] dark:text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mb-3">¡Contraseña Actualizada!</h1>
+          <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-3">¡Contraseña Actualizada!</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Tu contraseña ha sido restablecida exitosamente. Redirigiendo al login...
           </p>
@@ -116,12 +116,12 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
+      <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Lock size={32} className="text-[#34A853] dark:text-green-400" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white  dark:text-white mb-2">Nueva Contraseña</h1>
+          <h1 className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-2">Nueva Contraseña</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Ingresa tu nueva contraseña
           </p>
@@ -169,7 +169,7 @@ export default function ResetPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            className="btn-primary text-sm md:text-base  w-full flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

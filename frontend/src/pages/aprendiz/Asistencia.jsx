@@ -76,7 +76,7 @@ export default function AprendizAsistencia() {
             <input required className="input-field text-center font-mono text-xl tracking-widest uppercase"
               placeholder="X7B9K2" value={joinCode}
               onChange={e => setJoinCode(e.target.value.toUpperCase())} />
-            <button type="submit" disabled={joining} className="btn-primary w-full">
+            <button type="submit" disabled={joining} className="btn-primary text-sm md:text-base  w-full">
               {joining ? 'Uniéndose...' : 'Vincularme a esta ficha'}
             </button>
           </form>

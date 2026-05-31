@@ -76,7 +76,7 @@ export default function Landing() {
 
           {/* Titles */}
           <motion.div variants={itemVariants} className="space-y-4">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white  dark:text-white leading-[1.1] tracking-tight">
+            <h1 className="text-3xl md:text-4xl  md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white  dark:text-white leading-[1.1] tracking-tight">
               MÉTODOS DE <br className="hidden md:block" />
               <span className="text-[#4285F4]">ASISTENCIA</span>
             </h1>
@@ -115,7 +115,7 @@ export default function Landing() {
              animate="animate"
              className="relative z-20 w-[200px] sm:w-[260px] md:w-[320px] h-[300px] sm:h-[400px] md:h-[500px] bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-[25px] sm:rounded-[35px] md:rounded-[45px] shadow-2xl border-4 sm:border-8 border-gray-100 dark:border-zinc-700  dark:border-zinc-700 flex flex-col items-center justify-center transform rotate-6 hover:rotate-3 transition-transform duration-500"
            >
-              <div className="absolute inset-1 sm:inset-2 bg-[#F8FAFC] dark:bg-zinc-900 rounded-[18px] sm:rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden border border-gray-200 dark:border-zinc-700  dark:border-zinc-800 transition-colors duration-500">
+              <div className="absolute inset-1 sm:inset-2 bg-[#F8FAFC] dark:bg-zinc-900 rounded-[18px] sm:rounded-[25px] md:rounded-[35px] shadow-inner flex flex-col items-center justify-center p-4 sm:p-4 md:p-6  overflow-hidden border border-gray-200 dark:border-zinc-700  dark:border-zinc-800 transition-colors duration-500">
                 <div className="w-16 sm:w-24 md:w-32 h-20 sm:h-32 md:h-40 rounded-2xl sm:rounded-3xl flex items-center justify-center opacity-80 mb-4 sm:mb-6 bg-white dark:bg-zinc-800  dark:bg-zinc-800 shadow-md transition-colors duration-500">
                    <Fingerprint strokeWidth={1.5} className="text-[#4285F4] drop-shadow-sm w-12 h-12 sm:w-20 sm:h-20" />
                 </div>
@@ -135,7 +135,7 @@ export default function Landing() {
                  <ScanFace size={48} className="text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
                  <div className="absolute top-0 left-0 w-full h-1 bg-[#34A853]/50 blur-[2px] animate-pulse"></div>
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-wrap gap-2  items-center">
                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[#4285F4] transition-colors duration-500">
                     <ShieldCheck size={20} />
                  </div>

@@ -111,7 +111,7 @@ export default function InstructorMaterias() {
         subtitle={t('subjects.subtitle').replace('{count}', materias.length)}
         action={
           fichas.length > 0 && (
-            <button onClick={() => { setModal(true); setError(''); }} className="btn-primary flex items-center gap-2">
+            <button onClick={() => { setModal(true); setError(''); }} className="btn-primary text-sm md:text-base  flex items-center gap-2">
               <Plus size={16}/> {t('Action', 'Nueva Materia')}
             </button>
           )
@@ -129,7 +129,7 @@ export default function InstructorMaterias() {
             title={t('subjects.emptyTitle')}
             description={t('subjects.emptyDesc')}
             action={fichas.length > 0
-              ? <button onClick={() => setModal(true)} className="btn-primary">{t('Action', 'Crear Materia')}</button>
+              ? <button onClick={() => setModal(true)} className="btn-primary text-sm md:text-base ">{t('Action', 'Crear Materia')}</button>
               : <p className="text-sm text-gray-400">Primero crea una ficha</p>
             }
           />
@@ -210,9 +210,9 @@ export default function InstructorMaterias() {
               <option>Técnica</option><option>Transversal</option>
             </select>
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setModal(false)} className="btn-secondary flex-1">Cancelar</button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Creando...' : 'Crear Materia'}</button>
+          <div className="flex flex-wrap gap-3  pt-2">
+            <button type="button" onClick={() => setModal(false)} className="btn-secondary text-sm md:text-base  flex-1">Cancelar</button>
+            <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">{saving ? 'Creando...' : 'Crear Materia'}</button>
           </div>
         </form>
       </Modal>

@@ -152,7 +152,7 @@ export default function AprendizFichaDetalle() {
           </div>
         </div>
         
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
           {[1, 2, 3].map(i => (
             <div key={i} className="card animate-pulse">
               <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded" />
@@ -242,7 +242,7 @@ export default function AprendizFichaDetalle() {
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
+              <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
               <button
                 onClick={togglePin}
                 className={`p-1.5 rounded-lg transition-all ${
@@ -263,7 +263,7 @@ export default function AprendizFichaDetalle() {
         
         <button 
           onClick={() => setShowSalirDialog(true)} 
-          className="btn-secondary flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+          className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
           title="Salir de esta ficha"
         >
           <ArrowLeft size={16} />
@@ -272,14 +272,14 @@ export default function AprendizFichaDetalle() {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Instructores
               </p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <p className="text-xl md:text-2xl  font-bold text-purple-600 dark:text-purple-400">
                 {ficha.instructores?.length || 0}
               </p>
             </div>
@@ -295,7 +295,7 @@ export default function AprendizFichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Aprendices
               </p>
-              <p className="text-2xl font-bold text-[#4285F4]">
+              <p className="text-xl md:text-2xl  font-bold text-[#4285F4]">
                 {ficha.aprendices?.length || 0}
               </p>
             </div>
@@ -311,7 +311,7 @@ export default function AprendizFichaDetalle() {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
                 Materias
               </p>
-              <p className="text-2xl font-bold text-[#34A853]">
+              <p className="text-xl md:text-2xl  font-bold text-[#34A853]">
                 {ficha.materias?.length || 0}
               </p>
             </div>
@@ -326,7 +326,7 @@ export default function AprendizFichaDetalle() {
       <div className="card mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white  dark:text-white mb-4">Información General</h2>
         
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3">
           <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Número</p>
             <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{ficha.numero}</p>
@@ -365,7 +365,7 @@ export default function AprendizFichaDetalle() {
       {/* Pestañas: Aprendices y Materias */}
       <div className="card mb-6">
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 mb-4">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1 ">
             <button
               onClick={() => {
                 setActiveTab('aprendices');
@@ -648,7 +648,7 @@ export default function AprendizFichaDetalle() {
           </div>
           <button
             onClick={toggleHistorial}
-            className="btn-secondary text-sm flex items-center gap-2"
+            className="btn-secondary text-sm md:text-base  text-sm flex items-center gap-2"
           >
             {showHistorial ? 'Ocultar' : 'Ver Historial'}
           </button>
