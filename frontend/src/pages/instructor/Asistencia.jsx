@@ -55,6 +55,7 @@ export default function InstructorAsistencia() {
   const [selectedFecha, setSelectedFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [facialScannerActive, setFacialScannerActive] = useState(false);
   const [qrActive, setQrActive] = useState(false);
+  const [nfcActive, setNfcActive] = useState(false);
   const [manualRegisterOpen, setManualRegisterOpen] = useState(false);
   const [selectedSessionDetail, setSelectedSessionDetail] = useState(null);
   const socketRef = useRef(null);
@@ -567,6 +568,50 @@ export default function InstructorAsistencia() {
     }
   };
 
+  // ─── Lógica NFC Móvil (WebNFC) ─────────────────────────────────────────────
+  const startNFC = async () => {
+    if (!('NDEFReader' in window)) {
+      showToast('NFC no soportado. Requiere Android y Chrome.', 'error');
+      return;
+    }
+    try {
+      const ndef = new window.NDEFReader();
+      await ndef.scan();
+      setNfcActive(true);
+      showToast('NFC activado. Acerca una tarjeta.', 'success');
+      
+      ndef.onreading = async (event) => {
+        if (!event.serialNumber) return;
+        const formattedUid = event.serialNumber.replace(/:/g, '').toUpperCase();
+        try {
+          await fetchApi('/asistencias/hardware-register', {
+            method: 'POST',
+            body: JSON.stringify({ asistenciaId: activeSession.id, nfcUid: formattedUid })
+          });
+          showToast('✅ Asistencia NFC registrada', 'success');
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+      
+      ndef.onreadingerror = () => {
+        showToast('Error al leer la tarjeta NFC.', 'error');
+      };
+    } catch (error) {
+      showToast('Error al activar NFC: ' + error.message, 'error');
+      setNfcActive(false);
+    }
+  };
+
+  const toggleNFC = () => {
+    if (nfcActive) {
+      setNfcActive(false);
+      showToast('NFC desactivado', 'info');
+    } else {
+      startNFC();
+    }
+  };
+
   // Cargar puertos al montar el componente y cuando se activa una sesión
   useEffect(() => {
     loadAvailablePorts();
@@ -935,7 +980,7 @@ export default function InstructorAsistencia() {
               )}
 
               {/* Botones de métodos de registro - Horizontal */}
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button 
                   onClick={toggleQR}
                   className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 active:scale-95 ${
@@ -944,6 +989,15 @@ export default function InstructorAsistencia() {
                       : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 hover:shadow-yellow-500/50'
                   }`}>
                   <QrCode size={18}/> {qrActive ? 'Ocultar QR' : 'Código QR'}
+                </button>
+                <button 
+                  onClick={toggleNFC}
+                  className={`px-4 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center justify-center gap-2 transform hover:scale-105 active:scale-95 ${
+                    nfcActive 
+                      ? 'bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 hover:shadow-indigo-500/50 animate-pulse' 
+                      : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 hover:shadow-cyan-500/50'
+                  }`}>
+                  <Wifi size={18}/> {nfcActive ? 'Escaneando...' : 'NFC Móvil'}
                 </button>
                 <button 
                   onClick={() => setManualRegisterOpen(true)}
@@ -1641,11 +1695,22 @@ export default function InstructorAsistencia() {
                     onChange={e => setLlegadaTarde(parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#34A853] focus:outline-none"
                   />
-                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-semibold">
-                    <span>5 min</span>
-                    <span className="text-[#34A853]">15 min (Ref)</span>
-                    <span>30 min</span>
-                    <span>60 min</span>
+                  {/* Marcas de referencia alineadas con los ticks reales del slider (min=5, max=60, step=5 => 12 posiciones) */}
+                  <div className="relative h-4 mt-1">
+                    {[5, 15, 30, 45, 60].map(val => {
+                      const pct = ((val - 5) / (60 - 5)) * 100;
+                      return (
+                        <span
+                          key={val}
+                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
+                          className={`absolute text-[10px] font-semibold ${
+                            val === 15 ? 'text-[#34A853]' : 'text-gray-400 dark:text-gray-500'
+                          }`}
+                        >
+                          {val}m{val === 15 ? ' ✓' : ''}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1668,11 +1733,23 @@ export default function InstructorAsistencia() {
                     onChange={e => setDuracion(parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#34A853] focus:outline-none"
                   />
-                  <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-semibold">
-                    <span>30 min</span>
-                    <span className="text-[#34A853]">2h (Ref)</span>
-                    <span>3h</span>
-                    <span>4h</span>
+                  {/* Marcas de referencia alineadas con ticks reales del slider (min=30, max=240, step=15 => 15 posiciones) */}
+                  <div className="relative h-4 mt-1">
+                    {[30, 60, 90, 120, 180, 240].map(val => {
+                      const pct = ((val - 30) / (240 - 30)) * 100;
+                      const label = val < 60 ? `${val}m` : val % 60 === 0 ? `${val/60}h` : `${Math.floor(val/60)}h${val%60}m`;
+                      return (
+                        <span
+                          key={val}
+                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
+                          className={`absolute text-[10px] font-semibold ${
+                            val === 120 ? 'text-[#34A853]' : 'text-gray-400 dark:text-gray-500'
+                          }`}
+                        >
+                          {label}{val === 120 ? ' ✓' : ''}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

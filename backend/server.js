@@ -26,6 +26,7 @@ const hardwareRoutes = require('./routes/hardwareRoutes');
 const respuestaRapidaRoutes = require('./routes/respuestaRapidaRoutes');
 const adminRoutes = require('./routes/admin');
 const SerialService = require('./utils/serialService');
+const { checkAndCloseExpiredSessions } = require('./controllers/asistenciaController');
 
 const app = express();
 const server = http.createServer(app);
@@ -114,4 +115,12 @@ app.use((err, req, res, next) => {
 
 server.listen(PORT, () => {
   console.log(`Arachiz backend corriendo en http://localhost:${PORT}`);
+
+  // ── Cierre automático de sesiones expiradas (cada 60s) ──────────────────
+  setInterval(() => {
+    checkAndCloseExpiredSessions(io, serialService).catch(err =>
+      console.error('[AutoClose] Error inesperado:', err.message)
+    );
+  }, 60 * 1000);
+  console.log('[AutoClose] Monitor de sesiones expiradas activo (cada 60s)');
 });

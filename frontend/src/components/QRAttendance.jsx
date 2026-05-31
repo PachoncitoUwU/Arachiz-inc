@@ -57,9 +57,7 @@ export default function QRAttendance({ asistenciaId, onClose }) {
         console.log('[QR] Código escaneado, regenerando...');
         showToast(`✓ ${data.aprendiz?.fullName} escaneó el QR`, 'success');
         // Regenerar inmediatamente
-        setTimeout(() => {
-          generateQR();
-        }, 500);
+        generateQR();
       }
     });
     

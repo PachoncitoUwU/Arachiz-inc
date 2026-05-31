@@ -11,7 +11,7 @@ import MateriaInfoModal from '../../components/MateriaInfoModal';
 import NotificacionesModal from '../../components/NotificacionesModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
-  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell
+  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -34,6 +34,7 @@ export default function FichaDetalle() {
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [showJoinQR, setShowJoinQR] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [modalMateria, setModalMateria] = useState(false);
   const [formMateria, setFormMateria] = useState({ nombre: '', tipo: 'Técnica' });
@@ -667,6 +668,14 @@ export default function FichaDetalle() {
               {copiedLink ? <Check size={14} className="text-[#34A853]" /> : <Link size={14} />}
               {copiedLink ? 'Link copiado' : 'Copiar link'}
             </button>
+            
+            <button
+              onClick={() => setShowJoinQR(true)}
+              className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
+            >
+              <QrCode size={14} />
+              Mostrar QR
+            </button>
 
             {isLider && (
               <button 
@@ -1244,6 +1253,33 @@ export default function FichaDetalle() {
         cancelText="Cancelar"
         danger={true}
       />
+
+      {/* Modal Mostrar QR de Invitación */}
+      {showJoinQR && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-900 dark:text-white">QR de Invitación</h3>
+              <button onClick={() => setShowJoinQR(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="bg-white p-4 rounded-xl border-4 border-[#4285F4] flex items-center justify-center mb-4">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}/unirse/${ficha.code}`)}`}
+                alt="QR Code Invitación"
+                className="w-full h-auto max-w-[250px]"
+              />
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
+              <p className="font-mono font-bold text-lg text-[#4285F4] tracking-widest">{ficha.code}</p>
+            </div>
+            <p className="text-center text-sm text-gray-500 mt-4">
+              Escanea este código o usa el pin para unirte a la ficha
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Notificaciones */}
       <NotificacionesModal

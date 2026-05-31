@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/timeService');
+const { sendAttendanceEmail } = require('../utils/emailService');
 
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
@@ -313,75 +314,118 @@ const registerHardwareAttendance = async (req, res) => {
 };
 
 
-// RF28/RF42 - Finalizar sesión
-const endSession = async (req, res) => {
-  const { id } = req.params;
-  try {
-    // First fetch to get materiaId
-    const asistenciaBasic = await prisma.asistencia.findUnique({
-      where: { id },
-      select: { id: true, activa: true, materiaId: true }
-    });
-    
-    if (!asistenciaBasic) return res.status(404).json({ error: 'Sesión no encontrada' });
-    if (!asistenciaBasic.activa) return res.status(400).json({ error: 'La sesión ya fue cerrada' });
+const closeSessionById = async (id, io, serialService) => {
+  // First fetch to get materiaId
+  const asistenciaBasic = await prisma.asistencia.findUnique({
+    where: { id },
+    select: { id: true, activa: true, materiaId: true }
+  });
+  
+  if (!asistenciaBasic) throw new Error('Sesión no encontrada');
+  if (!asistenciaBasic.activa) throw new Error('La sesión ya fue cerrada');
 
-    // Now fetch with filtered aprendices using the materiaId
-    const asistencia = await prisma.asistencia.findUnique({
-      where: { id },
-      include: {
-        registros: true,
-        materia: { 
-          include: { 
-            ficha: { 
-              include: { 
-                aprendices: {
-                  where: {
-                    NOT: {
-                      materiasEvitadas: {
-                        some: { materiaId: asistenciaBasic.materiaId }
-                      }
+  // Now fetch with filtered aprendices using the materiaId
+  const asistencia = await prisma.asistencia.findUnique({
+    where: { id },
+    include: {
+      registros: true,
+      materia: { 
+        include: { 
+          ficha: { 
+            include: { 
+              aprendices: {
+                where: {
+                  NOT: {
+                    materiasEvitadas: {
+                      some: { materiaId: asistenciaBasic.materiaId }
                     }
                   }
                 }
-              } 
+              }
             } 
           } 
         }
       }
-    });
-
-    const todosAprendices = asistencia.materia.ficha.aprendices;
-    const registradosIds = asistencia.registros.map(r => r.aprendizId);
-    const ausentes = todosAprendices.filter(a => !registradosIds.includes(a.id));
-
-    if (ausentes.length > 0) {
-      await prisma.registroAsistencia.createMany({
-        data: ausentes.map(a => ({
-          presente: false,
-          metodo: 'automatico',
-          asistenciaId: asistencia.id,
-          aprendizId: a.id
-        }))
-      });
     }
+  });
 
-    const updatedAsistencia = await prisma.asistencia.update({
-      where: { id },
-      data: { activa: false },
-      include: {
-        registros: { include: { aprendiz: { select: { fullName: true, document: true } } } }
-      }
+  const todosAprendices = asistencia.materia.ficha.aprendices;
+  const registradosIds = asistencia.registros.map(r => r.aprendizId);
+  const ausentes = todosAprendices.filter(a => !registradosIds.includes(a.id));
+
+  if (ausentes.length > 0) {
+    await prisma.registroAsistencia.createMany({
+      data: ausentes.map(a => ({
+        presente: false,
+        metodo: 'automatico',
+        asistenciaId: asistencia.id,
+        aprendizId: a.id
+      }))
     });
 
+    // Enviar correos de inasistencia en segundo plano
+    for (const a of ausentes) {
+      sendAttendanceEmail(
+        a.email,
+        a.fullName,
+        asistencia.materia.nombre,
+        'ausente',
+        new Date(),
+        'automatico'
+      ).catch(err => console.error(`[EmailService] Error al enviar correo a ${a.email}:`, err));
+    }
+  }
+
+  const updatedAsistencia = await prisma.asistencia.update({
+    where: { id },
+    data: { activa: false },
+    include: {
+      registros: { include: { aprendiz: { select: { fullName: true, document: true } } } }
+    }
+  });
+
+  if (serialService) serialService.sendCommand('SESSION OFF');
+  if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
+
+  return updatedAsistencia;
+};
+
+// RF28/RF42 - Finalizar sesión
+const endSession = async (req, res) => {
+  const { id } = req.params;
+  try {
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
-    if (serialService) serialService.sendCommand('SESSION OFF');
-    if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
-
-    res.json({ message: 'Sesión finalizada. Ausencias marcadas automáticamente.', asistencia: updatedAsistencia });
+    const updated = await closeSessionById(id, io, serialService);
+    res.json({ message: 'Sesión finalizada. Ausencias marcadas automáticamente.', asistencia: updated });
   } catch (err) {
     res.status(500).json({ error: 'Error al finalizar sesión: ' + err.message });
+  }
+};
+
+const checkAndCloseExpiredSessions = async (io, serialService) => {
+  try {
+    const now = new Date();
+    const activeSessions = await prisma.asistencia.findMany({
+      where: { activa: true }
+    });
+
+    for (const session of activeSessions) {
+      const sessionStart = new Date(session.timestamp);
+      const durationMs = session.duracion * 60 * 1000;
+      const expireTime = new Date(sessionStart.getTime() + durationMs);
+
+      if (now >= expireTime) {
+        console.log(`[AutoClose] La sesión ${session.id} ha expirado. Cerrando automáticamente...`);
+        try {
+          await closeSessionById(session.id, io, serialService);
+        } catch (err) {
+          console.error(`[AutoClose] Error cerrando sesión ${session.id}:`, err.message);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[AutoClose] Error buscando sesiones expiradas:', error.message);
   }
 };
 
@@ -716,5 +760,5 @@ const registerManualAttendance = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerManualAttendance };
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerManualAttendance, checkAndCloseExpiredSessions };
 

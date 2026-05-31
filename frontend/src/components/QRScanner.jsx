@@ -69,19 +69,26 @@ export default function QRScanner({ onClose, onSuccess }) {
       
       // Usar jsQR para detectar QR
       try {
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        const qrResult = jsQR(imageData.data, imageData.width, imageData.height);
         
-        if (code) {
-          // Extraer el código del URL
-          const url = new URL(code.data);
-          const qrCode = url.searchParams.get('code');
+        if (qrResult && qrResult.data) {
+          let qrCode = null;
+          
+          try {
+            // Extraer el código del URL si es un formato de URL
+            const url = new URL(qrResult.data);
+            qrCode = url.searchParams.get('code');
+          } catch (e) {
+            // Si falla el parseo de URL, asumir que es un código crudo
+            qrCode = qrResult.data.trim();
+          }
           
           if (qrCode) {
             await validateQR(qrCode);
           }
         }
       } catch (err) {
-        // Ignorar errores de parsing
+        // Ignorar errores generales de jsQR
       }
     }
   };
