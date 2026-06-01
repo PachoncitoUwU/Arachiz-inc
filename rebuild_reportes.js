@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from 'react';
+const fs = require('fs');
+const path = 'C:\\Users\\LENOVO\\Documents\\Arachiz-inc\\frontend\\src\\pages\\admin\\Reportes.jsx';
+
+const content = `import React, { useEffect, useState } from 'react';
 import { BarChart3, Download, FileText, Users, BookOpen, Calendar, Filter, TrendingUp, PieChart, ChevronDown, ChevronUp, CheckCircle2, XCircle, Search, Clock, Loader2 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
@@ -31,7 +34,7 @@ export default function AdminReportes() {
   const [loadingSesiones, setLoadingSesiones] = useState(false);
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
-  const [sesionSeleccionada, setSesionSeleccionada] = useState(null);
+  const [sesionExpandida, setSesionExpandida] = useState(null);
 
   useEffect(() => {
     loadFichas();
@@ -64,7 +67,7 @@ export default function AdminReportes() {
       if (filtroFechaDesde) params.append('fechaDesde', filtroFechaDesde);
       if (filtroFechaHasta) params.append('fechaHasta', filtroFechaHasta);
       
-      const data = await fetchApi(`/admin/reportes/sesiones/${materiaSeleccionadaVista}?${params.toString()}`);
+      const data = await fetchApi(\`/admin/reportes/sesiones/\${materiaSeleccionadaVista}?\${params.toString()}\`);
       setSesiones(data.sesiones || []);
     } catch (err) {
       console.error('Error cargando sesiones:', err);
@@ -87,7 +90,7 @@ export default function AdminReportes() {
     try {
       setLoadingMateriasVista(true);
       setErrorMateriasVista(false);
-      const data = await fetchApi(`/admin/fichas/${fichaId}`);
+      const data = await fetchApi(\`/admin/fichas/\${fichaId}\`);
       setMateriasVista(data.ficha?.materias || []);
     } catch (err) {
       setErrorMateriasVista(true);
@@ -99,12 +102,12 @@ export default function AdminReportes() {
 
   const handleDownloadReporteSesionIndividual = async (sesionId, materiaNombre, fecha) => {
     try {
-      setDownloading(`sesion-${sesionId}`);
+      setDownloading(\`sesion-\${sesionId}\`);
       showToast('Generando reporte de sesión...', 'info');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/sesion/${sesionId}/excel`, {
+      const response = await fetch(\`\${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/sesion/\${sesionId}/excel\`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': \`Bearer \${localStorage.getItem('token')}\`
         }
       });
 
@@ -114,7 +117,7 @@ export default function AdminReportes() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Sesion_${materiaNombre}_${new Date(fecha).toISOString().split('T')[0]}.xlsx`;
+      a.download = \`Sesion_\${materiaNombre}_\${new Date(fecha).toISOString().split('T')[0]}.xlsx\`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -130,12 +133,12 @@ export default function AdminReportes() {
 
   const handleDownloadReporteFicha = async (fichaId) => {
     try {
-      setDownloading(`ficha-${fichaId}`);
+      setDownloading(\`ficha-\${fichaId}\`);
       showToast('Generando reporte de ficha...', 'info');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/ficha/${fichaId}`, {
+      const response = await fetch(\`\${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/ficha/\${fichaId}\`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': \`Bearer \${localStorage.getItem('token')}\`
         }
       });
 
@@ -147,7 +150,7 @@ export default function AdminReportes() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Ficha_${fichaId}_${Date.now()}.xlsx`;
+      a.download = \`Ficha_\${fichaId}_\${Date.now()}.xlsx\`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -164,7 +167,7 @@ export default function AdminReportes() {
   const handleOpenModalMateria = async (ficha) => {
     try {
       setFichaSeleccionada(ficha);
-      const data = await fetchApi(`/admin/fichas/${ficha.id}`);
+      const data = await fetchApi(\`/admin/fichas/\${ficha.id}\`);
       setMaterias(data.ficha?.materias || []);
       setModalMateria(true);
       setMateriaSeleccionada('');
@@ -182,7 +185,7 @@ export default function AdminReportes() {
     }
 
     try {
-      setDownloading(`materia-${materiaSeleccionada}`);
+      setDownloading(\`materia-\${materiaSeleccionada}\`);
       showToast('Generando reporte de asistencias...', 'info');
       
       const params = new URLSearchParams();
@@ -190,10 +193,10 @@ export default function AdminReportes() {
       if (fechaHasta) params.append('fechaHasta', fechaHasta);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/materia/${materiaSeleccionada}?${params.toString()}`,
+        \`\${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/materia/\${materiaSeleccionada}?\${params.toString()}\`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': \`Bearer \${localStorage.getItem('token')}\`
           }
         }
       );
@@ -206,7 +209,7 @@ export default function AdminReportes() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Asistencias_${Date.now()}.xlsx`;
+      a.download = \`Asistencias_\${Date.now()}.xlsx\`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -226,9 +229,9 @@ export default function AdminReportes() {
       setDownloading('consolidado');
       showToast('Generando reporte consolidado...', 'info');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/consolidado`, {
+      const response = await fetch(\`\${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/consolidado\`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': \`Bearer \${localStorage.getItem('token')}\`
         }
       });
 
@@ -240,7 +243,7 @@ export default function AdminReportes() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Reporte_Consolidado_${Date.now()}.xlsx`;
+      a.download = \`Reporte_Consolidado_\${Date.now()}.xlsx\`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -287,18 +290,18 @@ export default function AdminReportes() {
         <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => setVistaActual('reportes')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
+            className={\`btn-secondary flex-1 flex items-center justify-center gap-2 \${
               vistaActual === 'reportes' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
-            }`}
+            }\`}
           >
             <Download size={16} />
             Descargar Reportes
           </button>
           <button
             onClick={() => setVistaActual('sesiones')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
+            className={\`btn-secondary flex-1 flex items-center justify-center gap-2 \${
               vistaActual === 'sesiones' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
-            }`}
+            }\`}
           >
             <Calendar size={16} />
             Ver Sesiones Detalladas
@@ -392,12 +395,12 @@ export default function AdminReportes() {
                       <div className="flex flex-wrap gap-2 ">
                         <button
                           onClick={() => handleDownloadReporteFicha(ficha.id)}
-                          disabled={downloading === `ficha-${ficha.id}`}
+                          disabled={downloading === \`ficha-\${ficha.id}\`}
                           className="btn-secondary text-sm md:text-base  flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Descargar información general de la ficha"
                         >
                           <FileText size={16} />
-                          <span>{downloading === `ficha-${ficha.id}` ? 'Generando...' : 'Info Ficha'}</span>
+                          <span>{downloading === \`ficha-\${ficha.id}\` ? 'Generando...' : 'Info Ficha'}</span>
                         </button>
                         <button
                           onClick={() => handleOpenModalMateria(ficha)}
@@ -453,7 +456,7 @@ export default function AdminReportes() {
                       setSesiones([]);
                     }}
                     disabled={!fichaSeleccionadaVista || loadingMateriasVista || errorMateriasVista || materiasVista.length === 0}
-                    className={`input-field ${loadingMateriasVista ? 'pl-10' : ''} ${errorMateriasVista ? 'border-red-500' : ''}`}
+                    className={\`input-field \${loadingMateriasVista ? 'pl-10' : ''} \${errorMateriasVista ? 'border-red-500' : ''}\`}
                   >
                     {loadingMateriasVista ? (
                       <option value="">Cargando materias...</option>
@@ -522,21 +525,21 @@ export default function AdminReportes() {
                   <button
                     onClick={async () => {
                       try {
-                        setDownloading(`materia-${materiaSeleccionadaVista}`);
+                        setDownloading(\`materia-\${materiaSeleccionadaVista}\`);
                         showToast('Generando reporte de asistencias...', 'info');
                         const params = new URLSearchParams();
                         if (filtroFechaDesde) params.append('fechaDesde', filtroFechaDesde);
                         if (filtroFechaHasta) params.append('fechaHasta', filtroFechaHasta);
                         const response = await fetch(
-                          `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/materia/${materiaSeleccionadaVista}?${params.toString()}`,
-                          { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
+                          \`\${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/materia/\${materiaSeleccionadaVista}?\${params.toString()}\`,
+                          { headers: { 'Authorization': \`Bearer \${localStorage.getItem('token')}\` } }
                         );
                         if (!response.ok) throw new Error('Error al generar reporte');
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = `Asistencias_${Date.now()}.xlsx`;
+                        a.download = \`Asistencias_\${Date.now()}.xlsx\`;
                         document.body.appendChild(a);
                         a.click();
                         window.URL.revokeObjectURL(url);
@@ -548,20 +551,21 @@ export default function AdminReportes() {
                         setDownloading(null);
                       }
                     }}
-                    disabled={downloading === `materia-${materiaSeleccionadaVista}`}
+                    disabled={downloading === \`materia-\${materiaSeleccionadaVista}\`}
                     className="btn-secondary text-sm flex items-center gap-2"
                   >
                     <Download size={16} />
-                    {downloading === `materia-${materiaSeleccionadaVista}` ? 'Generando...' : 'Descargar Materia Completa'}
+                    {downloading === \`materia-\${materiaSeleccionadaVista}\` ? 'Generando...' : 'Descargar Materia Completa'}
                   </button>
                 )}
               </div>
 
               <div className="p-4 md:p-6">
                 {loadingSesiones ? (
-                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                    <Loader2 size={48} className="animate-spin text-red-500" />
-                    <p className="text-gray-500 dark:text-gray-400 font-medium">Cargando sesiones...</p>
+                  <div className="animate-pulse space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                    ))}
                   </div>
                 ) : sesiones.length === 0 ? (
                   <EmptyState
@@ -575,8 +579,8 @@ export default function AdminReportes() {
                       <div key={sesion.id} className="border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden">
                         {/* Cabecera Sesión */}
                         <div 
-                          className="p-4 bg-white dark:bg-gray-900 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                          onClick={() => setSesionSeleccionada(sesion)}
+                          className="p-4 bg-gray-50 dark:bg-gray-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                          onClick={() => setSesionExpandida(sesionExpandida === sesion.id ? null : sesion.id)}
                         >
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -584,7 +588,7 @@ export default function AdminReportes() {
                             </div>
                             <div>
                               <p className="font-bold text-gray-900 dark:text-white">
-                                {sesion.fechaReal || new Date(sesion.fecha).toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}
+                                {new Date(sesion.fecha).toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Instructor: {sesion.instructor}
@@ -606,14 +610,44 @@ export default function AdminReportes() {
                                 const materiaObj = materiasVista.find(m => m.id === materiaSeleccionadaVista);
                                 handleDownloadReporteSesionIndividual(sesion.id, materiaObj?.nombre || 'Materia', sesion.fecha);
                               }}
-                              disabled={downloading === `sesion-${sesion.id}`}
+                              disabled={downloading === \`sesion-\${sesion.id}\`}
                               className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-500 transition-colors"
                               title="Descargar Sesión Individual"
                             >
                               <FileText size={18} />
                             </button>
+                            
+                            <div className="text-gray-400">
+                              {sesionExpandida === sesion.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Detalle Aprendices (Expandible) */}
+                        {sesionExpandida === sesion.id && (
+                          <div className="p-4 border-t border-gray-200 dark:border-zinc-700 bg-white dark:bg-gray-900">
+                            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Detalle de Aprendices</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                              {sesion.aprendices.map(aprendiz => (
+                                <div key={aprendiz.id} className="flex items-center justify-between p-2 rounded-lg border border-gray-100 dark:border-gray-800">
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                      {aprendiz.nombre}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{aprendiz.documento}</span>
+                                  </div>
+                                  <div className="ml-2 flex-shrink-0">
+                                    {aprendiz.presente ? (
+                                      <CheckCircle2 size={18} className="text-green-500" />
+                                    ) : (
+                                      <XCircle size={18} className="text-red-500" />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -628,7 +662,7 @@ export default function AdminReportes() {
       <Modal
         open={modalMateria}
         onClose={() => setModalMateria(false)}
-        title={`Reporte de Asistencias - Ficha ${fichaSeleccionada?.numero}`}
+        title={\`Reporte de Asistencias - Ficha \${fichaSeleccionada?.numero}\`}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -681,114 +715,18 @@ export default function AdminReportes() {
             </button>
             <button
               onClick={handleDownloadReporteMateria}
-              disabled={!materiaSeleccionada || downloading === `materia-${materiaSeleccionada}`}
+              disabled={!materiaSeleccionada || downloading === \`materia-\${materiaSeleccionada}\`}
               className="btn-primary flex items-center gap-2"
             >
               <Download size={18} />
-              <span>{downloading === `materia-${materiaSeleccionada}` ? 'Generando...' : 'Descargar Reporte'}</span>
+              <span>{downloading === \`materia-\${materiaSeleccionada}\` ? 'Generando...' : 'Descargar Reporte'}</span>
             </button>
           </div>
         </div>
       </Modal>
-      {/* Modal para detalles de la sesión seleccionada */}
-      {sesionSeleccionada && (
-        <Modal
-          open={!!sesionSeleccionada}
-          onClose={() => setSesionSeleccionada(null)}
-          title="Detalles de la Sesión"
-        >
-          <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-            
-            {/* Header info */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Fecha y Hora</p>
-                <p className="font-bold text-gray-900 dark:text-white">
-                  {sesionSeleccionada.fechaReal || new Date(sesionSeleccionada.fecha).toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Instructor</p>
-                <p className="font-bold text-gray-900 dark:text-white">{sesionSeleccionada.instructor}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Duración</p>
-                <p className="font-bold text-gray-900 dark:text-white">
-                  {sesionSeleccionada.duracion ? `${sesionSeleccionada.duracion} minutos` : 'No especificada'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Asistencia</p>
-                <p className="font-bold text-gray-900 dark:text-white">
-                  {sesionSeleccionada.totalPresentes} / {sesionSeleccionada.totalEsperados} ({sesionSeleccionada.porcentajeAsistencia}%)
-                </p>
-              </div>
-            </div>
-
-            {/* Lista de aprendices */}
-            <div>
-              <h4 className="font-bold text-gray-900 dark:text-white mb-3">Lista de Aprendices</h4>
-              <div className="border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">
-                    <tr>
-                      <th className="px-4 py-3 whitespace-nowrap">Aprendiz</th>
-                      <th className="px-4 py-3 whitespace-nowrap">Documento</th>
-                      <th className="px-4 py-3 whitespace-nowrap">Estado</th>
-                      <th className="px-4 py-3 whitespace-nowrap">Método</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                    {sesionSeleccionada.aprendices.map(aprendiz => (
-                      <tr key={aprendiz.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">{aprendiz.nombre}</td>
-                        <td className="px-4 py-3 whitespace-nowrap">{aprendiz.documento}</td>
-                        <td className="px-4 py-3 whitespace-nowrap flex items-center">
-                          {aprendiz.presente ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              <CheckCircle2 size={14} /> Presente
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                              <XCircle size={14} /> Ausente
-                            </span>
-                          )}
-                          {aprendiz.tarde && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 ml-2 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                              Tarde
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 capitalize whitespace-nowrap">{aprendiz.metodo || 'Manual'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-3 mt-6 border-t border-gray-200 dark:border-zinc-700 pt-4">
-            <button
-              onClick={() => setSesionSeleccionada(null)}
-              className="btn-secondary"
-            >
-              Cerrar
-            </button>
-            <button
-              onClick={() => {
-                const materiaObj = materiasVista.find(m => m.id === materiaSeleccionadaVista);
-                handleDownloadReporteSesionIndividual(sesionSeleccionada.id, materiaObj?.nombre || 'Materia', sesionSeleccionada.fecha);
-              }}
-              disabled={downloading === `sesion-${sesionSeleccionada.id}`}
-              className="btn-primary flex items-center gap-2"
-            >
-              <FileText size={18} />
-              <span>{downloading === `sesion-${sesionSeleccionada.id}` ? 'Descargando...' : 'Descargar Excel'}</span>
-            </button>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
+`;
+fs.writeFileSync(path, content, 'utf8');
+console.log('Successfully rebuilt Reportes.jsx');
