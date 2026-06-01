@@ -184,7 +184,7 @@ const generarReporteFicha = async (req, res) => {
       sheetMaterias.addRow({
         nombre: materia.nombre,
         tipo: materia.tipo,
-        instructor: materia.instructor.fullName,
+        instructor: materia.instructor ? materia.instructor.fullName : 'Sin asignar',
         asistencias: materia._count.asistencias
       });
     });
@@ -309,7 +309,7 @@ const generarReporteMateria = async (req, res) => {
     sheet.addRow(['Ficha:', `${materia.ficha.numero} - ${materia.ficha.nombre}`]);
     sheet.addRow(['Materia:', materia.nombre]);
     sheet.addRow(['Tipo:', materia.tipo]);
-    sheet.addRow(['Instructor:', materia.instructor.fullName]);
+    sheet.addRow(['Instructor:', materia.instructor ? materia.instructor.fullName : 'Sin asignar']);
     sheet.addRow(['Líder de Ficha:', materia.ficha.instructorAdmin.fullName]);
     sheet.addRow(['Total Asistencias:', materia.asistencias.length]);
     sheet.addRow(['Fecha de Generación:', new Date().toLocaleString('es-CO', { 
@@ -516,7 +516,7 @@ const generarReporteConsolidado = async (req, res) => {
           ficha: ficha.numero,
           materia: materia.nombre,
           tipo: materia.tipo,
-          instructor: materia.instructor.fullName,
+          instructor: materia.instructor ? materia.instructor.fullName : 'Sin asignar',
           asistencias: materia._count.asistencias
         });
       });
@@ -670,7 +670,7 @@ const getEstadisticasReportes = async (req, res) => {
             id: materia.id,
             nombre: materia.nombre,
             tipo: materia.tipo,
-            instructor: materia.instructor.fullName,
+            instructor: materia.instructor ? materia.instructor.fullName : 'Sin asignar',
             fichaNumero: ficha.numero,
             totalAsistencias: materia.asistencias.length,
             porcentajeAsistencia: ((totalPresentes / totalRegistros) * 100).toFixed(1)
@@ -781,9 +781,218 @@ const getEstadisticasReportes = async (req, res) => {
   }
 };
 
+/**
+ * Obtener sesiones de asistencia de una materia
+ */
+const getSesionesAsistenciaMateria = async (req, res) => {
+  try {
+    const { materiaId } = req.params;
+    if (!materiaId || materiaId === 'undefined') {
+      return res.status(400).json({ error: 'ID de materia inválido' });
+    }
+    
+    const adminId = req.user.id;
+    const { fechaDesde, fechaHasta } = req.query;
+
+    let fechaDesdeIso, fechaHastaIso;
+    try {
+      if (fechaDesde) fechaDesdeIso = new Date(fechaDesde).toISOString();
+      if (fechaHasta) {
+        // Al ser 'hasta', podríamos querer incluir todo el día, pero si ya envían un ISO completo lo respetamos.
+        // Si mandan solo YYYY-MM-DD, al hacer new Date se tomará medianoche UTC.
+        const d = new Date(fechaHasta);
+        if (fechaHasta.length === 10) d.setUTCHours(23, 59, 59, 999);
+        fechaHastaIso = d.toISOString();
+      }
+    } catch (e) {
+      console.warn("Fechas inválidas provistas al filtro de sesiones", e);
+    }
+
+    const materia = await prisma.materia.findUnique({
+      where: { id: materiaId },
+      include: {
+        ficha: {
+          select: {
+            administradorId: true,
+            aprendices: { select: { id: true } }
+          }
+        },
+        instructor: { select: { fullName: true } },
+        asistencias: {
+          where: {
+            ...(fechaDesdeIso && { fecha: { gte: fechaDesdeIso } }),
+            ...(fechaHastaIso && { fecha: { lte: fechaHastaIso } })
+          },
+          orderBy: { timestamp: 'desc' }, // Order by real time instead of fecha
+          include: {
+            registros: {
+              include: {
+                aprendiz: { select: { id: true, fullName: true, document: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
+    if (materia.ficha.administradorId !== adminId) return res.status(403).json({ error: 'No tienes acceso a esta materia' });
+
+    const totalAprendicesFicha = materia.ficha.aprendices.length;
+
+    const sesiones = materia.asistencias.map(asistencia => {
+      const presentes = asistencia.registros.filter(r => r.presente).length;
+      const totalRegistros = asistencia.registros.length;
+      
+      const porcentaje = totalRegistros > 0 ? ((presentes / totalRegistros) * 100).toFixed(1) : 0;
+
+      // Formatear hora real a zona horaria de Colombia
+      const options = {
+        timeZone: 'America/Bogota',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: true
+      };
+      const fechaRealFormateada = new Date(asistencia.timestamp).toLocaleString('es-CO', options);
+
+      return {
+        id: asistencia.id,
+        fecha: asistencia.fecha,
+        fechaReal: fechaRealFormateada,
+        timestamp: asistencia.timestamp,
+        duracion: asistencia.duracion,
+        instructor: materia.instructor ? materia.instructor.fullName : 'Sin asignar',
+        totalEsperados: totalAprendicesFicha,
+        totalPresentes: presentes,
+        porcentajeAsistencia: parseFloat(porcentaje),
+        aprendices: asistencia.registros.map(r => ({
+          id: r.aprendiz.id,
+          nombre: r.aprendiz.fullName,
+          documento: r.aprendiz.document,
+          presente: r.presente,
+          metodo: r.metodo,
+          tarde: r.tarde
+        }))
+      };
+    });
+
+    res.json({ sesiones });
+  } catch (err) {
+    console.error('Error obteniendo sesiones:', err);
+    res.status(500).json({ error: 'Error obteniendo sesiones: ' + err.message });
+  }
+};
+
+/**
+ * Generar reporte Excel de una sesión individual
+ */
+const generarReporteSesionIndividual = async (req, res) => {
+  try {
+    const { sesionId } = req.params;
+    const adminId = req.user.id;
+
+    const asistencia = await prisma.asistencia.findUnique({
+      where: { id: sesionId },
+      include: {
+        materia: {
+          include: {
+            ficha: {
+              include: {
+                aprendices: true
+              }
+            },
+            instructor: true
+          }
+        },
+        registros: {
+          include: {
+            aprendiz: true
+          }
+        }
+      }
+    });
+
+    if (!asistencia) return res.status(404).json({ error: 'Sesión no encontrada' });
+    if (asistencia.materia.ficha.administradorId !== adminId) return res.status(403).json({ error: 'No tienes acceso a esta sesión' });
+
+    const totalEsperados = asistencia.materia.ficha.aprendices.length;
+    const presentes = asistencia.registros.filter(r => r.presente).length;
+    const porcentaje = totalEsperados > 0 ? ((presentes / totalEsperados) * 100).toFixed(1) : 0;
+
+    const optionsTime = { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+    const fechaReal = new Date(asistencia.timestamp).toLocaleString('es-CO', optionsTime);
+
+    const workbook = new ExcelJS.Workbook();
+    
+    // --- HOJA 1: RESUMEN ---
+    const sheetResumen = workbook.addWorksheet('Resumen de Sesión');
+    const titleStyle = { font: { bold: true, size: 14 } };
+    
+    sheetResumen.addRow(['REPORTE DE SESIÓN INDIVIDUAL']).font = titleStyle;
+    sheetResumen.addRow([]);
+    sheetResumen.addRow(['Materia:', asistencia.materia.nombre]);
+    sheetResumen.addRow(['Ficha:', asistencia.materia.ficha.numero]);
+    sheetResumen.addRow(['Instructor:', asistencia.materia.instructor ? asistencia.materia.instructor.fullName : 'Sin asignar']);
+    sheetResumen.addRow(['Fecha y Hora:', fechaReal]);
+    sheetResumen.addRow(['Duración:', asistencia.duracion ? `${asistencia.duracion} minutos` : 'No especificada']);
+    sheetResumen.addRow([]);
+    sheetResumen.addRow(['ESTADÍSTICAS']).font = { bold: true };
+    sheetResumen.addRow(['Total Esperados:', totalEsperados]);
+    sheetResumen.addRow(['Total Presentes:', presentes]);
+    sheetResumen.addRow(['Porcentaje de Asistencia:', `${porcentaje}%`]);
+    
+    sheetResumen.getColumn(1).width = 25;
+    sheetResumen.getColumn(2).width = 40;
+
+    // --- HOJA 2: LISTA DE APRENDICES ---
+    const sheetAprendices = workbook.addWorksheet('Lista de Aprendices');
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4285F4' } }
+    };
+
+    const columns = [
+      { header: 'Documento', key: 'doc', width: 15 },
+      { header: 'Nombre Completo', key: 'nombre', width: 40 },
+      { header: 'Estado', key: 'estado', width: 15 },
+      { header: 'Método', key: 'metodo', width: 15 },
+      { header: 'Hora de Registro', key: 'hora', width: 25 }
+    ];
+    
+    sheetAprendices.columns = columns;
+    const headerRow = sheetAprendices.getRow(1);
+    headerRow.eachCell(cell => { cell.style = headerStyle; });
+
+    asistencia.registros.forEach(r => {
+      let estado = r.presente ? 'Presente' : 'Ausente';
+      if (r.tarde) estado = 'Tarde';
+      
+      const horaRegistro = new Date(r.timestamp).toLocaleString('es-CO', optionsTime);
+
+      sheetAprendices.addRow({
+        doc: r.aprendiz.document,
+        nombre: r.aprendiz.fullName,
+        estado: estado,
+        metodo: r.metodo || 'Manual',
+        hora: horaRegistro
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=Sesion_${asistencia.materia.nombre.replace(/\s+/g, '_')}_${new Date(asistencia.fecha).toISOString().split('T')[0]}.xlsx`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error generando reporte sesión individual:', err);
+    res.status(500).json({ error: 'Error generando reporte' });
+  }
+};
+
 module.exports = {
   generarReporteFicha,
   generarReporteMateria,
   generarReporteConsolidado,
-  getEstadisticasReportes
+  getEstadisticasReportes,
+  getSesionesAsistenciaMateria,
+  generarReporteSesionIndividual
 };

@@ -109,8 +109,14 @@ router.get('/reportes/materia/:materiaId', reporteController.generarReporteMater
 // Generar reporte consolidado
 router.get('/reportes/consolidado', reporteController.generarReporteConsolidado);
 
-// Obtener estadísticas avanzadas
+// Obtener estadísticas avanzadas (Deprecated/Reemplazado por sesiones)
 router.get('/reportes/estadisticas', reporteController.getEstadisticasReportes);
+
+// Obtener sesiones de asistencia de una materia
+router.get('/reportes/sesiones/:materiaId', reporteController.getSesionesAsistenciaMateria);
+
+// Generar reporte excel de una sola sesión
+router.get('/reportes/sesion/:sesionId/excel', reporteController.generarReporteSesionIndividual);
 
 // =====================================================
 // RUTAS DE PAPELERA
