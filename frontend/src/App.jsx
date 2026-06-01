@@ -11,6 +11,7 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import GoogleCallback from './pages/auth/GoogleCallback';
+import CompleteProfile from './pages/auth/CompleteProfile';
 import Landing from './pages/Landing';
 import AboutUs from './pages/AboutUs';
 
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/callback" element={<GoogleCallback />} />
+              <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/unirse/:code" element={<JoinFicha />} />
               <Route path="/scan-qr" element={<ScanQR />} />
               <Route path="/payment-status" element={<PaymentStatus />} />

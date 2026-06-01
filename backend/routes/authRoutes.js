@@ -10,6 +10,7 @@ router.post('/login', authController.login);
 router.get('/me', authMiddleware, authController.getMe);
 router.put('/profile', authMiddleware, uploadMiddleware.single('avatar'), authController.updateProfile);
 router.put('/change-password', authMiddleware, authController.changePassword);
+router.put('/complete-profile', authMiddleware, authController.completeProfile);
 
 // Reconocimiento facial
 router.post('/face-descriptor', authMiddleware, faceController.saveFaceDescriptor);

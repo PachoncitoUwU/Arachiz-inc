@@ -14,12 +14,19 @@ export default function GoogleCallback() {
       // Decodificar el token para obtener datos del usuario
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        login(token, {
+        const userPayload = {
           id: payload.id,
           userType: payload.userType,
           email: payload.email,
-          fullName: payload.fullName
-        });
+          fullName: payload.fullName,
+          document: payload.document
+        };
+
+        if (payload.document && payload.document.startsWith('GOOGLE-')) {
+          navigate(`/complete-profile?token=${token}`);
+        } else {
+          login(token, userPayload);
+        }
       } catch (error) {
         console.error('Error procesando token:', error);
         navigate('/login');

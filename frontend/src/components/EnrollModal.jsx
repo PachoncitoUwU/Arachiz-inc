@@ -215,7 +215,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Credenciales Biométricas">
+      <Modal open={open} onClose={onClose} title="Credenciales Biométricas" maxWidth="max-w-2xl">
       <div className="space-y-4 text-center pb-2">
         {aprendiz && (
           <p className="text-gray-600 mb-4 pb-4 border-b border-gray-100 dark:border-zinc-700 ">

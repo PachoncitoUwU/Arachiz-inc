@@ -61,7 +61,7 @@ app.get('/api/auth/google/callback',
   (req, res) => {
     // Generar JWT token
     const token = jwt.sign(
-      { id: req.user.id, userType: req.user.userType, email: req.user.email, fullName: req.user.fullName },
+      { id: req.user.id, userType: req.user.userType, email: req.user.email, fullName: req.user.fullName, document: req.user.document },
       process.env.JWT_SECRET || 'supersecretarachiz',
       { expiresIn: '8h' }
     );

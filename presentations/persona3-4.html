@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Personas 3 & 4 — Demo + Cómo lo hicimos · Arachiz</title>
+<link rel="icon" href="logo.svg">
+<link rel="stylesheet" href="shared.css">
+<style>
+.metric-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:28px; width:100%; }
+.metric-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:18px;
+  padding:28px; text-align:center; transition:.3s;
+}
+.metric-card:hover { transform:translateY(-4px); }
+.metric-card .m-val { font-size:clamp(32px,4vw,56px); font-weight:900; line-height:1; }
+.metric-card .m-label { font-size:13px; color:var(--muted); margin-top:8px; }
+.metric-card .m-sub { font-size:11px; margin-top:4px; }
+.game-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; width:100%; }
+.game-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 12px; text-align:center; transition:.3s; }
+.game-card:hover { transform:translateY(-4px); border-color:rgba(251,188,5,0.4); }
+.game-card .g-icon { font-size:30px; margin-bottom:8px; }
+.game-card .g-name { font-size:12px; font-weight:600; color:var(--muted); }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">
+    <svg class="nav-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 46" fill="none">
+      <path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+    </svg>
+    <span class="nav-logo-text">Arachiz</span>
+  </a>
+  <div class="nav-controls">
+    <a class="nav-home" href="index.html">← Menú</a>
+    <button class="nav-btn" id="btn-prev">‹ Anterior</button>
+    <span class="slide-counter" id="slide-counter"></span>
+    <button class="nav-btn" id="btn-next">Siguiente ›</button>
+  </div>
+</nav>
+
+<div class="slides-wrap">
+
+  <!-- SLIDE 1: DEMO SOFTWARE -->
+  <div class="slide bg-solution">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Demo Software</span>
+      <span class="eyebrow green a1">Demo · Software</span>
+      <h2 class="a2">Asistencia en <span class="gradient-blue">tiempo real</span></h2>
+      <p class="subtitle a3">El instructor inicia la sesión. El QR aparece. El aprendiz escanea. Listo.</p>
+      <div class="flow a4">
+        <div class="flow-step"><div class="fs-icon">🔑</div><div class="fs-label">Login</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="fs-icon">📂</div><div class="fs-label">Abrir Ficha</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="fs-icon">▶️</div><div class="fs-label">Iniciar Sesión</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight"><div class="fs-icon">📱</div><div class="fs-label">QR Generado</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step success"><div class="fs-icon">✅</div><div class="fs-label">Presente</div></div>
+      </div>
+      <div class="pill-row center a5">
+        <span class="tag green">WebSockets · Tiempo real</span>
+        <span class="tag">Sin recargar la página</span>
+        <span class="tag yellow">Exportar Excel / PDF</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: DEMO HARDWARE -->
+  <div class="slide bg-tech">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Demo Hardware</span>
+      <span class="eyebrow a1">Demo · Hardware</span>
+      <h2 class="a2">El dispositivo <span class="gradient-blue">IoT</span></h2>
+      <p class="subtitle a3">Sin celular. Sin QR. Solo acerca la tarjeta o pon el dedo.</p>
+      <div class="card-grid g3 a4" style="width:100%;">
+        <div class="card"><div class="icon">📡</div><h4>ESP8266</h4><p>Microcontrolador WiFi. Se conecta al salón y envía datos al backend vía HTTP.</p><div class="detail">C++ · Arduino IDE</div></div>
+        <div class="card"><div class="icon">👆</div><h4>AS608</h4><p>Sensor de huella dactilar. Almacena hasta 162 huellas localmente para modo offline.</p><div class="detail">162 huellas offline</div></div>
+        <div class="card"><div class="icon">💳</div><h4>NFC MIFARE</h4><p>Tarjetas estándar económicas. Reconocimiento instantáneo en menos de 1 segundo.</p><div class="detail">~172.000 COP total</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: ARQUITECTURA -->
+  <div class="slide bg-tech">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Cómo lo hicimos</span>
+      <span class="eyebrow a1">Arquitectura</span>
+      <h2 class="a2">Cómo <span class="gradient-blue">todo conecta</span></h2>
+      <div class="arch a3" style="width:100%;">
+        <div class="arch-box"><div class="ab-icon">⚛️</div><div class="ab-name">Frontend</div><div class="ab-tech">React 19 · Vite<br>Vercel</div></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-box highlight"><div class="ab-icon">🟢</div><div class="ab-name">Backend</div><div class="ab-tech">Node.js · Express<br>Render</div></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-box"><div class="ab-icon">🗄️</div><div class="ab-name">Base de Datos</div><div class="ab-tech">PostgreSQL<br>Supabase</div></div>
+      </div>
+      <div class="pill-row center a4">
+        <span class="tag">🔌 Socket.io · Tiempo real</span>
+        <span class="tag green">Prisma ORM</span>
+        <span class="tag">🔐 JWT Auth</span>
+        <span class="tag yellow">📡 ESP8266 → HTTP</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: TECH STACK -->
+  <div class="slide bg-tech">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Cómo lo hicimos</span>
+      <span class="eyebrow a1">Tech Stack</span>
+      <h2 class="a2">Las <span class="gradient-blue">herramientas</span></h2>
+      <div class="tech-grid a3" style="width:100%;">
+        <div class="tech-item"><div class="t-icon">⚛️</div><div class="t-name">React 19</div></div>
+        <div class="tech-item"><div class="t-icon">⚡</div><div class="t-name">Vite</div></div>
+        <div class="tech-item"><div class="t-icon">🎨</div><div class="t-name">Tailwind</div></div>
+        <div class="tech-item"><div class="t-icon">🟢</div><div class="t-name">Node.js</div></div>
+        <div class="tech-item"><div class="t-icon">🚂</div><div class="t-name">Express</div></div>
+        <div class="tech-item"><div class="t-icon">🔷</div><div class="t-name">Prisma</div></div>
+        <div class="tech-item"><div class="t-icon">🔌</div><div class="t-name">Socket.io</div></div>
+        <div class="tech-item"><div class="t-icon">🐘</div><div class="t-name">PostgreSQL</div></div>
+        <div class="tech-item"><div class="t-icon">☁️</div><div class="t-name">Supabase</div></div>
+        <div class="tech-item"><div class="t-icon">▲</div><div class="t-name">Vercel</div></div>
+        <div class="tech-item"><div class="t-icon">🎯</div><div class="t-name">Render</div></div>
+        <div class="tech-item"><div class="t-icon">📡</div><div class="t-name">ESP8266</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: OPTIMIZACIÓN -->
+  <div class="slide bg-solution">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Cómo lo hicimos</span>
+      <span class="eyebrow green a1">Optimización</span>
+      <h2 class="a2">Bundle reducido <span class="gradient-blue">77%</span></h2>
+      <p class="subtitle a3">Carga rápida. Experiencia fluida. Costo cero.</p>
+      <div class="metric-row a4">
+        <div class="metric-card"><div class="m-val" style="color:var(--red);">900KB</div><div class="m-label">Bundle original</div><div class="m-sub" style="color:var(--red);">antes</div></div>
+        <div class="metric-card"><div class="m-val" style="color:var(--green);">209KB</div><div class="m-label">Bundle optimizado</div><div class="m-sub" style="color:var(--green);">↓ 77% más liviano</div></div>
+        <div class="metric-card"><div class="m-val" style="color:var(--blue);">$0</div><div class="m-label">Costo mensual</div><div class="m-sub" style="color:#94a3b8;">Vercel + Render + Supabase</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: GAMIFICACIÓN -->
+  <div class="slide bg-roles">
+    <div class="slide-content center">
+      <span class="person-badge a1">👤 Personas 3 & 4 · Bonus</span>
+      <span class="eyebrow purple a1">Gamificación</span>
+      <h2 class="a2">7 minijuegos <span class="gradient-purple">integrados</span></h2>
+      <p class="subtitle a3">Para mantener a los aprendices motivados entre clases.</p>
+      <div class="game-grid a4">
+        <div class="game-card"><div class="g-icon">🐍</div><div class="g-name">Snake</div></div>
+        <div class="game-card"><div class="g-icon">🐦</div><div class="g-name">Flappy Bird</div></div>
+        <div class="game-card"><div class="g-icon">🧱</div><div class="g-name">Breakout</div></div>
+        <div class="game-card"><div class="g-icon">🃏</div><div class="g-name">Memory Flash</div></div>
+        <div class="game-card"><div class="g-icon">⚡</div><div class="g-name">Reaction Time</div></div>
+        <div class="game-card"><div class="g-icon">🏗️</div><div class="g-name">Tower Stack</div></div>
+        <div class="game-card"><div class="g-icon">📝</div><div class="g-name">Wordle</div></div>
+        <div class="game-card" style="border-color:rgba(251,188,5,0.3);background:rgba(251,188,5,0.06);"><div class="g-icon">🛍️</div><div class="g-name">Tienda Skins</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="progress-bar" id="progress"></div>
+<div class="key-hint"><span class="key">←</span><span class="key">→</span> navegar &nbsp;<span class="key">Space</span> siguiente</div>
+<script src="shared.js"></script>
+</body>
+</html>
