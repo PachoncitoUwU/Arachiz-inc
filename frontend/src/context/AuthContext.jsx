@@ -60,6 +60,8 @@ export const AuthProvider = ({ children }) => {
       navigate('/instructor/dashboard');
     } else if (userData.userType === 'administrador') {
       navigate('/admin/dashboard');
+    } else if (userData.userType === 'super_usuario') {
+      navigate('/super-usuario/dashboard');
     } else {
       navigate('/aprendiz/dashboard');
     }

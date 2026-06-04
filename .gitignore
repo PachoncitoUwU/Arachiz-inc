@@ -92,3 +92,7 @@ prisma_error.txt
 *.backup
 *.bak
 *.old
+
+# carpetas ignoradas
+.idea
+.cursorrules
