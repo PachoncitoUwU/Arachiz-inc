@@ -71,7 +71,7 @@ export default function ResetPassword() {
 
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <Loader size={48} className="animate-spin text-[#4285F4] mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Verificando token...</p>
@@ -82,7 +82,7 @@ export default function ResetPassword() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-500 dark:text-red-400" />
@@ -99,7 +99,7 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-[#34A853] dark:text-green-400" />
@@ -115,7 +115,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">

@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit-table');
 const prisma = new PrismaClient();
 
 // Generador para exportar Asistencias de la clase
@@ -245,6 +246,16 @@ const exportFichaInfo = async (req, res) => {
     workbook.creator = 'Arachiz';
     workbook.created = new Date();
 
+    // Estilos comunes para encabezados
+    const headerStyle = (sheet) => {
+      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      sheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF34A853' } // Arachiz Green
+      };
+    };
+
     // HOJA 1: INFORMACIÓN GENERAL
     const sheetInfo = workbook.addWorksheet('Información General');
     sheetInfo.columns = [
@@ -261,13 +272,7 @@ const exportFichaInfo = async (req, res) => {
       { campo: 'Región', valor: ficha.region || 'N/A' },
       { campo: 'Duración (meses)', valor: ficha.duracion || 'N/A' }
     ]);
-    // Estilo para headers
-    sheetInfo.getRow(1).font = { bold: true };
-    sheetInfo.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+    headerStyle(sheetInfo);
 
     // HOJA 2: INSTRUCTORES
     const sheetInstructores = workbook.addWorksheet('Instructores');
@@ -285,12 +290,7 @@ const exportFichaInfo = async (req, res) => {
         rol: fi.role === 'admin' ? 'Admin' : 'Instructor'
       });
     });
-    sheetInstructores.getRow(1).font = { bold: true };
-    sheetInstructores.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+    headerStyle(sheetInstructores);
 
     // HOJA 3: MATERIAS
     const sheetMaterias = workbook.addWorksheet('Materias');
@@ -306,12 +306,7 @@ const exportFichaInfo = async (req, res) => {
         instructor: materia.instructor?.fullName || 'N/A'
       });
     });
-    sheetMaterias.getRow(1).font = { bold: true };
-    sheetMaterias.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+    headerStyle(sheetMaterias);
 
     // HOJA 4: APRENDICES
     const sheetAprendices = workbook.addWorksheet('Aprendices');
@@ -330,12 +325,7 @@ const exportFichaInfo = async (req, res) => {
         evitadas: evitadas.length > 0 ? evitadas.join(', ') : 'Ninguna'
       });
     });
-    sheetAprendices.getRow(1).font = { bold: true };
-    sheetAprendices.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+    headerStyle(sheetAprendices);
 
     // HOJA 5: HORARIOS
     const sheetHorarios = workbook.addWorksheet('Horarios');
@@ -353,12 +343,7 @@ const exportFichaInfo = async (req, res) => {
         horaFin: horario.horaFin
       });
     });
-    sheetHorarios.getRow(1).font = { bold: true };
-    sheetHorarios.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+    headerStyle(sheetHorarios);
 
     // Generar el archivo
     const buffer = await workbook.xlsx.writeBuffer();
@@ -372,4 +357,92 @@ const exportFichaInfo = async (req, res) => {
   }
 };
 
-module.exports = { exportAsistenciaFicha, exportSessionAsistencia, exportFichaInfo };
+// GET /api/export/ficha/:fichaId/info/pdf
+const exportFichaInfoPdf = async (req, res) => {
+  const { fichaId } = req.params;
+  const instructorId = req.user.id;
+
+  try {
+    const ficha = await prisma.ficha.findUnique({
+      where: { id: fichaId },
+      include: {
+        instructores: { include: { instructor: { select: { fullName: true, email: true, document: true } } } },
+        aprendices: { select: { fullName: true, document: true, email: true }, orderBy: { fullName: 'asc' } },
+        materias: { include: { instructor: { select: { fullName: true } } }, orderBy: { nombre: 'asc' } }
+      }
+    });
+
+    if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
+    if (!ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    const doc = new PDFDocument({ margin: 30, size: 'A4' });
+    const filename = `Ficha${ficha.numero}_Info.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    doc.pipe(res);
+
+    // Branding Arachiz
+    doc.rect(0, 0, doc.page.width, 80).fill('#34A853');
+    doc.fillColor('white').fontSize(24).font('Helvetica-Bold').text('Arachiz', 40, 25);
+    doc.fontSize(12).font('Helvetica').text('Reporte de Ficha', 40, 55);
+
+    doc.fillColor('black');
+    doc.moveDown(4);
+
+    // Información General
+    doc.fontSize(16).font('Helvetica-Bold').text(`Ficha ${ficha.numero}`, { underline: true }).moveDown(0.5);
+    doc.fontSize(12).font('Helvetica').text(`Programa: ${ficha.nombre || 'N/A'}`);
+    doc.text(`Nivel: ${ficha.nivel} | Jornada: ${ficha.jornada}`);
+    doc.text(`Centro: ${ficha.centro}`);
+    doc.moveDown(2);
+
+    // Tabla de Aprendices
+    doc.fontSize(14).font('Helvetica-Bold').text('Lista de Aprendices').moveDown(0.5);
+    const tableAprendices = {
+      headers: ['Nombre Completo', 'Documento', 'Email'],
+      rows: ficha.aprendices.map(a => [a.fullName, a.document, a.email])
+    };
+    await doc.table(tableAprendices, { 
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+      prepareRow: (row, indexColumn, indexRow, rectRow) => doc.font("Helvetica").fontSize(10)
+    });
+
+    doc.moveDown(2);
+
+    // Tabla de Materias
+    doc.fontSize(14).font('Helvetica-Bold').text('Materias').moveDown(0.5);
+    const tableMaterias = {
+      headers: ['Nombre de Materia', 'Tipo', 'Instructor a cargo'],
+      rows: ficha.materias.map(m => [m.nombre, m.tipo, m.instructor?.fullName || 'N/A'])
+    };
+    await doc.table(tableMaterias, { 
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+      prepareRow: (row, indexColumn, indexRow, rectRow) => doc.font("Helvetica").fontSize(10)
+    });
+
+    // Footer
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+      doc.switchToPage(i);
+      const bottom = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      doc.fillColor('gray').fontSize(8).text(
+        `Generado por Arachiz el ${new Date().toLocaleString('es-CO')} | Página ${i + 1} de ${pages.count}`,
+        0, doc.page.height - 30, { align: 'center' }
+      );
+      doc.page.margins.bottom = bottom;
+    }
+
+    doc.end();
+
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) res.status(500).json({ error: 'Error al exportar PDF' });
+  }
+};
+
+module.exports = { exportAsistenciaFicha, exportSessionAsistencia, exportFichaInfo, exportFichaInfoPdf };

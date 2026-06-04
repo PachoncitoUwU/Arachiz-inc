@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const templates = require('../utils/emailTemplates');
 
 // Configurar transporter de nodemailer
 const createTransporter = () => {
@@ -17,6 +18,7 @@ const createTransporter = () => {
 
 // Almacén temporal de tokens (en producción usar Redis)
 const resetTokens = new Map();
+const otpTokens = new Map();
 
 // Solicitar recuperación de contraseña
 exports.requestPasswordReset = async (req, res) => {
@@ -35,6 +37,13 @@ exports.requestPasswordReset = async (req, res) => {
     if (!user) {
       // Por seguridad, no revelar si el email existe o no
       return res.json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+    }
+
+    if (user.document.startsWith('GOOGLE-') || !user.password) {
+      return res.status(400).json({ 
+        googleAuth: true, 
+        error: 'Esta cuenta fue creada con Google. Inicia sesión con el botón "Continuar con Google".' 
+      });
     }
 
     // Generar token único
@@ -62,34 +71,7 @@ exports.requestPasswordReset = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Recuperación de Contraseña - Arachiz',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #34A853 0%, #0F9D58 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">🥜 Arachiz</h1>
-          </div>
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <h2 style="color: #333;">Recuperación de Contraseña</h2>
-            <p style="color: #666; line-height: 1.6;">
-              Hola <strong>${user.fullName}</strong>,
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Recibimos una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva contraseña:
-            </p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetLink}" style="background: #34A853; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-                Restablecer Contraseña
-              </a>
-            </div>
-            <p style="color: #999; font-size: 12px; line-height: 1.6;">
-              Este enlace expirará en 1 hora. Si no solicitaste este cambio, ignora este email.
-            </p>
-            <p style="color: #999; font-size: 12px; line-height: 1.6;">
-              Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-              <a href="${resetLink}" style="color: #4285F4;">${resetLink}</a>
-            </p>
-          </div>
-        </div>
-      `
+      html: templates.resetPassword(user.fullName, resetLink)
     };
 
     await transporter.sendMail(mailOptions);
@@ -165,4 +147,51 @@ exports.resetPassword = async (req, res) => {
     console.error('Error restableciendo contraseña:', error);
     res.status(500).json({ error: 'Error al restablecer contraseña' });
   }
+};
+
+// Enviar código OTP para verificación de email
+exports.sendEmailOTP = async (req, res) => {
+  try {
+    const { email, fullName } = req.body;
+    if (!email || !fullName) return res.status(400).json({ error: 'Faltan datos requeridos' });
+
+    // Validar que el email no exista ya
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) return res.status(400).json({ error: 'El email ya está registrado' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 10 * 60 * 1000; // 10 minutos
+
+    otpTokens.set(email, { otp, expires });
+    setTimeout(() => otpTokens.delete(email), 10 * 60 * 1000);
+
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verifica tu correo electrónico - Arachiz',
+      html: templates.verifyEmail(fullName, otp)
+    });
+
+    res.json({ message: 'Código enviado' });
+  } catch (error) {
+    console.error('Error enviando OTP:', error);
+    res.status(500).json({ error: 'Error al enviar código' });
+  }
+};
+
+// Confirmar código OTP
+exports.confirmEmailOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  const tokenData = otpTokens.get(email);
+
+  if (!tokenData) return res.status(400).json({ error: 'Código expirado o no solicitado' });
+  if (tokenData.otp !== otp) return res.status(400).json({ error: 'Código incorrecto' });
+  if (Date.now() > tokenData.expires) {
+    otpTokens.delete(email);
+    return res.status(400).json({ error: 'Código expirado' });
+  }
+
+  otpTokens.delete(email); // Limpiar para que no se re-use
+  res.json({ valid: true });
 };

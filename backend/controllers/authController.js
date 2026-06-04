@@ -164,4 +164,67 @@ const changePassword = async (req, res) => {
 
 // Se eliminó updateUserAvatar por solicitud del usuario
 
-module.exports = { register, login, getMe, updateProfile, changePassword };
+// RF - Completar perfil de Google
+const completeProfile = async (req, res) => {
+  const { userType, document } = req.body;
+  if (!userType || !document) {
+    return res.status(400).json({ error: 'Faltan datos requeridos' });
+  }
+  
+  try {
+    // Validar que el usuario actual tenga un documento temporal (Google)
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.document.startsWith('GOOGLE-')) {
+      return res.status(400).json({ error: 'Este perfil ya fue completado o no es válido para esta acción' });
+    }
+
+    // Validar que el nuevo documento no exista
+    const existingDoc = await prisma.user.findFirst({
+      where: { document, id: { not: user.id } }
+    });
+    
+    if (existingDoc) {
+      return res.status(400).json({ error: 'El documento ya está registrado por otro usuario' });
+    }
+
+    // Actualizar usuario
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { userType, document }
+    });
+
+    // Si es instructor o administrador, desbloquear todas las skins automáticamente
+    if (userType === 'instructor' || userType === 'administrador') {
+      try {
+        const allSkins = await prisma.snakeSkin.findMany();
+        const userSkinsData = allSkins.map(skin => ({
+          userId: updatedUser.id,
+          skinId: skin.id,
+          equipped: skin.isDefault
+        }));
+        
+        await prisma.userSkin.createMany({
+          data: userSkinsData,
+          skipDuplicates: true
+        });
+      } catch (skinError) {
+        console.error(`Error desbloqueando skins para ${userType}:`, skinError);
+      }
+    }
+
+    // Generar nuevo token con los datos actualizados
+    const token = jwt.sign(
+      { id: updatedUser.id, userType: updatedUser.userType, email: updatedUser.email, fullName: updatedUser.fullName },
+      process.env.JWT_SECRET || 'supersecretarachiz',
+      { expiresIn: '8h' }
+    );
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    res.json({ message: 'Perfil completado con éxito', token, user: userWithoutPassword });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error del servidor: ' + err.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword, completeProfile };

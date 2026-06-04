@@ -21,7 +21,11 @@ export default function ForgotPassword() {
       });
       setSent(true);
     } catch (err) {
-      setError(err.message);
+      if (err.message && err.message.includes('creada con Google')) {
+        setError('Esta cuenta usa Google. Vuelve e inicia sesión con el botón "Continuar con Google".');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -29,7 +33,7 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full text-center animate-scale-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-[#34A853] dark:text-green-400" />
@@ -51,7 +55,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="bg-white dark:bg-zinc-800  dark:bg-zinc-800 rounded-3xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-md w-full animate-fade-in border border-gray-100 dark:border-zinc-700  dark:border-zinc-700">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">

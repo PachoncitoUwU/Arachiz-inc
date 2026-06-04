@@ -9,9 +9,10 @@ import EnrollModal from '../../components/EnrollModal';
 import AprendizPerfilModal from '../../components/AprendizPerfilModal';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
 import NotificacionesModal from '../../components/NotificacionesModal';
+import ImportModal from '../../components/ImportModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
-  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X
+  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X, Upload
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -60,8 +61,10 @@ export default function FichaDetalle() {
   // Estado para fichas ancladas
   const [isPinned, setIsPinned] = useState(false);
   
-  // Estados para notificaciones
+  // Estados para notificaciones e importación
   const [showNotificaciones, setShowNotificaciones] = useState(false);
+  const [showImportAprendices, setShowImportAprendices] = useState(false);
+  const [showImportMaterias, setShowImportMaterias] = useState(false);
   
   // Estado para salir de ficha
   const [showSalirDialog, setShowSalirDialog] = useState(false);
@@ -142,7 +145,7 @@ export default function FichaDetalle() {
     });
   };
 
-  const handleExport = async () => {
+  const handleExportExcel = async () => {
     setExporting(true);
     try {
       const token = localStorage.getItem('token');
@@ -160,7 +163,33 @@ export default function FichaDetalle() {
       a.download = `Ficha${ficha.numero}_Info_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Información de ficha exportada exitosamente', 'success');
+      showToast('Excel exportado exitosamente', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/export/ficha/${id}/info/pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Ficha${ficha.numero}_Info.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('PDF exportado exitosamente', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -502,23 +531,34 @@ export default function FichaDetalle() {
         </div>
         
         <div className="flex items-center gap-2">
-          <button 
-            onClick={handleExport} 
-            disabled={exporting} 
-            className="btn-secondary text-sm md:text-base  flex items-center gap-2"
-            title="Exportar información completa de la ficha"
-          >
-            {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
-            Exportar Info
-          </button>
+          <div className="flex bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 shadow-sm overflow-hidden">
+            <button 
+              onClick={handleExportExcel} 
+              disabled={exporting} 
+              className="px-3 py-2 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-1 font-medium transition-colors border-r border-gray-200 dark:border-zinc-700"
+              title="Exportar a Excel"
+            >
+              {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
+              Excel
+            </button>
+            <button 
+              onClick={handleExportPdf} 
+              disabled={exporting} 
+              className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1 font-medium transition-colors"
+              title="Exportar a PDF"
+            >
+              {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
+              PDF
+            </button>
+          </div>
           
           <button 
             onClick={() => setShowSalirDialog(true)} 
-            className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="btn-secondary text-sm md:text-base flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
             title="Salir de esta ficha"
           >
             <ArrowLeft size={16} />
-            Salir de ficha
+            Salir
           </button>
         </div>
       </div>
@@ -763,34 +803,54 @@ export default function FichaDetalle() {
             </button>
           </div>
 
-          {/* Botón agregar materia */}
+          {/* Botones de Materias */}
           {activeTab === 'materias' && isInstructor && (
-            <button 
-              onClick={() => {
-                setModalMateria(true);
-                setErrorMateria('');
-                setFormMateria({ nombre: '', tipo: 'Técnica' });
-              }}
-              className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
-            >
-              <Plus size={16} />
-              Agregar
-            </button>
+            <div className="flex gap-2">
+              {isLider && (
+                <button 
+                  onClick={() => setShowImportMaterias(true)}
+                  className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-sm"
+                >
+                  <Upload size={16} />
+                  Importar
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  setModalMateria(true);
+                  setErrorMateria('');
+                  setFormMateria({ nombre: '', tipo: 'Técnica' });
+                }}
+                className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
+              >
+                <Plus size={16} />
+                Agregar
+              </button>
+            </div>
           )}
         </div>
 
         {/* Contenido de Aprendices */}
         {activeTab === 'aprendices' && (
           <>
-            {/* Búsqueda */}
-            <div className="mb-4">
+            {/* Búsqueda y acciones */}
+            <div className="mb-4 flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 placeholder="Buscar por nombre, correo o documento..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field"
+                className="input-field flex-1"
               />
+              {isLider && (
+                <button 
+                  onClick={() => setShowImportAprendices(true)}
+                  className="btn-secondary text-sm md:text-base  flex items-center justify-center gap-2"
+                >
+                  <Upload size={16} />
+                  Importar CSV/Excel
+                </button>
+              )}
             </div>
 
             {/* Lista de aprendices */}
@@ -1308,7 +1368,22 @@ export default function FichaDetalle() {
         isOpen={showNotificaciones}
         onClose={() => setShowNotificaciones(false)}
         fichaId={id}
-        userRole="instructor"
+      />
+
+      <ImportModal
+        isOpen={showImportAprendices}
+        onClose={() => setShowImportAprendices(false)}
+        type="aprendices"
+        fichaId={id}
+        onSuccess={loadFicha}
+      />
+
+      <ImportModal
+        isOpen={showImportMaterias}
+        onClose={() => setShowImportMaterias(false)}
+        type="materias"
+        fichaId={id}
+        onSuccess={loadFicha}
       />
 
       {/* Diálogo de confirmación para salir de ficha */}

@@ -17,6 +17,15 @@ export default function Register() {
   const [loading, setLoading]                 = useState(false);
   const [acceptedTc, setAcceptedTc]           = useState(false);
   const [showTc, setShowTc]                   = useState(false);
+  
+  // Email verification state
+  const [emailVerified, setEmailVerified]     = useState(false);
+  const [otpSent, setOtpSent]                 = useState(false);
+  const [otp, setOtp]                         = useState(['', '', '', '', '', '']);
+  const [verifyingEmail, setVerifyingEmail]   = useState(false);
+  const [otpError, setOtpError]               = useState('');
+  const [otpMessage, setOtpMessage]           = useState('');
+
   const [particles, setParticles] = useState([]);
   const [bubbles, setBubbles] = useState([
     { id: 1, left: '10%', size: 48, color: '#4285F4', duration: 12, delay: 0 },
@@ -68,6 +77,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
     if (!acceptedTc) return setError(t('register', 'acceptTerms'));
+    if (!emailVerified) return setError('Debes verificar tu correo electrónico antes de continuar.');
     if (password !== confirmPassword) return setError(t('register', 'passMismatch'));
     if (password.length < 6) return setError(t('register', 'passShort'));
     setLoading(true);
@@ -81,6 +91,85 @@ export default function Register() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    if (!email || !fullName) {
+      setOtpError('Ingresa tu nombre y correo primero');
+      return;
+    }
+    setOtpError('');
+    setOtpMessage('');
+    setVerifyingEmail(true);
+    try {
+      await fetchApi('/password/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ email, fullName })
+      });
+      setOtpSent(true);
+      setOtpMessage('Código enviado. Revisa tu bandeja de entrada.');
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
+
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) {
+      // Handle paste
+      const pasted = value.slice(0, 6).split('');
+      const newOtp = [...otp];
+      pasted.forEach((char, i) => {
+        if (i < 6) newOtp[i] = char;
+      });
+      setOtp(newOtp);
+      
+      if (pasted.length === 6) {
+        verifyOtp(newOtp.join(''));
+      }
+      return;
+    }
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-focus next
+    if (value && index < 5) {
+      document.getElementById(`otp-${index + 1}`).focus();
+    }
+
+    // Auto-submit
+    if (value && index === 5 && newOtp.every(v => v !== '')) {
+      verifyOtp(newOtp.join(''));
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      document.getElementById(`otp-${index - 1}`).focus();
+    }
+  };
+
+  const verifyOtp = async (code) => {
+    setVerifyingEmail(true);
+    setOtpError('');
+    try {
+      await fetchApi('/password/confirm-email', {
+        method: 'POST',
+        body: JSON.stringify({ email, otp: code })
+      });
+      setEmailVerified(true);
+      setOtpSent(false);
+      setOtpMessage('¡Correo verificado con éxito!');
+    } catch (err) {
+      setOtpError(err.message);
+      setOtp(['', '', '', '', '', '']);
+      document.getElementById('otp-0').focus();
+    } finally {
+      setVerifyingEmail(false);
     }
   };
 
@@ -227,10 +316,46 @@ export default function Register() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Mail size={16}/>
               </div>
-              <input type="email" required placeholder={t('register', 'email')}
+              <input type="email" required placeholder={t('register', 'email')} disabled={emailVerified}
                 className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:bg-zinc-800  dark:focus:bg-zinc-600"
-                value={email} onChange={e => setEmail(e.target.value)} />
+                value={email} onChange={e => {setEmail(e.target.value); setEmailVerified(false); setOtpSent(false);}} />
+                
+              {emailVerified && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+              )}
             </div>
+
+            {!emailVerified && email && fullName && !otpSent && (
+              <button type="button" onClick={handleSendOTP} disabled={verifyingEmail}
+                className="w-full text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-xl transition-colors font-semibold">
+                {verifyingEmail ? 'Enviando...' : 'Verificar correo electrónico'}
+              </button>
+            )}
+
+            {otpSent && !emailVerified && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 animate-fade-in">
+                <p className="text-sm text-blue-800 dark:text-blue-300 mb-2 font-medium">Ingresa el código de 6 dígitos que enviamos a tu correo:</p>
+                <div className="flex gap-2 justify-center mb-2">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`otp-${index}`}
+                      type="text"
+                      maxLength="6"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className="w-10 h-10 text-center font-bold text-lg rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-[#4285F4] dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+                    />
+                  ))}
+                </div>
+                {verifyingEmail && <p className="text-xs text-center text-blue-600 mt-2">Verificando...</p>}
+                {otpError && <p className="text-xs text-center text-red-500 mt-2">{otpError}</p>}
+                {otpMessage && <p className="text-xs text-center text-green-600 mt-2">{otpMessage}</p>}
+              </div>
+            )}
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">

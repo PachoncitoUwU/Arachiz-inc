@@ -11,4 +11,8 @@ router.get('/verify/:token', passwordResetController.verifyResetToken);
 // Restablecer contraseña
 router.post('/reset', passwordResetController.resetPassword);
 
+// Verificación de email OTP
+router.post('/verify-email', passwordResetController.sendEmailOTP);
+router.post('/confirm-email', passwordResetController.confirmEmailOTP);
+
 module.exports = router;
