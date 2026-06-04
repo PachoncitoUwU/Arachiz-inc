@@ -97,7 +97,15 @@ export default function Register() {
       setOtpSent(true);
       setOtpMessage('Código enviado. Revisa tu bandeja de entrada.');
     } catch (err) {
-      setOtpError(err.message);
+      // Mostrar error descriptivo
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('registrado')) {
+        setOtpError('Este correo ya tiene una cuenta. Inicia sesión.');
+      } else if (msg.toLowerCase().includes('enviar') || msg.toLowerCase().includes('código')) {
+        setOtpError('No se pudo enviar el correo. Verifica que la dirección sea correcta e inténtalo de nuevo.');
+      } else {
+        setOtpError(msg || 'Error al enviar el código. Inténtalo de nuevo.');
+      }
     } finally {
       setVerifyingEmail(false);
     }
@@ -417,19 +425,19 @@ export default function Register() {
 
           {/* ─── PASO 3: Contraseña y T&C ─────────────────────────────────── */}
           {step === 3 && (
-            <div className="step-enter space-y-4">
+            <div className="step-enter space-y-3">
               <button type="button" onClick={() => { setStep(2); setError(''); }}
                 className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
                 <ArrowLeft size={15} /> Volver
               </button>
 
-              <div className="text-center space-y-1">
+              <div className="text-center">
                 <p className="font-semibold text-gray-800 dark:text-white text-sm">Crea tu contraseña</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Mínimo 6 caracteres</p>
               </div>
 
               {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-2 rounded-xl text-xs">
                   {error}
                 </div>
               )}
@@ -453,12 +461,14 @@ export default function Register() {
                     value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
                 </div>
 
-                <div className="flex items-start gap-2 pt-1">
-                  <input type="checkbox" id="tc" className="mt-1 w-4 h-4 rounded border-gray-300 dark:border-zinc-600 text-[#4285F4] focus:ring-[#4285F4] dark:bg-zinc-700"
+                {/* T&C siempre visible */}
+                <div className="bg-gray-50 dark:bg-zinc-700/50 rounded-xl p-3 flex items-start gap-2">
+                  <input type="checkbox" id="tc"
+                    className="mt-0.5 w-4 h-4 flex-shrink-0 rounded border-gray-300 dark:border-zinc-600 text-[#4285F4] focus:ring-[#4285F4] dark:bg-zinc-700"
                     checked={acceptedTc} onChange={e => setAcceptedTc(e.target.checked)} />
-                  <label htmlFor="tc" className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
+                  <label htmlFor="tc" className="text-xs text-gray-600 dark:text-gray-400 leading-snug cursor-pointer">
                     {t('register', 'terms')}{' '}
-                    <span className="text-[#4285F4] font-semibold cursor-pointer hover:underline"
+                    <span className="text-[#4285F4] font-semibold hover:underline"
                       onClick={(e) => { e.preventDefault(); setShowTc(true); }}>
                       {t('register', 'termsLink')}
                     </span>{' '}
@@ -467,7 +477,7 @@ export default function Register() {
                 </div>
 
                 <button type="submit" disabled={loading}
-                  className="w-full text-white py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-sm mt-2"
+                  className="w-full text-white py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-sm"
                   style={{ backgroundColor: accentColor }}>
                   {loading ? t('register', 'submitting') : t('register', 'submit')}
                 </button>
