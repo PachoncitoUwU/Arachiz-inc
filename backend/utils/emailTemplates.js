@@ -1,215 +1,263 @@
-﻿const fs = require('fs');
-const path = require('path');
+﻿// ─────────────────────────────────────────────────────────────────────────────
+//  Arachiz — Email Templates
+//  Colores: Azul #4285F4 · Verde #34A853 · Rojo #EA4335 · Amarillo #FBBC05
+//  Logo: Cloudinary CDN (siempre disponible en producción)
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Logo Arachiz en base64 (incrustado para que se vea en todos los clientes de correo)
-// Busca el PNG en varias rutas posibles (local y producción)
-let LOGO_B64 = '';
-const logoPaths = [
-  path.join(__dirname, '..', '..', 'frontend', 'public', 'ArachizLogoPNG.png'),
-  path.join(__dirname, '..', 'public', 'ArachizLogoPNG.png'),
-  path.join(__dirname, 'logo_b64_clean.txt'),
-];
-for (const logoPath of logoPaths) {
-  try {
-    if (logoPath.endsWith('.txt')) {
-      LOGO_B64 = fs.readFileSync(logoPath, 'utf8').trim();
-    } else {
-      const bytes = fs.readFileSync(logoPath);
-      LOGO_B64 = `data:image/png;base64,${bytes.toString('base64')}`;
-    }
-    if (LOGO_B64) break;
-  } catch (e) {
-    // Intentar siguiente ruta
-  }
-}
+const LOGO_URL =
+  'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
 
-// ─── Colores oficiales Arachiz ───────────────────────────────────────────────
-const COLOR = {
-  blue:   '#4285F4',
-  green:  '#34A853',
-  red:    '#EA4335',
-  yellow: '#FBBC05',
-  dark:   '#1a1a2e',
-  gray:   '#6b7280',
-  lightBg:'#f4f7f6',
-  white:  '#ffffff',
-};
-
-// ─── Header con logo real ────────────────────────────────────────────────────
-const buildHeader = (accentColor = COLOR.blue) => `
-  <div style="background: linear-gradient(135deg, ${accentColor} 0%, ${COLOR.green} 100%); padding: 36px 24px; text-align: center;">
-    ${LOGO_B64
-      ? `<img src="${LOGO_B64}" alt="Arachiz" style="height: 56px; object-fit: contain; filter: brightness(0) invert(1);" />`
-      : `<span style="color:white;font-size:28px;font-weight:900;letter-spacing:2px;">ARACHIZ</span>`
-    }
-  </div>
-  <div style="height: 4px; background: linear-gradient(90deg, ${COLOR.blue} 0%, ${COLOR.yellow} 33%, ${COLOR.green} 66%, ${COLOR.red} 100%);"></div>
-`;
-
-// ─── Template base ───────────────────────────────────────────────────────────
-const getBaseTemplate = (title, content, actionButton = null, accentColor = COLOR.blue) => {
-  const buttonHtml = actionButton ? `
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${actionButton.url}"
-         style="background: linear-gradient(135deg, ${accentColor}, ${COLOR.green});
-                color: white; padding: 14px 36px; text-decoration: none;
-                border-radius: 12px; display: inline-block; font-weight: 700;
-                font-size: 15px; letter-spacing: 0.3px;
-                box-shadow: 0 4px 14px rgba(66,133,244,0.35);">
-        ${actionButton.text}
-      </a>
-    </div>
-  ` : '';
-
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} — Arachiz</title>
-</head>
-<body style="margin:0; padding:0; background-color:${COLOR.lightBg}; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${COLOR.lightBg}; padding: 32px 16px;">
+// Cuatro colores de la barra de marca Google-style
+const BRAND_BAR = `
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
     <tr>
-      <td align="center">
-        <table width="100%" style="max-width:600px; background:${COLOR.white}; border-radius:20px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.07);">
-
-          <!-- HEADER -->
-          <tr><td>${buildHeader(accentColor)}</td></tr>
-
-          <!-- CONTENT -->
-          <tr>
-            <td style="padding: 36px 32px; color:#1a1a1a; line-height:1.7; font-size:15px;">
-              <h2 style="margin:0 0 20px; font-size:22px; font-weight:700; color:${COLOR.dark};">${title}</h2>
-              ${content}
-              ${buttonHtml}
-            </td>
-          </tr>
-
-          <!-- DIVIDER -->
-          <tr>
-            <td style="padding: 0 32px;">
-              <div style="height:1px; background: linear-gradient(90deg, ${COLOR.blue}22, ${COLOR.green}44, ${COLOR.blue}22);"></div>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="padding: 24px 32px; text-align:center; background:#f9fafb;">
-              <p style="margin:0 0 6px; color:${COLOR.gray}; font-size:12px;">
-                Este es un mensaje automático — por favor no respondas a este correo.
-              </p>
-              <p style="margin:0; color:#9ca3af; font-size:12px;">
-                &copy; ${new Date().getFullYear()} <strong style="color:${COLOR.blue};">Arachiz Inc.</strong> — Sistema de Gestión de Asistencia
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
+      <td width="25%" height="4" style="background:#4285F4; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#EA4335; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#FBBC05; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#34A853; line-height:4px; font-size:4px;">&nbsp;</td>
     </tr>
-  </table>
+  </table>`;
+
+// ─── Plantilla base ───────────────────────────────────────────────────────────
+const base = (content, accentHex = '#4285F4') => `<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="color-scheme" content="light"/>
+  <meta name="supported-color-schemes" content="light"/>
+  <title>Arachiz</title>
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style>
+    body,table,td,p,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+    table,td{mso-table-lspace:0pt;mso-table-rspace:0pt;}
+    img{-ms-interpolation-mode:bicubic;border:0;height:auto;line-height:100%;outline:none;text-decoration:none;}
+    body{margin:0;padding:0;background:#F5F5F5;}
+    @media only screen and (max-width:600px){
+      .wrapper{width:100%!important;min-width:100%!important;}
+      .inner{padding:28px 20px!important;}
+      .btn-table{width:100%!important;}
+      .btn-td{width:100%!important;text-align:center!important;}
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F5F5;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+<!-- Outer wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+       style="background:#F5F5F5;padding:40px 16px;">
+  <tr><td align="center">
+
+    <!-- Card -->
+    <table class="wrapper" width="560" cellpadding="0" cellspacing="0" role="presentation"
+           style="background:#ffffff;border-radius:16px;overflow:hidden;
+                  box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:560px;width:100%;">
+
+      <!-- ── TOP BRAND BAR ── -->
+      <tr><td>${BRAND_BAR}</td></tr>
+
+      <!-- ── HEADER ── -->
+      <tr>
+        <td align="center" style="padding:36px 32px 24px;background:#ffffff;">
+          <img src="${LOGO_URL}"
+               alt="Arachiz"
+               width="140"
+               style="height:auto;display:block;margin:0 auto;"/>
+        </td>
+      </tr>
+
+      <!-- ── ACCENT LINE ── -->
+      <tr>
+        <td style="padding:0 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td height="2" style="background:${accentHex};border-radius:2px;
+                                    line-height:2px;font-size:2px;">&nbsp;</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- ── CONTENT ── -->
+      <tr>
+        <td class="inner" style="padding:32px 40px 36px;color:#1a1a1a;
+                                  font-size:15px;line-height:1.7;">
+          ${content}
+        </td>
+      </tr>
+
+      <!-- ── BOTTOM BRAND BAR ── -->
+      <tr><td>${BRAND_BAR}</td></tr>
+
+      <!-- ── FOOTER ── -->
+      <tr>
+        <td align="center" style="padding:20px 32px 28px;background:#F9FAFB;
+                                   border-top:1px solid #E5E7EB;">
+          <p style="margin:0 0 4px;font-size:12px;color:#9CA3AF;line-height:1.5;">
+            Este es un mensaje automático — por favor no respondas a este correo.
+          </p>
+          <p style="margin:0;font-size:12px;color:#9CA3AF;">
+            &copy; ${new Date().getFullYear()}&nbsp;
+            <span style="color:#4285F4;font-weight:600;">Arachiz Inc.</span>
+            &nbsp;— Sistema de Gestión de Asistencia
+          </p>
+        </td>
+      </tr>
+
+    </table>
+    <!-- /Card -->
+
+  </td></tr>
+</table>
+
 </body>
 </html>`;
-};
 
-// ─── Templates específicos ───────────────────────────────────────────────────
+// ─── Botón CTA ────────────────────────────────────────────────────────────────
+const ctaButton = (text, url, color = '#4285F4') => `
+  <table class="btn-table" cellpadding="0" cellspacing="0" role="presentation"
+         style="margin:32px auto 4px;">
+    <tr>
+      <td class="btn-td" align="center"
+          style="background:${color};border-radius:10px;">
+        <a href="${url}"
+           style="display:inline-block;padding:14px 36px;color:#ffffff;
+                  font-size:15px;font-weight:700;text-decoration:none;
+                  letter-spacing:0.2px;white-space:nowrap;">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>`;
+
+// ─── Caja de datos (credenciales, etc.) ───────────────────────────────────────
+const infoBox = (rows) => `
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+         style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:12px;
+                margin:24px 0;overflow:hidden;">
+    ${rows.map(([label, value]) => `
+    <tr>
+      <td style="padding:12px 20px;border-bottom:1px solid #E5E7EB;
+                 font-size:13px;color:#6B7280;width:40%;vertical-align:middle;">
+        ${label}
+      </td>
+      <td style="padding:12px 20px;border-bottom:1px solid #E5E7EB;
+                 font-size:14px;font-weight:700;color:#111827;vertical-align:middle;">
+        ${value}
+      </td>
+    </tr>`).join('')}
+  </table>`;
+
+// ─── Alerta inline ────────────────────────────────────────────────────────────
+const alert = (text, color = '#FBBC05', bgColor = '#FFFBEB', textColor = '#92400E') => `
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+         style="margin:20px 0;">
+    <tr>
+      <td style="border-left:4px solid ${color};background:${bgColor};
+                 border-radius:0 10px 10px 0;padding:12px 16px;
+                 font-size:13px;color:${textColor};line-height:1.5;">
+        ${text}
+      </td>
+    </tr>
+  </table>`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TEMPLATES
+// ─────────────────────────────────────────────────────────────────────────────
 const templates = {
 
-  // Recuperación de contraseña
-  resetPassword: (name, resetLink) => getBaseTemplate(
-    'Recuperación de Contraseña',
-    `
-    <p style="margin:0 0 16px;">Hola <strong>${name}</strong>,</p>
-    <p style="margin:0 0 16px;">
-      Recibimos una solicitud para restablecer la contraseña de tu cuenta en Arachiz.
-      Haz clic en el botón de abajo para crear una nueva contraseña.
-    </p>
-    <div style="background:#fff7ed; border-left:4px solid ${COLOR.yellow}; border-radius:8px; padding:14px 18px; margin:24px 0; font-size:13px; color:#92400e;">
-      ⏱ Este enlace expira en <strong>1 hora</strong>. Si no solicitaste este cambio, ignora este mensaje.
-    </div>
-    <p style="font-size:13px; color:${COLOR.gray}; margin:0;">
-      Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-      <a href="${resetLink}" style="color:${COLOR.blue}; word-break:break-all;">${resetLink}</a>
-    </p>
-    `,
-    { text: '🔑 Restablecer Contraseña', url: resetLink },
-    COLOR.red
-  ),
-
-  // Verificación de email (OTP registro)
-  verifyEmail: (name, otpCode) => getBaseTemplate(
-    'Verifica tu correo electrónico',
-    `
-    <p style="margin:0 0 16px;">Hola <strong>${name}</strong>,</p>
-    <p style="margin:0 0 24px;">
-      Gracias por registrarte en <strong>Arachiz</strong>. Ingresa el siguiente código
-      para completar la verificación de tu correo:
+  // ── Verificación de email (OTP) ──────────────────────────────────────────
+  verifyEmail: (name, otpCode) => base(`
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#111827;">
+      Verifica tu correo
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;">
+      Hola <strong style="color:#111827;">${name}</strong>, gracias por registrarte
+      en <strong style="color:#4285F4;">Arachiz</strong>. Ingresa este código para
+      completar tu registro:
     </p>
 
     <!-- OTP BOX -->
-    <div style="background: linear-gradient(135deg, #f0f4ff, #e8f5e9);
-                border: 2px solid ${COLOR.blue}33;
-                border-radius: 16px; padding: 28px 20px;
-                text-align: center; margin: 8px 0 28px;">
-      <p style="margin:0 0 8px; font-size:12px; color:${COLOR.gray}; text-transform:uppercase; letter-spacing:2px;">Código de verificación</p>
-      <div style="font-size: 42px; font-weight: 900; color: ${COLOR.dark};
-                  letter-spacing: 14px; font-family: 'Courier New', monospace;">
-        ${otpCode}
-      </div>
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td align="center"
+            style="background:#F8FAFC;border:2px dashed #CBD5E1;border-radius:14px;
+                   padding:28px 20px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:3px;
+                    text-transform:uppercase;color:#9CA3AF;">
+            Código de verificación
+          </p>
+          <p style="margin:0;font-size:46px;font-weight:900;letter-spacing:14px;
+                    color:#111827;font-family:'Courier New',Courier,monospace;
+                    line-height:1.1;">
+            ${otpCode}
+          </p>
+        </td>
+      </tr>
+    </table>
 
-    <div style="background:#fef2f2; border-left:4px solid ${COLOR.red}; border-radius:8px; padding:12px 16px; font-size:13px; color:#991b1b; margin-bottom:8px;">
-      ⏱ Este código expira en <strong>10 minutos</strong>. No lo compartas con nadie.
-    </div>
-    `,
-    null,
-    COLOR.green
-  ),
+    ${alert('⏱ Este código expira en <strong>10 minutos</strong>. No lo compartas con nadie.',
+            '#EA4335', '#FEF2F2', '#991B1B')}
+  `, '#34A853'),
 
-  // Bienvenida (importación masiva de aprendices)
-  welcomeImport: (name, document, tempPassword, loginLink) => getBaseTemplate(
-    '¡Bienvenido a Arachiz!',
-    `
-    <p style="margin:0 0 16px;">Hola <strong>${name}</strong>,</p>
-    <p style="margin:0 0 16px;">
-      Tu instructor ha creado una cuenta para ti en la plataforma <strong>Arachiz</strong> —
-      el sistema de gestión de asistencia de tu ficha.
+  // ── Recuperación de contraseña ───────────────────────────────────────────
+  resetPassword: (name, resetLink) => base(`
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#111827;">
+      Recupera tu contraseña
+    </h2>
+    <p style="margin:0 0 16px;color:#4B5563;">
+      Hola <strong style="color:#111827;">${name}</strong>, recibimos una solicitud
+      para restablecer la contraseña de tu cuenta en
+      <strong style="color:#4285F4;">Arachiz</strong>.
+    </p>
+    <p style="margin:0 0 8px;color:#4B5563;">
+      Haz clic en el botón para crear una nueva contraseña:
     </p>
 
-    <!-- CREDENTIALS BOX -->
-    <div style="background: linear-gradient(135deg, #f0f4ff, #e8f5e9);
-                border-radius:16px; padding:24px 20px; margin:24px 0;">
-      <p style="margin:0 0 4px; font-size:11px; color:${COLOR.gray}; text-transform:uppercase; letter-spacing:1.5px;">Tus credenciales de acceso</p>
-      <table style="width:100%; margin-top:12px; border-collapse:collapse;">
-        <tr>
-          <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; font-size:14px; color:${COLOR.gray}; width:40%;">
-            👤 Documento
-          </td>
-          <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; font-size:15px; font-weight:700; color:${COLOR.dark};">
-            ${document}
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0; font-size:14px; color:${COLOR.gray};">
-            🔒 Contraseña temporal
-          </td>
-          <td style="padding:8px 0;">
-            <span style="font-family:'Courier New',monospace; background:#e2e8f0; color:${COLOR.dark}; padding:4px 10px; border-radius:6px; font-size:15px; font-weight:700;">
-              ${tempPassword}
-            </span>
-          </td>
-        </tr>
-      </table>
-    </div>
+    ${ctaButton('🔑 Restablecer Contraseña', resetLink, '#EA4335')}
 
-    <div style="background:#fff7ed; border-left:4px solid ${COLOR.yellow}; border-radius:8px; padding:12px 16px; font-size:13px; color:#92400e; margin-bottom:8px;">
-      🔐 Por tu seguridad, <strong>cambia tu contraseña</strong> al iniciar sesión por primera vez.
-    </div>
-    `,
-    { text: '🚀 Iniciar Sesión en Arachiz', url: loginLink },
-    COLOR.green
-  ),
+    ${alert('⏱ Este enlace expira en <strong>1 hora</strong>. Si no solicitaste este cambio, ignora este mensaje.',
+            '#FBBC05', '#FFFBEB', '#92400E')}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;">
+      Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
+      <a href="${resetLink}"
+         style="color:#4285F4;word-break:break-all;">${resetLink}</a>
+    </p>
+  `, '#EA4335'),
+
+  // ── Bienvenida (importación masiva) ─────────────────────────────────────
+  welcomeImport: (name, document, tempPassword, loginLink) => base(`
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#111827;">
+      ¡Bienvenido a Arachiz! 🎉
+    </h2>
+    <p style="margin:0 0 20px;color:#4B5563;">
+      Hola <strong style="color:#111827;">${name}</strong>, tu instructor ha creado
+      una cuenta para ti en <strong style="color:#4285F4;">Arachiz</strong>, el
+      sistema de gestión de asistencia de tu ficha.
+    </p>
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#6B7280;
+              text-transform:uppercase;letter-spacing:1px;">
+      Tus credenciales de acceso
+    </p>
+
+    ${infoBox([
+      ['👤 Documento', document],
+      ['🔒 Contraseña temporal',
+       `<span style="font-family:'Courier New',Courier,monospace;
+                     background:#E2E8F0;color:#111827;padding:3px 10px;
+                     border-radius:6px;">${tempPassword}</span>`]
+    ])}
+
+    ${alert('🔐 Por tu seguridad, <strong>cambia tu contraseña</strong> al iniciar sesión por primera vez.',
+            '#FBBC05', '#FFFBEB', '#92400E')}
+
+    ${ctaButton('🚀 Iniciar Sesión en Arachiz', loginLink, '#34A853')}
+  `, '#34A853'),
 
 };
 
