@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/timeService');
 const { sendAttendanceEmail } = require('../utils/emailService');
+const { sendPushToUsers } = require('../utils/webPush');
 
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
@@ -69,6 +70,18 @@ const createSession = async (req, res) => {
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
     if (serialService) serialService.sendCommand('SESSION ON');
+
+    // WebPush notification
+    const userIds = newAsistencia.materia.ficha.aprendices.map(a => a.id);
+    const materiaName = newAsistencia.materia.nombre;
+    const instructorName = req.user?.fullName || 'tu instructor';
+
+    sendPushToUsers(userIds, {
+      title: '¡Sesión de Asistencia Iniciada!',
+      body: `La sesión de ${materiaName} ha comenzado con ${instructorName}. Registra tu asistencia a tiempo.`,
+      icon: '/mi-logo.png',
+      url: '/aprendiz/dashboard'
+    });
 
     res.status(201).json({ message: 'Sesión creada', asistencia: newAsistencia });
   } catch (err) {
@@ -387,6 +400,25 @@ const closeSessionById = async (id, io, serialService) => {
 
   if (serialService) serialService.sendCommand('SESSION OFF');
   if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
+
+  // Update Rachas de Asistencia (Streaks)
+  try {
+    if (registradosIds.length > 0) {
+      await prisma.user.updateMany({
+        where: { id: { in: registradosIds } },
+        data: { rachaAsistencia: { increment: 1 } }
+      });
+    }
+    if (ausentes.length > 0) {
+      const ausentesIds = ausentes.map(a => a.id);
+      await prisma.user.updateMany({
+        where: { id: { in: ausentesIds } },
+        data: { rachaAsistencia: 0 }
+      });
+    }
+  } catch (err) {
+    console.error('[Streaks] Error actualizando rachas de asistencia:', err);
+  }
 
   return updatedAsistencia;
 };

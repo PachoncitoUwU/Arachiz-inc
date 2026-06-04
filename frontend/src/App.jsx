@@ -22,6 +22,7 @@ import InstructorMaterias   from './pages/instructor/Materias';
 import InstructorHorario    from './pages/instructor/Horario';
 import InstructorAsistencia from './pages/instructor/Asistencia';
 import InstructorExcusas    from './pages/instructor/Excusas';
+import InstructorReportes   from './pages/instructor/Reportes';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminFichas from './pages/admin/Fichas';
@@ -46,6 +47,7 @@ import Configuracion from './pages/Configuracion';
 import JoinFicha from './pages/JoinFicha';
 import ScanQR from './pages/ScanQR';
 import PaymentStatus from './pages/PaymentStatus';
+import Perfil from './pages/Perfil';
 
 export default function App() {
   return (
@@ -76,7 +78,9 @@ export default function App() {
                 <Route path="horario"        element={<InstructorHorario />} />
                 <Route path="asistencia"     element={<InstructorAsistencia />} />
                 <Route path="excusas"        element={<InstructorExcusas />} />
+                <Route path="reportes"       element={<InstructorReportes />} />
                 <Route path="configuracion"  element={<Configuracion />} />
+                <Route path="perfil"         element={<Perfil />} />
               </Route>
 
               <Route path="/admin" element={<MainLayout allowedRoles={['administrador']} />}>
@@ -90,6 +94,7 @@ export default function App() {
                 <Route path="reportes"       element={<AdminReportes />} />
                 <Route path="papelera"       element={<AdminPapelera />} />
                 <Route path="configuracion"  element={<AdminConfiguracion />} />
+                <Route path="perfil"         element={<Perfil />} />
               </Route>
 
               <Route path="/aprendiz" element={<MainLayout allowedRoles={['aprendiz']} />}>
@@ -103,6 +108,7 @@ export default function App() {
                 <Route path="excusas"        element={<AprendizExcusas />} />
                 <Route path="compañeros"     element={<AprendizCompañeros />} />
                 <Route path="configuracion"  element={<Configuracion />} />
+                <Route path="perfil"         element={<Perfil />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/login" replace />} />

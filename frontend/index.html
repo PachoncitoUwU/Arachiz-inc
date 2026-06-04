@@ -32,19 +32,10 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            // Desregistrar service workers antiguos
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) {
-              await registration.unregister();
-            }
-            
-            // Limpiar todos los caches
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
-            
-            // Registrar el nuevo service worker
             const reg = await navigator.serviceWorker.register('/sw.js');
-            console.log('SW registered!', reg);
+            // Verificar actualizaciones periódicamente
+            setInterval(() => reg.update(), 60 * 60 * 1000); // cada hora
+            console.log('SW registered!', reg.scope);
           } catch (err) {
             console.log('SW registration failed', err);
           }

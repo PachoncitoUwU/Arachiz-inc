@@ -43,6 +43,9 @@ model User {
   historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
   conflictosInstructor ConflictoHorario[]   @relation("ConflictosInstructor")
   conflictosCreados    ConflictoHorario[]   @relation("ConflictosCreados")
+  rachaAsistencia      Int                  @default(0)
+  pushSubscriptions    PushSubscription[]
+  mensajesEnviados     MensajeChat[]
 }
 
 model Ficha {
@@ -66,6 +69,7 @@ model Ficha {
   aprendices        User[]              @relation("Aprendices")
   papelera          Papelera[]          @relation("FichaPapelera")
   historialCambios  HistorialCambios[]  @relation("FichaHistorial")
+  mensajesChat      MensajeChat[]
 
   @@index([administradorId])
 }
@@ -342,4 +346,29 @@ model ConflictoHorario {
 
   @@index([instructorId])
   @@index([resuelto])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MensajeChat {
+  id        String   @id @default(cuid())
+  texto     String
+  fichaId   String
+  senderId  String
+  createdAt DateTime @default(now())
+  ficha     Ficha    @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([fichaId])
+  @@index([senderId])
 }

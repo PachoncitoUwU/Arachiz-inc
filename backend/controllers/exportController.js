@@ -445,4 +445,207 @@ const exportFichaInfoPdf = async (req, res) => {
   }
 };
 
-module.exports = { exportAsistenciaFicha, exportSessionAsistencia, exportFichaInfo, exportFichaInfoPdf };
+// GET /api/export/materia/:materiaId/rango?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+const exportAsistenciaRango = async (req, res) => {
+  const { materiaId } = req.params;
+  const { desde, hasta } = req.query;
+  const instructorId = req.user.id;
+
+  try {
+    const materia = await prisma.materia.findUnique({
+      where: { id: materiaId },
+      include: {
+        ficha: {
+          include: {
+            instructores: true,
+            aprendices: { select: { id: true, fullName: true, document: true } }
+          }
+        },
+        asistencias: {
+          where: {
+            ...(desde || hasta ? {
+              fecha: {
+                ...(desde ? { gte: desde } : {}),
+                ...(hasta ? { lte: hasta } : {})
+              }
+            } : {})
+          },
+          orderBy: { timestamp: 'asc' },
+          include: {
+            registros: true
+          }
+        }
+      }
+    });
+
+    if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
+    if (!materia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    const rows = [];
+    for (const sesion of materia.asistencias) {
+      for (const aprendiz of materia.ficha.aprendices) {
+        const reg = sesion.registros.find(r => r.aprendizId === aprendiz.id);
+        rows.push({
+          Materia: materia.nombre,
+          'Fecha Sesión': sesion.fecha,
+          Nombre: aprendiz.fullName,
+          Documento: aprendiz.document,
+          Estado: reg?.presente ? (reg.tarde ? 'Tarde' : 'Presente') : 'Ausente',
+          'Hora Ingreso': reg?.timestamp
+            ? new Date(reg.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : 'N/A',
+          Método: reg?.metodo || 'N/A'
+        });
+      }
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No hay registros en ese rango de fechas.' });
+    }
+
+    const csv = toCSV(rows);
+    const filename = `Asistencia_${materia.nombre}_${desde || 'inicio'}_${hasta || 'fin'}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send('\uFEFF' + csv);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al exportar: ' + err.message });
+  }
+};
+
+// GET /api/export/materia/:materiaId/consolidado
+const exportReporteConsolidado = async (req, res) => {
+  const { materiaId } = req.params;
+  const instructorId = req.user.id;
+
+  try {
+    const materia = await prisma.materia.findUnique({
+      where: { id: materiaId },
+      include: {
+        ficha: {
+          include: {
+            instructores: true,
+            aprendices: {
+              select: { id: true, fullName: true, document: true },
+              orderBy: { fullName: 'asc' }
+            }
+          }
+        },
+        asistencias: {
+          where: { activa: false },
+          orderBy: { timestamp: 'asc' },
+          include: {
+            registros: true
+          }
+        }
+      }
+    });
+
+    if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
+    if (!materia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    const totalSesiones = materia.asistencias.length;
+    if (totalSesiones === 0) {
+      return res.status(404).json({ error: 'No hay sesiones cerradas para generar el reporte.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Arachiz';
+    const sheet = workbook.addWorksheet('Reporte Consolidado');
+
+    // Columnas: Nombre, Documento, luego una columna por sesión, luego Total, %
+    const columns = [
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Documento', key: 'documento', width: 15 }
+    ];
+
+    materia.asistencias.forEach((sesion, idx) => {
+      columns.push({ header: sesion.fecha, key: `s${idx}`, width: 12 });
+    });
+
+    columns.push({ header: 'Presencias', key: 'total', width: 12 });
+    columns.push({ header: '% Asistencia', key: 'porcentaje', width: 14 });
+    columns.push({ header: 'Tardanzas', key: 'tardanzas', width: 12 });
+
+    sheet.columns = columns;
+
+    // Header styling
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    sheet.getRow(1).fill = {
+      type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34A853' }
+    };
+
+    // Data rows
+    materia.ficha.aprendices.forEach(aprendiz => {
+      const rowData = {
+        nombre: aprendiz.fullName,
+        documento: aprendiz.document
+      };
+
+      let presencias = 0;
+      let tardanzas = 0;
+
+      materia.asistencias.forEach((sesion, idx) => {
+        const reg = sesion.registros.find(r => r.aprendizId === aprendiz.id);
+        if (reg?.presente) {
+          presencias++;
+          if (reg.tarde) {
+            tardanzas++;
+            rowData[`s${idx}`] = 'T'; // Tarde
+          } else {
+            rowData[`s${idx}`] = '✓';
+          }
+        } else {
+          rowData[`s${idx}`] = '✗';
+        }
+      });
+
+      rowData.total = presencias;
+      rowData.porcentaje = `${Math.round((presencias / totalSesiones) * 100)}%`;
+      rowData.tardanzas = tardanzas;
+
+      const row = sheet.addRow(rowData);
+
+      // Colorear % según riesgo
+      const pct = (presencias / totalSesiones) * 100;
+      const pctCell = row.getCell('porcentaje');
+      if (pct < 60) {
+        pctCell.font = { bold: true, color: { argb: 'FFEA4335' } }; // Rojo
+      } else if (pct < 80) {
+        pctCell.font = { bold: true, color: { argb: 'FFFBBC05' } }; // Amarillo
+      } else {
+        pctCell.font = { bold: true, color: { argb: 'FF34A853' } }; // Verde
+      }
+    });
+
+    // Footer row with totals
+    sheet.addRow({});
+    sheet.addRow({
+      nombre: 'TOTAL SESIONES',
+      documento: totalSesiones.toString()
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `Consolidado_${materia.nombre}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al generar consolidado: ' + err.message });
+  }
+};
+
+module.exports = {
+  exportAsistenciaFicha,
+  exportSessionAsistencia,
+  exportFichaInfo,
+  exportFichaInfoPdf,
+  exportAsistenciaRango,
+  exportReporteConsolidado
+};

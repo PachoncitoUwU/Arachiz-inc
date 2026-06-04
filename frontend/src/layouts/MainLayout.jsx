@@ -17,6 +17,7 @@ const INSTRUCTOR_LINKS = [
   { to: '/instructor/horario', icon: Calendar, labelKey: 'horario' },
   { to: '/instructor/asistencia', icon: Clock, labelKey: 'asistencia' },
   { to: '/instructor/excusas', icon: FileText, labelKey: 'excusas' },
+  { to: '/instructor/reportes', icon: BarChart3, labelKey: 'reportes' },
 ];
 
 const ADMIN_LINKS = [
@@ -169,14 +170,11 @@ export default function MainLayout({ allowedRoles }) {
   };
 
   const handleProfileClick = () => {
-    setShowProfileModal(true);
+    // Navigate to dedicated profile page instead of modal
+    const path = `/${routePrefix}/perfil`;
+    // We need to use navigate from react-router-dom
+    window.location.href = path; // Fallback since we don't have useNavigate here easily without adding hook
     setSidebarOpen(false);
-  };
-
-  const handleProfileUpdate = (updatedUser) => {
-    if (updateUser) {
-      updateUser(updatedUser);
-    }
   };
 
   return (
@@ -228,14 +226,6 @@ export default function MainLayout({ allowedRoles }) {
         confirmText="Cerrar sesión"
         cancelText="Cancelar"
         danger={true}
-      />
-
-      {/* Modal de perfil propio */}
-      <PerfilPropioModal
-        open={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        user={user}
-        onUpdate={handleProfileUpdate}
       />
     </>
   );

@@ -11,6 +11,7 @@ import { VERSION } from '../config/version';
 import TowerStack   from '../games/TowerStack';
 import MemoryFlash  from '../games/MemoryFlash';
 import SnakeShop    from '../components/SnakeShop';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { drawPremiumEyes, getRainbowColor, drawSegment3D, applyNeonGlow, clearGlow } from '../utils/snakeSkinRenderer';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -1432,6 +1433,7 @@ export default function Configuracion() {
   const { user } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
   const { showToast } = useToast();
+  const { isSubscribed, subscribeUser } = usePushNotifications();
   const [showReleaseNotes, setShowReleaseNotes] = useState(false);
 
   const t = (key) => {
@@ -1660,8 +1662,23 @@ export default function Configuracion() {
       {/* Notificaciones */}
       <Section icon={Bell} title={t('notificationsTitle')} onTitleClick={handleNotiClick}>
         <div className="divide-y divide-gray-100">
-          <ToggleSwitch checked={settings.notifications} onChange={v=>updateSetting('notifications',v)}
-            label={t('sysNotifications')} description={t('sysDesc')}/>
+          <ToggleSwitch 
+            checked={settings.notifications || isSubscribed} 
+            onChange={async (v) => {
+              if (v) {
+                const success = await subscribeUser();
+                if (success) {
+                  updateSetting('notifications', true);
+                  showToast('Notificaciones activadas', 'success');
+                } else {
+                  showToast('No se pudo activar notificaciones (revisa los permisos)', 'error');
+                }
+              } else {
+                updateSetting('notifications', false);
+              }
+            }}
+            label={t('sysNotifications')} 
+            description={t('sysDesc')}/>
         </div>
         {notiClicks > 0 && notiClicks < 7 && (
           <div className="mt-3 text-center">
