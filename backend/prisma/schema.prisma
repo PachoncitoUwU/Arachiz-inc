@@ -43,6 +43,7 @@ model User {
   historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
   conflictosInstructor ConflictoHorario[]   @relation("ConflictosInstructor")
   conflictosCreados    ConflictoHorario[]   @relation("ConflictosCreados")
+  superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
 }
 
 model Ficha {
@@ -342,4 +343,24 @@ model ConflictoHorario {
 
   @@index([instructorId])
   @@index([resuelto])
+}
+
+model SuperUserAuditLog {
+  id                String   @id @default(cuid())
+  superUserId       String
+  accion            String
+  entidad           String
+  entidadId         String?
+  descripcion       String
+  datosAnteriores   Json?
+  datosNuevos       Json?
+  ipAddress         String?
+  fechaHora         DateTime @default(now())
+  navegador         String?
+  
+  superUser         User     @relation("SuperUserLogs", fields: [superUserId], references: [id], onDelete: Cascade)
+  
+  @@index([superUserId])
+  @@index([fechaHora])
+  @@index([entidad])
 }

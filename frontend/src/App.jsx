@@ -33,6 +33,16 @@ import AdminReportes from './pages/admin/Reportes';
 import AdminPapelera from './pages/admin/Papelera';
 import AdminConfiguracion from './pages/admin/Configuracion';
 
+import SuperDashboard from './pages/superuser/Dashboard';
+import SuperUsuarios from './pages/superuser/Usuarios';
+import SuperFichas from './pages/superuser/Fichas';
+import SuperMaterias from './pages/superuser/Materias';
+import SuperDatabase from './pages/superuser/Database';
+import SuperExcusas from './pages/superuser/Excusas';
+import SuperBackup from './pages/superuser/Backup';
+import SuperLogs from './pages/superuser/Logs';
+import SuperEstadisticas from './pages/superuser/Estadisticas';
+
 import AprendizDashboard  from './pages/aprendiz/Dashboard';
 import AprendizFichas     from './pages/aprendiz/Fichas';
 import AprendizFichaDetalle from './pages/aprendiz/FichaDetalle';
@@ -103,6 +113,20 @@ export default function App() {
                 <Route path="excusas"        element={<AprendizExcusas />} />
                 <Route path="compañeros"     element={<AprendizCompañeros />} />
                 <Route path="configuracion"  element={<Configuracion />} />
+              </Route>
+
+              <Route path="/super-usuario" element={<MainLayout allowedRoles={['super_usuario']} />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<SuperDashboard />} />
+                <Route path="usuarios" element={<SuperUsuarios />} />
+                <Route path="fichas" element={<SuperFichas />} />
+                <Route path="materias" element={<SuperMaterias />} />
+                <Route path="database" element={<SuperDatabase />} />
+                <Route path="excusas" element={<SuperExcusas />} />
+                <Route path="backup" element={<SuperBackup />} />
+                <Route path="logs" element={<SuperLogs />} />
+                <Route path="estadisticas" element={<SuperEstadisticas />} />
+                <Route path="configuracion" element={<Configuracion />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/login" replace />} />
