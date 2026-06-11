@@ -6,8 +6,9 @@ import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
+import FichaForm from '../../components/FichaForm';
 import {
-  Users, Plus, Copy, Check, Star
+  Users, Plus, Copy, Check, Star, Upload
 } from 'lucide-react';
 
 const COLORES = [
@@ -17,63 +18,6 @@ const COLORES = [
   { border: '#FBBC05', bg: 'bg-yellow-50', text: 'text-yellow-600' },
   { border: '#EA4335', bg: 'bg-red-50',    text: 'text-[#EA4335]' },
 ];
-
-// ─── FichaForm ────────────────────────────────────────────────────────────────
-function FichaForm({ form, onChange, onSubmit, onCancel, saving, error }) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
-      <div>
-        <label className="input-label">Número de Ficha</label>
-        <input required type="number" className="input-field" placeholder="3146013"
-          value={form.numero} onChange={e => onChange('numero', e.target.value)}/>
-      </div>
-      <div>
-        <label className="input-label">Nombre del Programa</label>
-        <input required className="input-field" placeholder="Análisis y Desarrollo de Software"
-          value={form.nombre} onChange={e => onChange('nombre', e.target.value)}/>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
-        <div>
-          <label className="input-label">Nivel</label>
-          <select className="input-field" value={form.nivel} onChange={e => onChange('nivel', e.target.value)}>
-            <option>Técnico</option><option>Tecnólogo</option>
-          </select>
-        </div>
-        <div>
-          <label className="input-label">Jornada</label>
-          <select className="input-field" value={form.jornada} onChange={e => onChange('jornada', e.target.value)}>
-            <option>Mañana</option><option>Tarde</option><option>Noche</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label className="input-label">Centro de Formación</label>
-        <input required className="input-field" placeholder="CTPI Ibagué"
-          value={form.centro} onChange={e => onChange('centro', e.target.value)}/>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
-        <div>
-          <label className="input-label">Región</label>
-          <input required className="input-field" placeholder="Tolima"
-            value={form.region} onChange={e => onChange('region', e.target.value)}/>
-        </div>
-        <div>
-          <label className="input-label">Duración (meses)</label>
-          <input required type="number" min="1" max="30" className="input-field" placeholder="24"
-            value={form.duracion} onChange={e => onChange('duracion', e.target.value)}/>
-          <p className="text-xs text-gray-400 mt-1">Máximo 30 meses</p>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-3  pt-2">
-        <button type="button" onClick={onCancel} className="btn-secondary text-sm md:text-base  flex-1">Cancelar</button>
-        <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
-          {saving ? 'Guardando...' : 'Crear Ficha'}
-        </button>
-      </div>
-    </form>
-  );
-}
 
 // ─── FichaCard — tarjeta compacta clickeable ─────────────────────────────────
 function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
@@ -129,7 +73,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
-const EMPTY_FORM = { numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' };
+const EMPTY_FORM = { numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '', fechaInicio: '', fechaFin: '' };
 
 export default function AdminFichas() {
   const navigate = useNavigate();
@@ -147,6 +91,14 @@ export default function AdminFichas() {
   // Estados para búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState('');
   const [filterNivel, setFilterNivel] = useState('all'); // 'all' | 'Técnico' | 'Tecnólogo'
+
+  // Estados para Importación desde Excel
+  const [modalImport, setModalImport] = useState(false);
+  const [excelFile, setExcelFile] = useState(null);
+  const [parsedData, setParsedData] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importJornada, setImportJornada] = useState('Mañana');
+  const [importNivel, setImportNivel] = useState('Tecnólogo');
 
   const load = useCallback(async () => {
     try {
@@ -219,6 +171,57 @@ export default function AdminFichas() {
     }
   };
 
+  const handleParseExcel = async () => {
+    if (!excelFile) return;
+    setError('');
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', excelFile);
+      const data = await fetchApi('/import/excel-ficha/parse', {
+        method: 'POST',
+        body: formData
+      });
+      setParsedData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!parsedData) return;
+    setError('');
+    setImporting(true);
+    try {
+      const payload = {
+        ficha: {
+          ...parsedData.ficha,
+          jornada: importJornada,
+          nivel: importNivel
+        },
+        materias: parsedData.materias
+      };
+      
+      const response = await fetchApi('/import/excel-ficha/confirm', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      showToast('Ficha y materias importadas exitosamente', 'success');
+      setModalImport(false);
+      setExcelFile(null);
+      setParsedData(null);
+      load();
+      navigate(`/admin/fichas/${response.ficha.id}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleViewDetails = (fichaId) => {
     navigate(`/admin/fichas/${fichaId}`);
   };
@@ -231,6 +234,9 @@ export default function AdminFichas() {
         action={
           <div className="flex flex-wrap gap-2 ">
             <button onClick={() => { setModalJoin(true); setError(''); }} className="btn-secondary text-sm md:text-base ">Unirse</button>
+            <button onClick={() => { setModalImport(true); setExcelFile(null); setParsedData(null); setError(''); }} className="btn-secondary text-sm md:text-base flex items-center gap-2">
+              <Upload size={16} /> Importar Excel
+            </button>
             <button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); setError(''); }} className="btn-primary text-sm md:text-base  flex items-center gap-2">
               <Plus size={16}/> Nueva Ficha
             </button>
@@ -334,7 +340,8 @@ export default function AdminFichas() {
 
       <Modal open={modalCreate} onClose={() => setModalCreate(false)} title="Crear Nueva Ficha">
         <FichaForm form={form} onChange={handleField} onSubmit={handleCreate}
-          onCancel={() => setModalCreate(false)} saving={saving} error={error}/>
+          onCancel={() => setModalCreate(false)} saving={saving} error={error} isEdit={false}
+          canEditNumero={false} initialForm={null}/>
       </Modal>
 
       <Modal open={modalJoin} onClose={() => setModalJoin(false)} title="Unirse a una Ficha">
@@ -353,6 +360,145 @@ export default function AdminFichas() {
             <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">{saving ? 'Uniéndose...' : 'Unirse'}</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={modalImport} onClose={() => { setModalImport(false); setParsedData(null); setExcelFile(null); setError(''); }} title="Importar Ficha desde Excel">
+        {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-4">{error}</p>}
+        
+        {!parsedData ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Sube el archivo de reporte general de Excel de SofiaPlus. Extraeremos automáticamente los datos de la Ficha y la lista de Competencias (Materias).
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center hover:border-indigo-500 transition-colors cursor-pointer relative">
+              <input 
+                type="file" 
+                accept=".xlsx" 
+                onChange={e => setExcelFile(e.target.files[0])} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <Upload size={36} className="mx-auto text-gray-400 mb-3 animate-bounce" />
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                {excelFile ? excelFile.name : 'Haz clic para seleccionar o arrastra tu archivo Excel (.xlsx)'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Solo se admiten archivos Excel</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                type="button" 
+                onClick={() => { setModalImport(false); setExcelFile(null); }} 
+                className="btn-secondary text-sm md:text-base flex-1"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                disabled={!excelFile || importing} 
+                onClick={handleParseExcel} 
+                className="btn-primary text-sm md:text-base flex-1"
+              >
+                {importing ? 'Analizando...' : 'Analizar Archivo'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl space-y-3">
+              <h4 className="font-bold text-gray-900 dark:text-white border-b pb-2 mb-2">Datos de la Ficha Detectados</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">NÚMERO DE FICHA</span>
+                  <span className="font-mono text-base font-semibold">{parsedData.ficha.numero}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">NOMBRE DEL PROGRAMA</span>
+                  <span className="font-semibold">{parsedData.ficha.nombre}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">REGIONAL</span>
+                  <span>{parsedData.ficha.region || 'No especificada'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">CENTRO DE FORMACIÓN</span>
+                  <span>{parsedData.ficha.centro || 'No especificado'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">FECHA INICIO</span>
+                  <span>{parsedData.ficha.fechaInicio ? new Date(parsedData.ficha.fechaInicio).toLocaleDateString() : 'No especificada'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-400 block text-xs">FECHA FIN</span>
+                  <span>{parsedData.ficha.fechaFin ? new Date(parsedData.ficha.fechaFin).toLocaleDateString() : 'No especificada'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Jornada</label>
+                <select 
+                  value={importJornada} 
+                  onChange={e => setImportJornada(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="Mañana">Mañana</option>
+                  <option value="Tarde">Tarde</option>
+                  <option value="Mixta">Mixta</option>
+                  <option value="Nocturna">Nocturna</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nivel de formación</label>
+                <select 
+                  value={importNivel} 
+                  onChange={e => setImportNivel(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="Tecnólogo">Tecnólogo</option>
+                  <option value="Técnico">Técnico</option>
+                  <option value="Especialización Tecnológica">Especialización Tecnológica</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2 text-sm flex items-center gap-2">
+                <span>Materias a crear ({parsedData.materias.length})</span>
+              </h4>
+              <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white dark:bg-gray-950 space-y-1">
+                {parsedData.materias.map((mat, idx) => (
+                  <div key={idx} className="text-xs py-1 px-2 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded border border-gray-100 dark:border-gray-700 font-mono">
+                    {mat}
+                  </div>
+                ))}
+                {parsedData.materias.length === 0 && (
+                  <p className="text-xs text-gray-400 italic">No se detectaron competencias en el archivo.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                type="button" 
+                disabled={importing} 
+                onClick={() => setParsedData(null)} 
+                className="btn-secondary text-sm md:text-base flex-1"
+              >
+                Atrás
+              </button>
+              <button 
+                type="button" 
+                disabled={importing} 
+                onClick={handleConfirmImport} 
+                className="btn-primary text-sm md:text-base flex-1"
+              >
+                {importing ? 'Importando...' : 'Confirmar Importación'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

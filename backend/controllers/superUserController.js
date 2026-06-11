@@ -264,7 +264,12 @@ exports.getFichaDetail = async (req, res) => {
 
 exports.createFicha = async (req, res) => {
   try {
-    const data = req.body;
+    const data = {
+      ...req.body,
+      duracion: req.body.duracion ? parseInt(req.body.duracion, 10) : 0,
+      fechaInicio: req.body.fechaInicio ? new Date(req.body.fechaInicio) : undefined,
+      fechaFin: req.body.fechaFin ? new Date(req.body.fechaFin) : undefined
+    };
     const newFicha = await prisma.ficha.create({ data });
     await registrarLog(req, 'crear', 'Ficha', newFicha.id, `Creó ficha ${newFicha.numero}`, null, newFicha);
     res.json(newFicha);
@@ -277,9 +282,31 @@ exports.updateFicha = async (req, res) => {
   try {
     const oldFicha = await prisma.ficha.findUnique({ where: { id: req.params.id } });
     if (!oldFicha) return res.status(404).json({ error: 'Ficha no encontrada' });
+    
+    const body = req.body;
+    const data = {};
+
+    // Solo el superusuario puede cambiar el número, pero debe validar que no exista otro igual
+    if (body.numero !== undefined && body.numero.toString() !== oldFicha.numero.toString()) {
+      const existente = await prisma.ficha.findUnique({ where: { numero: body.numero.toString() } });
+      if (existente) {
+        return res.status(400).json({ error: 'Ya existe una ficha con ese número' });
+      }
+      data.numero = body.numero.toString();
+    }
+
+    if (body.nombre !== undefined) data.nombre = body.nombre;
+    if (body.nivel !== undefined) data.nivel = body.nivel;
+    if (body.centro !== undefined) data.centro = body.centro;
+    if (body.jornada !== undefined) data.jornada = body.jornada;
+    if (body.region !== undefined) data.region = body.region;
+    if (body.duracion !== undefined) data.duracion = body.duracion ? parseInt(body.duracion, 10) : 0;
+    if (body.fechaInicio !== undefined) data.fechaInicio = body.fechaInicio ? new Date(body.fechaInicio) : null;
+    if (body.fechaFin !== undefined) data.fechaFin = body.fechaFin ? new Date(body.fechaFin) : null;
+
     const newFicha = await prisma.ficha.update({
       where: { id: req.params.id },
-      data: req.body
+      data
     });
     await registrarLog(req, 'editar', 'Ficha', req.params.id, `Editó ficha ${oldFicha.numero}`, oldFicha, newFicha);
     res.json(newFicha);

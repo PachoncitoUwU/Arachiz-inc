@@ -734,6 +734,8 @@ const crearFicha = async (req, res) => {
         region: region || '',
         duracion: duracion ? parseInt(duracion, 10) : 0,
         nombre: nombre || 'Programa sin nombre',
+        fechaInicio: req.body.fechaInicio ? new Date(req.body.fechaInicio) : undefined,
+        fechaFin: req.body.fechaFin ? new Date(req.body.fechaFin) : undefined,
         code,
         administradorId: req.user.id,
         instructorAdminId: req.user.id // Admin como líder temporal
@@ -890,28 +892,19 @@ const actualizarFicha = async (req, res) => {
       return res.status(403).json({ error: 'No tienes permisos sobre esta ficha' });
     }
 
-    // Si se está cambiando el número, verificar que no exista otra ficha con ese número
-    if (numero && numero !== ficha.numero) {
-      const fichaExistente = await prisma.ficha.findUnique({
-        where: { numero }
-      });
-
-      if (fichaExistente) {
-        return res.status(400).json({ error: 'Ya existe una ficha con ese número' });
-      }
-    }
-
     // Actualizar ficha
     const fichaActualizada = await prisma.ficha.update({
       where: { id: fichaId },
       data: {
-        numero: numero || ficha.numero,
+        numero: ficha.numero,
         nombre: nombre || ficha.nombre,
         nivel: nivel || ficha.nivel,
         centro: centro || ficha.centro,
         jornada: jornada || ficha.jornada,
         region: region !== undefined ? region : ficha.region,
-        duracion: duracion !== undefined ? parseInt(duracion, 10) : ficha.duracion
+        duracion: duracion !== undefined ? parseInt(duracion, 10) : ficha.duracion,
+        fechaInicio: req.body.fechaInicio !== undefined ? (req.body.fechaInicio ? new Date(req.body.fechaInicio) : null) : ficha.fechaInicio,
+        fechaFin: req.body.fechaFin !== undefined ? (req.body.fechaFin ? new Date(req.body.fechaFin) : null) : ficha.fechaFin
       }
     });
 

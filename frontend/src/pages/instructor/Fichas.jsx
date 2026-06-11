@@ -8,6 +8,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
 import EnrollModal from '../../components/EnrollModal';
 import { useToast } from '../../context/ToastContext';
+import FichaForm from '../../components/FichaForm';
 import {
   Users, Plus, Copy, Check, Star
 } from 'lucide-react';
@@ -28,63 +29,6 @@ const COLORES = [
   { border: '#FBBC05', bg: 'bg-yellow-50', text: 'text-yellow-600' },
   { border: '#EA4335', bg: 'bg-red-50',    text: 'text-[#EA4335]' },
 ];
-
-// ─── FichaForm ────────────────────────────────────────────────────────────────
-function FichaForm({ form, onChange, onSubmit, onCancel, saving, error, isEdit }) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
-      <div>
-        <label className="input-label">Número de Ficha</label>
-        <input required type="number" className="input-field" placeholder="3146013"
-          value={form.numero} onChange={e => onChange('numero', e.target.value)} disabled={isEdit}/>
-      </div>
-      <div>
-        <label className="input-label">Nombre del Programa</label>
-        <input required className="input-field" placeholder="Análisis y Desarrollo de Software"
-          value={form.nombre} onChange={e => onChange('nombre', e.target.value)}/>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
-        <div>
-          <label className="input-label">Nivel</label>
-          <select className="input-field" value={form.nivel} onChange={e => onChange('nivel', e.target.value)}>
-            <option>Técnico</option><option>Tecnólogo</option>
-          </select>
-        </div>
-        <div>
-          <label className="input-label">Jornada</label>
-          <select className="input-field" value={form.jornada} onChange={e => onChange('jornada', e.target.value)}>
-            <option>Mañana</option><option>Tarde</option><option>Noche</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label className="input-label">Centro de Formación</label>
-        <input required className="input-field" placeholder="CTPI Ibagué"
-          value={form.centro} onChange={e => onChange('centro', e.target.value)}/>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2  gap-3">
-        <div>
-          <label className="input-label">Región</label>
-          <input required className="input-field" placeholder="Tolima"
-            value={form.region} onChange={e => onChange('region', e.target.value)}/>
-        </div>
-        <div>
-          <label className="input-label">Duración (meses)</label>
-          <input required type="number" min="1" max="30" className="input-field" placeholder="24"
-            value={form.duracion} onChange={e => onChange('duracion', e.target.value)}/>
-          <p className="text-xs text-gray-400 mt-1">Máximo 30 meses</p>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-3  pt-2">
-        <button type="button" onClick={onCancel} className="btn-secondary text-sm md:text-base  flex-1">Cancelar</button>
-        <button type="submit" disabled={saving} className="btn-primary text-sm md:text-base  flex-1">
-          {saving ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Crear Ficha'}
-        </button>
-      </div>
-    </form>
-  );
-}
 
 // ─── FichaCard — tarjeta compacta clickeable ─────────────────────────────────
 function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
@@ -142,7 +86,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
-const EMPTY_FORM = { numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '' };
+const EMPTY_FORM = { numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '', fechaInicio: '', fechaFin: '' };
 
 export default function InstructorFichas() {
   const navigate = useNavigate();
@@ -213,7 +157,9 @@ export default function InstructorFichas() {
       centro: ficha.centro, 
       jornada: ficha.jornada, 
       region: ficha.region || '', 
-      duracion: ficha.duracion || '' 
+      duracion: ficha.duracion || '',
+      fechaInicio: ficha.fechaInicio ? ficha.fechaInicio.split('T')[0] : '',
+      fechaFin: ficha.fechaFin ? ficha.fechaFin.split('T')[0] : ''
     });
     setEditFicha(ficha); setError('');
   };
@@ -300,12 +246,25 @@ export default function InstructorFichas() {
 
       <Modal open={modalCreate} onClose={() => setModalCreate(false)} title="Crear Nueva Ficha">
         <FichaForm form={form} onChange={handleField} onSubmit={handleCreate}
-          onCancel={() => setModalCreate(false)} saving={saving} error={error} isEdit={false}/>
+          onCancel={() => setModalCreate(false)} saving={saving} error={error} isEdit={false}
+          canEditNumero={false} initialForm={null}/>
       </Modal>
 
       <Modal open={!!editFicha} onClose={() => setEditFicha(null)} title="Editar Ficha">
         <FichaForm form={form} onChange={handleField} onSubmit={handleEdit}
-          onCancel={() => setEditFicha(null)} saving={saving} error={error} isEdit={true}/>
+          onCancel={() => setEditFicha(null)} saving={saving} error={error} isEdit={true}
+          canEditNumero={false}
+          initialForm={editFicha ? {
+            numero: editFicha.numero || '',
+            nombre: editFicha.nombre || '',
+            nivel: editFicha.nivel || 'Tecnólogo',
+            centro: editFicha.centro || '',
+            jornada: editFicha.jornada || 'Mañana',
+            region: editFicha.region || '',
+            duracion: editFicha.duracion || '',
+            fechaInicio: editFicha.fechaInicio ? editFicha.fechaInicio.split('T')[0] : '',
+            fechaFin: editFicha.fechaFin ? editFicha.fechaFin.split('T')[0] : ''
+          } : null}/>
       </Modal>
 
       <Modal open={modalJoin} onClose={() => setModalJoin(false)} title="Unirse a una Ficha">

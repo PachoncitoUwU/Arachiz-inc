@@ -3,9 +3,24 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.263';
+export const VERSION = '1.5.0';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.5.0',
+    date: '2026-06-11',
+    title: 'Importación de Excel y Restricciones de Fichas',
+    changes: [
+      'Importación completa de Ficha y sus Materias directamente desde reportes de Excel de SofiaPlus',
+      'Limpieza automática de códigos y prefijos numéricos de regionales y competencias de materias',
+      'Flujo de previsualización interactivo en el frontend para validar datos de ficha y materias',
+      'Selectores dinámicos en importación para configurar la Jornada y el Nivel de Formación',
+      'Soporte extendido de archivos Excel (.xlsx, .xls) y CSV (.csv) en el middleware del servidor',
+      'Restricción de edición del número de ficha (solo permitido para Superusuario con validación de duplicados)',
+      'Validación de cambios sin guardar con modal de confirmación en formularios de Ficha',
+      'Inclusión visual de fechas de inicio y fin en detalles e información general de Ficha'
+    ]
+  },
   {
     version: '1.4.263',
     date: '2026-05-31',
