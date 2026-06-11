@@ -5,6 +5,7 @@ import { superUserApi } from '../../services/superUserApi';
 import { useToast } from '../../context/ToastContext';
 import ConfirmationModal from '../../components/superuser/ConfirmationModal';
 import Modal from '../../components/Modal';
+import FichaForm from '../../components/FichaForm';
 
 export default function Fichas() {
   const { showToast } = useToast();
@@ -18,7 +19,7 @@ export default function Fichas() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   
-  const [formData, setFormData] = useState({ numero: '', nombre: '', nivel: '', centro: '' });
+  const [formData, setFormData] = useState({ numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '', fechaInicio: '', fechaFin: '' });
 
   useEffect(() => {
     loadFichas();
@@ -48,11 +49,16 @@ export default function Fichas() {
       setFormData({
         numero: ficha.numero || '',
         nombre: ficha.nombre || '',
-        nivel: ficha.nivel || '',
-        centro: ficha.centro || ''
+        nivel: ficha.nivel || 'Tecnólogo',
+        centro: ficha.centro || '',
+        jornada: ficha.jornada || 'Mañana',
+        region: ficha.region || '',
+        duracion: ficha.duracion || '',
+        fechaInicio: ficha.fechaInicio ? ficha.fechaInicio.split('T')[0] : '',
+        fechaFin: ficha.fechaFin ? ficha.fechaFin.split('T')[0] : ''
       });
     } else {
-      setFormData({ numero: '', nombre: '', nivel: '', centro: '' });
+      setFormData({ numero: '', nombre: '', nivel: 'Tecnólogo', centro: '', jornada: 'Mañana', region: '', duracion: '', fechaInicio: '', fechaFin: '' });
     }
     setShowEdit(true);
   };
@@ -161,30 +167,27 @@ export default function Fichas() {
 
       {/* Edit/Create Modal */}
       <Modal open={showEdit} onClose={() => setShowEdit(false)} title={selectedFicha ? 'Editar Ficha' : 'Nueva Ficha'}>
-        <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Número de Ficha</label>
-            <input type="text" required value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} className="w-full p-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Programa</label>
-            <input type="text" required value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nivel</label>
-              <input type="text" required value={formData.nivel} onChange={e => setFormData({...formData, nivel: e.target.value})} className="w-full p-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Centro</label>
-              <input type="text" value={formData.centro} onChange={e => setFormData({...formData, centro: e.target.value})} className="w-full p-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={() => setShowEdit(false)} className="btn-secondary">Cancelar</button>
-            <button type="submit" className="btn-primary">Guardar</button>
-          </div>
-        </form>
+        <FichaForm 
+          form={formData} 
+          onChange={(key, val) => setFormData(prev => ({...prev, [key]: val}))} 
+          onSubmit={handleSave} 
+          onCancel={() => setShowEdit(false)} 
+          saving={false} 
+          error={''} 
+          isEdit={!!selectedFicha}
+          canEditNumero={true}
+          initialForm={selectedFicha ? {
+            numero: selectedFicha.numero || '',
+            nombre: selectedFicha.nombre || '',
+            nivel: selectedFicha.nivel || 'Tecnólogo',
+            centro: selectedFicha.centro || '',
+            jornada: selectedFicha.jornada || 'Mañana',
+            region: selectedFicha.region || '',
+            duracion: selectedFicha.duracion || '',
+            fechaInicio: selectedFicha.fechaInicio ? selectedFicha.fechaInicio.split('T')[0] : '',
+            fechaFin: selectedFicha.fechaFin ? selectedFicha.fechaFin.split('T')[0] : ''
+          } : null}
+        />
       </Modal>
 
       {/* Delete Ficha Confirmation */}

@@ -728,6 +728,22 @@ export default function FichaDetalle() {
                 {ficha.duracion ? `${ficha.duracion}m` : 'N/A'}
               </p>
             </div>
+            {ficha.fechaInicio && (
+              <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Fecha de Inicio</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white dark:text-gray-100">
+                  {new Date(ficha.fechaInicio).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+            {ficha.fechaFin && (
+              <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Fecha de Fin</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white dark:text-gray-100">
+                  {new Date(ficha.fechaFin).toLocaleDateString()}
+                </p>
+              </div>
+            )}
             {ficha.region && (
               <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg col-span-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Región</p>

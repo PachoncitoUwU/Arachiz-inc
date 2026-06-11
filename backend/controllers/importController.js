@@ -319,4 +319,253 @@ const downloadPlantillaMaterias = async (req, res) => {
   res.end();
 };
 
-module.exports = { importAprendices, importMaterias, downloadPlantillaAprendices, downloadPlantillaMaterias };
+function parseExcelDate(cellValue) {
+  if (!cellValue) return null;
+  if (cellValue instanceof Date) return cellValue;
+  
+  if (typeof cellValue === 'object') {
+    if (cellValue.result instanceof Date) return cellValue.result;
+    if (cellValue.result) cellValue = cellValue.result;
+    else if (cellValue.richText) {
+      cellValue = cellValue.richText.map(t => t.text).join('');
+    } else {
+      cellValue = cellValue.toString();
+    }
+  }
+
+  const str = cellValue.toString().trim();
+  
+  // Format DD/MM/YYYY
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+    const year = parseInt(parts[2], 10);
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      const date = new Date(year, month, day);
+      if (!isNaN(date.getTime())) return date;
+    }
+  }
+  
+  // Format YYYY-MM-DD
+  const partsDash = str.split('-');
+  if (partsDash.length === 3) {
+    const year = parseInt(partsDash[0], 10);
+    const month = parseInt(partsDash[1], 10) - 1;
+    const day = parseInt(partsDash[2], 10);
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      const date = new Date(year, month, day);
+      if (!isNaN(date.getTime())) return date;
+    }
+  }
+
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function cleanName(val) {
+  if (!val) return '';
+  return val.toString()
+    .trim()
+    .replace(/^\d+\s*[-–—]\s*/, '') // Remove starting digits followed by dash
+    .replace(/^\d+\s+/, '')         // Remove starting digits followed by space
+    .trim();
+}
+
+const parseExcelFicha = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se subió ningún archivo' });
+  }
+
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return res.status(400).json({ error: 'El archivo está vacío' });
+
+    const getCellValue = (cellRef) => {
+      const cell = worksheet.getCell(cellRef);
+      if (!cell || cell.value === null || cell.value === undefined) return '';
+      if (typeof cell.value === 'object') {
+        if (cell.value.result !== undefined && cell.value.result !== null) {
+          return cell.value.result.toString().trim();
+        }
+        if (cell.value.richText) {
+          return cell.value.richText.map(t => t.text).join('').trim();
+        }
+        if (cell.value.text) {
+          return cell.value.text.toString().trim();
+        }
+        return cell.value.toString().trim();
+      }
+      return cell.value.toString().trim();
+    };
+
+    const numero = getCellValue('C3');
+    const nombre = getCellValue('C6');
+    const rawFechaInicio = worksheet.getCell('C8').value;
+    const rawFechaFin = worksheet.getCell('C9').value;
+    const modalidad = getCellValue('C10');
+    const rawRegional = getCellValue('C11');
+    const rawCentro = getCellValue('C12');
+
+    if (!numero || !nombre) {
+      return res.status(400).json({ 
+        error: 'El formato del archivo no coincide. Se espera el número de ficha en C3 y la denominación del programa en C6.' 
+      });
+    }
+
+    const fechaInicio = parseExcelDate(rawFechaInicio);
+    const fechaFin = parseExcelDate(rawFechaFin);
+
+    const region = cleanName(rawRegional);
+    const centro = cleanName(rawCentro);
+
+    // Read materias from column F (6th column) starting at row 14
+    const materiasSet = new Set();
+    const rowCount = worksheet.rowCount;
+    for (let r = 14; r <= rowCount; r++) {
+      const cell = worksheet.getCell(`F${r}`);
+      if (cell && cell.value !== null && cell.value !== undefined) {
+        let val = '';
+        if (typeof cell.value === 'object') {
+          if (cell.value.result !== undefined && cell.value.result !== null) {
+            val = cell.value.result.toString();
+          } else if (cell.value.richText) {
+            val = cell.value.richText.map(t => t.text).join('');
+          } else if (cell.value.text) {
+            val = cell.value.text.toString();
+          } else {
+            val = cell.value.toString();
+          }
+        } else {
+          val = cell.value.toString();
+        }
+        val = cleanName(val);
+        if (val) {
+          materiasSet.add(val);
+        }
+      }
+    }
+
+    const materias = Array.from(materiasSet);
+
+    res.json({
+      ficha: {
+        numero,
+        nombre,
+        fechaInicio: fechaInicio ? fechaInicio.toISOString() : null,
+        fechaFin: fechaFin ? fechaFin.toISOString() : null,
+        modalidad,
+        region,
+        centro
+      },
+      materias
+    });
+  } catch (error) {
+    console.error('Error al analizar archivo Excel:', error);
+    res.status(500).json({ error: 'Error al analizar el archivo Excel: ' + error.message });
+  }
+};
+
+const confirmExcelFicha = async (req, res) => {
+  const { ficha, materias } = req.body;
+  const instructorId = req.user.id;
+
+  if (!ficha || !ficha.numero || !ficha.nombre || !ficha.nivel || !ficha.centro || !ficha.jornada || !ficha.region) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios de la Ficha' });
+  }
+
+  try {
+    const existingFicha = await prisma.ficha.findUnique({
+      where: { numero: ficha.numero.toString() }
+    });
+
+    if (existingFicha) {
+      return res.status(400).json({ error: `Ya existe una ficha con el número ${ficha.numero}` });
+    }
+
+    const { generarCodigoFicha } = require('../utils/generators');
+    const code = generarCodigoFicha();
+
+    let duracion = 24;
+    if (ficha.fechaInicio && ficha.fechaFin) {
+      const start = new Date(ficha.fechaInicio);
+      const end = new Date(ficha.fechaFin);
+      const years = end.getFullYear() - start.getFullYear();
+      const months = end.getMonth() - start.getMonth();
+      const calculatedDuracion = (years * 12) + months;
+      if (calculatedDuracion > 0) {
+        duracion = calculatedDuracion > 30 ? 30 : calculatedDuracion;
+      }
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const newFicha = await tx.ficha.create({
+        data: {
+          numero: ficha.numero.toString(),
+          nombre: ficha.nombre,
+          nivel: ficha.nivel,
+          centro: ficha.centro,
+          jornada: ficha.jornada,
+          region: ficha.region,
+          duracion,
+          fechaInicio: ficha.fechaInicio ? new Date(ficha.fechaInicio) : null,
+          fechaFin: ficha.fechaFin ? new Date(ficha.fechaFin) : null,
+          code,
+          administrador: { connect: { id: instructorId } },
+          instructorAdmin: { connect: { id: instructorId } },
+          instructores: {
+            create: [{ instructorId, role: 'admin' }]
+          }
+        }
+      });
+
+      if (materias && materias.length > 0) {
+        await Promise.all(
+          materias.map(async (materiaNombre) => {
+            return tx.materia.create({
+              data: {
+                nombre: materiaNombre,
+                tipo: 'Técnica',
+                fichaId: newFicha.id,
+                instructorId: instructorId
+              }
+            });
+          })
+        );
+      }
+
+      await tx.historialCambios.create({
+        data: {
+          fichaId: newFicha.id,
+          usuarioId: instructorId,
+          tipoEvento: 'CREACION_IMPORTACION',
+          entidad: 'Ficha',
+          entidadId: newFicha.id,
+          descripcion: `Ficha ${newFicha.numero} y ${materias ? materias.length : 0} materias creadas e importadas desde Excel`
+        }
+      });
+
+      return newFicha;
+    });
+
+    res.status(201).json({
+      message: 'Ficha y materias importadas exitosamente',
+      ficha: result
+    });
+  } catch (error) {
+    console.error('Error al confirmar importación de Excel:', error);
+    res.status(500).json({ error: 'Error al confirmar la importación: ' + error.message });
+  }
+};
+
+module.exports = { 
+  importAprendices, 
+  importMaterias, 
+  downloadPlantillaAprendices, 
+  downloadPlantillaMaterias,
+  parseExcelFicha,
+  confirmExcelFicha
+};

@@ -30,6 +30,8 @@ const createFicha = async (req, res) => {
       data: {
         numero, nombre, nivel, centro, jornada, region,
         duracion: parseInt(duracion),
+        fechaInicio: req.body.fechaInicio ? new Date(req.body.fechaInicio) : undefined,
+        fechaFin: req.body.fechaFin ? new Date(req.body.fechaFin) : undefined,
         code,
         instructorAdmin: { connect: { id: instructorId } },
         instructores: {
@@ -79,13 +81,14 @@ const updateFicha = async (req, res) => {
     const dataToUpdate = {};
     
     // Agregar campos solo si tienen valor
-    if (numero) dataToUpdate.numero = numero.toString();
     if (nombre) dataToUpdate.nombre = nombre;
     if (nivel) dataToUpdate.nivel = nivel;
     if (centro) dataToUpdate.centro = centro;
     if (jornada) dataToUpdate.jornada = jornada;
     if (region) dataToUpdate.region = region;
     if (duracion) dataToUpdate.duracion = parseInt(duracion);
+    if (req.body.fechaInicio !== undefined) dataToUpdate.fechaInicio = req.body.fechaInicio ? new Date(req.body.fechaInicio) : null;
+    if (req.body.fechaFin !== undefined) dataToUpdate.fechaFin = req.body.fechaFin ? new Date(req.body.fechaFin) : null;
     
     const updated = await prisma.ficha.update({
       where: { id },
