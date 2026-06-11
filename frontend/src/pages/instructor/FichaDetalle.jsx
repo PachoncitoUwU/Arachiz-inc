@@ -12,8 +12,9 @@ import NotificacionesModal from '../../components/NotificacionesModal';
 import ImportModal from '../../components/ImportModal';
 import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
-  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X, Upload
+  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X, Upload, MessageSquare
 } from 'lucide-react';
+
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -801,6 +802,8 @@ export default function FichaDetalle() {
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
               )}
             </button>
+
+
           </div>
 
           {/* Botones de Materias */}
@@ -991,6 +994,7 @@ export default function FichaDetalle() {
             )}
           </>
         )}
+
       </div>
 
       {/* Administrador e Instructores */}

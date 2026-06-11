@@ -6,6 +6,7 @@ import { Users, BookOpen, Clock, FileText, Plus, ArrowRight, Calendar } from 'lu
 import fetchApi from '../../services/api';
 import StatCard from '../../components/StatCard';
 import ConflictosAlert from '../../components/ConflictosAlert';
+import InstructorStats from '../../components/InstructorStats';
 
 export default function InstructorDashboard() {
   const { user } = useContext(AuthContext);
@@ -66,6 +67,9 @@ export default function InstructorDashboard() {
           <StatCard icon={<FileText size={22}/>} label={t('dashboard', 'pendingExcuses')} value={pendientes}         color={pendientes > 0 ? 'yellow' : 'gray'} />
         </div>
       </div>
+
+      {/* Estadísticas Avanzadas (Riesgo de Deserción) */}
+      <InstructorStats />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Fichas */}

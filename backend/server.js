@@ -27,6 +27,10 @@ const hardwareRoutes = require('./routes/hardwareRoutes');
 const respuestaRapidaRoutes = require('./routes/respuestaRapidaRoutes');
 const adminRoutes = require('./routes/admin');
 const superUserRoutes = require('./routes/superUserRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const pushRoutes = require('./routes/pushRoutes');
+const statsRoutes = require('./routes/statsRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const SerialService = require('./utils/serialService');
 const { checkAndCloseExpiredSessions } = require('./controllers/asistenciaController');
 
@@ -92,6 +96,10 @@ app.use('/api/hardware', hardwareRoutes);
 app.use('/api/respuestas-rapidas', respuestaRapidaRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-usuario', superUserRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/push', pushRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/chat', chatRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);
@@ -104,6 +112,35 @@ io.on('connection', (socket) => {
   socket.on('leaveSession', (sessionId) => {
     socket.leave(`session_${sessionId}`);
   });
+  
+  // Chat
+  socket.on('joinChat', (fichaId) => {
+    socket.join(`chat_${fichaId}`);
+  });
+  socket.on('leaveChat', (fichaId) => {
+    socket.leave(`chat_${fichaId}`);
+  });
+  socket.on('sendMessage', async (data) => {
+    // data: { fichaId, senderId, texto }
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      const newMsg = await prisma.mensajeChat.create({
+        data: {
+          fichaId: data.fichaId,
+          senderId: data.senderId,
+          texto: data.texto
+        },
+        include: {
+          sender: { select: { id: true, fullName: true, avatarUrl: true, userType: true } }
+        }
+      });
+      io.to(`chat_${data.fichaId}`).emit('newMessage', newMsg);
+    } catch (e) {
+      console.error('Error saving chat message', e);
+    }
+  });
+
   socket.on('disconnect', () => {});
 });
 

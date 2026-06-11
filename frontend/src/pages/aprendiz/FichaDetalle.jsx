@@ -409,6 +409,7 @@ export default function AprendizFichaDetalle() {
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
               )}
             </button>
+
           </div>
         </div>
 
@@ -547,6 +548,7 @@ export default function AprendizFichaDetalle() {
             )}
           </>
         )}
+
       </div>
 
       {/* Administrador e Instructores */}

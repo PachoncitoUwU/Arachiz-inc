@@ -11,6 +11,7 @@ import { io } from 'socket.io-client';
 import { loadFaceModels, faceDistance, arrayToDescriptor } from '../../utils/faceApi';
 import * as faceapi from 'face-api.js';
 
+
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 // ─── Timer ────────────────────────────────────────────────────────────────────
@@ -910,6 +911,8 @@ export default function InstructorAsistencia() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Completado</p>
             </div>
           </div>
+
+
 
           {/* Layout principal: Reconocimiento facial + Registrados */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
