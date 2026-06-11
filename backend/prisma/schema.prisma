@@ -46,6 +46,7 @@ model User {
   rachaAsistencia      Int                  @default(0)
   pushSubscriptions    PushSubscription[]
   mensajesEnviados     MensajeChat[]
+  superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
 }
 
 model Ficha {
@@ -371,4 +372,24 @@ model MensajeChat {
 
   @@index([fichaId])
   @@index([senderId])
+}
+
+model SuperUserAuditLog {
+  id                String   @id @default(cuid())
+  superUserId       String
+  accion            String
+  entidad           String
+  entidadId         String?
+  descripcion       String
+  datosAnteriores   Json?
+  datosNuevos       Json?
+  ipAddress         String?
+  fechaHora         DateTime @default(now())
+  navegador         String?
+
+  superUser         User     @relation("SuperUserLogs", fields: [superUserId], references: [id], onDelete: Cascade)
+
+  @@index([superUserId])
+  @@index([fechaHora])
+  @@index([entidad])
 }
