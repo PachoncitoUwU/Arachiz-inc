@@ -1,17 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import fetchApi from '../services/api';
 
-// Llave pública generada (VAPID_PUBLIC_KEY)
-const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BPpzguTP5_tLNvvJIjwD2-ZN8PJH9YdjEbamT1XwbUyNFPzYH2cATXUMzk9wwVml3gJRiXlsb8s9lkw4h66THBM';
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
-
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
-
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
@@ -19,66 +15,66 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export function usePushNotifications() {
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSupported, setIsSupported] = useState(false);
+  const [subscription, setSubscription] = useState(null);
   const [permission, setPermission] = useState(Notification.permission);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    checkSubscription();
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      setIsSupported(true);
+      checkSubscription();
+    }
   }, []);
 
   const checkSubscription = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     try {
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
-    } catch (err) {
-      console.error('Error verificando suscripción:', err);
+      const sub = await registration.pushManager.getSubscription();
+      if (sub) {
+        setSubscription(sub);
+      }
+    } catch (e) {
+      console.error('Error checking subscription', e);
     }
   };
 
-  const subscribeUser = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setError('Notificaciones Push no soportadas');
-      return false;
-    }
-
+  const subscribe = useCallback(async () => {
+    if (!isSupported) return null;
+    
+    setLoading(true);
     try {
-      const p = await Notification.requestPermission();
-      setPermission(p);
-      if (p !== 'granted') {
-        throw new Error('Permiso de notificaciones denegado');
+      const permissionResult = await Notification.requestPermission();
+      setPermission(permissionResult);
+      
+      if (permissionResult !== 'granted') {
+        throw new Error('Permission not granted for Notification');
       }
 
       const registration = await navigator.serviceWorker.ready;
       
-      const subscription = await registration.pushManager.subscribe({
+      // Intentar suscribirse
+      const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
+      
+      setSubscription(sub);
 
       // Enviar al backend
-      const token = localStorage.getItem('token');
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      
-      await fetch(`${API_BASE}/push/subscribe`, {
+      await fetchApi('/push/subscribe', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ subscription })
+        body: JSON.stringify({ subscription: sub })
       });
 
-      setIsSubscribed(true);
-      return true;
-    } catch (err) {
-      console.error('Error suscribiendo al push:', err);
-      setError(err.message);
-      return false;
+      return sub;
+    } catch (error) {
+      console.error('Error subscribing to push:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [isSupported]);
 
-  return { isSubscribed, permission, error, subscribeUser };
+  return { isSupported, permission, subscription, subscribe, loading };
 }
