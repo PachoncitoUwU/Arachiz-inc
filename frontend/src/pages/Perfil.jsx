@@ -48,7 +48,7 @@ export default function Perfil() {
       {/* Tarjeta principal de perfil */}
       <div className="bg-white dark:bg-zinc-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-zinc-700 flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className="relative">
-          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-100 shadow-inner border-4 border-white dark:border-zinc-800">
+          <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden bg-gray-100 shadow-inner border-4 border-white dark:border-zinc-800">
             {stats?.avatarUrl ? (
               <img src={stats.avatarUrl} alt={stats.fullName} className="w-full h-full object-cover" />
             ) : (
@@ -103,32 +103,32 @@ export default function Perfil() {
 
       {/* Grid de Estadísticas Principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-6 rounded-3xl border border-orange-100 dark:border-orange-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
-          <div className="w-14 h-14 bg-white dark:bg-zinc-800 rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Flame className="text-orange-500" size={28} />
+        <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-4 rounded-2xl border border-orange-100 dark:border-orange-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
+          <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <Flame className="text-orange-500" size={22} />
           </div>
-          <p className="text-4xl font-black text-orange-600 dark:text-orange-400">{stats?.rachaAsistencia || 0}</p>
-          <p className="text-sm font-bold text-orange-800/60 dark:text-orange-300/60 mt-1 uppercase tracking-wide">Racha Actual</p>
+          <p className="text-2xl font-black text-orange-600 dark:text-orange-400">{stats?.rachaAsistencia || 0}</p>
+          <p className="text-xs font-bold text-orange-800/60 dark:text-orange-300/60 mt-1 uppercase tracking-wide">Racha Actual</p>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-3xl border border-blue-100 dark:border-blue-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
-          <div className="w-14 h-14 bg-white dark:bg-zinc-800 rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Activity className="text-blue-500" size={28} />
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
+          <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <Activity className="text-blue-500" size={22} />
           </div>
-          <p className="text-4xl font-black text-blue-600 dark:text-blue-400">{stats?.totalAsistencias || 0}</p>
-          <p className="text-sm font-bold text-blue-800/60 dark:text-blue-300/60 mt-1 uppercase tracking-wide">
+          <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{stats?.totalAsistencias || 0}</p>
+          <p className="text-xs font-bold text-blue-800/60 dark:text-blue-300/60 mt-1 uppercase tracking-wide">
             {isAprendiz ? 'Asistencias Totales' : 'Clases Registradas'}
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-6 rounded-3xl border border-emerald-100 dark:border-emerald-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
-          <div className="w-14 h-14 bg-white dark:bg-zinc-800 rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Clock className="text-emerald-500" size={28} />
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 flex flex-col items-center justify-center text-center group transition-transform hover:-translate-y-1">
+          <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <Clock className="text-emerald-500" size={22} />
           </div>
-          <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
+          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
             {Math.floor((stats?.totalAsistencias || 0) * 1.5)}h
           </p>
-          <p className="text-sm font-bold text-emerald-800/60 dark:text-emerald-300/60 mt-1 uppercase tracking-wide">
+          <p className="text-xs font-bold text-emerald-800/60 dark:text-emerald-300/60 mt-1 uppercase tracking-wide">
             Horas Totales
           </p>
         </div>

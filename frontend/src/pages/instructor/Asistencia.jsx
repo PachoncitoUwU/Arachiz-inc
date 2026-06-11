@@ -10,7 +10,7 @@ import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download,
 import { io } from 'socket.io-client';
 import { loadFaceModels, faceDistance, arrayToDescriptor } from '../../utils/faceApi';
 import * as faceapi from 'face-api.js';
-import LiveAttendanceMap from '../../components/LiveAttendanceMap';
+
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -912,10 +912,7 @@ export default function InstructorAsistencia() {
             </div>
           </div>
 
-          {/* Live Attendance Map */}
-          <div className="mb-6">
-            <LiveAttendanceMap session={activeSession} ioSocket={socketRef.current} />
-          </div>
+
 
           {/* Layout principal: Reconocimiento facial + Registrados */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

@@ -14,7 +14,7 @@ import {
   ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
   Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X, Upload, MessageSquare
 } from 'lucide-react';
-import ChatFicha from '../../components/ChatFicha';
+
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -803,25 +803,7 @@ export default function FichaDetalle() {
               )}
             </button>
 
-            <button
-              onClick={() => {
-                setActiveTab('chat');
-                setSearchQuery('');
-              }}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-                activeTab === 'chat'
-                  ? 'text-purple-600'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <MessageSquare size={16} />
-                Chat
-              </div>
-              {activeTab === 'chat' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />
-              )}
-            </button>
+
           </div>
 
           {/* Botones de Materias */}
@@ -1013,12 +995,6 @@ export default function FichaDetalle() {
           </>
         )}
 
-        {/* Contenido de Chat */}
-        {activeTab === 'chat' && (
-          <div className="animate-fade-in">
-            <ChatFicha fichaId={ficha.id} />
-          </div>
-        )}
       </div>
 
       {/* Administrador e Instructores */}

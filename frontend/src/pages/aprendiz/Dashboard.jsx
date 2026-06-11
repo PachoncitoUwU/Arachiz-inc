@@ -1,12 +1,40 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, FileText, AlertTriangle, ArrowRight, CheckCircle, XCircle, User } from 'lucide-react';
+import { BookOpen, Clock, FileText, AlertTriangle, ArrowRight, CheckCircle, XCircle, User, TrendingUp, Zap } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import fetchApi from '../../services/api';
 import StatCard from '../../components/StatCard';
 import { useSettings } from '../../context/SettingsContext';
+
+// ── Mini widget: Porcentaje de asistencia ────────────────────────────────────
+function AttendanceRateWidget({ presentes, total }) {
+  if (total === 0) return null;
+  const rate = Math.round((presentes / total) * 100);
+  const color = rate >= 80 ? '#34A853' : rate >= 60 ? '#FBBC05' : '#EA4335';
+  return (
+    <div className="card dark:bg-gray-900 dark:border-gray-800 flex items-center gap-4 py-3">
+      <div className="relative w-14 h-14 shrink-0">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+          <path className="text-gray-100 dark:text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4"/>
+          <path strokeDasharray={`${rate}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={color} strokeWidth="4" className="transition-all duration-700"/>
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-black" style={{ color }}>{rate}%</span>
+      </div>
+      <div>
+        <p className="text-sm font-bold text-gray-900 dark:text-white">Tu asistencia global</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{presentes} presentes de {total} clases registradas</p>
+        <div className="mt-1.5 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden w-40">
+          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${rate}%`, backgroundColor: color }}/>
+        </div>
+      </div>
+      <Link to="/aprendiz/asistencia" className="ml-auto shrink-0 flex items-center gap-1 text-xs text-blue-500 hover:underline">
+        Ver detalle <ArrowRight size={12}/>
+      </Link>
+    </div>
+  );
+}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -109,6 +137,9 @@ export default function AprendizDashboard() {
             <StatCard icon={<XCircle size={22}/>}     label={t('dashboard', 'absences')}           value={ausentes}         color="red" />
             <StatCard icon={<FileText size={22}/>}    label={t('dashboard', 'pendingExcuses')} value={pendientes}       color={pendientes > 0 ? 'yellow' : 'gray'} />
           </div>
+
+          {/* Widget de tasa de asistencia */}
+          <AttendanceRateWidget presentes={presentes} total={presentes + ausentes} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Mi ficha */}
