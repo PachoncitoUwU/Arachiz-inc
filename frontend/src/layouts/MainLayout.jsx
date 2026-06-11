@@ -8,7 +8,8 @@ import GlobalSearch from '../components/GlobalSearch';
 import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
-  Settings, Moon, Sun, FolderOpen, BarChart3, Trash2, Search
+  Settings, Moon, Sun, FolderOpen, BarChart3, Trash2, Search,
+  Database, Save, Activity
 } from 'lucide-react';
 
 const INSTRUCTOR_LINKS = [
@@ -38,6 +39,18 @@ const APRENDIZ_LINKS = [
   { to: '/aprendiz/horario', icon: Calendar, labelKey: 'horario' },
   { to: '/aprendiz/asistencia', icon: Clock, labelKey: 'asistencia' },
   { to: '/aprendiz/excusas', icon: FileText, labelKey: 'excusas' },
+];
+
+const SUPER_USUARIO_LINKS = [
+  { to: '/super-usuario/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
+  { to: '/super-usuario/usuarios', icon: Users, labelKey: 'usuarios' },
+  { to: '/super-usuario/fichas', icon: FolderOpen, labelKey: 'fichas' },
+  { to: '/super-usuario/materias', icon: BookOpen, labelKey: 'materias' },
+  { to: '/super-usuario/database', icon: Database, labelKey: 'base_de_datos' },
+  { to: '/super-usuario/excusas', icon: FileText, labelKey: 'excusas' },
+  { to: '/super-usuario/backup', icon: Save, labelKey: 'backup' },
+  { to: '/super-usuario/logs', icon: Activity, labelKey: 'logs' },
+  { to: '/super-usuario/estadisticas', icon: BarChart3, labelKey: 'estadisticas' },
 ];
 
 function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClick, onProfileClick }) {
@@ -151,14 +164,21 @@ export default function MainLayout({ allowedRoles }) {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user?.userType)) {
-    return <Navigate to={`/${user?.userType}/dashboard`} replace />;
-  }
-
-  const links = user?.userType === 'instructor' ? INSTRUCTOR_LINKS : user?.userType === 'administrador' ? ADMIN_LINKS : APRENDIZ_LINKS;
   
   // Mapear el userType a la ruta correcta
-  const routePrefix = user?.userType === 'administrador' ? 'admin' : user?.userType;
+  let routePrefix = user?.userType;
+  if (user?.userType === 'administrador') routePrefix = 'admin';
+  if (user?.userType === 'super_usuario') routePrefix = 'super-usuario';
+
+  if (allowedRoles && !allowedRoles.includes(user?.userType)) {
+    return <Navigate to={`/${routePrefix}/dashboard`} replace />;
+  }
+
+  let links = APRENDIZ_LINKS;
+  if (user?.userType === 'instructor') links = INSTRUCTOR_LINKS;
+  if (user?.userType === 'administrador') links = ADMIN_LINKS;
+  if (user?.userType === 'super_usuario') links = SUPER_USUARIO_LINKS;
+  
   const configPath = `/${routePrefix}/configuracion`;
 
   const handleLogoutClick = () => {
