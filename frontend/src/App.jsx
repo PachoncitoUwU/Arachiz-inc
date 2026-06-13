@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext';
 import { SettingsProvider } from './context/SettingsContext';
 import MainLayout from './layouts/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -62,8 +63,9 @@ import Perfil from './pages/Perfil';
 export default function App() {
   return (
     <ErrorBoundary>
-    <BrowserRouter>
-      <SettingsProvider>
+      <Toaster position="top-right" />
+      <BrowserRouter>
+        <SettingsProvider>
         <ToastProvider>
           <AuthProvider>
             <Routes>

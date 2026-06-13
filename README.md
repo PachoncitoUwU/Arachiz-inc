@@ -1,4 +1,4 @@
-# Arachiz — Sistema de Gestión de Asistencia
+o euand# Arachiz — Sistema de Gestión de Asistencia
 
 Plataforma web para gestión de asistencia académica del SENA. Permite a instructores administrar fichas, materias, horarios y sesiones de asistencia; y a los aprendices registrar su asistencia y gestionar excusas.
 

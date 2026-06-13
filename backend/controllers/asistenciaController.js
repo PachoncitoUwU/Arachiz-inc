@@ -23,6 +23,7 @@ const createSession = async (req, res) => {
     const parsedLlegadaTarde = llegadaTarde !== undefined ? parseInt(llegadaTarde, 10) : 15;
     const parsedDuracion = duracion !== undefined ? parseInt(duracion, 10) : 120;
 
+    // Crear la sesión primero (rápido, sin datos pesados)
     const newAsistencia = await prisma.asistencia.create({
       data: {
         fecha: autoFecha,
@@ -42,6 +43,8 @@ const createSession = async (req, res) => {
             ficha: { 
               select: { 
                 numero: true, 
+                // Traer aprendices SIN faceDescriptor para que sea rápido
+                // El frontend carga faceDescriptor aparte al arrancar el reconocimiento facial
                 aprendices: { 
                   where: {
                     NOT: {
@@ -56,8 +59,8 @@ const createSession = async (req, res) => {
                     document: true, 
                     nfcUid: true, 
                     huellas: true, 
-                    faceDescriptor: true,
                     avatarUrl: true
+                    // faceDescriptor omitido aquí: se carga bajo demanda al activar reconocimiento facial
                   } 
                 } 
               } 
@@ -69,21 +72,31 @@ const createSession = async (req, res) => {
     
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
-    if (serialService) serialService.sendCommand('SESSION ON');
 
-    // WebPush notification
+    // Notificar al hardware (USB o WiFi)
+    if (serialService && serialService.isConnected) {
+      serialService.sendCommand('SESSION ON');
+    } else {
+      // Modo WiFi: encolar para que el ESP lo recoja
+      const hardwareController = require('./hardwareController');
+      hardwareController.queueCommand('SESSION ON');
+    }
+
+    // WebPush y respuesta en paralelo (no bloquear la respuesta)
     const userIds = newAsistencia.materia.ficha.aprendices.map(a => a.id);
     const materiaName = newAsistencia.materia.nombre;
     const instructorName = req.user?.fullName || 'tu instructor';
 
+    // Responder inmediatamente al instructor sin esperar el push
+    res.status(201).json({ message: 'Sesión creada', asistencia: newAsistencia });
+
+    // Push en background (no bloquea la respuesta)
     sendPushToUsers(userIds, {
       title: '¡Sesión de Asistencia Iniciada!',
       body: `La sesión de ${materiaName} ha comenzado con ${instructorName}. Registra tu asistencia a tiempo.`,
       icon: '/mi-logo.png',
       url: '/aprendiz/dashboard'
     });
-
-    res.status(201).json({ message: 'Sesión creada', asistencia: newAsistencia });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear la sesión: ' + err.message });
   }
@@ -377,8 +390,8 @@ const closeSessionById = async (id, io, serialService) => {
       }))
     });
 
-    // Enviar correos de inasistencia en segundo plano
-    for (const a of ausentes) {
+    // Enviar correos de inasistencia en paralelo (no en bucle secuencial)
+    Promise.all(ausentes.map(a =>
       sendAttendanceEmail(
         a.email,
         a.fullName,
@@ -386,8 +399,8 @@ const closeSessionById = async (id, io, serialService) => {
         'ausente',
         new Date(),
         'automatico'
-      ).catch(err => console.error(`[EmailService] Error al enviar correo a ${a.email}:`, err));
-    }
+      ).catch(err => console.error(`[EmailService] Error al enviar correo a ${a.email}:`, err))
+    ));
   }
 
   const updatedAsistencia = await prisma.asistencia.update({
@@ -400,6 +413,12 @@ const closeSessionById = async (id, io, serialService) => {
 
   if (serialService) serialService.sendCommand('SESSION OFF');
   if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
+
+  // Notificar también al ESP por WiFi si no hay USB
+  if (!serialService || !serialService.isConnected) {
+    const hardwareController = require('./hardwareController');
+    hardwareController.queueCommand('SESSION OFF');
+  }
 
   // Update Rachas de Asistencia (Streaks)
   try {

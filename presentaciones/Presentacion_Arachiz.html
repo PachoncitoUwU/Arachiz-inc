@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación Arachiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --background: #F9FAFB;
+            --surface: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --accent: #10B981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1000px;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Decorative background elements */
+        .blob {
+            position: absolute;
+            background: var(--primary-light);
+            filter: blur(100px);
+            border-radius: 50%;
+            z-index: 1;
+            opacity: 0.2;
+        }
+
+        .blob-1 { top: -10%; left: -10%; width: 400px; height: 400px; }
+        .blob-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: Inicio -->
+    <section id="inicio">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="container">
+            <h1>Arachiz</h1>
+            <p>El sistema definitivo de control de asistencia, biometría y gestión para el SENA. Rápido, seguro e inteligente.</p>
+            <a href="#caracteristicas" class="btn">Descubrir más</a>
+        </div>
+    </section>
+
+    <!-- Slide 2: Características -->
+    <section id="caracteristicas">
+        <div class="container reveal">
+            <h2>Tecnología de Vanguardia</h2>
+            <p>Hemos integrado las mejores herramientas para garantizar un registro de asistencia sin fallas, incluso sin conexión a internet.</p>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <div class="icon">👆</div>
+                    <h3>Biometría Avanzada</h3>
+                    <p>Reconocimiento dactilar y facial ultra rápido para evitar suplantaciones.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">📱</div>
+                    <h3>NFC y RFID</h3>
+                    <p>Acceso instantáneo mediante tarjetas y dispositivos móviles compatibles.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">☁️</div>
+                    <h3>Sincronización Local/Nube</h3>
+                    <p>Opera localmente y sincroniza automáticamente los datos al recuperar la conexión.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: Diseño y UX -->
+    <section id="diseño">
+        <div class="container reveal">
+            <h2>Diseño Centrado en el Usuario</h2>
+            <p>Una interfaz limpia, moderna y amigable. Modo claro optimizado para ambientes educativos, tipografía 'Inter' de alta legibilidad y micro-animaciones que guían al usuario.</p>
+            <a href="#futuro" class="btn">Ver el Futuro</a>
+        </div>
+    </section>
+
+    <script>
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        // Trigger once on load
+        reveal();
+    </script>
+</body>
+</html>

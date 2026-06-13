@@ -311,10 +311,16 @@ export default function InstructorAsistencia() {
           descripcion
         })
       });
+      // Respuesta rápida: mostrar sesión sin faceDescriptor para no bloquear
       setActiveSession({ ...d.asistencia, registros: [] });
       connectSocket(d.asistencia.id);
       showToast('Sesión iniciada', 'success');
       setShowConfigModal(false);
+
+      // Cargar datos completos con faceDescriptor en background (para reconocimiento facial)
+      fetchApi(`/asistencias/materia/${selectedMateria}/active`)
+        .then(full => { if (full?.session) setActiveSession(full.session); })
+        .catch(() => {});
     } catch (err) { showToast(err.message, 'error'); }
     finally { setStarting(false); }
   };
@@ -411,10 +417,109 @@ export default function InstructorAsistencia() {
     if (loopRef.current) clearTimeout(loopRef.current);
     if (liveTimer.current) clearTimeout(liveTimer.current);
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
     setFacialScannerActive(false);
     setFaceReady(false);
     setLiveMatches([]);
     setDetectionCount(0);
+  };
+
+  // ─── Dibuja bounding boxes HUD sobre el canvas ──────────────────────────
+  const drawDetectionsOnCanvas = (detections, matchResults, videoEl) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !videoEl) return;
+
+    const W = videoEl.offsetWidth;
+    const H = videoEl.offsetHeight;
+    if (!W || !H) return;
+
+    canvas.width = W;
+    canvas.height = H;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    const displaySize = { width: W, height: H };
+    const resized = faceapi.resizeResults(detections, displaySize);
+
+    // Espejo: el video tiene scaleX(-1), hacemos lo mismo en el canvas
+    ctx.save();
+    ctx.translate(W, 0);
+    ctx.scale(-1, 1);
+
+    resized.forEach((det, i) => {
+      const box = det.detection.box;
+      const match = matchResults[i];
+
+      let color, label;
+      if (match?.recognized) {
+        const confidence = Math.round((1 - match.distance) * 100);
+        if (match.alreadyDone) {
+          color = '#4285F4'; label = `${match.name} · Ya marcado`;
+        } else {
+          color = '#34A853'; label = `${match.name} · ${confidence}%`;
+        }
+      } else {
+        color = '#EA4335'; label = 'Desconocido';
+      }
+
+      const { x, y, width, height } = box;
+      const r = 6;
+
+      // Rectángulo con glow
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = color + '18';
+      ctx.fill();
+
+      // Esquinas estilo HUD
+      const cL = Math.min(22, width * 0.25);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, y + cL); ctx.lineTo(x, y); ctx.lineTo(x + cL, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + width - cL, y); ctx.lineTo(x + width, y); ctx.lineTo(x + width, y + cL); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + height - cL); ctx.lineTo(x, y + height); ctx.lineTo(x + cL, y + height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + width - cL, y + height); ctx.lineTo(x + width, y + height); ctx.lineTo(x + width, y + height - cL); ctx.stroke();
+
+      // Label flotante
+      const fs = Math.max(12, Math.min(16, width / 7));
+      ctx.font = `bold ${fs}px Inter, Arial, sans-serif`;
+      const tw = ctx.measureText(label).width;
+      const lw = tw + 16;
+      const lh = fs + 10;
+      const lx = x;
+      const ly = y > lh + 4 ? y - lh - 4 : y + height + 4;
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, lw, lh, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(label, lx + 8, ly + lh - 4);
+    });
+
+    ctx.restore();
   };
 
   const startFaceLoop = () => {
@@ -442,6 +547,7 @@ export default function InstructorAsistencia() {
           const now = Date.now();
           const toRegister = [];
           let detectedName = '';
+          const matchResults = [];
 
           for (const det of detections) {
             let best = null, bestDist = Infinity;
@@ -455,13 +561,18 @@ export default function InstructorAsistencia() {
               
               const alreadyDone = registeredRef.current.has(best.id);
               const onCooldown = (now - (cooldownRef.current[best.id] || 0)) < COOLDOWN_MS;
+              matchResults.push({ recognized: true, name: best.fullName, distance: bestDist, id: best.id, alreadyDone: alreadyDone || onCooldown });
               
               if (!alreadyDone && !onCooldown) {
                 cooldownRef.current[best.id] = now;
                 toRegister.push(best);
               }
+            } else {
+              matchResults.push({ recognized: false });
             }
           }
+
+          drawDetectionsOnCanvas(detections, matchResults, videoRef.current);
 
           if (toRegister.length > 0) {
             Promise.all(toRegister.map(saveFacialAttendance)).then(results => {
@@ -491,6 +602,11 @@ export default function InstructorAsistencia() {
           }
         } else {
           setLastDetectedName('');
+          // Limpiar canvas cuando no hay caras
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
         }
       } catch (_) {}
 
@@ -583,7 +699,11 @@ export default function InstructorAsistencia() {
       
       ndef.onreading = async (event) => {
         if (!event.serialNumber) return;
-        const formattedUid = event.serialNumber.replace(/:/g, '').toUpperCase();
+        // Normalizar al formato del Arduino: "AC BE 12 34" (espacios, uppercase)
+        const formattedUid = event.serialNumber
+          .replace(/:/g, ' ')
+          .toUpperCase()
+          .trim();
         try {
           await fetchApi('/asistencias/hardware-register', {
             method: 'POST',
@@ -944,6 +1064,13 @@ export default function InstructorAsistencia() {
                     playsInline 
                     className="w-full h-full object-cover"
                     style={{ transform: 'scaleX(-1)' }} 
+                  />
+
+                  {/* Canvas para bounding boxes HUD — sin transform CSS, el flip se hace en el ctx */}
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    style={{ zIndex: 10 }}
                   />
 
                   {/* Nombre detectado */}

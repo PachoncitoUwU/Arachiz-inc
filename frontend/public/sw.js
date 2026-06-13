@@ -1,6 +1,6 @@
-const CACHE_NAME = 'arachiz-cache-v3';
-const STATIC_CACHE = 'arachiz-static-v3';
-const API_CACHE = 'arachiz-api-v1';
+const CACHE_NAME = 'arachiz-cache-v4';
+const STATIC_CACHE = 'arachiz-static-v4';
+const API_CACHE = 'arachiz-api-v2';
 
 const STATIC_URLS = [
   '/',
@@ -57,8 +57,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── Assets estáticos (JS, CSS, imágenes): Cache-first ──
-  if (isStaticAsset(url.pathname)) {
+  // ── Assets JS/CSS: Network-first para evitar chunks de React desactualizados ──
+  // Las imágenes y fuentes sí pueden ir Cache-first
+  if (isJsOrCss(url.pathname)) {
+    event.respondWith(networkFirstWithCache(request, STATIC_CACHE));
+    return;
+  }
+
+  // ── Imágenes y fuentes: Cache-first ──
+  if (isStaticMedia(url.pathname)) {
     event.respondWith(cacheFirstWithNetwork(request, STATIC_CACHE));
     return;
   }
@@ -69,8 +76,12 @@ self.addEventListener('fetch', event => {
 
 // ── Helpers de estrategias ──
 
-function isStaticAsset(pathname) {
-  return /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i.test(pathname);
+function isJsOrCss(pathname) {
+  return /\.(js|css)$/i.test(pathname);
+}
+
+function isStaticMedia(pathname) {
+  return /\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i.test(pathname);
 }
 
 async function networkFirstWithCache(request, cacheName) {

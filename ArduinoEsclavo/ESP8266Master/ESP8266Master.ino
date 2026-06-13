@@ -465,6 +465,7 @@ void conectarWifi() {
     mostrarMensaje("WiFi OK", WiFi.localIP().toString(), "Listo!");
     Serial.println("Conectado exitosamente!");
     delay(1500);
+    consultarEstadoSesion(); // Sincronizar estado de sesión al reconectar
   } else {
     mostrarMensaje("ERROR WiFi", "No conecta", "Mantener config");
     Serial.println("ERROR: No se pudo conectar al WiFi");
@@ -515,6 +516,33 @@ bool enviarEvento(String type, String payload, bool online) {
     http.end();
   }
   return ok;
+}
+
+void consultarEstadoSesion() {
+  // Al reconectar, sincroniza el estado de sesión con el backend
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient http;
+  String url = String(URL_RENDER_CMD);
+  // Construir URL de session-status desde la base de URL_RENDER_CMD
+  url.replace("/commands", "/session-status");
+  http.begin(client, url);
+  http.addHeader("x-hardware-key", API_KEY);
+  http.setTimeout(5000);
+
+  int code = http.GET();
+  if (code == 200) {
+    String payload = http.getString();
+    StaticJsonDocument<64> doc;
+    deserializeJson(doc, payload);
+    bool active = doc["sessionActive"] | false;
+    String cmd = active ? "SESSION ON" : "SESSION OFF";
+    arduinoSerial.println(cmd);
+    Serial.println("Estado sesion sincronizado: " + cmd);
+  }
+  http.end();
 }
 
 void consultarComandos() {
@@ -577,7 +605,10 @@ void loop() {
     return;
   }
   
-  if (WiFi.status() != WL_CONNECTED) conectarWifi();
+  if (WiFi.status() != WL_CONNECTED) {
+    conectarWifi();
+    consultarEstadoSesion(); // Re-sincronizar estado tras reconexión
+  }
 
   // Volver al logo después de 3 segundos sin actividad
   if (ultimoMensaje > 0 && millis() - ultimoMensaje > 3000) {
@@ -585,9 +616,9 @@ void loop() {
     mostrarLogo();
   }
 
-  // Consultar comandos pendientes cada 2 segundos
+  // Consultar comandos pendientes cada 500ms para menor latencia
   static unsigned long lastCheck = 0;
-  if (millis() - lastCheck > 2000) {
+  if (millis() - lastCheck > 500) {
     lastCheck = millis();
     consultarComandos();
   }

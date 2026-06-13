@@ -42,7 +42,14 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
       // Escuchar lecturas NFC
       ndef.addEventListener('reading', async ({ message, serialNumber }) => {
         console.log('NFC leído:', serialNumber);
-        setLastRead(serialNumber);
+        
+        // Normalizar UID al mismo formato que usa el Arduino: "AC BE 12 34"
+        const formattedUid = serialNumber
+          .replace(/:/g, ' ')
+          .toUpperCase()
+          .trim();
+        
+        setLastRead(formattedUid);
         
         try {
           // Enviar al backend para registrar asistencia
@@ -50,7 +57,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
             method: 'POST',
             body: JSON.stringify({ 
               asistenciaId, 
-              nfcUid: serialNumber 
+              nfcUid: formattedUid
             })
           });
 

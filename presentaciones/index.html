@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arachiz - Presentación Oficial</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Open Sans', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #202124; /* Gris oscuro tipo Google */
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slider-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            background: #ffffff;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .logo-center {
+            width: 250px;
+            margin: 0 auto 2rem auto;
+            display: block;
+        }
+
+        .logo-small {
+            width: 100px;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 400;
+            color: #202124;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e8eaed;
+            padding-bottom: 1rem;
+        }
+
+        p, li {
+            font-size: 1.5rem;
+            color: #5f6368; /* Gris medio */
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            margin-left: 2rem;
+        }
+
+        /* Layout en 2 columnas */
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        /* Tarjetas estilo Google Material */
+        .material-card {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .material-card h3 {
+            font-size: 1.2rem;
+            color: #1a73e8; /* Azul Google */
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .material-card p {
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .tech-item img {
+            height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .tech-item span {
+            display: block;
+            font-size: 1.2rem;
+            color: #202124;
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: #1a73e8;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .page-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 40px;
+            font-size: 1rem;
+            color: #5f6368;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="slider-container" id="slider">
+        
+        <!-- Slide 1: Inicio -->
+        <div class="slide active" style="align-items: center; text-align: center;">
+            <div class="slide-content" style="text-align: center; margin-top: -50px;">
+                <img src="../frontend/public/ArachizLogoPNG.png" alt="Arachiz Logo" class="logo-center" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3003/3003310.png'">
+                <p style="font-size: 1.8rem; color: #5f6368; max-width: 600px; margin: 0 auto;">
+                    Control de asistencia inteligente, biometría y gestión eficiente para el SENA
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Abstract -->
+        <div class="slide">
+            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h2>Abstract</h2>
+                <div class="two-cols">
+                    <div>
+                        <p>
+                            El proyecto nace para solucionar el control manual de asistencia en entornos educativos, eliminando el uso de papel y previniendo suplantaciones.
+                        </p>
+                        <p>
+                            Integramos hardware físico con una plataforma web moderna, ofreciendo respuestas en tiempo real mediante tecnología de vanguardia.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="material-card">
+                            <h3>Problema</h3>
+                            <p>Llamados a lista lentos, pérdida de tiempo de clase y registros inexactos.</p>
+                        </div>
+                        <div class="material-card">
+                            <h3>Solución</h3>
+                            <p>Sistema automatizado con lectura NFC y biométrica conectada a la nube.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: ¿Qué es Arachiz? -->
+        <div class="slide">
+            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h2>¿Qué es el Sistema?</h2>
+                <p>
+                    Es un ecosistema híbrido que permite la validación de identidad en tiempo récord. Consta de dos componentes clave:
+                </p>
+                <br>
+                <div class="two-cols">
+                    <div class="material-card" style="border-left: 4px solid #34a853;">
+                        <h3 style="color: #34a853;">Componente Físico (IoT)</h3>
+                        <p>Dispositivos instalados en las aulas capaces de leer huellas dactilares y tarjetas de proximidad (NFC).</p>
+                    </div>
+                    <div class="material-card" style="border-left: 4px solid #1a73e8;">
+                        <h3 style="color: #1a73e8;">Componente Lógico (Plataforma Web)</h3>
+                        <p>Software administrativo donde los instructores pueden gestionar aprendices, horarios y reportes estadísticos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Fases del Proyecto 1 -->
+        <div class="slide">
+            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h2>Fases del Desarrollo (1 - 3)</h2>
+                <div class="material-card">
+                    <h3>Fase 1: Análisis y Levantamiento</h3>
+                    <p>Definición del alcance, estudio de viabilidad del hardware e investigación de metodologías.</p>
+                </div>
+                <div class="material-card">
+                    <h3>Fase 2: Diseño Arquitectónico</h3>
+                    <p>Creación de mockups en Figma y estructuración del modelo Entidad-Relación de la base de datos.</p>
+                </div>
+                <div class="material-card">
+                    <h3>Fase 3: Implementación IoT</h3>
+                    <p>Ensamblaje del Arduino, lectores biométricos y programación en C++ para la captura de datos.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Fases del Proyecto 2 -->
+        <div class="slide">
+            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h2>Fases del Desarrollo (4 - 6)</h2>
+                <div class="material-card">
+                    <h3>Fase 4: Desarrollo Backend</h3>
+                    <p>Construcción de la API RESTful segura con Node.js, Express y Prisma ORM.</p>
+                </div>
+                <div class="material-card">
+                    <h3>Fase 5: Desarrollo Frontend</h3>
+                    <p>Desarrollo de las interfaces interactivas para administradores e instructores usando React.</p>
+                </div>
+                <div class="material-card">
+                    <h3>Fase 6: Sincronización y Pruebas</h3>
+                    <p>Conexión del hardware web vía Web Serial API, validaciones offline/online y pruebas de estrés.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Tecnologías -->
+        <div class="slide">
+            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h2>Tecnologías Implementadas</h2>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg">
+                        <span>React</span>
+                    </div>
+                    <div class="tech-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg">
+                        <span>Node.js</span>
+                    </div>
+                    <div class="tech-item">
+                        <img src="https://cdn.worldvectorlogo.com/logos/prisma-2.svg">
+                        <span>Prisma</span>
+                    </div>
+                    <div class="tech-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg">
+                        <span>PostgreSQL</span>
+                    </div>
+                    <div class="tech-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Arduino_Logo.svg">
+                        <span>Arduino & IoT</span>
+                    </div>
+                    <div class="tech-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/WebSockets_logo.svg" style="filter: grayscale(1);">
+                        <span>WebSockets</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Cierre -->
+        <div class="slide" style="align-items: center; text-align: center;">
+            <div class="slide-content" style="text-align: center; margin-top: -50px;">
+                <img src="../frontend/public/ArachizLogoPNG.png" alt="Arachiz Logo" class="logo-center" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3003/3003310.png'">
+                <p style="font-size: 2rem; color: #1a73e8; margin-top: 2rem;">
+                    Gracias por su atención
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="progress-bar" id="progress"></div>
+    <div class="page-indicator" id="pageNumber">1 / 7</div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress');
+        const pageIndicator = document.getElementById('pageNumber');
+        let currentSlide = 0;
+
+        function updateSlider() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            const progress = ((currentSlide + 1) / slides.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            pageIndicator.innerText = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < slides.length - 1) currentSlide++;
+                updateSlider();
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) currentSlide--;
+                updateSlider();
+            }
+        });
+        
+        // Clic en pantalla para avanzar
+        document.body.addEventListener('click', (e) => {
+            if (e.clientX > window.innerWidth / 2) {
+                if (currentSlide < slides.length - 1) currentSlide++;
+            } else {
+                if (currentSlide > 0) currentSlide--;
+            }
+            updateSlider();
+        });
+
+        updateSlider();
+    </script>
+</body>
+</html>

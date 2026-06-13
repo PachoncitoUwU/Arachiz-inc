@@ -4,6 +4,9 @@
 // Cola de comandos pendientes para el ESP8266
 let commandQueue = [];
 
+// Estado de sesión activa (sincronizado con el backend)
+let sessionActive = false;
+
 exports.handleEvent = (req, res) => {
   const { type, payload } = req.body;
   const io = req.app.get('io');
@@ -39,7 +42,14 @@ exports.getCommands = (req, res) => {
   }
 };
 
-// Agregar comando a la cola (llamado desde serialController)
+// Agregar comando a la cola (llamado desde serialController y asistenciaController via serialService)
 exports.queueCommand = (command) => {
   commandQueue.push(command);
+  if (command === 'SESSION ON') sessionActive = true;
+  if (command === 'SESSION OFF') sessionActive = false;
+};
+
+// Estado actual de sesión (para que el ESP pueda consultarlo al reconectar)
+exports.getSessionStatus = (req, res) => {
+  res.json({ sessionActive });
 };
