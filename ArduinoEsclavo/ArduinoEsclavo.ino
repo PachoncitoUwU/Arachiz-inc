@@ -76,10 +76,20 @@ void enviarEvento(String msg) {
 }
 
 void loop() {
-  // 1. Escuchar comandos desde Node.js (solo en modo USB)
+  // 1. Escuchar comandos desde Node.js (USB) o ESP8266 (WiFi)
+  String comando = "";
   if (Serial.available() > 0) {
-    String comando = Serial.readStringUntil('\n');
+    comando = Serial.readStringUntil('\n');
     comando.trim();
+  } else {
+    espSerial.listen();
+    if (espSerial.available() > 0) {
+      comando = espSerial.readStringUntil('\n');
+      comando.trim();
+    }
+  }
+
+  if (comando.length() > 0) {
     if (comando == "CLEAR_DB") {
       mySerial.listen();
       finger.emptyDatabase();
@@ -93,12 +103,27 @@ void loop() {
         mySerial.listen();
         bool res = enrolar(idx);
         if (res) {
-          Serial.print("ENROLL_SUCCESS: ");
-          Serial.println(idx);
+          enviarEvento("ENROLL_SUCCESS: " + String(idx));
         } else {
-          Serial.println("ENROLL_ERROR: Cancelado o fallo");
+          enviarEvento("ENROLL_ERROR: Cancelado o fallo");
         }
       }
+    } else if (comando.startsWith("DELETE_FINGER ")) {
+      int idx = comando.substring(14).toInt();
+      mySerial.listen();
+      if (finger.deleteModel(idx) == FINGERPRINT_OK) {
+        Serial.print("DEBUG: Huella ");
+        Serial.print(idx);
+        Serial.println(" eliminada del sensor");
+        sonidoEnrolamiento();
+      } else {
+        Serial.print("DEBUG: Error al eliminar huella ");
+        Serial.println(idx);
+        sonidoError();
+      }
+    } else if (comando.startsWith("SESSION ")) {
+      // Reenviar al flujo normal si es SESSION ON/OFF (ya lo maneja el loop de sesiones)
+      Serial.println("DEBUG: Comando sesion recibido: " + comando);
     }
   }
 

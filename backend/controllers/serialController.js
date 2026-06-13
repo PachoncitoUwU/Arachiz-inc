@@ -8,6 +8,15 @@ exports.getPorts = async (req, res) => {
   }
 };
 
+exports.getStatus = (req, res) => {
+  try {
+    const serialService = req.app.get('serialService');
+    res.json({ connected: serialService ? serialService.isConnected : false });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener estado' });
+  }
+};
+
 exports.connectPort = async (req, res) => {
   const { path } = req.body;
   if (!path) return res.status(400).json({ error: 'Ruta del puerto es requerida' });
@@ -123,7 +132,14 @@ exports.deleteFinger = async (req, res) => {
     });
 
     const serialService = req.app.get('serialService');
-    if (serialService) serialService.sendCommand(`DELETE_FINGER ${huellaId}`);
+    if (serialService && serialService.isConnected) {
+      // Modo USB: enviar directo
+      serialService.sendCommand(`DELETE_FINGER ${huellaId}`);
+    } else {
+      // Modo WiFi: encolar para que el ESP lo recoja
+      const hardwareController = require('./hardwareController');
+      hardwareController.queueCommand(`DELETE_FINGER ${huellaId}`);
+    }
 
     res.json({ success: true, message: `Huella ${huellaId} eliminada` });
   } catch (error) {

@@ -17,6 +17,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const [hasFace, setHasFace] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, data: null });
   const [deleting, setDeleting] = useState(false);
+  const [connectionMode, setConnectionMode] = useState('usb'); // 'usb' | 'wifi'
 
   // Reiniciar estado
   useEffect(() => {
@@ -26,6 +27,10 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       setMessage('');
       // Comprobar si ya tiene descriptor facial (length > 0)
       setHasFace(aprendiz?.faceDescriptor && aprendiz.faceDescriptor.length === 128);
+      // Detectar si hay conexión USB activa
+      fetchApi('/serial/status')
+        .then(res => setConnectionMode(res.connected ? 'usb' : 'wifi'))
+        .catch(() => setConnectionMode('wifi'));
     }
   }, [open, aprendiz]);
 
@@ -98,12 +103,13 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const startFingerprint = async () => {
     setMode('fingerprint');
     setStatus('waiting');
-    setMessage('Sigue las instrucciones del lector de huella...');
+    const modeLabel = connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB';
+    setMessage(`Sigue las instrucciones del lector de huella... [${modeLabel}]`);
     try {
       const { nextId } = await fetchApi('/serial/next-finger-id');
       await fetchApi('/serial/enroll/finger', {
         method: 'POST',
-        body: JSON.stringify({ id: nextId })
+        body: JSON.stringify({ id: nextId, mode: connectionMode })
       });
     } catch (err) {
       showToast(err.message || 'Error al iniciar enrolamiento', 'error');
@@ -218,10 +224,22 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       <Modal open={open} onClose={onClose} title="Credenciales Biométricas" maxWidth="max-w-2xl">
       <div className="space-y-4 text-center pb-2">
         {aprendiz && (
-          <p className="text-gray-600 mb-4 pb-4 border-b border-gray-100 dark:border-zinc-700 ">
-            Asignando credenciales a <br/>
-            <strong className="text-gray-900 dark:text-white ">{aprendiz.fullName}</strong>
-          </p>
+          <div className="mb-4 pb-4 border-b border-gray-100 dark:border-zinc-700">
+            <p className="text-gray-600">
+              Asignando credenciales a <br/>
+              <strong className="text-gray-900 dark:text-white">{aprendiz.fullName}</strong>
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                connectionMode === 'usb'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${connectionMode === 'usb' ? 'bg-blue-500' : 'bg-green-500'}`} />
+                {connectionMode === 'usb' ? '🔌 Lector USB conectado' : '📡 Modo WiFi (ESP8266)'}
+              </span>
+            </div>
+          </div>
         )}
 
         {/* Estado idle: mostrar info y botones */}

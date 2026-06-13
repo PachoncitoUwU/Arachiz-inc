@@ -3,6 +3,7 @@ const router = express.Router();
 const serialController = require('../controllers/serialController');
 
 router.get('/ports', serialController.getPorts);
+router.get('/status', serialController.getStatus);
 router.post('/connect', serialController.connectPort);
 router.post('/disconnect', serialController.disconnectPort);
 router.post('/enroll/finger', serialController.startEnrollFinger);
