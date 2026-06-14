@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Outlet, Navigate, NavLink } from 'react-router-dom';
+import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -212,11 +212,12 @@ export default function MainLayout({ allowedRoles }) {
     logout();
   };
 
+  const navigate = useNavigate();
+
   const handleProfileClick = () => {
     // Navigate to dedicated profile page instead of modal
     const path = `/${routePrefix}/perfil`;
-    // We need to use navigate from react-router-dom
-    window.location.href = path; // Fallback since we don't have useNavigate here easily without adding hook
+    navigate(path);
     setSidebarOpen(false);
   };
 
