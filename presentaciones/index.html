@@ -100,11 +100,20 @@ h2{font-size:clamp(24px,4vw,48px);font-weight:800;line-height:1.08;letter-spacin
 /* TECH GRID — 2 filas de 6, logos reales */
 .tg-2rows{display:flex;flex-direction:column;gap:12px;margin-top:1.4rem;width:100%;}
 .trow{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
-.ti{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:1.1rem .6rem;text-align:center;box-shadow:var(--shadow);transition:.3s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ti{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:1.1rem .6rem;text-align:center;box-shadow:var(--shadow);transition:.3s;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;}
 .ti:hover{border-color:var(--blue);transform:translateY(-3px);}
+.ti.active-tip{border-color:var(--blue);transform:translateY(-3px);box-shadow:var(--shadow-hover);}
 .timg{width:40px;height:40px;object-fit:contain;margin-bottom:.5rem;}
 .tii{font-size:1.6rem;margin-bottom:.5rem;}
 .tin{font-size:.68rem;font-weight:600;color:var(--muted);}
+
+/* Tech tooltip */
+#tech-tooltip{position:fixed;z-index:9999;background:#fff;border:1px solid var(--border);border-radius:1rem;box-shadow:0 12px 40px -8px rgba(0,0,0,.18);padding:1.1rem 1.3rem;max-width:280px;pointer-events:none;opacity:0;transform:translateY(8px) scale(.97);transition:opacity .2s,transform .2s;border-top:3px solid var(--blue);}
+#tech-tooltip.show{opacity:1;transform:none;}
+#tech-tooltip .tt-name{font-size:.85rem;font-weight:800;color:var(--dark);margin-bottom:.3rem;}
+#tech-tooltip .tt-cat{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:.5rem;}
+#tech-tooltip .tt-desc{font-size:.76rem;color:var(--muted);line-height:1.55;}
+#tech-tooltip .tt-close{position:absolute;top:.5rem;right:.6rem;font-size:.75rem;color:var(--light);}
 
 .pyr-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:1.4rem;}
 .pyr{border-radius:.875rem;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;transition:.3s;}
@@ -445,20 +454,20 @@ model-viewer{width:100%;height:320px;background:transparent;--poster-color:trans
   <h2 class="a2"><span class="grad">Las herramientas</span></h2>
   <div class="tg-2rows a3">
     <div class="trow">
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React"><div class="tin">React 19</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite"><div class="tin">Vite</div></div>
-      <div class="ti"><img class="timg" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" alt="Tailwind"><div class="tin">Tailwind</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="tin">Node.js</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" alt="Express" style="filter:brightness(0)"><div class="tin">Express</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" alt="Prisma"><div class="tin">Prisma</div></div>
+      <div class="ti" data-tech="React 19|Frontend|Librería de UI de Meta para construir interfaces reactivas. Usamos React 19 con hooks, contexto global y optimistic updates para reflejar la asistencia en tiempo real sin recargar la página."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React"><div class="tin">React 19</div></div>
+      <div class="ti" data-tech="Vite|Build Tool|Empaquetador ultrarrápido que reemplaza Webpack. Redujo el tiempo de arranque en desarrollo a menos de 500ms y permitió bajar el bundle de 900KB a 209KB gracias al tree-shaking agresivo."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite"><div class="tin">Vite</div></div>
+      <div class="ti" data-tech="Tailwind CSS|Estilos|Framework CSS de clases utilitarias. Permite diseñar directamente en el HTML sin escribir CSS personalizado, garantizando consistencia visual y rapidez en el desarrollo de la UI."><img class="timg" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" alt="Tailwind"><div class="tin">Tailwind</div></div>
+      <div class="ti" data-tech="Node.js|Backend|Entorno de ejecución JavaScript del lado del servidor. Es la base de toda la API REST de Arachiz: gestiona autenticación, sesiones de asistencia, WebSockets y la comunicación con el hardware IoT."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="tin">Node.js</div></div>
+      <div class="ti" data-tech="Express|Backend|Framework minimalista de Node.js para construir APIs. Define todas las rutas HTTP del sistema: auth, asistencia, fichas, hardware, exportaciones y más, con middlewares de autenticación JWT."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" alt="Express" style="filter:brightness(0)"><div class="tin">Express</div></div>
+      <div class="ti" data-tech="Prisma ORM|Base de datos|ORM de nueva generación para Node.js. Genera queries tipadas a partir del schema de la base de datos, evita inyecciones SQL y simplifica las migraciones del esquema PostgreSQL en producción."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" alt="Prisma"><div class="tin">Prisma</div></div>
     </div>
     <div class="trow">
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL"><div class="tin">PostgreSQL</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker"><div class="tin">Docker</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"><div class="tin">GitHub</div></div>
-      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" alt="Arduino"><div class="tin">Arduino</div></div>
-      <div class="ti"><div class="tii">🔌</div><div class="tin">Socket.io</div></div>
-      <div class="ti"><div class="tii">☁️</div><div class="tin">Supabase</div></div>
+      <div class="ti" data-tech="PostgreSQL|Base de datos|Sistema de base de datos relacional robusto y open source. Almacena aprendices, fichas, horarios, asistencias y excusas. Hospedado en Supabase con backups automáticos y acceso en tiempo real."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL"><div class="tin">PostgreSQL</div></div>
+      <div class="ti" data-tech="Docker|DevOps|Plataforma de contenedores que empaqueta el backend con todas sus dependencias. Garantiza que el servidor funcione igual en desarrollo, staging y producción sin problemas de entorno."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker"><div class="tin">Docker</div></div>
+      <div class="ti" data-tech="GitHub|Control de versiones|Plataforma de control de versiones con CI/CD automático. Cada push a main dispara el workflow de GitHub Actions que actualiza las release notes y despliega automáticamente en Render y Vercel."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"><div class="tin">GitHub</div></div>
+      <div class="ti" data-tech="Arduino|Hardware IoT|Microcontrolador de código abierto. El Arduino Uno coordina el sensor de huellas AS608 y el módulo NFC PN532, enviando los datos al ESP8266 que los retransmite al servidor vía WiFi."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" alt="Arduino"><div class="tin">Arduino</div></div>
+      <div class="ti" data-tech="Socket.io|Tiempo Real|Librería de WebSockets bidireccionales. Permite que el dashboard del instructor se actualice al instante cuando un aprendiz registra asistencia, sin necesidad de refrescar la página."><div class="tii">🔌</div><div class="tin">Socket.io</div></div>
+      <div class="ti" data-tech="Supabase|Cloud|Plataforma BaaS (Backend as a Service) que hospeda la base de datos PostgreSQL. Proporciona autenticación de respaldo, almacenamiento de archivos y API REST automática. Costo: $0/mes en el plan gratuito."><div class="tii">☁️</div><div class="tin">Supabase</div></div>
     </div>
   </div>
 </div>
@@ -626,13 +635,50 @@ document.addEventListener('keydown',e=>{
   if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();nav(1);}
   else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();nav(-1);}
 });
-document.body.addEventListener('click',e=>{
-  if(e.target.closest('.arrow')||e.target.closest('model-viewer'))return;
-  nav(e.clientX>window.innerWidth/2?1:-1);
-});
 let tx=0;
 document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
 document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)nav(dx<0?1:-1);});
+
+/* ── Tech Tooltip ── */
+const tooltip=document.createElement('div');
+tooltip.id='tech-tooltip';
+tooltip.innerHTML='<div class="tt-close">✕ cerrar</div><div class="tt-cat"></div><div class="tt-name"></div><div class="tt-desc"></div>';
+document.body.appendChild(tooltip);
+let tipOpen=null;
+
+function showTip(el,e){
+  const [name,cat,desc]=el.dataset.tech.split('|');
+  tooltip.querySelector('.tt-name').textContent=name;
+  tooltip.querySelector('.tt-cat').textContent=cat;
+  tooltip.querySelector('.tt-desc').textContent=desc;
+  positionTip(e);
+  el.classList.add('active-tip');
+  tooltip.classList.add('show');
+  tipOpen=el;
+}
+function hideTip(){
+  tooltip.classList.remove('show');
+  if(tipOpen){tipOpen.classList.remove('active-tip');tipOpen=null;}
+}
+function positionTip(e){
+  const tw=290,th=160;
+  let x=e.clientX+14,y=e.clientY-20;
+  if(x+tw>window.innerWidth-10)x=e.clientX-tw-14;
+  if(y+th>window.innerHeight-10)y=window.innerHeight-th-10;
+  tooltip.style.left=x+'px';tooltip.style.top=y+'px';
+}
+
+document.querySelectorAll('.ti[data-tech]').forEach(el=>{
+  el.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(tipOpen===el){hideTip();}else{if(tipOpen)hideTip();showTip(el,e);}
+  });
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.ti')&&!e.target.closest('#tech-tooltip'))hideTip();
+});
+tooltip.addEventListener('click',e=>{e.stopPropagation();hideTip();});
+
 sync();
 </script>
 </body>
