@@ -7,6 +7,7 @@ import fetchApi from '../../services/api';
 import StatCard from '../../components/StatCard';
 import ConflictosAlert from '../../components/ConflictosAlert';
 import InstructorStats from '../../components/InstructorStats';
+import ConnectionBadges from '../../components/ConnectionBadges';
 
 export default function InstructorDashboard() {
   const { user } = useContext(AuthContext);
@@ -60,6 +61,9 @@ export default function InstructorDashboard() {
 
       {/* Alerta de conflictos */}
       <ConflictosAlert userType={user?.userType} />
+
+      {/* Badges de conexión de hardware */}
+      <ConnectionBadges />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
