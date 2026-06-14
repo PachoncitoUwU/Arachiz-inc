@@ -3,13 +3,17 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Coffee } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import { useWorldCup } from '../../context/WorldCupContext';
 import fetchApi from '../../services/api';
+import BallLoading from '../../components/BallLoading';
+import NormalLoading from '../../components/NormalLoading';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
   const { t } = useSettings();
+  const { worldCupMode } = useWorldCup();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -145,55 +149,70 @@ export default function Login() {
 
   const [particles, setParticles] = useState([]);
   const [bubbles, setBubbles] = useState([
-    { id: 1, left: '10%', size: 48, color: '#4285F4', duration: 12, delay: 0 },
-    { id: 2, left: '20%', size: 64, color: '#EA4335', duration: 10, delay: 1 },
-    { id: 3, left: '30%', size: 72, color: '#FBBC05', duration: 14, delay: 2 },
-    { id: 4, left: '40%', size: 56, color: '#34A853', duration: 11, delay: 0 },
-    { id: 5, left: '50%', size: 80, color: '#4285F4', duration: 13, delay: 1.5 },
-    { id: 6, left: '60%', size: 52, color: '#EA4335', duration: 12, delay: 0.5 },
-    { id: 7, left: '70%', size: 68, color: '#FBBC05', duration: 10, delay: 2.5 },
-    { id: 8, left: '80%', size: 60, color: '#34A853', duration: 11, delay: 1 },
-    { id: 9, left: '85%', size: 76, color: '#4285F4', duration: 13, delay: 0 },
-    { id: 10, left: '15%', size: 44, color: '#EA4335', duration: 12, delay: 2 },
-    { id: 11, left: '25%', size: 88, color: '#34A853', duration: 14, delay: 0.5 },
-    { id: 12, left: '45%', size: 70, color: '#FBBC05', duration: 11, delay: 1.5 },
-    { id: 13, left: '65%', size: 58, color: '#4285F4', duration: 12, delay: 2 },
-    { id: 14, left: '75%', size: 84, color: '#EA4335', duration: 13, delay: 0.5 },
-    { id: 15, left: '90%', size: 66, color: '#34A853', duration: 10, delay: 1 },
+    { id: 1, left: '5%', size: 60, color: '#4285F4', duration: 12, delay: 0 },
+    { id: 2, left: '18%', size: 45, color: '#EA4335', duration: 14, delay: 2 },
+    { id: 3, left: '32%', size: 70, color: '#FBBC05', duration: 11, delay: 4 },
+    { id: 4, left: '48%', size: 55, color: '#34A853', duration: 13, delay: 1 },
+    { id: 5, left: '63%', size: 50, color: '#4285F4', duration: 12, delay: 3 },
+    { id: 6, left: '77%', size: 65, color: '#EA4335', duration: 14, delay: 0 },
+    { id: 7, left: '91%', size: 48, color: '#FBBC05', duration: 13, delay: 2.5 },
   ]);
+
+  const [kickedBalls, setKickedBalls] = useState([]);
 
   const handleBubbleClick = (bubble, event) => {
     event.stopPropagation();
     
-    // Obtener posición del click
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    
-    // Crear partículas
-    const newParticles = Array.from({ length: 12 }, (_, i) => ({
-      id: `particle-${Date.now()}-${i}`,
-      x,
-      y,
-      color: bubble.color,
-      angle: (i * 360) / 12,
-      size: Math.random() * 6 + 3,
-    }));
-    
-    setParticles(prev => [...prev, ...newParticles]);
-    
-    // Eliminar burbuja
-    setBubbles(prev => prev.filter(b => b.id !== bubble.id));
-    
-    // Limpiar partículas después de la animación
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-    }, 800);
-    
-    // Recrear burbuja después de 2 segundos
-    setTimeout(() => {
-      setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
-    }, 2000);
+    if (worldCupMode) {
+      // Efecto de patada (modo mundialista)
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left;
+      const y = rect.top;
+      
+      const kickedBall = {
+        id: `kicked-${Date.now()}`,
+        x,
+        y,
+        size: bubble.size,
+        left: bubble.left,
+      };
+      
+      setKickedBalls(prev => [...prev, kickedBall]);
+      setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      
+      setTimeout(() => {
+        setKickedBalls(prev => prev.filter(kb => kb.id !== kickedBall.id));
+      }, 3000);
+      
+      setTimeout(() => {
+        setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+      }, 4000);
+    } else {
+      // Efecto de explosión (modo base)
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      
+      const newParticles = Array.from({ length: 12 }, (_, i) => ({
+        id: `${Date.now()}-${i}`,
+        x,
+        y,
+        color: bubble.color,
+        size: Math.random() * 8 + 4,
+        angle: (360 / 12) * i,
+      }));
+      
+      setParticles(prev => [...prev, ...newParticles]);
+      setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      
+      setTimeout(() => {
+        setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+      }, 800);
+      
+      setTimeout(() => {
+        setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+      }, 2000);
+    }
   };
 
   return (
@@ -219,6 +238,43 @@ export default function Login() {
         }
         .circle-float:hover {
           transform: scale(1.2);
+        }
+        @keyframes kick-ball {
+          0% {
+            transform: translateY(0) translateZ(0) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          20% {
+            transform: translateY(-200px) translateZ(100px) scale(1.1) rotate(-180deg);
+          }
+          40% {
+            transform: translateY(-300px) translateZ(200px) scale(0.9) rotate(-360deg);
+          }
+          50% {
+            transform: translateY(-280px) translateZ(250px) scale(0.8) rotate(-450deg);
+          }
+          60% {
+            transform: translateY(-320px) translateZ(300px) scale(0.7) rotate(-540deg);
+          }
+          70% {
+            transform: translateY(-310px) translateZ(320px) scale(0.6) rotate(-630deg);
+          }
+          80% {
+            transform: translateY(-340px) translateZ(350px) scale(0.5) rotate(-720deg);
+          }
+          90% {
+            transform: translateY(-330px) translateZ(360px) scale(0.3) rotate(-810deg);
+          }
+          100% {
+            transform: translateY(-360px) translateZ(400px) scale(0.1) rotate(-900deg);
+            opacity: 0;
+          }
+        }
+        .kicked-ball {
+          position: fixed;
+          animation: kick-ball 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          z-index: 1000;
+          pointer-events: none;
         }
         @keyframes particle-burst {
           0% {
@@ -405,25 +461,59 @@ export default function Login() {
       )}
 
 
-      {/* Burbujas flotantes interactivas */}
+      {/* Balones flotantes interactivos */}
       <div className="absolute inset-0 overflow-hidden">
         {bubbles.map(bubble => (
-          <div
-            key={bubble.id}
-            className="circle-float opacity-10 hover:opacity-20"
-            style={{
-              left: bubble.left,
-              width: `${bubble.size}px`,
-              height: `${bubble.size}px`,
-              backgroundColor: bubble.color,
-              animationDuration: `${bubble.duration}s`,
-              animationDelay: `${bubble.delay}s`,
-              pointerEvents: 'auto',
-            }}
-            onClick={(e) => handleBubbleClick(bubble, e)}
-          />
+          worldCupMode ? (
+            <img
+              key={bubble.id}
+              src="/world cup.png"
+              alt="Balón Copa Mundial"
+              className="circle-float opacity-30 hover:opacity-50 cursor-pointer"
+              style={{
+                left: bubble.left,
+                width: `${bubble.size}px`,
+                height: `${bubble.size}px`,
+                animationDuration: `${bubble.duration}s`,
+                animationDelay: `${bubble.delay}s`,
+                pointerEvents: 'auto',
+              }}
+              onClick={(e) => handleBubbleClick(bubble, e)}
+            />
+          ) : (
+            <div
+              key={bubble.id}
+              className="circle-float opacity-70 hover:opacity-100 cursor-pointer"
+              style={{
+                left: bubble.left,
+                width: `${bubble.size}px`,
+                height: `${bubble.size}px`,
+                backgroundColor: bubble.color,
+                animationDuration: `${bubble.duration}s`,
+                animationDelay: `${bubble.delay}s`,
+                pointerEvents: 'auto',
+              }}
+              onClick={(e) => handleBubbleClick(bubble, e)}
+            />
+          )
         ))}
       </div>
+
+      {/* Balones pateados (solo modo mundialista) */}
+      {worldCupMode && kickedBalls.map(ball => (
+        <img
+          key={ball.id}
+          src="/world cup.png"
+          alt="Balón pateado"
+          className="kicked-ball"
+          style={{
+            left: `${ball.x}px`,
+            top: `${ball.y}px`,
+            width: `${ball.size}px`,
+            height: `${ball.size}px`,
+          }}
+        />
+      ))}
 
       {/* Partículas de explosión */}
       {particles.map(particle => {
@@ -531,11 +621,7 @@ export default function Login() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                  </svg>
-                  Ingresando...
+                  {worldCupMode ? <BallLoading size={20} text="" /> : <NormalLoading size={20} text="Cargando..." />}
                 </span>
               ) : 'Ingresar'}
             </button>

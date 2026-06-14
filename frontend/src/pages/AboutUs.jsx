@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Users, Target, Code, Database, Palette, Instagram, Coffee, Heart, Sparkles, X } from 'lucide-react';
+import { useWorldCup } from '../context/WorldCupContext';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
 export default function AboutUs() {
+  const { worldCupMode } = useWorldCup();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -215,9 +217,9 @@ export default function AboutUs() {
       {/* Logo Nuevo en Esquina Superior Derecha */}
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-50">
         <img 
-          src="/mi-logo.png" 
+          src={worldCupMode ? "/mi-logo.png?v=3" : "/logo-ormi.png"} 
           alt="Arachiz Logo" 
-          className="h-10 w-10 md:h-12 md:w-12 object-contain opacity-80 hover:opacity-100 transition-all duration-300 hover:scale-110" 
+          className="h-10 w-10 md:h-12 md:w-12 object-contain opacity-80 hover:opacity-100 transition-all duration-300 hover:scale-110 mix-blend-multiply dark:mix-blend-screen" 
         />
       </div>
 
