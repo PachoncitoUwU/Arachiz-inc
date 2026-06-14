@@ -1,4 +1,24 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy as reactLazy, Suspense } from 'react';
+
+// Wrapper para evitar errores de chunks perdidos en Vercel (Failed to fetch dynamically imported module)
+const lazy = (componentImport) =>
+  reactLazy(async () => {
+    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+      window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
+    );
+    try {
+      const component = await componentImport();
+      window.sessionStorage.setItem('page-has-been-force-refreshed', 'false');
+      return component;
+    } catch (error) {
+      if (!pageHasAlreadyBeenForceRefreshed) {
+        window.sessionStorage.setItem('page-has-been-force-refreshed', 'true');
+        window.location.reload();
+        return { default: () => null }; // Evitar que tire el error visualmente mientras recarga
+      }
+      throw error;
+    }
+  });
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
