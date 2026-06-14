@@ -3,9 +3,24 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.326';
+export const VERSION = '1.4.327';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.327',
+    date: '2026-06-14',
+    title: 'Fiebre Mundialista ⚽',
+    changes: [
+      '⚽ Modo Mundialista: Activa/desactiva el tema del mundial con un solo click',
+      '🎨 Logo dinámico: Cambia entre logo Arachiz y logo con gorra de Colombia',
+      '🏆 Balones Copa Mundial: Balones flotantes interactivos reemplazan burbujas',
+      '⚡ Efecto de patada: Los balones vuelan al hacer click (modo mundial)',
+      '💥 Efecto de explosión: Burbujas explotan en partículas (modo base)',
+      '🎮 Loading animado: Balón rebotando con chispas al tocar el suelo',
+      '🔄 Persistencia: El modo elegido se guarda automáticamente',
+      '🎯 Toggle fácil: Botón ⚽ junto al modo oscuro en todas las vistas'
+    ]
+  },
   {
     version: '1.4.326',
     date: '2026-06-14',
