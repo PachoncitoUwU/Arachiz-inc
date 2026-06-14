@@ -17,49 +17,75 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          
+
+      # ── 1. Calcular versión ──────────────────────────────────────────────────
       - name: Get commit count
         id: commit_count
         run: echo "count=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
-        
+
       - name: Generate version
         id: version
         run: |
-          MAJOR=1
-          MINOR=4
-          PATCH=${{ steps.commit_count.outputs.count }}
-          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          VERSION="1.4.${{ steps.commit_count.outputs.count }}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Generated version: ${VERSION}"
-          
+          echo "Versión generada: ${VERSION}"
+
+      # ── 2. Recopilar commits de este push ────────────────────────────────────
+      - name: Get commits from this push
+        id: commits
+        run: |
+          PREV="${{ github.event.before }}"
+          if git cat-file -e "$PREV" 2>/dev/null; then
+            RANGE="$PREV..HEAD"
+          else
+            RANGE="HEAD~5..HEAD"
+          fi
+          # Array JSON de mensajes de commit
+          JSON=$(git log --pretty=format:"%s" $RANGE | \
+                 grep -v "^chore: bump version" | \
+                 head -12 | \
+                 jq -R . | jq -s . -c)
+          echo "json=${JSON}" >> $GITHUB_OUTPUT
+          echo "Commits recogidos: $JSON"
+
+      # ── 3. Actualizar version.js con el script Node ──────────────────────────
+      - name: Update version.js and release notes
+        run: |
+          node .github/scripts/update-release-notes.js \
+            "${{ steps.version.outputs.version }}" \
+            '${{ steps.commits.outputs.json }}'
+
+      # ── 4. Actualizar package.json de backend y frontend ────────────────────
       - name: Update backend package.json
         run: |
           cd backend
           npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
-          
+
       - name: Update frontend package.json
         run: |
           cd frontend
           npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
-          
-      - name: Create version file
+
+      # ── 5. Actualizar archivo VERSION ────────────────────────────────────────
+      - name: Create VERSION file
         run: |
           echo "${{ steps.version.outputs.version }}" > VERSION
           echo "Build: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> VERSION
           echo "Commit: $(git rev-parse --short HEAD)" >> VERSION
-          
+
+      # ── 6. Commit y push de todos los cambios ────────────────────────────────
       - name: Commit version bump
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add backend/package.json frontend/package.json VERSION
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
-          
+          git add backend/package.json frontend/package.json VERSION frontend/src/config/version.js
+          git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
