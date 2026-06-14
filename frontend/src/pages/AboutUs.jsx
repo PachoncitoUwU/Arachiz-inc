@@ -212,6 +212,15 @@ export default function AboutUs() {
         </Link>
       </div>
 
+      {/* Logo Nuevo en Esquina Superior Derecha */}
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-50">
+        <img 
+          src="/mi-logo.png" 
+          alt="Arachiz Logo" 
+          className="h-10 w-10 md:h-12 md:w-12 object-contain opacity-80 hover:opacity-100 transition-all duration-300 hover:scale-110" 
+        />
+      </div>
+
       {/* Main Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 pt-16 sm:pt-16 md:pt-24">
         
