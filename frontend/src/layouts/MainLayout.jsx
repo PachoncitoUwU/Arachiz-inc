@@ -4,7 +4,6 @@ import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PerfilPropioModal from '../components/PerfilPropioModal';
-import GlobalSearch from '../components/GlobalSearch';
 import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
@@ -227,12 +226,7 @@ export default function MainLayout({ allowedRoles }) {
               <div className="flex items-center">
                 <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain dark:invert transition-all duration-300" />
               </div>
-              <button onClick={() => {
-                // Dispatch a fake Ctrl+K to open GlobalSearch on mobile
-                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
-              }} className="btn-icon text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Search size={18} />
-              </button>
+              <div className="w-9" />
             </header>
 
 
@@ -242,9 +236,6 @@ export default function MainLayout({ allowedRoles }) {
           </div>
         </div>
       </div>
-
-      {/* Buscador global — activo con Ctrl+K en toda la app */}
-      <GlobalSearch />
 
       {/* Modal de confirmación para cerrar sesión */}
       <ConfirmDialog
