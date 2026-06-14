@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.327';
+export const VERSION = '1.4.329';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.329',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.329',
+    changes: [
+      'Fiebre Mundialista',
+      'feat: Implementar modo mundialista con toggle, balones Copa Mundial y loading animado'
+    ]
+  },
   {
     version: '1.4.327',
     date: '2026-06-14',
