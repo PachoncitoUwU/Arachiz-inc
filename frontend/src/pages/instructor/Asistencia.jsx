@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import fetchApi from '../../services/api';
 import PageHeader from '../../components/PageHeader';
+import ConnectionBadges from '../../components/ConnectionBadges';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { Play, Square, Users, CheckCircle, Clock, BookOpen, BarChart2, Download, ScanFace, QrCode, Fingerprint, Wifi, RefreshCw, TrendingUp, Award, X, Camera, UserPlus, Zap, Activity, Eye, EyeOff, MapPin, Hourglass } from 'lucide-react';
@@ -863,7 +864,7 @@ export default function InstructorAsistencia() {
 
   return (
     <div className="animate-fade-in-up space-y-5">
-      <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} />
+      <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} action={<ConnectionBadges />} />
 
       {loading ? (
         <div className="flex justify-center items-center py-16">
