@@ -1,229 +1,275 @@
+// Deshabilitar watchdog al inicio para evitar loop de resets
+#include <avr/wdt.h>
+void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+void wdt_init(void) { wdt_disable(); }
+
 #include <Wire.h>
 #include <PN532_I2C.h>
 #include <PN532.h>
 #include <Adafruit_Fingerprint.h>
 #include <SoftwareSerial.h>
 
-// --- CONFIGURACIÓN HARDWARE ---
+// ── HARDWARE ──────────────────────────────────────────────────────────────────
 PN532_I2C pn532_i2c(Wire);
 PN532 nfc_hardware(pn532_i2c);
-SoftwareSerial mySerial(2, 3);
+
+SoftwareSerial mySerial(2, 3);   // AS608 huella: RX=2, TX=3
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
+SoftwareSerial espSerial(8, 9);  // ESP8266: RX=8, TX=9
 
-const int PIN_BUZZER = 6;
-const int PIN_BUZZER2 = 5;  // Segundo pin para modo puente (mas volumen)
-const int PIN_SWITCH = 7;
-const int PIN_RX_ESP = 8;
-const int PIN_TX_ESP = 9;
+const int PIN_BUZZER  = 6;
+const int PIN_BUZZER2 = 5;
+const int PIN_SWITCH  = 7;  // LOW=WiFi | HIGH=USB
 
-// Comunicación con ESP8266
-SoftwareSerial espSerial(PIN_RX_ESP, PIN_TX_ESP);
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+bool sesionActiva = false;
+bool enrollando   = false;
+unsigned long lastPoll = 0;
+const unsigned long POLL_INTERVAL = 600;
 
-// --- PROTOTIPOS ---
-void sonidoNFC();
-void sonidoHuella();
-void sonidoEnrolamiento();
-void sonidoError();
-bool enrolar(int id);
+// ── PROTOTIPOS ────────────────────────────────────────────────────────────────
+void   sonidoNFC();
+void   sonidoHuella();
+void   sonidoEnrolamientoInicio();
+void   sonidoEnrolamientoOK();
+void   sonidoError();
+bool   enrolar(int id);
 String hexUID(uint8_t* uid, uint8_t len);
-void enviarEvento(String msg);
+void   enviarEvento(String msg);
+void   bridgeTone(int freq, unsigned long dur);
+void   procesarComando(String cmd);
+String pollESP();
 
+// ── SETUP ─────────────────────────────────────────────────────────────────────
 void setup() {
+  wdt_disable();
+
   Serial.begin(9600);
-  espSerial.begin(9600);
-  pinMode(PIN_BUZZER, OUTPUT);
+  espSerial.begin(4800);
+
+  pinMode(PIN_BUZZER,  OUTPUT);
   pinMode(PIN_BUZZER2, OUTPUT);
   digitalWrite(PIN_BUZZER2, LOW);
   pinMode(PIN_SWITCH, INPUT_PULLUP);
 
-  Serial.println(F("\n-------------------------------------------"));
-  Serial.println(F("SISTEMA ARACHIZ - MODO ESCLAVO V7.1"));
-  Serial.println(F("-------------------------------------------"));
+  delay(100);
 
-  Serial.println(F("DEBUG: Iniciando NFC..."));
+  Serial.println(F("\n========================================="));
+  Serial.println(F(" ARACHIZ - MODO ESCLAVO V10.2"));
+  Serial.println(F("========================================="));
+
+  Wire.begin();
   nfc_hardware.begin();
-  uint32_t versiondata = nfc_hardware.getFirmwareVersion();
-  if (!versiondata) {
-    Serial.println(F("ERROR: Sensor NFC PN532 no encontrado."));
+  delay(50);
+  uint32_t ver = nfc_hardware.getFirmwareVersion();
+  if (!ver) {
+    Serial.println(F("ERROR: NFC no encontrado"));
   } else {
-    Serial.print(F("DEBUG: NFC OK - Firmware v"));
-    Serial.println((versiondata >> 16) & 0xFF);
+    Serial.print(F("NFC OK v")); Serial.println((ver >> 16) & 0xFF);
     nfc_hardware.SAMConfig();
   }
 
-  Serial.println(F("DEBUG: Iniciando sensor de huella..."));
+  mySerial.listen();
   finger.begin(57600);
+  delay(50);
   if (finger.verifyPassword()) {
-    Serial.println(F("DEBUG: Huella OK"));
+    Serial.println(F("Huella AS608 OK"));
   } else {
-    Serial.println(F("ERROR: Sensor de huella no encontrado."));
+    Serial.println(F("ERROR: Sensor huella no encontrado"));
   }
 
-  bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
-  Serial.println(modoESP ? F("MODO: ESP8266 (WiFi)") : F("MODO: USB (Local)"));
-  Serial.println(F("-------------------------------------------"));
+  Serial.println(digitalRead(PIN_SWITCH) == LOW ? F("MODO: WiFi") : F("MODO: USB"));
+  Serial.println(F("========================================="));
 }
 
-// Envía el evento al destino correcto según el switch
+// ── ENVIAR EVENTO ─────────────────────────────────────────────────────────────
 void enviarEvento(String msg) {
-  bool modoESP = (digitalRead(PIN_SWITCH) == LOW);
-  if (modoESP) {
+  if (digitalRead(PIN_SWITCH) == LOW) {
     espSerial.listen();
-    espSerial.println("MODO:RENDER|" + msg);
+    delay(5);
+    espSerial.println("EVT:" + msg);
+    Serial.println("WiFi -> " + msg);
   } else {
     Serial.println(msg);
   }
 }
 
+// ── POLL AL ESP ───────────────────────────────────────────────────────────────
+String pollESP() {
+  espSerial.listen();
+  delay(5);
+  espSerial.println("POLL");
+  unsigned long t0 = millis();
+  while (millis() - t0 < 250) {
+    if (espSerial.available()) {
+      delay(20);
+      String r = espSerial.readStringUntil('\n');
+      r.trim();
+      String clean = "";
+      for (int i = 0; i < (int)r.length(); i++) {
+        char c = r[i]; if (c >= 32 && c < 127) clean += c;
+      }
+      return (clean == "NONE") ? "" : clean;
+    }
+  }
+  return "";
+}
+
+// ── LOOP PRINCIPAL ────────────────────────────────────────────────────────────
 void loop() {
-  // 1. Escuchar comandos desde Node.js (USB) o ESP8266 (WiFi)
-  String comando = "";
+
+  // A. Comandos por USB
   if (Serial.available() > 0) {
-    comando = Serial.readStringUntil('\n');
-    comando.trim();
-  } else {
-    espSerial.listen();
-    if (espSerial.available() > 0) {
-      comando = espSerial.readStringUntil('\n');
-      comando.trim();
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    procesarComando(cmd);
+  }
+
+  // B. POLL al ESP (modo WiFi, no durante enrolamiento)
+  if (!enrollando && digitalRead(PIN_SWITCH) == LOW) {
+    if (millis() - lastPoll >= POLL_INTERVAL) {
+      lastPoll = millis();
+      String cmd = pollESP();
+      if (cmd.length() > 0) {
+        Serial.println("CMD:[" + cmd + "]");
+        procesarComando(cmd);
+      }
     }
   }
 
-  if (comando.length() > 0) {
-    if (comando == "CLEAR_DB") {
-      mySerial.listen();
-      finger.emptyDatabase();
-      Serial.println("DEBUG: Base de datos borrada con exito");
-      sonidoEnrolamiento();
-    } else if (comando.startsWith("ENROLL ")) {
-      int idx = comando.substring(7).toInt();
-      if (idx > 0 && idx < 128) {
-        Serial.print("DEBUG: Iniciando enrolamiento en ID ");
-        Serial.println(idx);
-        mySerial.listen();
-        bool res = enrolar(idx);
-        if (res) {
-          enviarEvento("ENROLL_SUCCESS: " + String(idx));
+  // C. Lectura NFC (no durante enrolamiento)
+  if (!enrollando) {
+    uint8_t uid[7] = {0};
+    uint8_t uidLen = 0;
+    if (nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 25)) {
+      enviarEvento("READ_NFC: " + hexUID(uid, uidLen));
+      sonidoNFC();
+      delay(400);
+      nfc_hardware.SAMConfig();
+    }
+  }
+
+  // D. Lectura Huella (solo con sesión activa)
+  if (!enrollando && sesionActiva) {
+    mySerial.listen();
+    if (finger.getImage() == FINGERPRINT_OK) {
+      if (finger.image2Tz() == FINGERPRINT_OK) {
+        if (finger.fingerFastSearch() == FINGERPRINT_OK) {
+          enviarEvento("READ_FINGER: " + String(finger.fingerID));
+          sonidoHuella();
+          delay(400);
         } else {
-          enviarEvento("ENROLL_ERROR: Cancelado o fallo");
+          delay(200);
         }
-      }
-    } else if (comando.startsWith("DELETE_FINGER ")) {
-      int idx = comando.substring(14).toInt();
-      mySerial.listen();
-      if (finger.deleteModel(idx) == FINGERPRINT_OK) {
-        Serial.print("DEBUG: Huella ");
-        Serial.print(idx);
-        Serial.println(" eliminada del sensor");
-        sonidoEnrolamiento();
-      } else {
-        Serial.print("DEBUG: Error al eliminar huella ");
-        Serial.println(idx);
-        sonidoError();
-      }
-    } else if (comando.startsWith("SESSION ")) {
-      // Reenviar al flujo normal si es SESSION ON/OFF (ya lo maneja el loop de sesiones)
-      Serial.println("DEBUG: Comando sesion recibido: " + comando);
-    }
-  }
-
-  // 2. Lectura NFC
-  uint8_t success;
-  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
-  uint8_t uidLength;
-
-  success = nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);
-
-  if (success) {
-    String uid_str = hexUID(uid, uidLength);
-    enviarEvento("READ_NFC: " + uid_str);
-    sonidoNFC();
-    delay(500);
-    nfc_hardware.SAMConfig();
-  }
-
-  // 3. Lectura Huella
-  mySerial.listen();
-  if (finger.getImage() == FINGERPRINT_OK) {
-    if (finger.image2Tz() == FINGERPRINT_OK) {
-      if (finger.fingerFastSearch() == FINGERPRINT_OK) {
-        enviarEvento("READ_FINGER: " + String(finger.fingerID));
-        sonidoHuella();
-        delay(500);
-      } else {
-        Serial.println("DEBUG: Huella no reconocida por el sensor");
-        sonidoError();
-        delay(500);
       }
     }
   }
 }
 
-// --- FUNCIÓN DE ENROLAMIENTO ---
-bool enrolar(int id) {
-  int p = -1;
-  Serial.println(F("DEBUG: COLOQUE EL DEDO..."));
-  unsigned long start = millis();
-  while (p != FINGERPRINT_OK) {
-    p = finger.getImage();
-    if (millis() - start > 15000) {
-      Serial.println(F("ENROLL_ERROR: Tiempo agotado (15s)."));
+// ── PROCESAR COMANDO ──────────────────────────────────────────────────────────
+void procesarComando(String cmd) {
+  if (cmd.length() == 0) return;
+
+  if (cmd == "SESSION ON") {
+    sesionActiva = true;
+    Serial.println(F("Sesion ACTIVA"));
+
+  } else if (cmd == "SESSION OFF") {
+    sesionActiva = false;
+    Serial.println(F("Sesion INACTIVA"));
+
+  } else if (cmd == "CLEAR_DB") {
+    mySerial.listen();
+    finger.emptyDatabase();
+    Serial.println(F("BD borrada"));
+    sonidoEnrolamientoOK();
+
+  } else if (cmd.startsWith("ENROLL ") && !enrollando) {
+    int idx = cmd.substring(7).toInt();
+    if (idx > 0 && idx < 128) {
+      enrollando = true;
+      mySerial.listen();
+      bool ok = enrolar(idx);
+      delay(100);
+      enviarEvento(ok
+        ? "ENROLL_SUCCESS: " + String(idx)
+        : "ENROLL_ERROR: Cancelado o fallo");
+      enrollando = false;
+    }
+
+  } else if (cmd.startsWith("DELETE_FINGER ")) {
+    int idx = cmd.substring(14).toInt();
+    mySerial.listen();
+    if (finger.deleteModel(idx) == FINGERPRINT_OK) {
+      Serial.println(F("Huella eliminada"));
+      sonidoEnrolamientoOK();
+    } else {
       sonidoError();
-      return false;
     }
   }
+}
+
+// ── ENROLAMIENTO 2 CAPTURAS ───────────────────────────────────────────────────
+bool enrolar(int id) {
+  int p;
+
+  // Captura 1
+  sonidoEnrolamientoInicio();
+  Serial.println(F("[1/2] PON EL DEDO"));
+  unsigned long t = millis();
+  do {
+    mySerial.listen();
+    p = finger.getImage();
+    if (millis() - t > 15000) { sonidoError(); return false; }
+  } while (p != FINGERPRINT_OK);
 
   p = finger.image2Tz(1);
-  if (p == FINGERPRINT_OK) {
-    p = finger.fingerFastSearch();
-    if (p == FINGERPRINT_OK) {
-      Serial.println(F("ENROLL_ERROR: Esta huella ya esta registrada."));
-      sonidoError();
-      delay(2000);
-      return false;
-    }
+  if (p != FINGERPRINT_OK) { sonidoError(); return false; }
+
+  finger.getTemplateCount();
+  if (finger.templateCount > 0 && finger.fingerFastSearch() == FINGERPRINT_OK) {
+    Serial.println(F("Ya registrada"));
+    sonidoError(); delay(1500); return false;
   }
 
-  bridgeTone(1200, 150);
-  Serial.println(F("DEBUG: QUITE EL DEDO..."));
-  delay(1000);
-  start = millis();
-  while (finger.getImage() != FINGERPRINT_NOFINGER) {
-    if (millis() - start > 10000) break;
-  }
+  bridgeTone(1400, 100); delay(70); bridgeTone(1400, 100);
+  Serial.println(F("QUITA EL DEDO"));
+  delay(600);
+  t = millis();
+  mySerial.listen();
+  while (finger.getImage() != FINGERPRINT_NOFINGER && millis() - t < 8000);
+  delay(150);
 
-  p = -1;
-  Serial.println(F("DEBUG: COLOQUE EL MISMO DEDO OTRA VEZ..."));
-  start = millis();
-  while (p != FINGERPRINT_OK) {
+  // Captura 2
+  sonidoEnrolamientoInicio();
+  Serial.println(F("[2/2] PON EL MISMO DEDO"));
+  t = millis();
+  do {
+    mySerial.listen();
     p = finger.getImage();
-    if (millis() - start > 15000) {
-      Serial.println(F("ENROLL_ERROR: Tiempo agotado (15s)."));
-      sonidoError();
-      return false;
-    }
-  }
+    if (millis() - t > 15000) { sonidoError(); return false; }
+  } while (p != FINGERPRINT_OK);
 
   p = finger.image2Tz(2);
+  if (p != FINGERPRINT_OK) { sonidoError(); return false; }
+
+  p = finger.createModel();
   if (p != FINGERPRINT_OK) {
-    Serial.println(F("ENROLL_ERROR: Error al procesar imagen 2."));
-    sonidoError();
-    return false;
+    Serial.println(F("No coinciden"));
+    sonidoError(); delay(1000); return false;
   }
 
-  if (finger.createModel() == FINGERPRINT_OK) {
-    if (finger.storeModel(id) == FINGERPRINT_OK) {
-      sonidoEnrolamiento();
-      return true;
-    }
+  p = finger.storeModel(id);
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Guardada ID " + String(id));
+    sonidoEnrolamientoOK();
+    return true;
   }
-
-  Serial.println(F("ENROLL_ERROR: Las huellas no coinciden."));
   sonidoError();
-  delay(1000);
   return false;
 }
 
+// ── UTILIDADES ────────────────────────────────────────────────────────────────
 String hexUID(uint8_t* uid, uint8_t len) {
   String s = "";
   for (uint8_t i = 0; i < len; i++) {
@@ -235,51 +281,20 @@ String hexUID(uint8_t* uid, uint8_t len) {
   return s;
 }
 
-// --- FUNCION DE TONO EN MODO PUENTE (2x VOLUMEN) ---
-// Genera el tono manualmente alternando 2 pines en fase opuesta
-// Esto duplica el voltaje efectivo en el altavoz (10Vpp vs 5Vpp)
-void bridgeTone(int freq, unsigned long duracion) {
-  unsigned long periodo = 1000000UL / freq;  // microsegundos
-  unsigned long mitad = periodo / 2;
-  unsigned long inicio = millis();
-
-  while (millis() - inicio < duracion) {
-    digitalWrite(PIN_BUZZER, HIGH);
-    digitalWrite(PIN_BUZZER2, LOW);
-    delayMicroseconds(mitad);
-    digitalWrite(PIN_BUZZER, LOW);
-    digitalWrite(PIN_BUZZER2, HIGH);
-    delayMicroseconds(mitad);
+void bridgeTone(int freq, unsigned long dur) {
+  unsigned long per = 1000000UL / freq, half = per / 2;
+  unsigned long t0 = millis();
+  while (millis() - t0 < dur) {
+    digitalWrite(PIN_BUZZER, HIGH); digitalWrite(PIN_BUZZER2, LOW);
+    delayMicroseconds(half);
+    digitalWrite(PIN_BUZZER, LOW);  digitalWrite(PIN_BUZZER2, HIGH);
+    delayMicroseconds(half);
   }
-  // Apagar ambos pines al terminar
-  digitalWrite(PIN_BUZZER, LOW);
-  digitalWrite(PIN_BUZZER2, LOW);
+  digitalWrite(PIN_BUZZER, LOW); digitalWrite(PIN_BUZZER2, LOW);
 }
 
-void sonidoNFC() {
-  bridgeTone(1000, 250);
-  delay(50);
-  bridgeTone(1400, 250);
-}
-
-void sonidoHuella() {
-  bridgeTone(900, 200);
-  delay(50);
-  bridgeTone(1200, 200);
-  delay(50);
-  bridgeTone(1500, 200);
-}
-
-void sonidoEnrolamiento() {
-  bridgeTone(1000, 200);
-  delay(50);
-  bridgeTone(1300, 200);
-  delay(50);
-  bridgeTone(1600, 300);
-}
-
-void sonidoError() {
-  bridgeTone(400, 400);
-  delay(100);
-  bridgeTone(400, 400);
-}
+void sonidoNFC()               { bridgeTone(1000,180); delay(40); bridgeTone(1500,180); }
+void sonidoHuella()            { bridgeTone(900,130); delay(35); bridgeTone(1200,130); delay(35); bridgeTone(1600,180); }
+void sonidoEnrolamientoInicio(){ bridgeTone(800,90);  delay(55); bridgeTone(1100,180); }
+void sonidoEnrolamientoOK()    { bridgeTone(1000,110); delay(45); bridgeTone(1300,110); delay(45); bridgeTone(1600,110); delay(45); bridgeTone(2000,280); }
+void sonidoError()             { bridgeTone(320,320); delay(75); bridgeTone(320,320); }

@@ -82,6 +82,9 @@ const unsigned char arachiz_logo [] PROGMEM = {
 
 unsigned long ultimoMensaje = 0;
 
+// Comando pendiente para el Arduino (se entrega cuando el Arduino hace POLL)
+String pendingCommand = "";
+
 // --- COMUNICACIÓN CON ARDUINO ---
 SoftwareSerial arduinoSerial(4, 0); // RX=D2, TX=D3
 
@@ -539,7 +542,7 @@ void consultarEstadoSesion() {
     deserializeJson(doc, payload);
     bool active = doc["sessionActive"] | false;
     String cmd = active ? "SESSION ON" : "SESSION OFF";
-    arduinoSerial.println(cmd);
+    pendingCommand = cmd; // El Arduino lo recoge con POLL
     Serial.println("Estado sesion sincronizado: " + cmd);
   }
   http.end();
@@ -553,28 +556,41 @@ void consultarComandos() {
   HTTPClient http;
   http.begin(client, URL_RENDER_CMD);
   http.addHeader("x-hardware-key", API_KEY);
-  http.setTimeout(5000);
+  http.setTimeout(8000);
   
   int code = http.GET();
+  Serial.println("[CMD] HTTP " + String(code));
+
   if (code == 200) {
     String payload = http.getString();
+    Serial.println("[CMD] Payload: " + payload);
+
     StaticJsonDocument<128> doc;
-    deserializeJson(doc, payload);
+    DeserializationError err = deserializeJson(doc, payload);
+    if (err) {
+      Serial.println("[CMD] JSON error: " + String(err.c_str()));
+      http.end();
+      return;
+    }
+
     const char* cmd = doc["command"];
     
     if (cmd != nullptr && strlen(cmd) > 0) {
-      Serial.println("Comando recibido: " + String(cmd));
-      arduinoSerial.println(cmd); // Enviar al Arduino
-      mostrarMensaje("Comando", cmd);
-      delay(500);
+      Serial.println("[CMD] Guardando para Arduino: " + String(cmd));
+      pendingCommand = String(cmd); // El Arduino lo recoge con POLL
+      mostrarMensaje("CMD listo", String(cmd), "esp. Arduino...");
+    } else {
+      Serial.println("[CMD] Sin comandos pendientes");
     }
+  } else {
+    Serial.println("[CMD] Error HTTP: " + String(code));
   }
   http.end();
 }
 
 void setup() {
   Serial.begin(115200);
-  arduinoSerial.begin(9600);
+  arduinoSerial.begin(4800);   // debe coincidir con el Arduino
 
   Wire.begin(OLED_SDA, OLED_SCL);
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -616,24 +632,53 @@ void loop() {
     mostrarLogo();
   }
 
-  // Consultar comandos pendientes cada 500ms para menor latencia
+  // Consultar comandos al backend cada 1.5s (el Arduino hace POLL cada 400ms)
   static unsigned long lastCheck = 0;
-  if (millis() - lastCheck > 500) {
+  if (millis() - lastCheck > 1500) {
     lastCheck = millis();
     consultarComandos();
   }
 
   // Leer mensajes del Arduino
   if (arduinoSerial.available()) {
+    // Limpiar bytes basura antes de leer
+    delay(15);
     String msg = arduinoSerial.readStringUntil('\n');
     msg.trim();
+    // Filtrar solo ASCII imprimible
+    String limpio = "";
+    for (int i = 0; i < (int)msg.length(); i++) {
+      char c = msg[i];
+      if (c >= 32 && c < 127) limpio += c;
+    }
+    msg = limpio;
     if (msg.length() == 0) return;
 
     Serial.println("Arduino: " + msg);
 
-    // Detectar modo desde el prefijo que manda el Arduino
+    // El Arduino hace POLL preguntando si hay comandos pendientes
+    if (msg == "POLL") {
+      if (pendingCommand.length() > 0) {
+        Serial.println("[POLL] -> " + pendingCommand);
+        delay(10);                    // pausa antes de responder
+        arduinoSerial.println(pendingCommand);
+        pendingCommand = "";
+      } else {
+        delay(10);
+        arduinoSerial.println("NONE");
+      }
+      return;
+    }
+
+    // Eventos del Arduino (prefijo EVT: en modo WiFi)
+    if (msg.startsWith("EVT:")) {
+      msg = msg.substring(4);
+    }
+
+    // Detectar modo desde el prefijo que manda el Arduino (compatibilidad)
     bool online = msg.startsWith("MODO:RENDER|");
     if (online) msg = msg.substring(12);
+    else online = true; // en modo WiFi siempre online
 
     if (msg.startsWith("READ_NFC:")) {
       String uid = msg.substring(9); uid.trim();

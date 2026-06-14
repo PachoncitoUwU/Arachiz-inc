@@ -1,360 +1,639 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arachiz - Presentación Oficial</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Arachiz — Presentación Oficial · Proyecto Formativo SENA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>
+:root {
+  --blue:#4285F4; --green:#34A853; --red:#EA4335; --yellow:#FBBC05;
+  --white:#FFFFFF; --border:#F3F4F6; --dark:#111827; --mid:#374151;
+  --muted:#6B7280; --light:#9CA3AF;
+  --shadow:0 4px 24px -4px rgba(0,0,0,0.08);
+  --shadow-hover:0 8px 32px -4px rgba(0,0,0,0.14);
+  --font:'Inter',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);}
+body{background:linear-gradient(135deg,#fff 0%,rgba(52,168,83,.04) 50%,rgba(66,133,244,.07) 100%);color:var(--dark);}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Open Sans', Arial, sans-serif;
-        }
+#bubbles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.bubble{position:absolute;bottom:-160px;border-radius:50%;opacity:.10;animation:floatUp linear infinite;}
+@keyframes floatUp{0%{transform:translateY(0) rotate(0deg);opacity:.10;}100%{transform:translateY(-120vh) rotate(720deg);opacity:0;}}
 
-        body {
-            background-color: #ffffff;
-            color: #202124; /* Gris oscuro tipo Google */
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+#pbar{position:fixed;bottom:0;left:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .35s;z-index:999;}
+#pnum{position:fixed;bottom:14px;right:20px;font-size:.78rem;font-weight:600;color:var(--muted);z-index:999;}
 
-        .slider-container {
-            width: 100%;
-            max-width: 1200px;
-            height: 100%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+.arrow{position:fixed;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.9);border:1px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;z-index:999;color:var(--mid);box-shadow:var(--shadow);transition:all .2s;backdrop-filter:blur(8px);}
+.arrow:hover{background:#fff;box-shadow:0 4px 20px rgba(66,133,244,.25);border-color:var(--blue);color:var(--blue);}
+#aL{left:10px;}#aR{right:10px;}
 
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.4s ease-in-out;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 4rem;
-            background: #ffffff;
-        }
+.khint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--light);z-index:999;display:flex;gap:6px;}
+.kk{background:rgba(0,0,0,.06);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-size:.66rem;}
 
-        .slide.active {
-            opacity: 1;
-            visibility: visible;
-        }
+.slide{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:3rem 5rem;opacity:0;visibility:hidden;pointer-events:none;transform:translateX(50px) scale(.99);transition:opacity .45s cubic-bezier(.4,0,.2,1),transform .45s cubic-bezier(.4,0,.2,1);z-index:1;}
+.slide.active{opacity:1;visibility:visible;pointer-events:all;transform:none;}
+.slide.exit{opacity:0;transform:translateX(-50px) scale(.99);}
+.sc{max-width:980px;width:100%;position:relative;z-index:1;}
+.center{text-align:center;display:flex;flex-direction:column;align-items:center;}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;width:100%;}
 
-        .slide-content {
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-        }
+.logo-sm{position:fixed;top:18px;left:22px;height:36px;width:auto;z-index:998;filter:drop-shadow(0 2px 8px rgba(0,0,0,.1));}
+.logo-hero{height:72px;width:auto;margin-bottom:1rem;animation:floatLogo 4s ease-in-out infinite;filter:drop-shadow(0 4px 16px rgba(66,133,244,.2));}
+@keyframes floatLogo{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 
-        .logo-center {
-            width: 250px;
-            margin: 0 auto 2rem auto;
-            display: block;
-        }
+.eyebrow{display:block;font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--blue);margin-bottom:.9rem;}
+h1{font-size:clamp(34px,5.5vw,68px);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:1rem;color:var(--dark);}
+h2{font-size:clamp(24px,4vw,48px);font-weight:800;line-height:1.08;letter-spacing:-1.5px;margin-bottom:.75rem;color:var(--dark);}
+.subtitle{font-size:clamp(13px,1.7vw,17px);color:var(--muted);line-height:1.7;max-width:600px;}
 
-        .logo-small {
-            width: 100px;
-            position: absolute;
-            top: 40px;
-            left: 40px;
-        }
+.grad{background:linear-gradient(135deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.grad-animate{background:linear-gradient(270deg,var(--blue),var(--green),var(--yellow),var(--red));background-size:400% 400%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradMove 8s ease infinite;}
+@keyframes gradMove{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
 
-        h2 {
-            font-size: 2.5rem;
-            font-weight: 400;
-            color: #202124;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #e8eaed;
-            padding-bottom: 1rem;
-        }
+.slide.active .a1{animation:fadeUp .5s .06s both;}
+.slide.active .a2{animation:fadeUp .5s .17s both;}
+.slide.active .a3{animation:fadeUp .5s .28s both;}
+.slide.active .a4{animation:fadeUp .5s .39s both;}
+.slide.active .a5{animation:fadeUp .5s .50s both;}
+.slide.active .asc{animation:scIn .55s .1s both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
+@keyframes scIn{from{opacity:0;transform:scale(.88);}to{opacity:1;transform:scale(1);}}
 
-        p, li {
-            font-size: 1.5rem;
-            color: #5f6368; /* Gris medio */
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
+.card{background:var(--white);border-radius:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);padding:1.4rem;transition:all .3s ease;}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);}
+.card-icon{width:44px;height:44px;border-radius:.875rem;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.9rem;}
+.ci-b{background:rgba(66,133,244,.1);}.ci-g{background:rgba(52,168,83,.1);}.ci-r{background:rgba(234,67,53,.1);}.ci-y{background:rgba(251,188,5,.12);}.ci-p{background:rgba(99,102,241,.1);}
+.card h4{font-size:.88rem;font-weight:700;margin-bottom:.35rem;color:var(--dark);}
+.card p{font-size:.78rem;color:var(--muted);line-height:1.55;}
+.cg{display:grid;gap:12px;margin-top:1.4rem;}.cg2{grid-template-columns:1fr 1fr;}.cg3{grid-template-columns:1fr 1fr 1fr;}
 
-        ul {
-            margin-left: 2rem;
-        }
+.tag{display:inline-flex;align-items:center;gap:4px;padding:.3rem .9rem;border-radius:9999px;font-size:.7rem;font-weight:600;}
+.tag-b{background:rgba(66,133,244,.1);color:#1D4ED8;}.tag-g{background:rgba(52,168,83,.1);color:#15803D;}
+.tag-r{background:rgba(234,67,53,.1);color:#B91C1C;}.tag-y{background:rgba(251,188,5,.12);color:#B45309;}
+.tag-gr{background:#F3F4F6;color:var(--muted);}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:.9rem;}.pill-row.c{justify-content:center;}
 
-        /* Layout en 2 columnas */
-        .two-cols {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: start;
-        }
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:1.4rem;width:100%;}
+.stc{background:var(--white);border-radius:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);padding:1.4rem;text-align:center;}
+.stc.rt{background:rgba(234,67,53,.05);border-color:rgba(234,67,53,.2);}
+.stn{font-size:clamp(26px,4vw,46px);font-weight:900;line-height:1;}
+.stl{font-size:.72rem;color:var(--muted);margin-top:.35rem;font-weight:500;}
 
-        /* Tarjetas estilo Google Material */
-        .material-card {
-            background: #ffffff;
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
+.flow{display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:0;margin-top:1.4rem;}
+.fs{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:12px 10px;text-align:center;min-width:82px;transition:.3s;box-shadow:var(--shadow);}
+.fs:hover{transform:translateY(-3px);border-color:var(--blue);}
+.fs.hi{border-color:rgba(66,133,244,.4);background:rgba(66,133,244,.05);}
+.fs.ok{border-color:rgba(52,168,83,.4);background:rgba(52,168,83,.05);}
+.fsi{font-size:1.5rem;margin-bottom:.3rem;}.fsl{font-size:.62rem;color:var(--muted);font-weight:600;}
+.fa{font-size:1rem;color:var(--border);padding:0 5px;flex-shrink:0;}
 
-        .material-card h3 {
-            font-size: 1.2rem;
-            color: #1a73e8; /* Azul Google */
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
+.arch{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;margin-top:1.4rem;width:100%;}
+.ab{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:1.1rem;text-align:center;box-shadow:var(--shadow);}
+.ab.hi{border-color:rgba(66,133,244,.3);background:rgba(66,133,244,.04);}
+.ab .abi{font-size:1.3rem;margin-bottom:.4rem;}.ab .abn{font-size:.85rem;font-weight:700;color:var(--dark);}
+.ab .abt{font-size:.7rem;color:var(--muted);margin-top:.2rem;line-height:1.4;}
+.aa{font-size:1.2rem;color:var(--border);text-align:center;}
 
-        .material-card p {
-            font-size: 1.1rem;
-            margin-bottom: 0;
-        }
+/* TECH GRID — 2 filas de 6, logos reales */
+.tg-2rows{display:flex;flex-direction:column;gap:12px;margin-top:1.4rem;width:100%;}
+.trow{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.ti{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:1.1rem .6rem;text-align:center;box-shadow:var(--shadow);transition:.3s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ti:hover{border-color:var(--blue);transform:translateY(-3px);}
+.timg{width:40px;height:40px;object-fit:contain;margin-bottom:.5rem;}
+.tii{font-size:1.6rem;margin-bottom:.5rem;}
+.tin{font-size:.68rem;font-weight:600;color:var(--muted);}
 
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            text-align: center;
-            margin-top: 2rem;
-        }
+.pyr-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:1.4rem;}
+.pyr{border-radius:.875rem;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;transition:.3s;}
+.pyr:hover{transform:scale(1.015);}
+.py1{width:200px;padding:12px;background:rgba(66,133,244,.08);border:1px solid rgba(66,133,244,.3);font-size:.92rem;color:var(--dark);}
+.py2{width:300px;padding:11px;background:rgba(52,168,83,.07);border:1px solid rgba(52,168,83,.3);font-size:.85rem;color:var(--dark);}
+.py3{width:400px;padding:10px;background:rgba(251,188,5,.07);border:1px solid rgba(251,188,5,.3);font-size:.78rem;color:var(--dark);}
+.pya{font-size:.85rem;color:var(--border);}
 
-        .tech-item img {
-            height: 50px;
-            margin-bottom: 1rem;
-        }
+.pt-wrap{width:100%;overflow:auto;margin-top:1rem;}
+.pt-tbl{width:100%;border-collapse:collapse;font-size:.78rem;}
+.pt-tbl th{padding:9px 14px;text-align:left;color:var(--muted);font-weight:600;background:#F9FAFB;border-bottom:1px solid var(--border);}
+.pt-tbl td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--mid);}
+.pt-tbl tr:hover td{background:#FAFAFA;}
+.chk{color:var(--green);font-weight:800;}.crs{color:var(--red);}
 
-        .tech-item span {
-            display: block;
-            font-size: 1.2rem;
-            color: #202124;
-        }
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:1.2rem;max-width:720px;}
+.ac{display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:1.25rem;padding:12px 14px;box-shadow:var(--shadow);transition:.3s;}
+.ac:hover{border-color:var(--green);transform:translateX(3px);}
+.aci{font-size:1.25rem;flex-shrink:0;}.act{font-size:.82rem;font-weight:700;color:var(--dark);}
+.acs{font-size:.68rem;color:var(--muted);margin-top:2px;}
 
-        .progress-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            height: 4px;
-            background: #1a73e8;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
+.rc{background:var(--white);border:1px solid var(--border);border-radius:1.25rem;padding:1.4rem;box-shadow:var(--shadow);text-align:left;}
+.rc.ins{border-color:rgba(66,133,244,.25);background:rgba(66,133,244,.03);}
+.rc.apr{border-color:rgba(52,168,83,.25);background:rgba(52,168,83,.03);}
+.rci{font-size:2rem;margin-bottom:.5rem;}.rct{font-size:1.1rem;font-weight:800;margin-bottom:.3rem;color:var(--dark);}
+.rcd{font-size:.76rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem;}
+.pi{font-size:.7rem;color:var(--mid);padding:3px 0;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);}
+.pi::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;}
+.pi.no::before{content:'✗';color:var(--red);}.pi.no{color:var(--light);}
 
-        .page-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 40px;
-            font-size: 1rem;
-            color: #5f6368;
-        }
+.abox{background:rgba(66,133,244,.04);border:1px solid rgba(66,133,244,.18);border-left:4px solid var(--blue);border-radius:1.25rem;padding:1.8rem 2rem;max-width:820px;margin-top:1.1rem;}
+.abox p{font-size:clamp(13px,1.55vw,16px);line-height:1.85;color:var(--mid);font-style:italic;}
+.abox strong{color:var(--blue);font-style:normal;}
 
-    </style>
+.methods{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:1.2rem;width:100%;}
+.mth{background:var(--white);border:1px solid var(--border);border-radius:1.25rem;padding:1rem .7rem;text-align:center;box-shadow:var(--shadow);transition:.3s;}
+.mth:hover{transform:translateY(-3px);border-color:var(--blue);}
+.mi{font-size:1.5rem;margin-bottom:.3rem;}.mn{font-size:.66rem;font-weight:600;color:var(--muted);}
+.mt{font-size:1.15rem;font-weight:900;color:var(--blue);margin-top:.2rem;}
+
+.url-pill{display:inline-flex;align-items:center;gap:6px;margin-top:1.1rem;background:rgba(52,168,83,.08);border:1px solid rgba(52,168,83,.25);border-radius:.875rem;padding:6px 16px;font-size:.85rem;font-weight:700;color:#15803D;}
+.url-big{font-size:clamp(16px,2.8vw,34px);font-weight:900;letter-spacing:-1px;}
+
+.mockup{background:var(--white);border-radius:1rem;overflow:hidden;box-shadow:0 20px 60px -12px rgba(0,0,0,.15);border:1px solid var(--border);max-width:680px;margin:1.5rem auto 0;}
+.bar{background:#F9FAFB;padding:.55rem .9rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid var(--border);}
+.bdot{width:10px;height:10px;border-radius:50%;}
+.burl{background:var(--white);border-radius:4px;padding:.15rem .6rem;font-size:.7rem;color:var(--muted);flex:1;text-align:center;border:1px solid var(--border);}
+.mbody{background:linear-gradient(135deg,#fff,rgba(52,168,83,.04),rgba(66,133,244,.06));padding:1.5rem;display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center;}
+.dc{background:var(--white);border:1px solid var(--border);border-radius:.875rem;padding:1rem;width:140px;box-shadow:var(--shadow);}
+.dav{width:36px;height:36px;border-radius:.6rem;margin-bottom:.7rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.dn{font-weight:700;font-size:.78rem;margin-bottom:.3rem;color:var(--dark);}
+.ds{display:inline-flex;align-items:center;gap:.2rem;font-size:.62rem;font-weight:600;padding:.15rem .5rem;border-radius:9999px;}
+.sok{background:rgba(52,168,83,.1);color:#15803D;}.snfc{background:rgba(66,133,244,.1);color:#1D4ED8;}.sfp{background:rgba(99,102,241,.1);color:#4338CA;}
+
+.mr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:1.4rem;width:100%;}
+.mc{background:var(--white);border:1px solid var(--border);border-radius:1.25rem;padding:1.3rem;text-align:center;box-shadow:var(--shadow);}
+.mv{font-size:clamp(22px,3.5vw,42px);font-weight:900;line-height:1;}.ml{font-size:.7rem;color:var(--muted);margin-top:.3rem;}
+
+.qr-box{background:var(--white);border-radius:1rem;padding:12px;box-shadow:0 0 40px rgba(66,133,244,.15);border:1px solid var(--border);}
+
+model-viewer{width:100%;height:320px;background:transparent;--poster-color:transparent;}
+</style>
 </head>
 <body>
+<div id="bubbles"></div>
+<img src="/ArachizLogoPNG.png" class="logo-sm" alt="Arachiz" onerror="this.src='/docs/presentations/ArachizLogoPNG.png'">
 
-    <div class="slider-container" id="slider">
-        
-        <!-- Slide 1: Inicio -->
-        <div class="slide active" style="align-items: center; text-align: center;">
-            <div class="slide-content" style="text-align: center; margin-top: -50px;">
-                <img src="../frontend/public/ArachizLogoPNG.png" alt="Arachiz Logo" class="logo-center" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3003/3003310.png'">
-                <p style="font-size: 1.8rem; color: #5f6368; max-width: 600px; margin: 0 auto;">
-                    Control de asistencia inteligente, biometría y gestión eficiente para el SENA
-                </p>
-            </div>
-        </div>
+<!-- Logo SENA fijo esquina inferior izquierda -->
+<img src="/sena.png" id="sena-logo" alt="SENA"
+     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Sena-logo.svg/1200px-Sena-logo.svg.png'"
+     style="position:fixed;bottom:20px;right:22px;height:52px;width:auto;z-index:998;opacity:.85;filter:drop-shadow(0 2px 8px rgba(0,0,0,.12))">
+<div class="arrow" id="aL" onclick="nav(-1)">◀</div>
+<div class="arrow" id="aR" onclick="nav(1)">▶</div>
+<div id="pbar"></div><div id="pnum"></div>
+<div class="khint"><span class="kk">←</span><span class="kk">→</span> navegar &nbsp;<span class="kk">Space</span> siguiente</div>
 
-        <!-- Slide 2: Abstract -->
-        <div class="slide">
-            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h2>Abstract</h2>
-                <div class="two-cols">
-                    <div>
-                        <p>
-                            El proyecto nace para solucionar el control manual de asistencia en entornos educativos, eliminando el uso de papel y previniendo suplantaciones.
-                        </p>
-                        <p>
-                            Integramos hardware físico con una plataforma web moderna, ofreciendo respuestas en tiempo real mediante tecnología de vanguardia.
-                        </p>
-                    </div>
-                    <div>
-                        <div class="material-card">
-                            <h3>Problema</h3>
-                            <p>Llamados a lista lentos, pérdida de tiempo de clase y registros inexactos.</p>
-                        </div>
-                        <div class="material-card">
-                            <h3>Solución</h3>
-                            <p>Sistema automatizado con lectura NFC y biométrica conectada a la nube.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- S01 COVER -->
+<div class="slide active" id="s0">
+<div class="sc center">
+  <img src="/ArachizLogoPNG.png" class="logo-hero asc" onerror="this.src='/docs/presentations/ArachizLogoPNG.png'" alt="Arachiz">
+  <div class="a1" style="margin-bottom:.9rem">
+    <span class="eyebrow" style="margin-bottom:0">Proyecto Formativo SENA</span>
+  </div>
+  <h1 class="a2">Sistema <span class="grad">Inteligente</span><br>de Asistencia</h1>
+  <p class="subtitle a3">Biometría · IoT · Nube · Tiempo Real<br>De 10 minutos a 3 segundos.</p>
+  <div class="pill-row c a4">
+    <span class="tag tag-b">👆 Huella</span><span class="tag tag-g">💳 NFC</span>
+    <span class="tag tag-y">📷 QR</span><span class="tag tag-r">😊 Facial</span>
+  </div>
+  <div class="a5"><div class="url-pill">🌐 arachiz.vercel.app</div></div>
+</div>
+</div>
 
-        <!-- Slide 3: ¿Qué es Arachiz? -->
-        <div class="slide">
-            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h2>¿Qué es el Sistema?</h2>
-                <p>
-                    Es un ecosistema híbrido que permite la validación de identidad en tiempo récord. Consta de dos componentes clave:
-                </p>
-                <br>
-                <div class="two-cols">
-                    <div class="material-card" style="border-left: 4px solid #34a853;">
-                        <h3 style="color: #34a853;">Componente Físico (IoT)</h3>
-                        <p>Dispositivos instalados en las aulas capaces de leer huellas dactilares y tarjetas de proximidad (NFC).</p>
-                    </div>
-                    <div class="material-card" style="border-left: 4px solid #1a73e8;">
-                        <h3 style="color: #1a73e8;">Componente Lógico (Plataforma Web)</h3>
-                        <p>Software administrativo donde los instructores pueden gestionar aprendices, horarios y reportes estadísticos.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- S02 PROBLEMA -->
+<div class="slide" id="s1">
+<div class="sc center">
+  <span style="font-size:5rem;line-height:1;display:block;margin-bottom:.5rem" class="a1">📋</span>
+  <span class="eyebrow a1">El Problema</span>
+  <h2 class="a2">Pasar lista tarda <span style="color:var(--red)">10 minutos.</span></h2>
+  <p class="subtitle a3">Listas en papel que se pierden. Suplantaciones. Sin datos en tiempo real.</p>
+  <div class="stat-grid a4">
+    <div class="stc rt"><div class="stn" style="color:var(--red)">10 min</div><div class="stl">perdidos por clase</div></div>
+    <div class="stc rt"><div class="stn" style="color:var(--red)">∞</div><div class="stl">errores humanos</div></div>
+    <div class="stc rt"><div class="stn" style="color:var(--red)">0</div><div class="stl">datos en tiempo real</div></div>
+  </div>
+</div>
+</div>
 
-        <!-- Slide 4: Fases del Proyecto 1 -->
-        <div class="slide">
-            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h2>Fases del Desarrollo (1 - 3)</h2>
-                <div class="material-card">
-                    <h3>Fase 1: Análisis y Levantamiento</h3>
-                    <p>Definición del alcance, estudio de viabilidad del hardware e investigación de metodologías.</p>
-                </div>
-                <div class="material-card">
-                    <h3>Fase 2: Diseño Arquitectónico</h3>
-                    <p>Creación de mockups en Figma y estructuración del modelo Entidad-Relación de la base de datos.</p>
-                </div>
-                <div class="material-card">
-                    <h3>Fase 3: Implementación IoT</h3>
-                    <p>Ensamblaje del Arduino, lectores biométricos y programación en C++ para la captura de datos.</p>
-                </div>
-            </div>
-        </div>
+<!-- S03 SOLUCIÓN -->
+<div class="slide" id="s2">
+<div class="sc center">
+  <img src="/ArachizLogoPNG.png" class="logo-hero asc" onerror="this.src='/docs/presentations/ArachizLogoPNG.png'" alt="Arachiz">
+  <span class="eyebrow a1">La Solución</span>
+  <h2 class="a2"><span class="grad">Arachiz</span> — De 10 min a <span style="color:var(--green)">3 seg.</span></h2>
+  <div class="methods a3">
+    <div class="mth"><div class="mi">📱</div><div class="mn">QR</div><div class="mt">3s</div></div>
+    <div class="mth"><div class="mi">💳</div><div class="mn">NFC</div><div class="mt">1s</div></div>
+    <div class="mth"><div class="mi">👆</div><div class="mn">Huella</div><div class="mt">2s</div></div>
+    <div class="mth"><div class="mi">👤</div><div class="mn">Facial</div><div class="mt">2s</div></div>
+  </div>
+  <div class="a4"><div class="url-pill">🌐 arachiz.vercel.app</div></div>
+</div>
+</div>
 
-        <!-- Slide 5: Fases del Proyecto 2 -->
-        <div class="slide">
-            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h2>Fases del Desarrollo (4 - 6)</h2>
-                <div class="material-card">
-                    <h3>Fase 4: Desarrollo Backend</h3>
-                    <p>Construcción de la API RESTful segura con Node.js, Express y Prisma ORM.</p>
-                </div>
-                <div class="material-card">
-                    <h3>Fase 5: Desarrollo Frontend</h3>
-                    <p>Desarrollo de las interfaces interactivas para administradores e instructores usando React.</p>
-                </div>
-                <div class="material-card">
-                    <h3>Fase 6: Sincronización y Pruebas</h3>
-                    <p>Conexión del hardware web vía Web Serial API, validaciones offline/online y pruebas de estrés.</p>
-                </div>
-            </div>
-        </div>
+<!-- S04 ABSTRACT -->
+<div class="slide" id="s3">
+<div class="sc center">
+  <span style="font-size:1.4rem;display:block;margin-bottom:.3rem" class="a1">🇺🇸</span>
+  <span class="eyebrow a1">Abstract · English</span>
+  <div class="abox a2">
+    <p>Arachiz is an <strong>intelligent attendance management system</strong> designed for SENA's academic environment.
+    It integrates biometric identification — <strong>QR codes, NFC cards, fingerprint sensors, and facial recognition</strong> —
+    with a real-time web platform built on <strong>React 19 and Node.js</strong>.
+    Three user roles with granular permissions. Cloud PostgreSQL via Supabase.
+    Hardware: <strong>Arduino Uno + ESP8266 + AS608 + PN532</strong>.
+    Live at <strong>arachiz.vercel.app</strong>.</p>
+  </div>
+  <div class="pill-row c a3">
+    <span class="tag tag-b">⚛️ React 19</span><span class="tag tag-b">🟢 Node.js</span>
+    <span class="tag tag-gr">🐘 PostgreSQL</span><span class="tag tag-b">🔌 Socket.io</span>
+    <span class="tag tag-g">☁️ Supabase</span><span class="tag tag-g">📡 ESP8266</span>
+  </div>
+</div>
+</div>
 
-        <!-- Slide 6: Tecnologías -->
-        <div class="slide">
-            <img src="../frontend/public/ArachizLogoPNG.png" class="logo-small" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h2>Tecnologías Implementadas</h2>
-                <div class="tech-grid">
-                    <div class="tech-item">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg">
-                        <span>React</span>
-                    </div>
-                    <div class="tech-item">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg">
-                        <span>Node.js</span>
-                    </div>
-                    <div class="tech-item">
-                        <img src="https://cdn.worldvectorlogo.com/logos/prisma-2.svg">
-                        <span>Prisma</span>
-                    </div>
-                    <div class="tech-item">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg">
-                        <span>PostgreSQL</span>
-                    </div>
-                    <div class="tech-item">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Arduino_Logo.svg">
-                        <span>Arduino & IoT</span>
-                    </div>
-                    <div class="tech-item">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/WebSockets_logo.svg" style="filter: grayscale(1);">
-                        <span>WebSockets</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 7: Cierre -->
-        <div class="slide" style="align-items: center; text-align: center;">
-            <div class="slide-content" style="text-align: center; margin-top: -50px;">
-                <img src="../frontend/public/ArachizLogoPNG.png" alt="Arachiz Logo" class="logo-center" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3003/3003310.png'">
-                <p style="font-size: 2rem; color: #1a73e8; margin-top: 2rem;">
-                    Gracias por su atención
-                </p>
-            </div>
-        </div>
-
+<!-- S05 MOCKUP -->
+<div class="slide" id="s4">
+<div class="sc center">
+  <span class="eyebrow a1">Demo · Software</span>
+  <h2 class="a2">Asistencia en <span class="grad">tiempo real</span></h2>
+  <p class="subtitle a3">El instructor inicia. El QR aparece. El aprendiz escanea. Listo.</p>
+  <div class="mockup a4">
+    <div class="bar">
+      <div class="bdot" style="background:#EA4335"></div>
+      <div class="bdot" style="background:#FBBC05"></div>
+      <div class="bdot" style="background:#34A853"></div>
+      <div class="burl">arachiz.vercel.app — Sesión Activa · Sistemas de Información</div>
     </div>
+    <div class="mbody">
+      <div class="dc"><div class="dav" style="background:rgba(52,168,83,.1)">🧑‍🎓</div><div class="dn">Carlos M.</div><span class="ds sok">✓ Presente</span></div>
+      <div class="dc"><div class="dav" style="background:rgba(66,133,244,.1)">👩‍🎓</div><div class="dn">Laura P.</div><span class="ds snfc">💳 NFC</span></div>
+      <div class="dc"><div class="dav" style="background:rgba(99,102,241,.1)">🧑‍💻</div><div class="dn">Andrés R.</div><span class="ds sfp">👆 Huella</span></div>
+      <div class="dc"><div class="dav" style="background:rgba(251,188,5,.12)">👩‍💼</div><div class="dn">Sofía T.</div><span class="ds sok">😊 Facial</span></div>
+    </div>
+  </div>
+</div>
+</div>
 
-    <div class="progress-bar" id="progress"></div>
-    <div class="page-indicator" id="pageNumber">1 / 7</div>
+<!-- S06 FLUJO -->
+<div class="slide" id="s5">
+<div class="sc center">
+  <span class="eyebrow a1">Flujo de Sesión</span>
+  <h2 class="a2">De inicio a <span class="grad">fin</span></h2>
+  <p class="subtitle a3">El instructor abre. Los aprendices se registran. El sistema cierra marcando ausentes.</p>
+  <div class="flow a4">
+    <div class="fs"><div class="fsi">🔑</div><div class="fsl">Login</div></div><div class="fa">→</div>
+    <div class="fs"><div class="fsi">📂</div><div class="fsl">Ficha</div></div><div class="fa">→</div>
+    <div class="fs"><div class="fsi">▶️</div><div class="fsl">Iniciar</div></div><div class="fa">→</div>
+    <div class="fs hi"><div class="fsi">📱</div><div class="fsl">QR/NFC/<br>Huella</div></div><div class="fa">→</div>
+    <div class="fs ok"><div class="fsi">✅</div><div class="fsl">Presente</div></div><div class="fa">→</div>
+    <div class="fs"><div class="fsi">📊</div><div class="fsl">Reporte</div></div>
+  </div>
+  <div class="pill-row c a5">
+    <span class="tag tag-g">WebSockets tiempo real</span>
+    <span class="tag tag-b">Optimistic updates</span>
+    <span class="tag tag-y">Exportar Excel/PDF</span>
+  </div>
+</div>
+</div>
 
-    <script>
-        const slides = document.querySelectorAll('.slide');
-        const progressBar = document.getElementById('progress');
-        const pageIndicator = document.getElementById('pageNumber');
-        let currentSlide = 0;
+<!-- FASES 1-3 -->
+<div class="slide" id="sf1">
+<div class="sc center">
+  <span class="eyebrow a1">Metodología de Desarrollo</span>
+  <h2 class="a2">Las <span class="grad">6 fases</span> de Arachiz</h2>
+  <div class="cg cg3 a3" style="width:100%">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(66,133,244,.08),rgba(66,133,244,.04));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-b" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--blue)">01</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:.2rem">Fase 1</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Análisis y Levantamiento</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=70&fit=crop" alt="Análisis" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">Definición del alcance, estudio de viabilidad del hardware e investigación de metodologías ágiles para entornos educativos del SENA.</p>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(52,168,83,.08),rgba(52,168,83,.04));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-g" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--green)">02</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin-bottom:.2rem">Fase 2</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Diseño Arquitectónico</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=400&q=70&fit=crop" alt="Diseño" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">Mockups en Figma, estructuración del modelo Entidad-Relación y definición del stack tecnológico completo.</p>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(251,188,5,.1),rgba(251,188,5,.05));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-y" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--yellow)">03</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);margin-bottom:.2rem">Fase 3</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Implementación IoT</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=70&fit=crop" alt="IoT" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">Ensamblaje del Arduino + ESP8266 y programación en C++ para captura de huellas, NFC y comunicación WiFi.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
 
-        function updateSlider() {
-            slides.forEach((slide, index) => {
-                if (index === currentSlide) {
-                    slide.classList.add('active');
-                } else {
-                    slide.classList.remove('active');
-                }
-            });
-            const progress = ((currentSlide + 1) / slides.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            pageIndicator.innerText = `${currentSlide + 1} / ${slides.length}`;
-        }
+<!-- FASES 4-6 -->
+<div class="slide" id="sf2">
+<div class="sc center">
+  <span class="eyebrow a1">Metodología de Desarrollo</span>
+  <h2 class="a2">Fases <span class="grad">4, 5 y 6</span></h2>
+  <div class="cg cg3 a3" style="width:100%">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(234,67,53,.07),rgba(234,67,53,.03));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-r" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--red)">04</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:.2rem">Fase 4</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Desarrollo Backend</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&q=70&fit=crop" alt="Backend" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">API RESTful con Node.js, Express y Prisma ORM. Autenticación JWT, WebSockets en tiempo real y endpoints para hardware.</p>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(66,133,244,.08),rgba(66,133,244,.04));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-b" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--blue)">05</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:.2rem">Fase 5</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Desarrollo Frontend</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?w=400&q=70&fit=crop" alt="Frontend" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">Interfaces React para administrador, instructor y aprendiz. Reconocimiento facial con face-api.js y NFC móvil.</p>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(52,168,83,.08),rgba(52,168,83,.04));padding:1.2rem 1.2rem .8rem;border-bottom:1px solid var(--border);display:flex;gap:.8rem;align-items:center">
+        <div class="card-icon ci-g" style="margin:0;flex-shrink:0"><span style="font-size:1.1rem;font-weight:900;color:var(--green)">06</span></div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin-bottom:.2rem">Fase 6</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">Sincronización y Pruebas</div>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.2rem">
+        <img src="https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&q=70&fit=crop" alt="Pruebas" style="width:100%;height:90px;object-fit:cover;border-radius:.6rem;margin-bottom:.7rem">
+        <p style="font-size:.76rem;color:var(--muted);line-height:1.5">Integración hardware-web, pruebas de estrés, optimización del bundle de 900KB a 209KB y despliegue en Render + Vercel.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                if (currentSlide < slides.length - 1) currentSlide++;
-                updateSlider();
-            } else if (e.key === 'ArrowLeft') {
-                if (currentSlide > 0) currentSlide--;
-                updateSlider();
-            }
-        });
-        
-        // Clic en pantalla para avanzar
-        document.body.addEventListener('click', (e) => {
-            if (e.clientX > window.innerWidth / 2) {
-                if (currentSlide < slides.length - 1) currentSlide++;
-            } else {
-                if (currentSlide > 0) currentSlide--;
-            }
-            updateSlider();
-        });
+<!-- HARDWARE + CAJA 3D -->
+<div class="slide" id="s6">
+<div class="sc split">
+  <div>
+    <span class="eyebrow a1">Hardware IoT</span>
+    <h2 class="a2">El dispositivo <span class="grad">físico</span></h2>
+    <div class="cg cg3 a3">
+      <div class="card"><div class="card-icon ci-b">📡</div><h4>ESP8266</h4><p>Gateway WiFi al backend vía HTTPS. Polling cada 600ms.</p></div>
+      <div class="card"><div class="card-icon ci-p">👆</div><h4>AS608</h4><p>Sensor huella dactilar. 127 plantillas. 2 capturas.</p></div>
+      <div class="card"><div class="card-icon ci-b">💳</div><h4>PN532 NFC</h4><p>Tarjetas MIFARE en menos de 1s.</p></div>
+    </div>
+    <div class="pill-row a4">
+      <span class="tag tag-gr">Switch USB ↔ WiFi</span>
+      <span class="tag tag-gr">Buzzer Bridge 2×</span>
+      <span class="tag tag-gr">SoftwareSerial 4800</span>
+    </div>
+  </div>
+  <div class="a3" style="display:flex;flex-direction:column;align-items:center">
+    <p style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem;text-align:center">↻ Arrastra para rotar la caja</p>
+    <model-viewer src="/caja_deadpool.glb" alt="Caja Arachiz 3D" auto-rotate camera-controls shadow-intensity="0.8" environment-image="neutral"></model-viewer>
+  </div>
+</div>
+</div>
 
-        updateSlider();
-    </script>
+<!-- ARQUITECTURA -->
+<div class="slide" id="s7">
+<div class="sc center">
+  <span class="eyebrow a1">Arquitectura</span>
+  <h2 class="a2">Cómo <span class="grad">todo conecta</span></h2>
+  <div class="arch a3">
+    <div class="ab"><div class="abi">⚛️</div><div class="abn">Frontend</div><div class="abt">React 19 · Vite<br>Vercel</div></div>
+    <div class="aa">⇄</div>
+    <div class="ab hi"><div class="abi">🟢</div><div class="abn">Backend</div><div class="abt">Node.js · Express<br>Render</div></div>
+    <div class="aa">⇄</div>
+    <div class="ab"><div class="abi">🗄️</div><div class="abn">Base de Datos</div><div class="abt">PostgreSQL<br>Supabase</div></div>
+  </div>
+  <div class="pill-row c a4">
+    <span class="tag tag-b">🔌 Socket.io</span><span class="tag tag-g">Prisma ORM</span>
+    <span class="tag tag-b">🔐 JWT Auth</span><span class="tag tag-y">📡 ESP8266 HTTP</span>
+    <span class="tag tag-r">📧 Web Push</span>
+  </div>
+</div>
+</div>
+
+<!-- TECH STACK — 2 filas de 6 con logos reales -->
+<div class="slide" id="s8">
+<div class="sc center">
+  <span class="eyebrow a1">Stack Tecnológico</span>
+  <h2 class="a2"><span class="grad">Las herramientas</span></h2>
+  <div class="tg-2rows a3">
+    <div class="trow">
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React"><div class="tin">React 19</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite"><div class="tin">Vite</div></div>
+      <div class="ti"><img class="timg" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" alt="Tailwind"><div class="tin">Tailwind</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="tin">Node.js</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" alt="Express" style="filter:brightness(0)"><div class="tin">Express</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" alt="Prisma"><div class="tin">Prisma</div></div>
+    </div>
+    <div class="trow">
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL"><div class="tin">PostgreSQL</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker"><div class="tin">Docker</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"><div class="tin">GitHub</div></div>
+      <div class="ti"><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" alt="Arduino"><div class="tin">Arduino</div></div>
+      <div class="ti"><div class="tii">🔌</div><div class="tin">Socket.io</div></div>
+      <div class="ti"><div class="tii">☁️</div><div class="tin">Supabase</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- OPTIMIZACIÓN -->
+<div class="slide" id="s9">
+<div class="sc center">
+  <span class="eyebrow a1">Rendimiento</span>
+  <h2 class="a2">Bundle reducido <span class="grad">77%</span></h2>
+  <p class="subtitle a3">Carga rápida. Experiencia fluida. Costo operativo cero.</p>
+  <div class="mr a4">
+    <div class="mc"><div class="mv" style="color:var(--red)">900KB</div><div class="ml">Bundle original</div></div>
+    <div class="mc"><div class="mv" style="color:var(--green)">209KB</div><div class="ml">Bundle optimizado ↓ 77%</div></div>
+    <div class="mc"><div class="mv" style="color:var(--blue)">$0</div><div class="ml">Costo mensual total</div></div>
+  </div>
+</div>
+</div>
+
+<!-- JERARQUÍA -->
+<div class="slide" id="s11">
+<div class="sc center">
+  <span class="eyebrow a1">Jerarquía de Acceso</span>
+  <h2 class="a2">3 niveles de <span class="grad">permisos</span></h2>
+  <div class="pyr-wrap a3">
+    <div class="pyr py1">👑 Administrador</div>
+    <div class="pya">▼</div>
+    <div class="pyr py2">🎓 Instructor</div>
+    <div class="pya">▼</div>
+    <div class="pyr py3">🧑‍💻 Aprendiz</div>
+  </div>
+  <p class="subtitle a4" style="margin-top:1rem">Middleware JWT bloquea cada ruta según el rol. Sin excepciones.</p>
+</div>
+</div>
+
+<!-- ROLES -->
+<div class="slide" id="s12">
+<div class="sc center">
+  <span class="eyebrow a1">Instructor & Aprendiz</span>
+  <h2 class="a2">Cada uno en <span class="grad">su carril</span></h2>
+  <div class="cg cg2 a3" style="width:100%;margin-top:1rem">
+    <div class="rc ins">
+      <div class="rci">🎓</div><div class="rct">Instructor</div>
+      <div class="rcd">Gestiona sus propias fichas y aprendices.</div>
+      <div class="pi">Crear materias y horarios</div>
+      <div class="pi">Iniciar sesiones de asistencia</div>
+      <div class="pi">Gestionar excusas con archivos</div>
+      <div class="pi">Exportar reportes Excel / PDF</div>
+      <div class="pi no">No ve fichas de otros instructores</div>
+    </div>
+    <div class="rc apr">
+      <div class="rci">🧑‍💻</div><div class="rct">Aprendiz</div>
+      <div class="rcd">Usuario final del sistema.</div>
+      <div class="pi">Marcar asistencia (4 métodos)</div>
+      <div class="pi">Enviar excusas con adjuntos</div>
+      <div class="pi">Ver su historial completo</div>
+      <div class="pi">Perfil y notificaciones push</div>
+      <div class="pi no">No ve datos de otros aprendices</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PERMISOS -->
+<div class="slide" id="s13">
+<div class="sc center">
+  <span class="eyebrow a1">Tabla de Permisos</span>
+  <h2 class="a2">Quién puede <span class="grad">hacer qué</span></h2>
+  <div class="pt-wrap a3">
+    <table class="pt-tbl">
+      <thead><tr><th>Acción</th><th>👑 Admin</th><th>🎓 Instructor</th><th>🧑‍💻 Aprendiz</th></tr></thead>
+      <tbody>
+        <tr><td>Ver todos los usuarios</td><td><span class="chk">✓</span></td><td><span class="crs">✗</span></td><td><span class="crs">✗</span></td></tr>
+        <tr><td>Gestionar fichas propias</td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td><td><span class="crs">✗</span></td></tr>
+        <tr><td>Iniciar sesión de asistencia</td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td><td><span class="crs">✗</span></td></tr>
+        <tr><td>Marcar asistencia</td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td></tr>
+        <tr><td>Exportar reportes</td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td><td><span class="crs">✗</span></td></tr>
+        <tr><td>Acceder a papelera</td><td><span class="chk">✓</span></td><td><span class="crs">✗</span></td><td><span class="crs">✗</span></td></tr>
+        <tr><td>Gestionar excusas</td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td><td><span class="chk">✓</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- LOGROS -->
+<div class="slide" id="s14">
+<div class="sc center">
+  <span class="eyebrow a1">Logros</span>
+  <h2 class="a2">Lo que <span class="grad">construimos</span></h2>
+  <div class="ag a3">
+    <div class="ac"><div class="aci">🌐</div><div><div class="act">Sistema en producción</div><div class="acs">arachiz.vercel.app — disponible ahora</div></div></div>
+    <div class="ac"><div class="aci">🔐</div><div><div class="act">4 métodos biométricos</div><div class="acs">QR · NFC · Huella · Facial</div></div></div>
+    <div class="ac"><div class="aci">⚡</div><div><div class="act">Tiempo real</div><div class="acs">WebSockets con Socket.io</div></div></div>
+    <div class="ac"><div class="aci">🔧</div><div><div class="act">Hardware IoT propio</div><div class="acs">ESP8266 + AS608 + PN532</div></div></div>
+    <div class="ac"><div class="aci">📊</div><div><div class="act">Reportes y exportación</div><div class="acs">CSV · PDF · Historial completo</div></div></div>
+    <div class="ac"><div class="aci">💰</div><div><div class="act">Costo de operación</div><div class="acs" style="color:var(--green);font-weight:700">$0 pesos mensuales</div></div></div>
+  </div>
+</div>
+</div>
+
+<!-- CIERRE -->
+<div class="slide" id="s15">
+<div class="sc split">
+  <div>
+    <img src="/ArachizLogoPNG.png" class="logo-hero asc" onerror="this.src='/docs/presentations/ArachizLogoPNG.png'" alt="Arachiz" style="margin-bottom:.7rem">
+    <h1 class="a1" style="font-size:clamp(28px,4.5vw,58px);letter-spacing:-2px;margin-bottom:.6rem">
+      <span class="grad-animate">Pruébalo</span><br>ahora mismo.
+    </h1>
+    <div class="a2 url-big grad" style="text-align:left;margin-bottom:.9rem">arachiz.vercel.app</div>
+    <div class="pill-row a3" style="margin-top:0">
+      <span class="tag tag-g">✅ En producción</span>
+      <span class="tag tag-b">💸 Costo $0</span>
+      <span class="tag tag-gr">Proyecto Formativo SENA</span>
+    </div>
+    <p style="margin-top:1.5rem;font-size:1.1rem;font-weight:700;color:var(--dark)" class="a4">¿Preguntas? 🙋</p>
+  </div>
+  <div class="a3" style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+    <div class="qr-box">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://arachiz.vercel.app&color=111827&bgcolor=ffffff&qzone=1" width="200" height="200" style="display:block;border-radius:6px" alt="QR">
+    </div>
+    <span style="font-size:.72rem;color:var(--muted);font-weight:600">Escanea para abrir</span>
+  </div>
+</div>
+</div>
+
+<script>
+const BD=[
+  {l:'10%',s:48,c:'#4285F4',d:12,dl:0},{l:'20%',s:64,c:'#EA4335',d:10,dl:1},
+  {l:'30%',s:72,c:'#FBBC05',d:14,dl:2},{l:'40%',s:56,c:'#34A853',d:11,dl:0},
+  {l:'50%',s:80,c:'#4285F4',d:13,dl:1.5},{l:'60%',s:52,c:'#EA4335',d:12,dl:.5},
+  {l:'70%',s:68,c:'#FBBC05',d:10,dl:2.5},{l:'80%',s:60,c:'#34A853',d:11,dl:1},
+  {l:'85%',s:76,c:'#4285F4',d:13,dl:0},{l:'15%',s:44,c:'#EA4335',d:12,dl:2},
+  {l:'25%',s:88,c:'#34A853',d:14,dl:.5},{l:'45%',s:70,c:'#FBBC05',d:11,dl:1.5},
+  {l:'65%',s:58,c:'#4285F4',d:12,dl:2},{l:'75%',s:84,c:'#EA4335',d:13,dl:.5},
+  {l:'90%',s:66,c:'#34A853',d:10,dl:1},
+];
+const bDiv=document.getElementById('bubbles');
+BD.forEach(b=>{
+  const el=document.createElement('div');el.className='bubble';
+  el.style.cssText=`left:${b.l};width:${b.s}px;height:${b.s}px;background:${b.c};animation-duration:${b.d}s;animation-delay:${b.dl}s`;
+  bDiv.appendChild(el);
+});
+
+const slides=document.querySelectorAll('.slide');
+let cur=0;
+
+function nav(d){
+  const prev=cur;
+  cur=Math.max(0,Math.min(cur+d,slides.length-1));
+  if(cur===prev)return;
+  slides[prev].classList.remove('active');
+  slides[prev].classList.add('exit');
+  setTimeout(()=>slides[prev].classList.remove('exit'),500);
+  slides[cur].classList.add('active');
+  sync();
+}
+
+function sync(){
+  document.getElementById('pbar').style.width=((cur+1)/slides.length*100)+'%';
+  document.getElementById('pnum').textContent=(cur+1)+' / '+slides.length;
+}
+
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();nav(1);}
+  else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();nav(-1);}
+});
+document.body.addEventListener('click',e=>{
+  if(e.target.closest('.arrow')||e.target.closest('model-viewer'))return;
+  nav(e.clientX>window.innerWidth/2?1:-1);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)nav(dx<0?1:-1);});
+sync();
+</script>
 </body>
 </html>

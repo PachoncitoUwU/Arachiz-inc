@@ -104,7 +104,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     setMode('fingerprint');
     setStatus('waiting');
     const modeLabel = connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB';
-    setMessage(`Sigue las instrucciones del lector de huella... [${modeLabel}]`);
+    setMessage(`Sigue las instrucciones del lector — se harán 2 capturas [${modeLabel}]`);
     try {
       const { nextId } = await fetchApi('/serial/next-finger-id');
       await fetchApi('/serial/enroll/finger', {
@@ -353,7 +353,13 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
               {mode === 'nfc' ? <CreditCard size={48} className="text-[#4285F4] animate-pulse" /> : <Fingerprint size={48} className="text-purple-500 animate-pulse" />}
               <div className="absolute -inset-4 bg-blue-500/20 rounded-full animate-ping" />
             </div>
-            <p className="text-lg font-medium text-gray-800 animate-pulse">{message}</p>
+            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 animate-pulse">{message}</p>
+            {mode === 'fingerprint' && (
+              <p className="text-xs text-gray-400 mt-3 max-w-xs text-center">
+                El lector pedirá el dedo <strong>2 veces</strong>.<br/>
+                Captura 1 → retira → captura 2
+              </p>
+            )}
             <p className="text-sm text-gray-400 mt-2">Esperando respuesta del Arduino...</p>
           </div>
         )}
