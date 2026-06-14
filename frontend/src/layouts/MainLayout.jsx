@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PerfilPropioModal from '../components/PerfilPropioModal';
+import ArachizAssist from '../components/ArachizAssist';
 import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
@@ -280,6 +281,7 @@ export default function MainLayout({ allowedRoles }) {
         cancelText="Cancelar"
         danger={true}
       />
+      <ArachizAssist />
     </>
   );
 }

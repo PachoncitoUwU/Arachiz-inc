@@ -18,7 +18,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         });
 
         if (user) {
-          // Usuario existe, retornar
+          // Si el usuario existe pero no tiene avatar, o si queremos mantener la de Google
+          if (!user.avatarUrl && profile.photos?.[0]?.value) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { avatarUrl: profile.photos[0].value }
+            });
+          }
           return done(null, user);
         }
 
