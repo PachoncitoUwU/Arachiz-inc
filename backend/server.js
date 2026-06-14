@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const session = require('express-session');
 const passport = require('./config/passport');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const fichaRoutes = require('./routes/fichaRoutes');
@@ -36,11 +38,33 @@ const { checkAndCloseExpiredSessions } = require('./controllers/asistenciaContro
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+
+// ── CORS: solo el dominio oficial ────────────────────────────────────────────
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ['http://localhost:5173'];
+
+const io = new Server(server, {
+  cors: { origin: allowedOrigins, credentials: true }
+});
 
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// ── Compresión gzip/Brotli ────────────────────────────────────────────────────
+app.use(compression());
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// ── Rate limiting en auth ─────────────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20,                   // máx 20 intentos por IP en ese ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.' }
+});
+
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

@@ -25,6 +25,9 @@ router.post('/join/:code', adminController.unirseAFicha);
 // Obtener historial de cambios de una ficha (DEBE IR ANTES de la ruta genérica)
 router.get('/fichas/:fichaId/historial', isAdminDeFicha, adminController.getHistorialFicha);
 
+// Obtener historial global de todas las fichas del admin (auditoría)
+router.get('/historial', adminController.getHistorialGlobal);
+
 // Obtener detalle de una ficha específica
 router.get('/fichas/:fichaId', isAdminDeFicha, adminController.getFichaDetalle);
 

@@ -4,9 +4,19 @@ const authController = require('../controllers/authController');
 const faceController = require('../controllers/faceController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const uploadMiddleware = require('../middlewares/uploadMiddleware');
+const rateLimit = require('express-rate-limit');
 
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// Rate limiter exclusivo para login y register (20 intentos / 15 min por IP)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.' }
+});
+
+router.post('/register', authLimiter, authController.register);
+router.post('/login', authLimiter, authController.login);
 router.get('/me', authMiddleware, authController.getMe);
 router.put('/profile', authMiddleware, uploadMiddleware.single('avatar'), authController.updateProfile);
 router.put('/change-password', authMiddleware, authController.changePassword);

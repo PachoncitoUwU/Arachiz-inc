@@ -1749,6 +1749,65 @@ const getHistorialFicha = async (req, res) => {
   }
 };
 
+/**
+ * Obtener historial global de TODAS las fichas del administrador
+ * Con paginación, filtro por ficha, tipo de evento y búsqueda de texto
+ */
+const getHistorialGlobal = async (req, res) => {
+  try {
+    const { limit = 50, offset = 0, fichaId, tipoEvento, entidad, busqueda } = req.query;
+
+    // Obtener IDs de todas las fichas del admin
+    const fichasAdmin = await prisma.ficha.findMany({
+      where: { administradorId: req.user.id },
+      select: { id: true, numero: true, nombre: true }
+    });
+
+    if (fichasAdmin.length === 0) {
+      return res.json({ historial: [], total: 0, fichas: [] });
+    }
+
+    const fichaIds = fichasAdmin.map(f => f.id);
+
+    // Construir filtros dinámicos
+    const where = {
+      fichaId: fichaId ? fichaId : { in: fichaIds }
+    };
+
+    if (tipoEvento) where.tipoEvento = { contains: tipoEvento, mode: 'insensitive' };
+    if (entidad) where.entidad = { equals: entidad, mode: 'insensitive' };
+    if (busqueda) where.descripcion = { contains: busqueda, mode: 'insensitive' };
+
+    const [historial, total] = await Promise.all([
+      prisma.historialCambios.findMany({
+        where,
+        include: {
+          usuario: {
+            select: { id: true, fullName: true, email: true, userType: true }
+          },
+          ficha: {
+            select: { id: true, numero: true, nombre: true }
+          }
+        },
+        orderBy: { fechaHora: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+      }),
+      prisma.historialCambios.count({ where })
+    ]);
+
+    res.json({
+      historial,
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      fichas: fichasAdmin
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error obteniendo historial global: ' + err.message });
+  }
+};
+
 module.exports = {
   getFichasAdmin,
   getFichaDetalle,
@@ -1772,5 +1831,6 @@ module.exports = {
   getMateriasDeInstructor,
   getExcusasAdmin,
   getEstadisticasExcusas,
-  getHistorialFicha
+  getHistorialFicha,
+  getHistorialGlobal
 };

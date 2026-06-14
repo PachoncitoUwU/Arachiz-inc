@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
   Settings, Moon, Sun, FolderOpen, BarChart3, Trash2, Search,
-  Database, Save, Activity
+  Database, Save, Activity, ClipboardList
 } from 'lucide-react';
 
 const INSTRUCTOR_LINKS = [
@@ -29,6 +29,7 @@ const ADMIN_LINKS = [
   { to: '/admin/excusas', icon: FileText, labelKey: 'excusas' },
   { to: '/admin/reportes', icon: BarChart3, labelKey: 'reportes' },
   { to: '/admin/papelera', icon: Trash2, labelKey: 'papelera' },
+  { to: '/admin/auditoria', icon: ClipboardList, labelKey: 'auditoria' },
 ];
 
 const APRENDIZ_LINKS = [

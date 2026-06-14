@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -7,6 +7,7 @@ import MainLayout from './layouts/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 
+// ── Páginas críticas (carga inmediata — siempre necesarias) ───────────────────
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -14,52 +15,67 @@ import ResetPassword from './pages/auth/ResetPassword';
 import GoogleCallback from './pages/auth/GoogleCallback';
 import CompleteProfile from './pages/auth/CompleteProfile';
 import Landing from './pages/Landing';
-import AboutUs from './pages/AboutUs';
-import Slides from './pages/Slides';
 
-import InstructorDashboard  from './pages/instructor/Dashboard';
-import InstructorFichas     from './pages/instructor/Fichas';
-import InstructorFichaDetalle from './pages/instructor/FichaDetalle';
-import InstructorMaterias   from './pages/instructor/Materias';
-import InstructorHorario    from './pages/instructor/Horario';
-import InstructorAsistencia from './pages/instructor/Asistencia';
-import InstructorExcusas    from './pages/instructor/Excusas';
-import InstructorReportes   from './pages/instructor/Reportes';
+// ── Páginas lazy (se cargan solo cuando el usuario navega a ellas) ────────────
+const AboutUs      = lazy(() => import('./pages/AboutUs'));
+const Slides       = lazy(() => import('./pages/Slides'));
+const Configuracion = lazy(() => import('./pages/Configuracion'));
+const JoinFicha    = lazy(() => import('./pages/JoinFicha'));
+const ScanQR       = lazy(() => import('./pages/ScanQR'));
+const PaymentStatus = lazy(() => import('./pages/PaymentStatus'));
+const Perfil       = lazy(() => import('./pages/Perfil'));
 
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminFichas from './pages/admin/Fichas';
-import AdminFichaDetalle from './pages/admin/FichaDetalle';
-import AdminUsuarios from './pages/admin/Usuarios';
-import AdminHorarios from './pages/admin/Horarios';
-import AdminExcusas from './pages/admin/Excusas';
-import AdminReportes from './pages/admin/Reportes';
-import AdminPapelera from './pages/admin/Papelera';
-import AdminConfiguracion from './pages/admin/Configuracion';
+// ── Instructor ─────────────────────────────────────────────────────────────────
+const InstructorDashboard   = lazy(() => import('./pages/instructor/Dashboard'));
+const InstructorFichas      = lazy(() => import('./pages/instructor/Fichas'));
+const InstructorFichaDetalle = lazy(() => import('./pages/instructor/FichaDetalle'));
+const InstructorMaterias    = lazy(() => import('./pages/instructor/Materias'));
+const InstructorHorario     = lazy(() => import('./pages/instructor/Horario'));
+const InstructorAsistencia  = lazy(() => import('./pages/instructor/Asistencia'));
+const InstructorExcusas     = lazy(() => import('./pages/instructor/Excusas'));
+const InstructorReportes    = lazy(() => import('./pages/instructor/Reportes'));
 
-import SuperDashboard from './pages/superuser/Dashboard';
-import SuperUsuarios from './pages/superuser/Usuarios';
-import SuperFichas from './pages/superuser/Fichas';
-import SuperMaterias from './pages/superuser/Materias';
-import SuperDatabase from './pages/superuser/Database';
-import SuperExcusas from './pages/superuser/Excusas';
-import SuperBackup from './pages/superuser/Backup';
-import SuperLogs from './pages/superuser/Logs';
-import SuperEstadisticas from './pages/superuser/Estadisticas';
+// ── Admin ──────────────────────────────────────────────────────────────────────
+const AdminDashboard     = lazy(() => import('./pages/admin/Dashboard'));
+const AdminFichas        = lazy(() => import('./pages/admin/Fichas'));
+const AdminFichaDetalle  = lazy(() => import('./pages/admin/FichaDetalle'));
+const AdminUsuarios      = lazy(() => import('./pages/admin/Usuarios'));
+const AdminHorarios      = lazy(() => import('./pages/admin/Horarios'));
+const AdminExcusas       = lazy(() => import('./pages/admin/Excusas'));
+const AdminReportes      = lazy(() => import('./pages/admin/Reportes'));
+const AdminPapelera      = lazy(() => import('./pages/admin/Papelera'));
+const AdminConfiguracion = lazy(() => import('./pages/admin/Configuracion'));
+const AdminAuditoria     = lazy(() => import('./pages/admin/Auditoria'));
 
-import AprendizDashboard  from './pages/aprendiz/Dashboard';
-import AprendizFichas     from './pages/aprendiz/Fichas';
-import AprendizFichaDetalle from './pages/aprendiz/FichaDetalle';
-import AprendizMaterias   from './pages/aprendiz/Materias';
-import AprendizHorario    from './pages/aprendiz/Horario';
-import AprendizAsistencia from './pages/aprendiz/Asistencia';
-import AprendizExcusas    from './pages/aprendiz/Excusas';
-import AprendizCompañeros from './pages/aprendiz/Compañeros';
+// ── Super Usuario ──────────────────────────────────────────────────────────────
+const SuperDashboard    = lazy(() => import('./pages/superuser/Dashboard'));
+const SuperUsuarios     = lazy(() => import('./pages/superuser/Usuarios'));
+const SuperFichas       = lazy(() => import('./pages/superuser/Fichas'));
+const SuperMaterias     = lazy(() => import('./pages/superuser/Materias'));
+const SuperDatabase     = lazy(() => import('./pages/superuser/Database'));
+const SuperExcusas      = lazy(() => import('./pages/superuser/Excusas'));
+const SuperBackup       = lazy(() => import('./pages/superuser/Backup'));
+const SuperLogs         = lazy(() => import('./pages/superuser/Logs'));
+const SuperEstadisticas = lazy(() => import('./pages/superuser/Estadisticas'));
 
-import Configuracion from './pages/Configuracion';
-import JoinFicha from './pages/JoinFicha';
-import ScanQR from './pages/ScanQR';
-import PaymentStatus from './pages/PaymentStatus';
-import Perfil from './pages/Perfil';
+// ── Aprendiz ───────────────────────────────────────────────────────────────────
+const AprendizDashboard   = lazy(() => import('./pages/aprendiz/Dashboard'));
+const AprendizFichas      = lazy(() => import('./pages/aprendiz/Fichas'));
+const AprendizFichaDetalle = lazy(() => import('./pages/aprendiz/FichaDetalle'));
+const AprendizMaterias    = lazy(() => import('./pages/aprendiz/Materias'));
+const AprendizHorario     = lazy(() => import('./pages/aprendiz/Horario'));
+const AprendizAsistencia  = lazy(() => import('./pages/aprendiz/Asistencia'));
+const AprendizExcusas     = lazy(() => import('./pages/aprendiz/Excusas'));
+const AprendizCompañeros  = lazy(() => import('./pages/aprendiz/Compañeros'));
+
+// ── Spinner mínimo para Suspense ───────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -69,6 +85,7 @@ export default function App() {
         <SettingsProvider>
         <ToastProvider>
           <AuthProvider>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
@@ -108,6 +125,7 @@ export default function App() {
                 <Route path="excusas"        element={<AdminExcusas />} />
                 <Route path="reportes"       element={<AdminReportes />} />
                 <Route path="papelera"       element={<AdminPapelera />} />
+                <Route path="auditoria"      element={<AdminAuditoria />} />
                 <Route path="configuracion"  element={<AdminConfiguracion />} />
                 <Route path="perfil"         element={<Perfil />} />
               </Route>
@@ -142,6 +160,7 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
+            </Suspense>
           </AuthProvider>
         </ToastProvider>
       </SettingsProvider>

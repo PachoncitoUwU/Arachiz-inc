@@ -227,6 +227,9 @@ const importMaterias = async (req, res) => {
 
     const resultados = { creados: 0, errores: [], filas: 0 };
 
+    // Recopilar materias válidas primero para insertarlas en lote
+    const materiasACrear = [];
+
     for (let i = 2; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
       if (!row.hasValues) continue;
@@ -241,29 +244,38 @@ const importMaterias = async (req, res) => {
         continue;
       }
 
-      // Validar si ya existe
-      if (ficha.materias.some(m => m.nombre.toLowerCase() === nombre.toLowerCase())) {
+      // Validar si ya existe en la ficha (comparar con las existentes Y las que ya vamos a crear)
+      const yaExiste = ficha.materias.some(m => m.nombre.toLowerCase() === nombre.toLowerCase())
+        || materiasACrear.some(m => m.nombre.toLowerCase() === nombre.toLowerCase());
+
+      if (yaExiste) {
         resultados.errores.push(`Fila ${i}: La materia ${nombre} ya existe en la ficha`);
         continue;
       }
 
-      await prisma.materia.create({
-        data: {
-          nombre,
-          tipo: tipo || 'Transversal',
-          fichaId,
-          instructorId // Se le asigna por defecto al que la subió
-        }
+      materiasACrear.push({
+        nombre,
+        tipo: tipo || 'Transversal',
+        fichaId,
+        instructorId
       });
+    }
+
+    // Inserción en lote (una sola query en lugar de N queries)
+    if (materiasACrear.length > 0) {
+      await prisma.materia.createMany({
+        data: materiasACrear,
+        skipDuplicates: true
+      });
+      resultados.creados = materiasACrear.length;
 
       await prisma.historialCambios.create({
         data: {
           fichaId, usuarioId: instructorId,
           tipoEvento: 'IMPORTACION_MATERIA', entidad: 'Ficha', entidadId: fichaId,
-          descripcion: `Materia ${nombre} importada masivamente`
+          descripcion: `${materiasACrear.length} materias importadas masivamente`
         }
       });
-      resultados.creados++;
     }
 
     res.json({ message: 'Importación finalizada', resultados });
@@ -523,18 +535,15 @@ const confirmExcelFicha = async (req, res) => {
       });
 
       if (materias && materias.length > 0) {
-        await Promise.all(
-          materias.map(async (materiaNombre) => {
-            return tx.materia.create({
-              data: {
-                nombre: materiaNombre,
-                tipo: 'Técnica',
-                fichaId: newFicha.id,
-                instructorId: instructorId
-              }
-            });
-          })
-        );
+        await tx.materia.createMany({
+          data: materias.map((materiaNombre) => ({
+            nombre: materiaNombre,
+            tipo: 'Técnica',
+            fichaId: newFicha.id,
+            instructorId: instructorId
+          })),
+          skipDuplicates: true
+        });
       }
 
       await tx.historialCambios.create({
