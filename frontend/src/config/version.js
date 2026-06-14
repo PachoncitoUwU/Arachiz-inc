@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.5.0';
+export const VERSION = '1.4.305';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.305',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.305',
+    changes: [
+      'Merge branch main of https://github.com/PachoncitoUwU/Arachiz-inc',
+      'soy una mariposotaa'
+    ]
+  },
   {
     version: '1.5.0',
     date: '2026-06-11',
