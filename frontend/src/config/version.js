@@ -3,9 +3,19 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.316';
+export const VERSION = '1.4.320';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.320',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.320',
+    changes: [
+      'Merge pull request #55 from PachoncitoUwU/TodoloFue',
+      'porfin se arreglo ese pefil',
+      'feat: add ArachizAssist AI chatbot + presentation tooltips'
+    ]
+  },
   {
     version: '1.4.316',
     date: '2026-06-14',
