@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Users, Target, Code, Database, Palette, Instagram, Coffee, Heart, Sparkles, X } from 'lucide-react';
 
@@ -12,8 +12,9 @@ export default function AboutUs() {
   const [donationAmount, setDonationAmount] = useState('');
   const [amountError, setAmountError] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  // Easter egg: doble clic en "Arachiz" → caja 3D
+  // Easter egg: doble clic en "Arachiz" → página secreta de slides
   const [showEasterEgg, setShowEasterEgg] = useState(false);
 
   // Cargar model-viewer una sola vez
@@ -252,7 +253,7 @@ export default function AboutUs() {
               <p>
                 <strong
                   className="text-gray-900 dark:text-white cursor-pointer select-none"
-                  onDoubleClick={() => setShowEasterEgg(true)}
+                  onDoubleClick={() => navigate('/arachiz-slides-2025')}
                   title="💀"
                 >Arachiz</strong> es una plataforma integral diseñada para revolucionar la gestión de asistencia en instituciones educativas. Nuestro software combina tecnología de vanguardia con una interfaz intuitiva para facilitar el control y seguimiento de la asistencia de estudiantes e instructores.
               </p>
@@ -261,53 +262,6 @@ export default function AboutUs() {
               </p>
             </div>
           </motion.div>
-
-          {/* Easter egg: caja 3D */}
-          <AnimatePresence>
-            {showEasterEgg && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-                style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
-                onClick={() => setShowEasterEgg(false)}
-              >
-                <motion.div
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                  className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl p-6 max-w-sm w-full relative"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <button
-                    onClick={() => setShowEasterEgg(false)}
-                    className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
-                  <p className="text-xs font-bold tracking-widest text-[#4285F4] uppercase mb-1 text-center">Easter Egg 💀</p>
-                  <h3 className="text-lg font-extrabold text-gray-900 dark:text-white text-center mb-4">
-                    La caja de Deadpool
-                  </h3>
-                  {/* model-viewer — carga el GLB desde el CDN del backend o ruta pública */}
-                  <model-viewer
-                    src="/caja_deadpool.glb"
-                    alt="Caja Deadpool 3D"
-                    auto-rotate
-                    camera-controls
-                    shadow-intensity="1"
-                    environment-image="neutral"
-                    style={{ width: '100%', height: '280px', background: 'transparent' }}
-                  />
-                  <p className="text-xs text-gray-400 text-center mt-3">
-                    Haz doble clic en "Arachiz" para ver esto 🤫
-                  </p>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Enfoque del Software */}
           <motion.div 

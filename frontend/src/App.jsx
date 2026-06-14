@@ -15,6 +15,7 @@ import GoogleCallback from './pages/auth/GoogleCallback';
 import CompleteProfile from './pages/auth/CompleteProfile';
 import Landing from './pages/Landing';
 import AboutUs from './pages/AboutUs';
+import Slides from './pages/Slides';
 
 import InstructorDashboard  from './pages/instructor/Dashboard';
 import InstructorFichas     from './pages/instructor/Fichas';
@@ -71,6 +72,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
+              {/* Ruta secreta — no aparece en menús */}
+              <Route path="/arachiz-slides-2025" element={<Slides />} />
               <Route path="/login"    element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
