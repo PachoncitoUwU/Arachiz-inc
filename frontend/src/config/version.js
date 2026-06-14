@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.314';
+export const VERSION = '1.4.316';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.316',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.316',
+    changes: [
+      'feat: sistema de notificaciones + cache de sesiones + mejoras en escaner facial'
+    ]
+  },
   {
     version: '1.4.314',
     date: '2026-06-14',
