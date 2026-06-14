@@ -26,46 +26,72 @@ const getProfileStats = async (req, res) => {
     let recentHistory = [];
     
     if (user.userType === 'aprendiz') {
+      // totalAsistencias: cuenta directo en BD (O(1) en índice)
       totalAsistencias = await prisma.registroAsistencia.count({
         where: { aprendizId: userId, presente: true }
       });
 
-      // 1. Estadísticas por materia (Chart Data)
-      const todosLosRegistros = await prisma.registroAsistencia.findMany({
-        where: { aprendizId: userId },
-        include: {
-          asistencia: {
-            include: { materia: true }
-          }
-        }
-      });
+      // 1. Estadísticas por materia: agrupar en BD con groupBy, evitando cargar miles de filas
+      const [grupoPresentes, grupoAusentes] = await Promise.all([
+        prisma.registroAsistencia.groupBy({
+          by: ['asistenciaId'],
+          where: { aprendizId: userId, presente: true },
+          _count: { id: true }
+        }),
+        prisma.registroAsistencia.groupBy({
+          by: ['asistenciaId'],
+          where: { aprendizId: userId, presente: false },
+          _count: { id: true }
+        })
+      ]);
 
-      // Agrupar por materia
+      // Obtener los IDs únicos de asistencias para buscar su materia
+      const asistenciaIds = [...new Set([
+        ...grupoPresentes.map(g => g.asistenciaId),
+        ...grupoAusentes.map(g => g.asistenciaId)
+      ])];
+
+      const asistencias = await prisma.asistencia.findMany({
+        where: { id: { in: asistenciaIds } },
+        select: { id: true, materia: { select: { nombre: true } } }
+      });
+      const asistenciaMap = Object.fromEntries(asistencias.map(a => [a.id, a.materia.nombre]));
+
       const materiaStats = {};
-      todosLosRegistros.forEach(reg => {
-        const mat = reg.asistencia.materia.nombre;
-        if (!materiaStats[mat]) {
-          materiaStats[mat] = { subject: mat, total: 0, presentes: 0 };
-        }
-        materiaStats[mat].total += 1;
-        if (reg.presente) materiaStats[mat].presentes += 1;
+      grupoPresentes.forEach(g => {
+        const mat = asistenciaMap[g.asistenciaId] || 'Desconocida';
+        if (!materiaStats[mat]) materiaStats[mat] = { subject: mat, presentes: 0, ausencias: 0 };
+        materiaStats[mat].presentes += g._count.id;
+      });
+      grupoAusentes.forEach(g => {
+        const mat = asistenciaMap[g.asistenciaId] || 'Desconocida';
+        if (!materiaStats[mat]) materiaStats[mat] = { subject: mat, presentes: 0, ausencias: 0 };
+        materiaStats[mat].ausencias += g._count.id;
       });
 
       chartData = Object.values(materiaStats).map(st => ({
         subject: st.subject,
-        percentage: st.total > 0 ? Math.round((st.presentes / st.total) * 100) : 0,
+        percentage: (st.presentes + st.ausencias) > 0
+          ? Math.round((st.presentes / (st.presentes + st.ausencias)) * 100)
+          : 0,
         presentes: st.presentes,
-        ausencias: st.total - st.presentes
+        ausencias: st.ausencias
       }));
 
-      // 2. Historial Reciente
+      // 2. Historial Reciente — solo los 10 últimos, con select mínimo
       const registrosRecientes = await prisma.registroAsistencia.findMany({
         where: { aprendizId: userId },
         orderBy: { timestamp: 'desc' },
         take: 10,
-        include: {
+        select: {
+          id: true,
+          timestamp: true,
+          presente: true,
+          tarde: true,
+          justificado: true,
+          metodo: true,
           asistencia: {
-            include: { materia: true }
+            select: { materia: { select: { nombre: true } } }
           }
         }
       });
@@ -84,32 +110,35 @@ const getProfileStats = async (req, res) => {
         where: { instructorId: userId }
       });
 
-      // Para el instructor, mostrar clases impartidas por materia
-      const asistenciasCreadas = await prisma.asistencia.findMany({
+      // Para el instructor, agrupar en BD para no descargar todas las sesiones
+      const grupoMaterias = await prisma.asistencia.groupBy({
+        by: ['materiaId'],
         where: { instructorId: userId },
-        include: { materia: true }
+        _count: { id: true }
       });
 
-      const materiaStats = {};
-      asistenciasCreadas.forEach(ast => {
-        const mat = ast.materia.nombre;
-        if (!materiaStats[mat]) {
-          materiaStats[mat] = { subject: mat, clases: 0 };
-        }
-        materiaStats[mat].clases += 1;
+      const materiaIds = grupoMaterias.map(g => g.materiaId);
+      const materias = await prisma.materia.findMany({
+        where: { id: { in: materiaIds } },
+        select: { id: true, nombre: true }
       });
+      const materiaMap = Object.fromEntries(materias.map(m => [m.id, m.nombre]));
 
-      chartData = Object.values(materiaStats).map(st => ({
-        subject: st.subject,
-        clases: st.clases
+      chartData = grupoMaterias.map(g => ({
+        subject: materiaMap[g.materiaId] || 'Desconocida',
+        clases: g._count.id
       }));
 
-      // Historial Reciente de clases
+      // Historial Reciente de clases — solo los 10 últimos con select mínimo
       const clasesRecientes = await prisma.asistencia.findMany({
         where: { instructorId: userId },
         orderBy: { timestamp: 'desc' },
         take: 10,
-        include: { materia: true }
+        select: {
+          id: true,
+          timestamp: true,
+          materia: { select: { nombre: true } }
+        }
       });
 
       recentHistory = clasesRecientes.map(c => ({

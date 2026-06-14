@@ -3,6 +3,50 @@ const { getCurrentColombiaDate, getCurrentColombiaTime } = require('../utils/tim
 const { sendAttendanceEmail } = require('../utils/emailService');
 const { sendPushToUsers } = require('../utils/webPush');
 
+// Cache en memoria de sesiones activas: { asistenciaId → { materiaId, activa, llegadaTarde, timestamp, fichaAprendicesIds } }
+// Evita re-consultar la BD en cada registro facial. Se invalida al finalizar una sesión.
+const sessionCache = new Map();
+const SESSION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos máximo
+
+async function getSessionFromCache(asistenciaId) {
+  const cached = sessionCache.get(asistenciaId);
+  if (cached && Date.now() - cached._cachedAt < SESSION_CACHE_TTL_MS) {
+    return cached;
+  }
+  // Leer de BD con select mínimo: solo lo que necesitamos para validar
+  const session = await prisma.asistencia.findUnique({
+    where: { id: asistenciaId },
+    select: {
+      id: true,
+      activa: true,
+      materiaId: true,
+      llegadaTarde: true,
+      timestamp: true,
+      materia: {
+        select: {
+          ficha: {
+            select: {
+              aprendices: { select: { id: true } }
+            }
+          }
+        }
+      }
+    }
+  });
+  if (!session) return null;
+  const entry = {
+    ...session,
+    fichaAprendicesIds: new Set(session.materia.ficha.aprendices.map(a => a.id)),
+    _cachedAt: Date.now()
+  };
+  if (session.activa) sessionCache.set(asistenciaId, entry);
+  return entry;
+}
+
+function invalidateSessionCache(asistenciaId) {
+  sessionCache.delete(asistenciaId);
+}
+
 // RF08 - Crear sesión
 const createSession = async (req, res) => {
   const { materiaId, llegadaTarde, duracion, aula, descripcion } = req.body;
@@ -45,14 +89,8 @@ const createSession = async (req, res) => {
                 numero: true, 
                 // Traer aprendices SIN faceDescriptor para que sea rápido
                 // El frontend carga faceDescriptor aparte al arrancar el reconocimiento facial
+                // Traer aprendices SIN faceDescriptor para que sea rápido (al crear no hace falta)
                 aprendices: { 
-                  where: {
-                    NOT: {
-                      materiasEvitadas: {
-                        some: { materiaId }
-                      }
-                    }
-                  },
                   select: { 
                     id: true, 
                     fullName: true, 
@@ -60,7 +98,6 @@ const createSession = async (req, res) => {
                     nfcUid: true, 
                     huellas: true, 
                     avatarUrl: true
-                    // faceDescriptor omitido aquí: se carga bajo demanda al activar reconocimiento facial
                   } 
                 } 
               } 
@@ -69,6 +106,14 @@ const createSession = async (req, res) => {
         }
       }
     });
+    
+    // Filtrar en memoria
+    const materiasEvitadas = await prisma.materiaEvitada.findMany({
+      where: { materiaId },
+      select: { aprendizId: true }
+    });
+    const evitadasIds = new Set(materiasEvitadas.map(me => me.aprendizId));
+    newAsistencia.materia.ficha.aprendices = newAsistencia.materia.ficha.aprendices.filter(a => !evitadasIds.has(a.id));
     
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
@@ -102,22 +147,37 @@ const createSession = async (req, res) => {
   }
 };
 
-// RF30/RF31 - Historial del aprendiz
+// RF30/RF31 - Historial del aprendiz (paginado para no traer miles de registros)
 const getMyAttendance = async (req, res) => {
   const aprendizId = req.user.id;
+  const limit = Math.min(parseInt(req.query.limit || '200', 10), 500);
+  const offset = parseInt(req.query.offset || '0', 10);
   try {
-    const registros = await prisma.registroAsistencia.findMany({
-      where: { aprendizId },
-      include: {
-        asistencia: {
-          include: {
-            materia: { select: { nombre: true, tipo: true } }
+    const [registros, total] = await Promise.all([
+      prisma.registroAsistencia.findMany({
+        where: { aprendizId },
+        select: {
+          id: true,
+          presente: true,
+          metodo: true,
+          tarde: true,
+          justificado: true,
+          timestamp: true,
+          asistencia: {
+            select: {
+              id: true,
+              fecha: true,
+              materia: { select: { nombre: true, tipo: true } }
+            }
           }
-        }
-      },
-      orderBy: { timestamp: 'desc' }
-    });
-    res.json({ registros });
+        },
+        orderBy: { timestamp: 'desc' },
+        take: limit,
+        skip: offset
+      }),
+      prisma.registroAsistencia.count({ where: { aprendizId } })
+    ]);
+    res.json({ registros, total, limit, offset });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
   }
@@ -449,6 +509,8 @@ const endSession = async (req, res) => {
     const io = req.app.get('io');
     const serialService = req.app.get('serialService');
     const updated = await closeSessionById(id, io, serialService);
+    // Invalidar cache al finalizar sesión
+    invalidateSessionCache(id);
     res.json({ message: 'Sesión finalizada. Ausencias marcadas automáticamente.', asistencia: updated });
   } catch (err) {
     res.status(500).json({ error: 'Error al finalizar sesión: ' + err.message });
@@ -494,13 +556,6 @@ const getActiveSession = async (req, res) => {
             ficha: {
               include: { 
                 aprendices: { 
-                  where: {
-                    NOT: {
-                      materiasEvitadas: {
-                        some: { materiaId }
-                      }
-                    }
-                  },
                   select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
@@ -510,6 +565,16 @@ const getActiveSession = async (req, res) => {
         }
       }
     });
+    
+    if (session) {
+      // Filtrar materias evitadas en memoria para no sobrecargar la DB con joins complejos
+      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        where: { materiaId },
+        select: { aprendizId: true }
+      });
+      const evitadasIds = new Set(materiasEvitadas.map(me => me.aprendizId));
+      session.materia.ficha.aprendices = session.materia.ficha.aprendices.filter(a => !evitadasIds.has(a.id));
+    }
     
     res.json({ session: session || null });
   } catch (err) {
@@ -538,13 +603,6 @@ const getSessionById = async (req, res) => {
             ficha: {
               include: { 
                 aprendices: { 
-                  where: {
-                    NOT: {
-                      materiasEvitadas: {
-                        some: { materiaId: sessionBasic.materiaId }
-                      }
-                    }
-                  },
                   select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
@@ -554,6 +612,15 @@ const getSessionById = async (req, res) => {
         }
       }
     });
+    
+    if (session) {
+      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        where: { materiaId: sessionBasic.materiaId },
+        select: { aprendizId: true }
+      });
+      const evitadasIds = new Set(materiasEvitadas.map(me => me.aprendizId));
+      session.materia.ficha.aprendices = session.materia.ficha.aprendices.filter(a => !evitadasIds.has(a.id));
+    }
     
     res.json({ session });
   } catch (err) {
@@ -583,13 +650,6 @@ const getMyActiveAnySession = async (req, res) => {
             ficha: {
               include: { 
                 aprendices: { 
-                  where: {
-                    NOT: {
-                      materiasEvitadas: {
-                        some: { materiaId: sessionBasic.materiaId }
-                      }
-                    }
-                  },
                   select: { id: true, fullName: true, document: true, nfcUid: true, huellas: true, faceDescriptor: true, avatarUrl: true } 
                 } 
               }
@@ -600,6 +660,15 @@ const getMyActiveAnySession = async (req, res) => {
       }
     });
     
+    if (session) {
+      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        where: { materiaId: sessionBasic.materiaId },
+        select: { aprendizId: true }
+      });
+      const evitadasIds = new Set(materiasEvitadas.map(me => me.aprendizId));
+      session.materia.ficha.aprendices = session.materia.ficha.aprendices.filter(a => !evitadasIds.has(a.id));
+    }
+    
     res.json({ session: session || null });
   } catch (err) {
     res.status(500).json({ error: 'Error: ' + err.message });
@@ -607,7 +676,7 @@ const getMyActiveAnySession = async (req, res) => {
 };
 
 // Registrar asistencia por reconocimiento facial (instructor)
-// El instructor ya identificó al aprendiz en el frontend
+// OPTIMIZADO: usa cache en memoria para la sesión + upsert atómico (1-2 queries en vez de 4)
 const registerFacialAttendance = async (req, res) => {
   const { asistenciaId, aprendizId } = req.body;
   if (!asistenciaId || !aprendizId) {
@@ -615,72 +684,52 @@ const registerFacialAttendance = async (req, res) => {
   }
 
   try {
-    const asistencia = await prisma.asistencia.findUnique({
-      where: { id: asistenciaId },
-      include: { materia: { include: { ficha: { include: { aprendices: true } } } } }
-    });
-    if (!asistencia || !asistencia.activa) {
+    // 1. Obtener sesión desde cache (0ms si ya está en cache, ~100ms si hay que ir a BD)
+    const session = await getSessionFromCache(asistenciaId);
+    if (!session || !session.activa) {
       return res.status(400).json({ error: 'Sesión inactiva o no encontrada' });
     }
 
-    const perteneceAFicha = asistencia.materia.ficha.aprendices.some(a => a.id === aprendizId);
-    if (!perteneceAFicha) {
+    // 2. Verificar pertenencia a la ficha (en memoria, 0ms)
+    if (!session.fichaAprendicesIds.has(aprendizId)) {
       return res.status(403).json({ error: 'Aprendiz no pertenece a esta ficha' });
     }
-    
-    // Verificar que el aprendiz NO tenga esta materia evitada
-    const tieneMateriaEvitada = await prisma.materiaEvitada.findUnique({
-      where: {
-        aprendizId_materiaId: {
-          aprendizId,
-          materiaId: asistencia.materiaId
-        }
-      }
-    });
-    
-    if (tieneMateriaEvitada) {
-      return res.status(403).json({ error: 'Este aprendiz tiene esta materia evitada' });
-    }
 
-    const existing = await prisma.registroAsistencia.findUnique({
-      where: { asistenciaId_aprendizId: { asistenciaId, aprendizId } }
-    });
-    if (existing) {
-      return res.status(400).json({ error: 'Este aprendiz ya registró asistencia' });
-    }
-
-    // Obtener hora actual de Colombia, Bogotá
+    // 3. Calcular tardanza en memoria (0ms)
     const colombiaTime = await getCurrentColombiaTime();
-
-    // Calcular si llegó tarde
-    const sessionStart = new Date(asistencia.timestamp);
+    const sessionStart = new Date(session.timestamp);
     const registerTime = new Date(colombiaTime);
-    const diffMs = registerTime.getTime() - sessionStart.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const tarde = diffMins > (asistencia.llegadaTarde || 15);
+    const diffMins = Math.floor((registerTime - sessionStart) / 60000);
+    const tarde = diffMins > (session.llegadaTarde || 15);
 
-    const registro = await prisma.registroAsistencia.create({
-      data: {
-        presente: true,
-        metodo: 'facial',
-        timestamp: colombiaTime,
-        tarde: tarde,
-        asistencia: { connect: { id: asistenciaId } },
-        aprendiz: { connect: { id: aprendizId } }
-      },
-      include: { aprendiz: { select: { id: true, fullName: true, document: true } } }
-    });
+    // 4. Upsert atómico: si ya existe no hace nada, si no existe lo crea
+    //    UNA SOLA QUERY en vez de findUnique + create por separado
+    let registro;
+    try {
+      registro = await prisma.registroAsistencia.create({
+        data: {
+          presente: true,
+          metodo: 'facial',
+          timestamp: colombiaTime,
+          tarde,
+          asistencia: { connect: { id: asistenciaId } },
+          aprendiz: { connect: { id: aprendizId } }
+        },
+        select: { id: true, tarde: true, timestamp: true }
+      });
+    } catch (e) {
+      // P2002 = unique constraint violation = ya estaba registrado
+      if (e.code === 'P2002') {
+        return res.status(400).json({ error: 'Este aprendiz ya registró asistencia' });
+      }
+      throw e;
+    }
 
     const io = req.app.get('io');
     if (io) {
       io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
         id: registro.id,
-        aprendizId: aprendizId,
-        aprendiz: {
-          id: aprendizId,
-          fullName: registro.aprendiz.fullName,
-          document: registro.aprendiz.document
-        },
+        aprendizId,
         presente: true,
         metodo: 'facial',
         timestamp: registro.timestamp,
@@ -688,9 +737,83 @@ const registerFacialAttendance = async (req, res) => {
       });
     }
 
-    res.json({ message: 'Asistencia facial registrada', registro });
+    res.json({ message: 'Asistencia facial registrada', ok: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error: ' + err.message });
+    res.status(500).json({ error: 'Error al registrar: ' + err.message });
+  }
+};
+
+// Registrar asistencia facial en LOTE (hasta 20 aprendices en una sola llamada)
+// Para eventos masivos: el frontend agrupa detecciones y las envía juntas
+const registerFacialBatch = async (req, res) => {
+  const { asistenciaId, aprendizIds } = req.body;
+  if (!asistenciaId || !Array.isArray(aprendizIds) || aprendizIds.length === 0) {
+    return res.status(400).json({ error: 'Faltan asistenciaId o aprendizIds' });
+  }
+  if (aprendizIds.length > 20) {
+    return res.status(400).json({ error: 'Máximo 20 aprendices por lote' });
+  }
+
+  try {
+    // Obtener sesión desde cache
+    const session = await getSessionFromCache(asistenciaId);
+    if (!session || !session.activa) {
+      return res.status(400).json({ error: 'Sesión inactiva o no encontrada' });
+    }
+
+    const colombiaTime = await getCurrentColombiaTime();
+    const sessionStart = new Date(session.timestamp);
+    const diffMins = Math.floor((new Date(colombiaTime) - sessionStart) / 60000);
+    const tarde = diffMins > (session.llegadaTarde || 15);
+
+    // Filtrar solo los que pertenecen a la ficha
+    const validIds = aprendizIds.filter(id => session.fichaAprendicesIds.has(id));
+
+    // Intentar insertar todos en paralelo (cada uno atrapa su propio error de duplicado)
+    const results = await Promise.allSettled(
+      validIds.map(aprendizId =>
+        prisma.registroAsistencia.create({
+          data: {
+            presente: true,
+            metodo: 'facial',
+            timestamp: colombiaTime,
+            tarde,
+            asistencia: { connect: { id: asistenciaId } },
+            aprendiz: { connect: { id: aprendizId } }
+          },
+          select: { id: true, tarde: true, timestamp: true }
+        })
+      )
+    );
+
+    const ok = [];
+    const already = [];
+    const failed = [];
+
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        ok.push(validIds[i]);
+      } else if (r.reason?.code === 'P2002') {
+        already.push(validIds[i]);
+      } else {
+        failed.push(validIds[i]);
+      }
+    });
+
+    // Emitir socket para los registrados
+    const io = req.app.get('io');
+    if (io && ok.length > 0) {
+      ok.forEach(aprendizId => {
+        io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+          aprendizId, presente: true, metodo: 'facial',
+          timestamp: colombiaTime, tarde
+        });
+      });
+    }
+
+    res.json({ registered: ok, alreadyDone: already, failed });
+  } catch (err) {
+    res.status(500).json({ error: 'Error en lote: ' + err.message });
   }
 };
 
@@ -812,5 +935,5 @@ const registerManualAttendance = async (req, res) => {
   }
 };
 
-module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerManualAttendance, checkAndCloseExpiredSessions };
+module.exports = { createSession, getSessionsByMateria, getMyAttendance, registerAttendance, registerHardwareAttendance, endSession, getActiveSession, getSessionById, getMyActiveAnySession, registerFacialAttendance, registerFacialBatch, registerManualAttendance, checkAndCloseExpiredSessions };
 

@@ -15,6 +15,7 @@ router.get('/:id', asistenciaController.getSessionById);
 router.post('/registrar', roleMiddleware(['aprendiz']), asistenciaController.registerAttendance);
 router.post('/hardware-register', roleMiddleware(['instructor']), asistenciaController.registerHardwareAttendance);
 router.post('/facial-register', roleMiddleware(['instructor']), asistenciaController.registerFacialAttendance);
+router.post('/facial-batch', roleMiddleware(['instructor']), asistenciaController.registerFacialBatch);
 router.post('/manual-register', roleMiddleware(['instructor']), asistenciaController.registerManualAttendance);
 router.put('/:id/finalizar', roleMiddleware(['instructor']), asistenciaController.endSession);
 

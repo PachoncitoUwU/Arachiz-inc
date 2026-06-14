@@ -18,6 +18,8 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
   const busyRef = useRef(false);
   const registeredRef = useRef(new Set(alreadyRegistered));
   const cooldownRef = useRef({});
+  const batchQueueRef = useRef([]);
+  const batchBusyRef = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -25,9 +27,10 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
   const [facesDetected, setFacesDetected] = useState(0);
   const [history, setHistory] = useState([]);
 
-  const THRESHOLD = 0.50;
+  // Umbral de similitud (menor es más estricto, 0.50 a 0.55 es ideal para TinyFaceDetector)
+  const THRESHOLD = 0.55;
   const COOLDOWN_MS = 5000;
-  const OPTIONS = useRef(new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 }));
+  const OPTIONS = useRef(new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.40 }));
 
   const candidates = aprendices
     .filter(a => a.faceDescriptor?.length === 128)
@@ -36,6 +39,7 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
   // ─── Init ──────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+    let batchInterval;
     const init = async () => {
       try {
         await loadFaceModels();
@@ -51,12 +55,13 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
         }
         setReady(true);
         startLoop();
+        batchInterval = setInterval(flushBatch, 1000);
       } catch (err) {
         if (!cancelled) setErrorMsg(err.name === 'NotAllowedError' ? 'Permiso de cámara denegado' : 'Error: ' + err.message);
       }
     };
     init();
-    return () => { cancelled = true; cleanup(); };
+    return () => { cancelled = true; clearInterval(batchInterval); cleanup(); };
   }, []);
 
   const cleanup = () => {
@@ -228,25 +233,9 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
 
           drawDetections(detections, matchResults, video);
 
-          // Confirmar en BD en segundo plano (si falla, revertir el conteo)
+          // Agregar a la cola de lotes en vez de enviar uno a uno
           if (toRegister.length > 0) {
-            Promise.all(toRegister.map(save)).then(results => {
-              const failedIds = new Set(
-                results.map((r, i) => r === null ? toRegister[i].id : null).filter(Boolean)
-              );
-              if (failedIds.size > 0) {
-                // Revertir los que fallaron
-                failedIds.forEach(id => {
-                  registeredRef.current.delete(id);
-                  delete cooldownRef.current[id];
-                });
-                setRegisteredCount(n => n - failedIds.size);
-                setHistory(prev => prev.filter(h => !failedIds.has(h.id)));
-              } else {
-                // Marcar como confirmados
-                setHistory(prev => prev.map(h => ({ ...h, pending: false })));
-              }
-            });
+            batchQueueRef.current.push(...toRegister);
           }
         }
       } catch (_) {}
@@ -258,20 +247,47 @@ export default function FacialScanner({ asistenciaId, aprendices = [], alreadyRe
     loopRef.current = setTimeout(tick, 300);
   };
 
-  const save = async (aprendiz) => {
+  const flushBatch = async () => {
+    if (batchQueueRef.current.length === 0 || batchBusyRef.current) return;
+    batchBusyRef.current = true;
+    
+    // Tomar el lote actual y vaciar la cola
+    const batch = [...batchQueueRef.current];
+    batchQueueRef.current = [];
+    
     try {
-      await fetchApi('/asistencias/facial-register', {
+      const res = await fetchApi('/asistencias/facial-batch', {
         method: 'POST',
-        body: JSON.stringify({ asistenciaId, aprendizId: aprendiz.id })
+        body: JSON.stringify({ asistenciaId, aprendizIds: batch.map(a => a.id) })
       });
-      return aprendiz;
-    } catch (err) {
-      if (err.message?.includes('ya registró')) {
-        // Ya estaba en BD, no es error real
-        return aprendiz;
+      
+      const okIds = new Set([...(res.registered || []), ...(res.alreadyDone || [])]);
+      const failedIds = new Set(res.failed || []);
+      
+      if (failedIds.size > 0) {
+        failedIds.forEach(id => {
+          registeredRef.current.delete(id);
+          delete cooldownRef.current[id];
+        });
+        setRegisteredCount(n => Math.max(0, n - failedIds.size));
+        setHistory(prev => prev.filter(h => !failedIds.has(h.id)));
       }
-      return null;
+      
+      if (okIds.size > 0) {
+        setHistory(prev => prev.map(h => okIds.has(h.id) ? { ...h, pending: false } : h));
+      }
+    } catch (err) {
+      // Si falla todo el lote (ej. sin internet), revertir optimismo
+      const failedIds = new Set(batch.map(a => a.id));
+      failedIds.forEach(id => {
+        registeredRef.current.delete(id);
+        delete cooldownRef.current[id];
+      });
+      setRegisteredCount(n => Math.max(0, n - failedIds.size));
+      setHistory(prev => prev.filter(h => !failedIds.has(h.id)));
     }
+    
+    batchBusyRef.current = false;
   };
 
   const totalWithFace = candidates.length;

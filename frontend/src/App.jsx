@@ -66,6 +66,7 @@ const AprendizMaterias    = lazy(() => import('./pages/aprendiz/Materias'));
 const AprendizHorario     = lazy(() => import('./pages/aprendiz/Horario'));
 const AprendizAsistencia  = lazy(() => import('./pages/aprendiz/Asistencia'));
 const AprendizExcusas     = lazy(() => import('./pages/aprendiz/Excusas'));
+const Notificaciones      = lazy(() => import('./pages/aprendiz/Notificaciones'));
 const AprendizCompañeros  = lazy(() => import('./pages/aprendiz/Compañeros'));
 
 // ── Spinner mínimo para Suspense ───────────────────────────────────────────────
@@ -139,6 +140,7 @@ export default function App() {
                 <Route path="horario"        element={<AprendizHorario />} />
                 <Route path="asistencia"     element={<AprendizAsistencia />} />
                 <Route path="excusas"        element={<AprendizExcusas />} />
+                <Route path="notificaciones" element={<Notificaciones />} />
                 <Route path="compañeros"     element={<AprendizCompañeros />} />
                 <Route path="configuracion"  element={<Configuracion />} />
                 <Route path="perfil"         element={<Perfil />} />

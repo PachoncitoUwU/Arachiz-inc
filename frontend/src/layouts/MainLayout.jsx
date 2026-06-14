@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, Navigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
   Settings, Moon, Sun, FolderOpen, BarChart3, Trash2, Search,
-  Database, Save, Activity, ClipboardList
+  Database, Save, Activity, ClipboardList, Bell
 } from 'lucide-react';
 
 const INSTRUCTOR_LINKS = [
@@ -72,6 +72,14 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
           <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-8 object-contain dark:invert transition-all duration-300" />
         </div>
         <div className="flex items-center gap-1">
+          {user?.userType === 'aprendiz' && (
+            <NavLink to="/aprendiz/notificaciones" onClick={onClose} className="btn-icon relative text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-1">
+              <Bell size={18} />
+              {window.__UNREAD_NOTIFICATIONS__ > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
+              )}
+            </NavLink>
+          )}
           <button onClick={toggleDark} className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
             {settings.darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -155,6 +163,19 @@ export default function MainLayout({ allowedRoles }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (user?.userType === 'aprendiz') {
+      import('../services/api').then(({ default: fetchApi }) => {
+        fetchApi('/notifications').then(res => {
+          setUnreadNotifications(res.unreadCount || 0);
+          window.__UNREAD_NOTIFICATIONS__ = res.unreadCount || 0;
+        }).catch(err => console.error(err));
+      });
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -227,7 +248,17 @@ export default function MainLayout({ allowedRoles }) {
               <div className="flex items-center">
                 <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain dark:invert transition-all duration-300" />
               </div>
-              <div className="w-9" />
+              <div className="flex items-center gap-1">
+                {user?.userType === 'aprendiz' && (
+                  <NavLink to="/aprendiz/notificaciones" className="btn-icon relative text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-1">
+                    <Bell size={20} />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
+                    )}
+                  </NavLink>
+                )}
+                <div className="w-4" />
+              </div>
             </header>
 
 

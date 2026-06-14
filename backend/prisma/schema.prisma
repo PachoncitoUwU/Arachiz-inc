@@ -47,6 +47,7 @@ model User {
   pushSubscriptions    PushSubscription[]
   mensajesEnviados     MensajeChat[]
   superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
+  notifications        Notification[]
 }
 
 model Ficha {
@@ -394,4 +395,18 @@ model SuperUserAuditLog {
   @@index([superUserId])
   @@index([fechaHora])
   @@index([entidad])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
 }

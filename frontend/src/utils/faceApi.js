@@ -56,7 +56,7 @@ export async function detectFaceDescriptor(videoElement) {
  */
 export async function detectFaceWithBox(videoElement) {
   const detection = await faceapi
-    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+    .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
     .withFaceLandmarks(true)
     .withFaceDescriptor();
 

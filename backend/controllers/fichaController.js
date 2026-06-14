@@ -149,7 +149,7 @@ const getUserFichas = async (req, res) => {
           select: { id: true, fullName: true, email: true, avatarUrl: true }
         },
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
-        aprendices: { select: { id: true, fullName: true, document: true, email: true, avatarUrl: true, nfcUid: true, huellas: true, faceDescriptor: true } },
+        aprendices: { select: { id: true } },
         materias: { include: { instructor: { select: { fullName: true } } } }
       }
     });

@@ -141,21 +141,21 @@ export default function FaceCapture({
           }
         } else {
           // Modo enrolamiento: Validar encuadre y estabilidad
-          // La caja debe ocupar al menos el 25% del ancho del video
-          const isBoxBigEnough = box.width > vw * 0.25; 
+          // La caja debe ocupar al menos el 15% del ancho del video (antes 25%, era muy estricto)
+          const isBoxBigEnough = box.width > vw * 0.15; 
           const centerX = box.x + box.width / 2;
           const centerY = box.y + box.height / 2;
-          // El centro de la cara debe estar en el tercio central
+          // El centro de la cara debe estar en una zona más amplia (40% central en vez de 30%)
           const isBoxCentered = 
-            centerX > vw * 0.35 && centerX < vw * 0.65 &&
-            centerY > vh * 0.3 && centerY < vh * 0.7;
+            centerX > vw * 0.25 && centerX < vw * 0.75 &&
+            centerY > vh * 0.2 && centerY < vh * 0.8;
 
           if (isBoxBigEnough && isBoxCentered) {
             setIsCentered(true);
             stabilityRef.current += 1;
-            setMessage(`Mantente estable... (${stabilityRef.current}/3)`);
+            setMessage(`Mantente estable... (${stabilityRef.current}/2)`);
             
-            if (stabilityRef.current >= 3) {
+            if (stabilityRef.current >= 2) {
               setStatus('detected');
               setMessage('¡Rostro perfecto! Guardando...');
               if (intervalRef.current) clearInterval(intervalRef.current);
@@ -201,7 +201,7 @@ export default function FaceCapture({
           status === 'detected' ? 'border-[#34A853]' : 
           !continuousMode && isCentered ? 'border-[#4285F4]' : 'border-gray-800'
         }`}
-        style={{ width: '100%', maxWidth: 480, aspectRatio: '3/4' }}>
+        style={{ width: '100%', maxWidth: 500, aspectRatio: 'auto', minHeight: 350 }}>
 
         <video
           ref={videoRef}

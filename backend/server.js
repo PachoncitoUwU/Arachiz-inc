@@ -33,6 +33,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const SerialService = require('./utils/serialService');
 const { checkAndCloseExpiredSessions } = require('./controllers/asistenciaController');
 
@@ -124,6 +125,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);

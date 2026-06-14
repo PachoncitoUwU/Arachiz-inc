@@ -14,24 +14,33 @@ export default function InstructorDashboard() {
   const [fichas, setFichas] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [excusas, setExcusas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingBasic, setLoadingBasic] = useState(true);
+  const [loadingExcusas, setLoadingExcusas] = useState(true);
 
   useEffect(() => {
+    // Carga prioritaria
     Promise.all([
       fetchApi('/fichas/my-fichas'),
-      fetchApi('/materias/my-materias'),
-      fetchApi('/excusas'),
-    ]).then(([f, m, e]) => {
-      setFichas(f.fichas);
-      setMaterias(m.materias);
-      setExcusas(e.excusas);
-    }).catch(console.error).finally(() => setLoading(false));
+      fetchApi('/materias/my-materias')
+    ]).then(([f, m]) => {
+      setFichas(f.fichas || []);
+      setMaterias(m.materias || []);
+      setLoadingBasic(false);
+    }).catch(console.error);
+
+    // Carga en segundo plano
+    fetchApi('/excusas')
+      .then(e => {
+        setExcusas(e.excusas || []);
+        setLoadingExcusas(false);
+      })
+      .catch(console.error);
   }, []);
 
   const pendientes = excusas.filter(e => e.estado === 'Pendiente').length;
   const totalAprendices = fichas.reduce((acc, f) => acc + (f.aprendices?.length || 0), 0);
 
-  if (loading) return (
+  if (loadingBasic) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin" />
     </div>
@@ -64,7 +73,13 @@ export default function InstructorDashboard() {
           <StatCard icon={<Users size={22}/>}    label={t('dashboard', 'totalStudents')} value={totalAprendices}      color="gray" />
         </div>
         <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-          <StatCard icon={<FileText size={22}/>} label={t('dashboard', 'pendingExcuses')} value={pendientes}         color={pendientes > 0 ? 'yellow' : 'gray'} />
+          {loadingExcusas ? (
+             <div className="h-full flex items-center justify-center">
+               <div className="w-5 h-5 border-2 border-[#FBBC05] border-t-transparent rounded-full animate-spin"/>
+             </div>
+          ) : (
+            <StatCard icon={<FileText size={22}/>} label={t('dashboard', 'pendingExcuses')} value={pendientes}         color={pendientes > 0 ? 'yellow' : 'gray'} />
+          )}
         </div>
       </div>
 

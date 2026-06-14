@@ -56,22 +56,21 @@ export default function AprendizDashboard() {
   const [materias, setMaterias] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [excusas, setExcusas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingBasic, setLoadingBasic] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {
+    // Carga rápida de lo esencial
     Promise.all([
       fetchApi('/fichas/my-fichas'),
       fetchApi('/materias/my-materias'),
-      fetchApi('/asistencias/my-history'),
-      fetchApi('/excusas/my-excusas'),
-    ]).then(([f, m, h, e]) => {
-      setFichas(f.fichas);
-      setMaterias(m.materias);
-      setHistorial(h.registros);
-      setExcusas(e.excusas);
+    ]).then(([f, m]) => {
+      setFichas(f.fichas || []);
+      setMaterias(m.materias || []);
+      setLoadingBasic(false);
 
-      // Check for active sessions to notify the Learner
-      m.materias.forEach(async (materia) => {
+      // Notificar clases activas
+      (m.materias || []).forEach(async (materia) => {
         try {
           const res = await fetchApi(`/asistencias/materia/${materia.id}/active`);
           if (res.session) {
@@ -79,7 +78,17 @@ export default function AprendizDashboard() {
           }
         } catch {}
       });
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(console.error);
+
+    // Carga secundaria (más pesada)
+    Promise.all([
+      fetchApi('/asistencias/my-history'),
+      fetchApi('/excusas/my-excusas'),
+    ]).then(([h, e]) => {
+      setHistorial(h.registros || []);
+      setExcusas(e.excusas || []);
+      setLoadingHistory(false);
+    }).catch(console.error);
   }, []);
 
   const presentes  = historial.filter(r => r.presente).length;
@@ -97,7 +106,7 @@ export default function AprendizDashboard() {
     };
   }).filter(d => d.Presentes + d.Ausentes > 0);
 
-  if (loading) return (
+  if (loadingBasic) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-2 border-[#34A853] border-t-transparent rounded-full animate-spin"/>
     </div>
@@ -131,15 +140,23 @@ export default function AprendizDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
-            <StatCard icon={<BookOpen size={22}/>}    label={t('dashboard', 'subjects')}           value={materias.length}  color="blue" />
-            <StatCard icon={<CheckCircle size={22}/>} label={t('dashboard', 'attendances')}        value={presentes}        color="green" />
-            <StatCard icon={<XCircle size={22}/>}     label={t('dashboard', 'absences')}           value={ausentes}         color="red" />
-            <StatCard icon={<FileText size={22}/>}    label={t('dashboard', 'pendingExcuses')} value={pendientes}       color={pendientes > 0 ? 'yellow' : 'gray'} />
-          </div>
+          {loadingHistory ? (
+             <div className="flex justify-center p-4">
+               <div className="w-6 h-6 border-2 border-[#34A853] border-t-transparent rounded-full animate-spin"/>
+             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard icon={<BookOpen size={22}/>}    label={t('dashboard', 'subjects')}           value={materias.length}  color="blue" />
+                <StatCard icon={<CheckCircle size={22}/>} label={t('dashboard', 'attendances')}        value={presentes}        color="green" />
+                <StatCard icon={<XCircle size={22}/>}     label={t('dashboard', 'absences')}           value={ausentes}         color="red" />
+                <StatCard icon={<FileText size={22}/>}    label={t('dashboard', 'pendingExcuses')}     value={pendientes}       color={pendientes > 0 ? 'yellow' : 'gray'} />
+              </div>
 
-          {/* Widget de tasa de asistencia */}
-          <AttendanceRateWidget presentes={presentes} total={presentes + ausentes} />
+              {/* Widget de tasa de asistencia */}
+              <AttendanceRateWidget presentes={presentes} total={presentes + ausentes} />
+            </>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Mi ficha */}
