@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.322';
+export const VERSION = '1.4.326';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.326',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.326',
+    changes: [
+      'feat: show connection badges in asistencia page header'
+    ]
+  },
   {
     version: '1.4.322',
     date: '2026-06-14',
