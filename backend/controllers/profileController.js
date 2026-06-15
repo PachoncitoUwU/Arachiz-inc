@@ -53,9 +53,9 @@ const getProfileStats = async (req, res) => {
 
       const asistencias = await prisma.asistencia.findMany({
         where: { id: { in: asistenciaIds } },
-        select: { id: true, materia: { select: { nombre: true } } }
+        select: { id: true, resultado: { select: { nombre: true, competencia: { select: { nombre: true } } } } }
       });
-      const asistenciaMap = Object.fromEntries(asistencias.map(a => [a.id, a.materia.nombre]));
+      const asistenciaMap = Object.fromEntries(asistencias.map(a => [a.id, a.resultado ? `${a.resultado.competencia.nombre} - ${a.resultado.nombre}` : 'Desconocida']));
 
       const materiaStats = {};
       grupoPresentes.forEach(g => {
@@ -91,7 +91,7 @@ const getProfileStats = async (req, res) => {
           justificado: true,
           metodo: true,
           asistencia: {
-            select: { materia: { select: { nombre: true } } }
+            select: { resultado: { select: { nombre: true, competencia: { select: { nombre: true } } } } }
           }
         }
       });
@@ -101,7 +101,7 @@ const getProfileStats = async (req, res) => {
         type: 'asistencia',
         date: r.timestamp,
         title: r.presente ? (r.tarde ? 'Llegada Tarde' : 'Presente') : (r.justificado ? 'Falta Justificada' : 'Ausente'),
-        description: r.asistencia.materia.nombre,
+        description: r.asistencia?.resultado ? `${r.asistencia.resultado.competencia.nombre} - ${r.asistencia.resultado.nombre}` : 'Desconocida',
         status: r.presente ? (r.tarde ? 'warning' : 'success') : (r.justificado ? 'info' : 'danger')
       }));
 
@@ -111,21 +111,21 @@ const getProfileStats = async (req, res) => {
       });
 
       // Para el instructor, agrupar en BD para no descargar todas las sesiones
-      const grupoMaterias = await prisma.asistencia.groupBy({
-        by: ['materiaId'],
+      const grupoResultados = await prisma.asistencia.groupBy({
+        by: ['resultadoId'],
         where: { instructorId: userId },
         _count: { id: true }
       });
 
-      const materiaIds = grupoMaterias.map(g => g.materiaId);
-      const materias = await prisma.materia.findMany({
-        where: { id: { in: materiaIds } },
-        select: { id: true, nombre: true }
+      const resultadoIds = grupoResultados.map(g => g.resultadoId);
+      const resultados = await prisma.resultadoAprendizaje.findMany({
+        where: { id: { in: resultadoIds } },
+        select: { id: true, nombre: true, competencia: { select: { nombre: true } } }
       });
-      const materiaMap = Object.fromEntries(materias.map(m => [m.id, m.nombre]));
+      const resultadoMap = Object.fromEntries(resultados.map(r => [r.id, `${r.competencia.nombre} - ${r.nombre}`]));
 
-      chartData = grupoMaterias.map(g => ({
-        subject: materiaMap[g.materiaId] || 'Desconocida',
+      chartData = grupoResultados.map(g => ({
+        subject: resultadoMap[g.resultadoId] || 'Desconocida',
         clases: g._count.id
       }));
 
@@ -137,7 +137,7 @@ const getProfileStats = async (req, res) => {
         select: {
           id: true,
           timestamp: true,
-          materia: { select: { nombre: true } }
+          resultado: { select: { nombre: true, competencia: { select: { nombre: true } } } }
         }
       });
 
@@ -146,7 +146,7 @@ const getProfileStats = async (req, res) => {
         type: 'clase_creada',
         date: c.timestamp,
         title: 'Sesión Creada',
-        description: c.materia.nombre,
+        description: c.resultado ? `${c.resultado.competencia.nombre} - ${c.resultado.nombre}` : 'Desconocida',
         status: 'success'
       }));
     }

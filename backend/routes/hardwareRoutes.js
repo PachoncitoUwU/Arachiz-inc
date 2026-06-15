@@ -14,5 +14,6 @@ const hardwareAuth = (req, res, next) => {
 router.post('/event', hardwareAuth, hardwareController.handleEvent);
 router.get('/commands', hardwareAuth, hardwareController.getCommands);
 router.get('/session-status', hardwareAuth, hardwareController.getSessionStatus);
+router.get('/status', hardwareController.getHardwareStatus);
 
 module.exports = router;

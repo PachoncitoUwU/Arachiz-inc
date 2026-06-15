@@ -12,7 +12,8 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const fichaRoutes = require('./routes/fichaRoutes');
-const materiaRoutes = require('./routes/materiaRoutes');
+const competenciaRoutes = require('./routes/competenciaRoutes');
+const resultadoRoutes = require('./routes/resultadoRoutes');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
 const excusaRoutes = require('./routes/excusaRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
@@ -22,7 +23,7 @@ const serialRoutes = require('./routes/serialRoutes');
 const snakeRoutes  = require('./routes/snakeRoutes');
 const gamesRoutes  = require('./routes/gamesRoutes');
 const skinRoutes   = require('./routes/skinRoutes');
-const materiaEvitadaRoutes = require('./routes/materiaEvitada');
+const resultadoEvitadoRoutes = require('./routes/resultadoEvitadoRoutes');
 const qrRoutes     = require('./routes/qrRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const hardwareRoutes = require('./routes/hardwareRoutes');
@@ -105,7 +106,8 @@ app.get('/api/auth/google/callback',
 
 app.use('/api/auth', authRoutes);
 app.use('/api/fichas', fichaRoutes);
-app.use('/api/materias', materiaRoutes);
+app.use('/api/competencias', competenciaRoutes);
+app.use('/api/resultados', resultadoRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
 app.use('/api/excusas', excusaRoutes);
 app.use('/api/horarios', horarioRoutes);
@@ -115,7 +117,7 @@ app.use('/api/serial', serialRoutes);
 app.use('/api/snake',  snakeRoutes);
 app.use('/api/games',  gamesRoutes);
 app.use('/api/skins',  skinRoutes);
-app.use('/api', materiaEvitadaRoutes);
+app.use('/api/resultados-evitados', resultadoEvitadoRoutes);
 app.use('/api/qr',     qrRoutes);
 app.use('/api/password', passwordResetRoutes);
 app.use('/api/hardware', hardwareRoutes);

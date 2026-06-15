@@ -12,7 +12,7 @@ const prisma = require('../lib/prisma');
 async function detectarConflictos(instructorId, dia, horaInicio, horaFin, horarioIdExcluir = null) {
   const whereClause = {
     dia,
-    materia: { instructorId },
+    resultado: { instructorId },
     OR: [
       // Caso 1: El nuevo horario empieza durante una clase existente
       { AND: [{ horaInicio: { lte: horaInicio } }, { horaFin: { gt: horaInicio } }] },
@@ -30,10 +30,15 @@ async function detectarConflictos(instructorId, dia, horaInicio, horaFin, horari
   const conflictos = await prisma.horario.findMany({
     where: whereClause,
     include: {
-      materia: {
+      resultado: {
         select: {
           nombre: true,
-          ficha: { select: { numero: true } }
+          competencia: {
+            select: {
+              nombre: true,
+              ficha: { select: { numero: true } }
+            }
+          }
         }
       }
     }
@@ -100,9 +105,9 @@ function generarDescripcionConflicto(horariosConflicto) {
   if (horariosConflicto.length === 0) return 'Sin conflictos';
   
   const descripciones = horariosConflicto.map(h => {
-    const fichaInfo = h.ficha || h.materia?.ficha;
+    const fichaInfo = h.ficha || h.resultado?.competencia?.ficha;
     const fichaNumero = fichaInfo?.numero || 'N/A';
-    return `${h.materia.nombre} (${h.horaInicio} - ${h.horaFin}) en Ficha ${fichaNumero}`;
+    return `${h.resultado?.competencia?.nombre} - ${h.resultado?.nombre} (${h.horaInicio} - ${h.horaFin}) en Ficha ${fichaNumero}`;
   });
   
   return `Conflicto de horario: ${descripciones.join(' y ')}`;

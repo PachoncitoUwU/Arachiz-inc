@@ -22,10 +22,10 @@ export default function InstructorDashboard() {
     // Carga prioritaria
     Promise.all([
       fetchApi('/fichas/my-fichas'),
-      fetchApi('/materias/my-materias')
+      fetchApi('/competencias/my-competencias')
     ]).then(([f, m]) => {
       setFichas(f.fichas || []);
-      setMaterias(m.materias || []);
+      setMaterias(m.competencias || []);
       setLoadingBasic(false);
     }).catch(console.error);
 

@@ -99,6 +99,7 @@ export default function AdminFichas() {
   const [importing, setImporting] = useState(false);
   const [importJornada, setImportJornada] = useState('Mañana');
   const [importNivel, setImportNivel] = useState('Tecnólogo');
+  const [selectedCompIdx, setSelectedCompIdx] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -183,6 +184,7 @@ export default function AdminFichas() {
         body: formData
       });
       setParsedData(data);
+      setSelectedCompIdx(0);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -201,7 +203,7 @@ export default function AdminFichas() {
           jornada: importJornada,
           nivel: importNivel
         },
-        materias: parsedData.materias
+        competencias: parsedData.competencias
       };
       
       const response = await fetchApi('/import/excel-ficha/confirm', {
@@ -209,7 +211,7 @@ export default function AdminFichas() {
         body: JSON.stringify(payload)
       });
 
-      showToast('Ficha y materias importadas exitosamente', 'success');
+      showToast('Ficha, competencias y resultados importados exitosamente', 'success');
       setModalImport(false);
       setExcelFile(null);
       setParsedData(null);
@@ -362,7 +364,7 @@ export default function AdminFichas() {
         </form>
       </Modal>
 
-      <Modal open={modalImport} onClose={() => { setModalImport(false); setParsedData(null); setExcelFile(null); setError(''); }} title="Importar Ficha desde Excel">
+      <Modal open={modalImport} onClose={() => { setModalImport(false); setParsedData(null); setExcelFile(null); setError(''); setSelectedCompIdx(0); }} title="Importar Ficha desde Excel" maxWidth="max-w-5xl">
         {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-4">{error}</p>}
         
         {!parsedData ? (
@@ -445,7 +447,6 @@ export default function AdminFichas() {
                 >
                   <option value="Mañana">Mañana</option>
                   <option value="Tarde">Tarde</option>
-                  <option value="Mixta">Mixta</option>
                   <option value="Nocturna">Nocturna</option>
                 </select>
               </div>
@@ -458,24 +459,52 @@ export default function AdminFichas() {
                 >
                   <option value="Tecnólogo">Tecnólogo</option>
                   <option value="Técnico">Técnico</option>
-                  <option value="Especialización Tecnológica">Especialización Tecnológica</option>
                 </select>
               </div>
             </div>
 
             <div>
               <h4 className="font-bold text-gray-900 dark:text-white mb-2 text-sm flex items-center gap-2">
-                <span>Materias a crear ({parsedData.materias.length})</span>
+                <span>Competencias a crear ({parsedData.competencias?.length || 0})</span>
               </h4>
-              <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white dark:bg-gray-950 space-y-1">
-                {parsedData.materias.map((mat, idx) => (
-                  <div key={idx} className="text-xs py-1 px-2 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded border border-gray-100 dark:border-gray-700 font-mono">
-                    {mat}
-                  </div>
-                ))}
-                {parsedData.materias.length === 0 && (
-                  <p className="text-xs text-gray-400 italic">No se detectaron competencias en el archivo.</p>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-2 bg-white dark:bg-gray-950 space-y-2">
+                  {(parsedData.competencias || []).map((comp, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => setSelectedCompIdx(idx)}
+                      className={`w-full text-left text-sm py-3 px-4 rounded-lg border transition-all ${selectedCompIdx === idx ? 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-200 shadow-sm font-bold' : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 hover:border-blue-200 hover:shadow-sm'}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-500 dark:text-blue-400 mt-0.5">•</span>
+                        <p className="line-clamp-2 leading-tight">{comp.nombre}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {(!parsedData.competencias || parsedData.competencias.length === 0) && (
+                    <p className="text-sm text-gray-400 italic p-3">No se detectaron competencias.</p>
+                  )}
+                </div>
+                
+                <div className="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-5 bg-gray-50 dark:bg-zinc-900 shadow-inner">
+                  <h5 className="font-bold text-sm text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2 mb-3">
+                    Resultados de Aprendizaje
+                  </h5>
+                  {parsedData.competencias && parsedData.competencias[selectedCompIdx] ? (
+                    <ul className="space-y-3 list-disc pl-5">
+                      {parsedData.competencias[selectedCompIdx].resultados?.map((res, rIdx) => (
+                        <li key={rIdx} className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed marker:text-blue-500">
+                          {res}
+                        </li>
+                      ))}
+                      {(!parsedData.competencias[selectedCompIdx].resultados || parsedData.competencias[selectedCompIdx].resultados.length === 0) && (
+                        <li className="text-gray-400 text-sm italic list-none -ml-5">Esta competencia no tiene resultados asignados.</li>
+                      )}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Selecciona una competencia a la izquierda para ver sus resultados.</p>
+                  )}
+                </div>
               </div>
             </div>
 

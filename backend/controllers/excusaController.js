@@ -3,10 +3,10 @@ const { uploadToSupabase, isSupabaseConfigured } = require('../utils/supabaseSto
 
 // Crear excusa
 const createExcusa = async (req, res) => {
-  const { fechas, motivo, materiaId } = req.body;
+  const { fechas, motivo, resultadoId } = req.body;
   const aprendizId = req.user.id;
 
-  if (!fechas || !motivo || !materiaId) {
+  if (!fechas || !motivo || !resultadoId) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
 
@@ -18,39 +18,43 @@ const createExcusa = async (req, res) => {
       return res.status(400).json({ error: 'Debes seleccionar al menos una fecha' });
     }
 
-    // Verificar que el aprendiz está inscrito en la ficha de la materia
-    const materia = await prisma.materia.findUnique({
-      where: { id: materiaId },
+    // Verificar que el aprendiz está inscrito en la ficha del resultado
+    const resultado = await prisma.resultadoAprendizaje.findUnique({
+      where: { id: resultadoId },
       include: { 
-        ficha: { 
+        competencia: { 
           include: { 
-            aprendices: { where: { id: aprendizId } }
+            ficha: { 
+              include: { 
+                aprendices: { where: { id: aprendizId } }
+              }
+            }
           }
         },
         horarios: true
       }
     });
 
-    if (!materia) {
-      return res.status(404).json({ error: 'Materia no encontrada' });
+    if (!resultado) {
+      return res.status(404).json({ error: 'Resultado de aprendizaje no encontrado' });
     }
 
-    if (materia.ficha.aprendices.length === 0) {
+    if (resultado.competencia.ficha.aprendices.length === 0) {
       return res.status(403).json({ error: 'No estás inscrito en esta ficha' });
     }
 
-    // Verificar que no esté evitando esta materia
-    const materiaEvitada = await prisma.materiaEvitada.findUnique({
+    // Verificar que no esté evitando este resultado
+    const resultadoEvitado = await prisma.resultadoEvitado.findUnique({
       where: {
-        aprendizId_materiaId: {
+        aprendizId_resultadoId: {
           aprendizId,
-          materiaId
+          resultadoId
         }
       }
     });
 
-    if (materiaEvitada) {
-      return res.status(400).json({ error: 'No puedes enviar excusas para materias que evitas' });
+    if (resultadoEvitado) {
+      return res.status(400).json({ error: 'No puedes enviar excusas para resultados de aprendizaje que evitas' });
     }
 
     // Validar todas las fechas
@@ -66,10 +70,10 @@ const createExcusa = async (req, res) => {
 
       // Validar que la fecha corresponda a un día con clase según el horario
       const diaSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][fechaExcusa.getDay()];
-      const tieneClase = materia.horarios.some(h => h.dia === diaSemana);
+      const tieneClase = resultado.horarios.some(h => h.dia === diaSemana);
 
       if (!tieneClase) {
-        return res.status(400).json({ error: `No hay clases de ${materia.nombre} los días ${diaSemana}` });
+        return res.status(400).json({ error: `No hay clases de ${resultado.nombre} los días ${diaSemana}` });
       }
     }
 
@@ -93,13 +97,18 @@ const createExcusa = async (req, res) => {
         motivo,
         archivosUrls: archivosUrls.length > 0 ? JSON.stringify(archivosUrls) : null,
         aprendizId,
-        materiaId
+        resultadoId
       },
       include: {
-        materia: { 
+        resultado: { 
           select: { 
             nombre: true,
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              select: {
+                nombre: true,
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         },
         aprendiz: { select: { fullName: true, document: true } }
@@ -128,10 +137,15 @@ const getMyExcusas = async (req, res) => {
     const excusas = await prisma.excusa.findMany({
       where,
       include: {
-        materia: {
+        resultado: {
           select: {
             nombre: true,
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              select: {
+                nombre: true,
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           }
         }
       },
@@ -145,21 +159,21 @@ const getMyExcusas = async (req, res) => {
   }
 };
 
-// Obtener excusas de las materias del instructor
+// Obtener excusas de los resultados a cargo del instructor
 const getExcusasInstructor = async (req, res) => {
   const instructorId = req.user.id;
   const { estado } = req.query;
 
   try {
-    // Obtener todas las materias del instructor
-    const materias = await prisma.materia.findMany({
+    // Obtener todos los resultados del instructor
+    const resultados = await prisma.resultadoAprendizaje.findMany({
       where: { instructorId },
       select: { id: true }
     });
 
-    const materiasIds = materias.map(m => m.id);
+    const resultadosIds = resultados.map(r => r.id);
 
-    const where = { materiaId: { in: materiasIds } };
+    const where = { resultadoId: { in: resultadosIds } };
 
     if (estado && estado !== 'Todas') {
       where.estado = estado;
@@ -171,10 +185,15 @@ const getExcusasInstructor = async (req, res) => {
         aprendiz: {
           select: { fullName: true, document: true }
         },
-        materia: {
+        resultado: {
           select: {
             nombre: true,
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              select: {
+                nombre: true,
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           }
         }
       },
@@ -188,7 +207,7 @@ const getExcusasInstructor = async (req, res) => {
   }
 };
 
-// Actualizar estado de excusa (aprobar/rechazar) - Ahora permite editar después
+// Actualizar estado de excusa (aprobar/rechazar)
 const updateExcusaEstado = async (req, res) => {
   const { id } = req.params;
   const { estado, respuesta } = req.body;
@@ -199,11 +218,11 @@ const updateExcusaEstado = async (req, res) => {
   }
 
   try {
-    // Verificar que la excusa pertenece a una materia del instructor
+    // Verificar que la excusa pertenece a un resultado a cargo del instructor
     const excusa = await prisma.excusa.findUnique({
       where: { id },
       include: {
-        materia: { select: { instructorId: true } }
+        resultado: { select: { instructorId: true } }
       }
     });
 
@@ -211,7 +230,7 @@ const updateExcusaEstado = async (req, res) => {
       return res.status(404).json({ error: 'Excusa no encontrada' });
     }
 
-    if (excusa.materia.instructorId !== instructorId) {
+    if (excusa.resultado.instructorId !== instructorId) {
       return res.status(403).json({ error: 'No tienes permiso para responder esta excusa' });
     }
 
@@ -278,7 +297,7 @@ const updateExcusa = async (req, res) => {
         updatedAt: new Date()
       },
       include: {
-        materia: { select: { nombre: true } }
+        resultado: { select: { nombre: true } }
       }
     });
 
@@ -289,8 +308,8 @@ const updateExcusa = async (req, res) => {
   }
 };
 
-// Obtener materias del aprendiz con horarios
-const getMateriasConHorarios = async (req, res) => {
+// Obtener resultados del aprendiz con horarios (filtrando evitados)
+const getResultadosConHorarios = async (req, res) => {
   const aprendizId = req.user.id;
 
   try {
@@ -300,40 +319,46 @@ const getMateriasConHorarios = async (req, res) => {
         aprendices: { some: { id: aprendizId } }
       },
       include: {
-        materias: {
+        competencias: {
           include: {
-            horarios: true
+            resultados: {
+              include: {
+                horarios: true
+              }
+            }
           }
         }
       }
     });
 
-    // Filtrar materias que no está evitando
-    const materiasEvitadas = await prisma.materiaEvitada.findMany({
+    // Filtrar resultados evitados
+    const resultadosEvitados = await prisma.resultadoEvitado.findMany({
       where: { aprendizId },
-      select: { materiaId: true }
+      select: { resultadoId: true }
     });
 
-    const materiasEvitadasIds = materiasEvitadas.map(me => me.materiaId);
+    const resultadosEvitadosIds = resultadosEvitados.map(re => re.resultadoId);
 
-    const materias = [];
+    const resultados = [];
     fichas.forEach(ficha => {
-      ficha.materias.forEach(materia => {
-        if (!materiasEvitadasIds.includes(materia.id)) {
-          materias.push({
-            id: materia.id,
-            nombre: materia.nombre,
-            ficha: { numero: ficha.numero, nombre: ficha.nombre },
-            horarios: materia.horarios
-          });
-        }
+      ficha.competencias.forEach(competencia => {
+        competencia.resultados.forEach(resultado => {
+          if (!resultadosEvitadosIds.includes(resultado.id)) {
+            resultados.push({
+              id: resultado.id,
+              nombre: `${competencia.nombre} - ${resultado.nombre}`,
+              ficha: { numero: ficha.numero, nombre: ficha.nombre },
+              horarios: resultado.horarios
+            });
+          }
+        });
       });
     });
 
-    res.json({ materias });
+    res.json({ resultados });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener materias: ' + err.message });
+    res.status(500).json({ error: 'Error al obtener resultados: ' + err.message });
   }
 };
 
@@ -347,9 +372,13 @@ const deleteExcusa = async (req, res) => {
     const excusa = await prisma.excusa.findUnique({
       where: { id },
       include: {
-        materia: {
+        resultado: {
           include: {
-            ficha: true,
+            competencia: {
+              include: {
+                ficha: true
+              }
+            },
             instructor: { select: { fullName: true } }
           }
         },
@@ -362,21 +391,18 @@ const deleteExcusa = async (req, res) => {
     }
     
     // Verificar permisos
-    const isInstructor = excusa.materia.instructorId === userId;
-    const isAdmin = userType === 'administrador' && excusa.materia.ficha.administradorId === userId;
+    const isInstructor = excusa.resultado.instructorId === userId;
+    const isAdmin = userType === 'administrador' && excusa.resultado.competencia.ficha.administradorId === userId;
     
     if (!isInstructor && !isAdmin) {
       return res.status(403).json({ error: 'No tienes permiso para eliminar esta excusa' });
     }
     
-    // Importar funciones de papelera
-    const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController');
-    
     // Enviar a papelera
     await enviarAPapelera(
       'excusa',
       id,
-      excusa.materia.fichaId,
+      excusa.resultado.competencia.fichaId,
       userId,
       userType,
       `Excusa de ${excusa.aprendiz.fullName} eliminada`
@@ -387,7 +413,7 @@ const deleteExcusa = async (req, res) => {
     
     // Registrar en historial
     await crearHistorialCambio(
-      excusa.materia.fichaId,
+      excusa.resultado.competencia.fichaId,
       userId,
       'enviar_papelera',
       'excusa',
@@ -408,5 +434,5 @@ module.exports = {
   updateExcusaEstado,
   updateExcusa,
   deleteExcusa,
-  getMateriasConHorarios
+  getResultadosConHorarios
 };

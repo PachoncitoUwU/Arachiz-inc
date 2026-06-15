@@ -31,7 +31,24 @@ export default function FichaDetalle() {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
   
-  const [ficha, setFicha] = useState(null);
+  const [ficha, _setFicha] = useState(null);
+  const setFicha = (val) => {
+    if (val) {
+      val.materias = (val.competencias || []).map(comp => ({
+        ...comp,
+        instructor: comp.resultados?.[0]?.instructor || null,
+        instructorId: comp.resultados?.[0]?.instructorId || null
+      }));
+      if (val.horarios) {
+        val.horarios = val.horarios.map(h => ({
+          ...h,
+          materiaId: h.resultadoId,
+          materia: h.resultado
+        }));
+      }
+    }
+    _setFicha(val);
+  };
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -58,6 +75,8 @@ export default function FichaDetalle() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState('all'); // 'all' | 'Técnica' | 'Transversal'
   const [filterInstructor, setFilterInstructor] = useState('all'); // 'all' | instructorId
+  const [currentMateriaView, setCurrentMateriaView] = useState('competencias');
+  const [selectedCompetenciaView, setSelectedCompetenciaView] = useState(null);
   
   // Estado para fichas ancladas
   const [isPinned, setIsPinned] = useState(false);
@@ -219,7 +238,7 @@ export default function FichaDetalle() {
     setErrorMateria('');
     setSavingMateria(true);
     try {
-      await fetchApi('/materias', {
+      await fetchApi('/competencias', {
         method: 'POST',
         body: JSON.stringify({
           fichaId: id,
@@ -229,7 +248,7 @@ export default function FichaDetalle() {
       });
       setModalMateria(false);
       setFormMateria({ nombre: '', tipo: 'Técnica' });
-      showToast('Materia creada exitosamente', 'success');
+      showToast('Competencia creada exitosamente', 'success');
       loadFicha();
     } catch (err) {
       setErrorMateria(err.message);
@@ -325,6 +344,12 @@ export default function FichaDetalle() {
     try {
       const data = await fetchApi(`/fichas/${id}`);
       setFicha(data.ficha);
+      if (selectedCompetenciaView) {
+        const updatedComp = (data.ficha.materias || []).find(m => m.id === selectedCompetenciaView.id);
+        if (updatedComp) {
+          setSelectedCompetenciaView(updatedComp);
+        }
+      }
     } catch (err) {
       console.error('Error al actualizar datos:', err);
     }
@@ -345,6 +370,15 @@ export default function FichaDetalle() {
     try {
       const data = await fetchApi(`/fichas/${id}`);
       setFicha(data.ficha);
+      if (selectedCompetenciaView) {
+        const updatedComp = (data.ficha.materias || []).find(m => m.id === selectedCompetenciaView.id);
+        if (updatedComp) {
+          setSelectedCompetenciaView(updatedComp);
+        } else {
+          setSelectedCompetenciaView(null);
+          setCurrentMateriaView('competencias');
+        }
+      }
     } catch (err) {
       console.error('Error al actualizar datos:', err);
     }
@@ -453,7 +487,7 @@ export default function FichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
-  const filteredMaterias = (ficha.materias || []).filter(materia => {
+  const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
     // Filtro de búsqueda
@@ -476,9 +510,9 @@ export default function FichaDetalle() {
   });
 
   // Obtener instructores únicos para el filtro
-  const uniqueInstructors = [...new Set((ficha.materias || []).map(m => m.instructorId))]
+  const uniqueInstructors = [...new Set((ficha.competencias || []).map(m => m.instructorId))]
     .map(id => {
-      const materia = ficha.materias.find(m => m.instructorId === id);
+      const materia = ficha.competencias.find(m => m.instructorId === id);
       return {
         id,
         name: materia?.instructor?.fullName || 'Desconocido'
@@ -602,7 +636,7 @@ export default function FichaDetalle() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
-                Materias
+                Competencias
               </p>
               <p className="text-xl md:text-2xl  font-bold text-[#34A853]">
                 {ficha.materias?.length || 0}
@@ -812,7 +846,7 @@ export default function FichaDetalle() {
             >
               <div className="flex items-center gap-2">
                 <BookOpen size={16} />
-                Materias ({ficha.materias?.length || 0})
+                Competencias ({ficha.materias?.length || 0})
               </div>
               {activeTab === 'materias' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
@@ -958,8 +992,8 @@ export default function FichaDetalle() {
                 <BookOpen size={32} className="text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">
                   {searchQuery || filterTipo !== 'all' || filterInstructor !== 'all' 
-                    ? 'No se encontraron materias con esos filtros' 
-                    : 'Sin materias asignadas aún'}
+                    ? 'No se encontraron competencias con esos filtros' 
+                    : 'Sin competencias asignadas aún'}
                 </p>
                 {!searchQuery && filterTipo === 'all' && filterInstructor === 'all' && isInstructor && (
                   <button 
@@ -971,37 +1005,63 @@ export default function FichaDetalle() {
                     className="btn-primary text-sm md:text-base  mt-4 text-sm"
                   >
                     <Plus size={16} className="inline mr-2" />
-                    Crear primera materia
+                    Crear primera competencia
                   </button>
                 )}
+              </div>
+            ) : currentMateriaView === 'resultados' && selectedCompetenciaView ? (
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <button onClick={() => { setCurrentMateriaView('competencias'); setSelectedCompetenciaView(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 font-medium flex items-center gap-2">
+                    ← Volver
+                  </button>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Competencia</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCompetenciaView.nombre}</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {selectedCompetenciaView.resultados?.map(r => (
+                    <div 
+                      key={r.id} 
+                      onClick={() => handleOpenMateriaInfo({...r, competencia: selectedCompetenciaView, competenciaId: selectedCompetenciaView.id, ficha: { numero: ficha.numero, nombre: ficha.nombre }})} 
+                      className="p-4 rounded-xl border border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:shadow-md transition-shadow cursor-pointer flex items-center justify-between gap-4"
+                    >
+                      <p className="font-bold text-gray-800 dark:text-gray-100 flex-1 min-w-0 truncate">{r.nombre}</p>
+                      <p className="text-sm font-medium flex-shrink-0 text-gray-600 dark:text-gray-400">
+                        {r.instructor ? r.instructor.fullName : 'Sin instructor asignado'}
+                      </p>
+                    </div>
+                  ))}
+                  {(!selectedCompetenciaView.resultados || selectedCompetenciaView.resultados.length === 0) && (
+                    <div className="p-8 text-center text-gray-500 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
+                      Esta competencia aún no tiene resultados de aprendizaje asignados.
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredMaterias.map(materia => {
-                  const sinInstructor = !materia.instructor;
                   return (
                     <div 
                       key={materia.id} 
-                      className={`flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border cursor-pointer ${
-                        sinInstructor 
-                          ? 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20' 
-                          : 'border-gray-100 dark:border-gray-700'
-                      }`}
-                      onClick={() => handleOpenMateriaInfo(materia)}
+                      className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{materia.nombre}</p>
-                        <p className="text-xs text-gray-400">{materia.tipo}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
-                        <p className={`text-sm font-medium truncate max-w-[150px] ${
-                          sinInstructor 
-                            ? 'text-orange-600 dark:text-orange-400' 
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          {materia.instructor?.fullName || 'Sin instructor a cargo'}
-                        </p>
+                      <div className="flex items-center justify-between cursor-pointer" onClick={() => handleOpenMateriaInfo(materia)}>
+                        <div className="flex-1 min-w-0 pr-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{materia.nombre}</p>
+                          <p className="text-xs text-gray-400">{materia.tipo}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedCompetenciaView(materia); setCurrentMateriaView('resultados'); }}
+                            className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Ver resultados de aprendizaje ({materia.resultados?.length || 0})
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1156,7 +1216,7 @@ export default function FichaDetalle() {
       )}
 
       {/* Modals */}
-      <Modal open={modalMateria} onClose={() => setModalMateria(false)} title="Agregar Materia">
+      <Modal open={modalMateria} onClose={() => setModalMateria(false)} title="Agregar Competencia">
         <form onSubmit={handleCreateMateria} className="space-y-4">
           {errorMateria && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl">{errorMateria}</p>}
           
@@ -1168,7 +1228,7 @@ export default function FichaDetalle() {
           </div>
 
           <div>
-            <label className="input-label">Nombre de la Materia</label>
+            <label className="input-label">Nombre de la Competencia</label>
             <input 
               required 
               className="input-field" 
@@ -1179,7 +1239,7 @@ export default function FichaDetalle() {
           </div>
 
           <div>
-            <label className="input-label">Tipo de Materia</label>
+            <label className="input-label">Tipo</label>
             <select 
               className="input-field" 
               value={formMateria.tipo} 
@@ -1187,6 +1247,7 @@ export default function FichaDetalle() {
             >
               <option>Técnica</option>
               <option>Transversal</option>
+              <option>Básica</option>
             </select>
           </div>
 
@@ -1195,7 +1256,7 @@ export default function FichaDetalle() {
               Cancelar
             </button>
             <button type="submit" disabled={savingMateria} className="btn-primary text-sm md:text-base  flex-1">
-              {savingMateria ? 'Creando...' : 'Crear Materia'}
+              {savingMateria ? 'Creando...' : 'Crear Competencia'}
             </button>
           </div>
         </form>
@@ -1336,6 +1397,8 @@ export default function FichaDetalle() {
           onClose={handleCloseMateriaInfo} 
           materia={selectedMateria}
           isCreatorOrAdmin={selectedMateria.instructorId === user?.id || isLider}
+          isAdmin={isLider}
+          canTakeMateria={true}
           instructores={ficha.instructores?.map(fi => fi.instructor) || []}
           currentUserId={user?.id}
           onUpdate={handleMateriaUpdate}

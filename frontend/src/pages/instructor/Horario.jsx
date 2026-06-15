@@ -228,14 +228,33 @@ export default function InstructorHorario() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [materiasRes, fichasRes, horariosRes] = await Promise.all([
-        fetchApi('/materias/my-materias'),
+      const [competenciasRes, fichasRes, horariosRes] = await Promise.all([
+        fetchApi('/competencias/my-competencias'),
         fetchApi('/fichas/my-fichas'),
         fetchApi('/horarios/my-horarios')
       ]);
-      setMaterias(materiasRes.materias || []);
+      const resultadosDisponibles = (competenciasRes.competencias || []).flatMap(comp => 
+        (comp.resultados || []).map(res => ({
+          ...res,
+          competenciaNombre: comp.nombre,
+          nombre: `${res.nombre} (${comp.nombre})`,
+          fichaId: comp.fichaId,
+          ficha: comp.ficha
+        }))
+      );
+      setMaterias(resultadosDisponibles);
       setFichas(fichasRes.fichas || []);
-      setHorarios(horariosRes.horarios || []);
+      
+      const mappedHorarios = (horariosRes.horarios || []).map(h => ({
+        ...h,
+        materiaId: h.resultadoId,
+        materia: {
+          ...h.resultado,
+          fichaId: h.resultado?.competencia?.fichaId,
+          ficha: h.resultado?.competencia?.ficha
+        }
+      }));
+      setHorarios(mappedHorarios);
     } catch (err) {
       console.error('Error cargando datos de horarios:', err);
       showToast('Error al cargar datos del horario', 'error');
@@ -327,7 +346,16 @@ export default function InstructorHorario() {
           horaFin: formEdit.horaFin
         })
       });
-      setHorarios(prev => prev.map(h => h.id === formEdit.id ? response.horario : h));
+      const updatedHorario = {
+        ...response.horario,
+        materiaId: response.horario.resultadoId,
+        materia: {
+          ...response.horario.resultado,
+          fichaId: response.horario.resultado?.competencia?.fichaId,
+          ficha: response.horario.resultado?.competencia?.ficha
+        }
+      };
+      setHorarios(prev => prev.map(h => h.id === formEdit.id ? updatedHorario : h));
       setModalEdit(false);
       
       if (response.conflictos) {
@@ -355,13 +383,22 @@ export default function InstructorHorario() {
         method: 'POST',
         body: JSON.stringify({
           fichaId: materiaToAdd.fichaId,
-          materiaId: materiaToAdd.id,
+          resultadoId: materiaToAdd.id,
           dia: diaToAdd,
           horaInicio: formAddMateria.horaInicio,
           horaFin: formAddMateria.horaFin
         })
       });
-      setHorarios(prev => [...prev, response.horario]);
+      const newHorario = {
+        ...response.horario,
+        materiaId: response.horario.resultadoId,
+        materia: {
+          ...response.horario.resultado,
+          fichaId: response.horario.resultado?.competencia?.fichaId,
+          ficha: response.horario.resultado?.competencia?.ficha
+        }
+      };
+      setHorarios(prev => [...prev, newHorario]);
       setModalAddMateria(false);
       setMateriaToAdd(null);
       setDiaToAdd('');
@@ -462,7 +499,7 @@ export default function InstructorHorario() {
         subtitle={
           modoEditar ? "Haz click en una clase para editar sus horas" :
           modoEliminar ? `${horariosSeleccionados.length} clase(s) seleccionada(s)` :
-          "Arrastra tus materias al calendario para crear horarios"
+          "Arrastra tus resultados al calendario para crear horarios"
         }
       />
 
@@ -546,8 +583,8 @@ export default function InstructorHorario() {
         <div className="card">
           <EmptyState 
             icon={<Calendar size={32}/>} 
-            title="No tienes materias asignadas" 
-            description="Crea materias en tus fichas para poder gestionar horarios." 
+            title="No tienes resultados asignados" 
+            description="Pide a tu líder que te asigne resultados de aprendizaje para poder gestionar horarios." 
           />
         </div>
       ) : (
@@ -561,7 +598,7 @@ export default function InstructorHorario() {
           <div className="card mb-6">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3 flex items-center gap-2">
               <GripVertical size={16} className="text-gray-400" />
-              Tienes {materias.length} {materias.length === 1 ? 'materia' : 'materias'} a cargo
+              Tienes {materias.length} {materias.length === 1 ? 'resultado' : 'resultados'} a cargo
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {materias.map(materia => (
@@ -575,7 +612,7 @@ export default function InstructorHorario() {
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 flex items-center gap-1">
               <CheckCircle2 size={12} className="text-green-500" />
-              Las materias con check ya están en el horario
+              Los resultados con check ya están en el horario
             </p>
           </div>
 
@@ -672,7 +709,7 @@ export default function InstructorHorario() {
           
           {materiaToAdd && (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Materia</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">Competencia</p>
               <p className="text-sm font-bold text-gray-900 dark:text-white  dark:text-gray-100">{materiaToAdd.nombre}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ficha {materiaToAdd.ficha?.numero} - {materiaToAdd.ficha?.nombre}</p>
             </div>

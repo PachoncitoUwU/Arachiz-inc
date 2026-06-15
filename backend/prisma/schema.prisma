@@ -28,7 +28,7 @@ model User {
   fichasAdministradas  Ficha[]              @relation("Administrador")
   fichasInst           FichaInstructor[]
   flappyScore          FlappyScore?
-  materias             Materia[]            @relation("InstructorMaterias")
+  resultados           ResultadoAprendizaje[] @relation("InstructorResultados")
   memoryScore          MemoryScore?
   reactionScore        ReactionScore?
   registros            RegistroAsistencia[]
@@ -37,7 +37,7 @@ model User {
   userSkins            UserSkin[]
   wordleScore          WordleScore?
   fichasApr            Ficha[]              @relation("Aprendices")
-  materiasEvitadas     MateriaEvitada[]
+  resultadosEvitados   ResultadoEvitado[]
   respuestasRapidas    RespuestaRapida[]    @relation("RespuestasRapidas")
   papeleraEliminados   Papelera[]           @relation("EliminadoPor")
   historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
@@ -69,7 +69,7 @@ model Ficha {
   administrador     User?               @relation("Administrador", fields: [administradorId], references: [id])
   instructores      FichaInstructor[]
   horarios          Horario[]
-  materias          Materia[]
+  competencias      Competencia[]
   aprendices        User[]              @relation("Aprendices")
   papelera          Papelera[]          @relation("FichaPapelera")
   historialCambios  HistorialCambios[]  @relation("FichaHistorial")
@@ -89,29 +89,37 @@ model FichaInstructor {
   @@unique([fichaId, instructorId])
 }
 
-model Materia {
-  id               String             @id @default(cuid())
-  nombre           String
-  tipo             String
-  fichaId          String
-  instructorId     String?
-  asistencias      Asistencia[]
-  horarios         Horario[]
-  excusas          Excusa[]
-  ficha            Ficha              @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  instructor       User?              @relation("InstructorMaterias", fields: [instructorId], references: [id])
-  materiasEvitadas MateriaEvitada[]
+model Competencia {
+  id          String                 @id @default(cuid())
+  nombre      String
+  tipo        String
+  fichaId     String
+  ficha       Ficha                  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  resultados  ResultadoAprendizaje[]
+}
+
+model ResultadoAprendizaje {
+  id                 String             @id @default(cuid())
+  nombre             String
+  competenciaId      String
+  instructorId       String?
+  competencia        Competencia        @relation(fields: [competenciaId], references: [id], onDelete: Cascade)
+  instructor         User?              @relation("InstructorResultados", fields: [instructorId], references: [id])
+  horarios           Horario[]
+  asistencias        Asistencia[]
+  excusas            Excusa[]
+  resultadosEvitados ResultadoEvitado[]
 }
 
 model Horario {
-  id         String  @id @default(cuid())
-  dia        String
-  horaInicio String
-  horaFin    String
-  fichaId    String
-  materiaId  String
-  ficha      Ficha   @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  materia    Materia @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  id          String               @id @default(cuid())
+  dia         String
+  horaInicio  String
+  horaFin     String
+  fichaId     String
+  resultadoId String
+  ficha       Ficha                @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  resultado   ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
 }
 
 model Asistencia {
@@ -119,10 +127,10 @@ model Asistencia {
   fecha        String
   activa       Boolean              @default(true)
   timestamp    DateTime             @default(now())
-  materiaId    String
+  resultadoId  String
   instructorId String
   instructor   User                 @relation("InstructorAsistencia", fields: [instructorId], references: [id])
-  materia      Materia              @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  resultado    ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
   registros    RegistroAsistencia[]
   llegadaTarde Int                  @default(15)
   duracion     Int                  @default(120)
@@ -157,26 +165,26 @@ model Excusa {
   updatedAt            DateTime            @default(now()) @updatedAt
   respondedAt          DateTime?
   aprendizId           String
-  materiaId            String
+  resultadoId          String
   registroAsistenciaId String?
   aprendiz             User                @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
-  materia              Materia             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  resultado            ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
   registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
 
   @@index([aprendizId])
-  @@index([materiaId])
+  @@index([resultadoId])
   @@index([estado])
 }
 
-model MateriaEvitada {
-  id         String   @id @default(cuid())
-  aprendizId String
-  materiaId  String
-  createdAt  DateTime @default(now())
-  aprendiz   User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
-  materia    Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+model ResultadoEvitado {
+  id          String               @id @default(cuid())
+  aprendizId  String
+  resultadoId String
+  createdAt   DateTime             @default(now())
+  aprendiz    User                 @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  resultado   ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
 
-  @@unique([aprendizId, materiaId])
+  @@unique([aprendizId, resultadoId])
 }
 
 model SnakeScore {

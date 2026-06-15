@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { BarChart3, AlertTriangle, CheckCircle, Target } from 'lucide-react';
 import fetchApi from '../services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -50,8 +50,8 @@ export default function InstructorStats() {
         {/* Gráfico de Tasa de Asistencia General */}
         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700">
           <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Tasa de Asistencia</p>
-          <div className="w-full h-32 relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="relative w-full" style={{ height: 128 }}>
+            <ResponsiveContainer width="100%" height={128}>
               <PieChart>
                 <Pie
                   data={pieData}

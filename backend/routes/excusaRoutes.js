@@ -7,7 +7,7 @@ const {
   updateExcusaEstado,
   updateExcusa,
   deleteExcusa,
-  getMateriasConHorarios
+  getResultadosConHorarios
 } = require('../controllers/excusaController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const { roleMiddleware } = require('../middlewares/roleMiddleware');
@@ -18,7 +18,7 @@ router.use(authMiddleware);
 // Rutas de aprendiz
 router.post('/', roleMiddleware(['aprendiz']), upload.array('archivos', 10), createExcusa);
 router.get('/my-excusas', roleMiddleware(['aprendiz']), getMyExcusas);
-router.get('/materias-con-horarios', roleMiddleware(['aprendiz']), getMateriasConHorarios);
+router.get('/resultados-con-horarios', roleMiddleware(['aprendiz']), getResultadosConHorarios);
 router.put('/:id', roleMiddleware(['aprendiz']), upload.array('archivos', 10), updateExcusa);
 
 // Rutas de instructor

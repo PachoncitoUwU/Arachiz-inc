@@ -64,10 +64,10 @@ export default function Materias() {
       const dataToSave = { ...formData, creditos: parseInt(formData.creditos) };
       if (selectedMateria) {
         await superUserApi.updateMateria(selectedMateria.id, dataToSave);
-        showToast('Materia actualizada', 'success');
+        showToast('Competencia actualizada', 'success');
       } else {
         await superUserApi.createMateria(dataToSave);
-        showToast('Materia creada', 'success');
+        showToast('Competencia creada', 'success');
       }
       setShowEdit(false);
       loadMaterias();
@@ -85,7 +85,7 @@ export default function Materias() {
   const executeDelete = async () => {
     try {
       await superUserApi.deleteMateriaPermanently(selectedMateria.id);
-      showToast('Materia eliminada', 'success');
+      showToast('Competencia eliminada', 'success');
       setShowDelete(false);
       loadMaterias();
     } catch (err) {
@@ -96,9 +96,9 @@ export default function Materias() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <PageHeader title="Gestión de Materias" subtitle="Administra las materias y asignaciones globales" />
+        <PageHeader title="Gestión de Competencias" subtitle="Administra las competencias y asignaciones globales" />
         <button onClick={() => openEdit(null)} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> Nueva Materia
+          <Plus size={18} /> Nueva Competencia
         </button>
       </div>
 
@@ -106,13 +106,13 @@ export default function Materias() {
         {loading ? (
           <div className="p-12 text-center text-gray-500">Cargando...</div>
         ) : materias.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">No hay materias registradas.</div>
+          <div className="p-12 text-center text-gray-500">No hay competencias registradas.</div>
         ) : (
           <div className="overflow-x-auto min-h-[300px]">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 dark:bg-zinc-900/50 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-zinc-700">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-sm">Materia</th>
+                  <th className="px-6 py-4 font-semibold text-sm">Competencia</th>
                   <th className="px-6 py-4 font-semibold text-sm">Ficha</th>
                   <th className="px-6 py-4 font-semibold text-sm">Instructor</th>
                   <th className="px-6 py-4 font-semibold text-sm text-center">Acciones</th>
@@ -160,10 +160,10 @@ export default function Materias() {
       </div>
 
       {/* Edit/Create Modal */}
-      <Modal open={showEdit} onClose={() => setShowEdit(false)} title={selectedMateria ? 'Editar Materia' : 'Nueva Materia'}>
+      <Modal open={showEdit} onClose={() => setShowEdit(false)} title={selectedMateria ? 'Editar Competencia' : 'Nueva Competencia'}>
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Materia</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Competencia</label>
             <input type="text" required value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700" />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -196,8 +196,8 @@ export default function Materias() {
         isOpen={showDelete}
         onClose={() => setShowDelete(false)}
         onConfirm={executeDelete}
-        title="⚠️ Eliminar Materia Permanente"
-        message={`Estás a punto de borrar la materia ${selectedMateria?.nombre}. ¡ESTO NO SE PUEDE DESHACER!`}
+        title="⚠️ Eliminar Competencia Permanente"
+        message={`Estás a punto de borrar la competencia ${selectedMateria?.nombre}. ¡ESTO NO SE PUEDE DESHACER!`}
         confirmText={`eliminar ${selectedMateria?.nombre}`}
       />
     </div>

@@ -48,7 +48,7 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function InstructorAsistencia() {
   const { showToast } = useToast();
-  const [materias, setMaterias] = useState([]);
+  const [competencias, setCompetencias] = useState([]);
   const [selectedMateria, setSelectedMateria] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -114,17 +114,25 @@ export default function InstructorAsistencia() {
         let activeSet = false;
         
         if (activeData?.session) {
-          setSelectedMateria(activeData.session.materiaId);
+          setSelectedMateria(activeData.session.resultadoId);
           setActiveSession(activeData.session);
           connectSocket(activeData.session.id);
           activeSet = true;
         }
         
-        const materiasData = await fetchApi('/materias/my-materias').catch(() => ({ materias: [] }));
-        setMaterias(materiasData.materias || []);
+        const competenciasData = await fetchApi('/competencias/my-competencias').catch(() => ({ competencias: [] }));
+        setCompetencias(competenciasData.competencias || []);
         
-        if (materiasData.materias?.length > 0 && !activeSet && !selectedMateria) {
-          setSelectedMateria(materiasData.materias[0].id);
+        const resultadosDisponibles = (competenciasData.competencias || []).flatMap(comp => 
+          (comp.resultados || []).map(res => ({
+            ...res,
+            competenciaNombre: comp.nombre,
+            fichaNumero: comp.ficha?.numero
+          }))
+        );
+
+        if (resultadosDisponibles.length > 0 && !activeSet && !selectedMateria) {
+          setSelectedMateria(resultadosDisponibles[0].id);
         }
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -140,7 +148,7 @@ export default function InstructorAsistencia() {
     if (!selectedMateria) return;
     loadSessions();
     // Si ya recuperamos we don't duplicate
-    if (!activeSession || activeSession.materiaId !== selectedMateria) {
+    if (!activeSession || activeSession.resultadoId !== selectedMateria) {
       checkActiveSession();
     }
   }, [selectedMateria]);
@@ -148,7 +156,7 @@ export default function InstructorAsistencia() {
   const loadSessions = async () => {
     if (!selectedMateria) return;
     try {
-      let url = `/asistencias/materia/${selectedMateria}`;
+      let url = `/asistencias/resultado/${selectedMateria}`;
       const params = new URLSearchParams();
       
       if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
@@ -186,7 +194,7 @@ export default function InstructorAsistencia() {
   const checkActiveSession = async () => {
     if (!selectedMateria) return;
     try {
-      const d = await fetchApi(`/asistencias/materia/${selectedMateria}/active`);
+      const d = await fetchApi(`/asistencias/resultado/${selectedMateria}/active`);
       if (d.session) { 
         setActiveSession(d.session); 
         connectSocket(d.session.id); 
@@ -230,7 +238,7 @@ export default function InstructorAsistencia() {
       if (!sessionId) return;
       setActiveSession(prev => {
         if (!prev) return prev;
-        const student = prev.materia?.ficha?.aprendices?.find(a => a.nfcUid === data.uid);
+        const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.nfcUid === data.uid);
         if (student) {
           if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
           showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
@@ -264,7 +272,7 @@ export default function InstructorAsistencia() {
       if (!sessionId) return;
       setActiveSession(prev => {
         if (!prev) return prev;
-        const student = prev.materia?.ficha?.aprendices?.find(a => a.huellas?.includes(data.id));
+        const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.huellas?.includes(data.id));
         if (student) {
           if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
           showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
@@ -305,7 +313,7 @@ export default function InstructorAsistencia() {
       const d = await fetchApi('/asistencias', {
         method: 'POST',
         body: JSON.stringify({ 
-          materiaId: selectedMateria,
+          resultadoId: selectedMateria,
           llegadaTarde,
           duracion,
           aula,
@@ -319,7 +327,7 @@ export default function InstructorAsistencia() {
       setShowConfigModal(false);
 
       // Cargar datos completos con faceDescriptor en background (para reconocimiento facial)
-      fetchApi(`/asistencias/materia/${selectedMateria}/active`)
+      fetchApi(`/asistencias/resultado/${selectedMateria}/active`)
         .then(full => { if (full?.session) setActiveSession(full.session); })
         .catch(() => {});
     } catch (err) { showToast(err.message, 'error'); }
@@ -375,7 +383,7 @@ export default function InstructorAsistencia() {
     { name: 'Ausentes',  value: totalAusentes,  color: '#EA4335' },
   ];
 
-  const totalAprendices = activeSession?.materia?.ficha?.aprendices?.length || 0;
+  const totalAprendices = activeSession?.resultado?.competencia?.ficha?.aprendices?.length || 0;
   const presentes = activeSession?.registros?.filter(r => r.presente !== false).length || 0;
   const pendientes = totalAprendices - presentes;
   const porcentajeCompletado = totalAprendices > 0 ? Math.round((presentes / totalAprendices) * 100) : 0;
@@ -525,7 +533,7 @@ export default function InstructorAsistencia() {
 
   const startFaceLoop = () => {
     const OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 }); // Balance entre velocidad y precisión
-    const candidates = (activeSession?.materia?.ficha?.aprendices || [])
+    const candidates = (activeSession?.resultado?.competencia?.ficha?.aprendices || [])
       .filter(a => a.faceDescriptor?.length === 128)
       .map(a => ({ ...a, descriptor: arrayToDescriptor(a.faceDescriptor) }));
 
@@ -801,7 +809,7 @@ export default function InstructorAsistencia() {
     setRegistering(prev => new Set([...prev, aprendizId]));
 
     try {
-      const aprendiz = activeSession.materia?.ficha?.aprendices?.find(a => a.id === aprendizId);
+      const aprendiz = activeSession.resultado?.competencia?.ficha?.aprendices?.find(a => a.id === aprendizId);
       
       // Crear ID único para el registro temporal
       const tempId = `temp-manual-${aprendizId}-${Date.now()}`;
@@ -880,17 +888,29 @@ export default function InstructorAsistencia() {
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1">
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              Selecciona una Materia
+              Selecciona una Competencia / Resultado
             </label>
             <select 
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all hover:border-gray-300 dark:hover:border-gray-600"
               value={selectedMateria}
               onChange={e => setSelectedMateria(e.target.value)}
-              disabled={!!activeSession || materias.length === 0}>
-              {materias.length === 0
-                ? <option>Sin materias disponibles</option>
-                : materias.map(m => <option key={m.id} value={m.id}>{m.nombre} – Ficha {m.ficha?.numero}</option>)
-              }
+              disabled={!!activeSession || competencias.length === 0}>
+              {(() => {
+                const resultadosDisponibles = competencias.flatMap(comp => 
+                  (comp.resultados || []).map(res => ({
+                    ...res,
+                    competenciaNombre: comp.nombre,
+                    fichaNumero: comp.ficha?.numero
+                  }))
+                );
+                return resultadosDisponibles.length === 0
+                  ? <option>Sin resultados disponibles</option>
+                  : resultadosDisponibles.map(r => (
+                      <option key={r.id} value={r.id}>
+                        {r.nombre} ({r.competenciaNombre}) – Ficha {r.fichaNumero}
+                      </option>
+                    ));
+              })()}
             </select>
           </div>
           <div>
@@ -1154,7 +1174,7 @@ export default function InstructorAsistencia() {
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {[...(activeSession.materia?.ficha?.aprendices || [])].sort((a, b) => {
+                  {[...(activeSession.resultado?.competencia?.ficha?.aprendices || [])].sort((a, b) => {
                     const getP = (ap) => {
                       const r = activeSession.registros?.find(r => r.aprendizId === ap.id);
                       if (!r) return 2;       // ausente → abajo
@@ -1320,7 +1340,7 @@ export default function InstructorAsistencia() {
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.fecha}</p>
-                        <p className="text-xs text-gray-400">{s.materia?.nombre}</p>
+                        <p className="text-xs text-gray-400">{s.resultado?.nombre}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
@@ -1367,7 +1387,7 @@ export default function InstructorAsistencia() {
             <EmptyState
               icon={<BarChart2 size={48} className="text-gray-400" />}
               title="Sin sesiones"
-              description={selectedMateria ? "No hay sesiones registradas para esta materia" : "Selecciona una materia para ver el historial"}
+              description={selectedMateria ? "No hay sesiones registradas" : "Selecciona un resultado para ver el historial"}
             />
           )}
         </div>
@@ -1450,7 +1470,7 @@ export default function InstructorAsistencia() {
 
             <div className="p-4 md:p-6 ">
               {(() => {
-                const pendingStudents = activeSession.materia?.ficha?.aprendices
+                const pendingStudents = activeSession.resultado?.competencia?.ficha?.aprendices
                   ?.filter(a => !activeSession.registros?.some(r => r.aprendizId === a.id))
                   .sort((a, b) => a.fullName.localeCompare(b.fullName)) || [];
 
@@ -1543,7 +1563,7 @@ export default function InstructorAsistencia() {
                 <div>
                   <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white text-xl md:text-2xl ">Análisis Detallado de Sesión</h2>
                   <p className="text-sm text-gray-400">
-                    {selectedSessionDetail.fecha} • {selectedSessionDetail.materia?.nombre} • Ficha {selectedSessionDetail.materia?.ficha?.numero}
+                    {selectedSessionDetail.fecha} • {selectedSessionDetail.resultado?.nombre} • Ficha {selectedSessionDetail.resultado?.competencia?.ficha?.numero}
                     {selectedSessionDetail.aula && ` • Aula: ${selectedSessionDetail.aula}`}
                     {selectedSessionDetail.duracion && ` • Duración: ${selectedSessionDetail.duracion} min`}
                     {selectedSessionDetail.llegadaTarde && ` • Tolerancia Tarde: ${selectedSessionDetail.llegadaTarde} min`}

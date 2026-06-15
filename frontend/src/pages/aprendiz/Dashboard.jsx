@@ -63,20 +63,22 @@ export default function AprendizDashboard() {
     // Carga rápida de lo esencial
     Promise.all([
       fetchApi('/fichas/my-fichas'),
-      fetchApi('/materias/my-materias'),
+      fetchApi('/competencias/my-competencias'),
     ]).then(([f, m]) => {
       setFichas(f.fichas || []);
-      setMaterias(m.materias || []);
+      setMaterias(m.competencias || []);
       setLoadingBasic(false);
 
       // Notificar clases activas
-      (m.materias || []).forEach(async (materia) => {
-        try {
-          const res = await fetchApi(`/asistencias/materia/${materia.id}/active`);
-          if (res.session) {
-            showToast(`La clase de ${materia.nombre} ha iniciado. ¡Asegúrate de registrar tu asistencia!`, 'info');
-          }
-        } catch {}
+      (m.competencias || []).forEach((competencia) => {
+        (competencia.resultados || []).forEach(async (resultado) => {
+          try {
+            const res = await fetchApi(`/asistencias/resultado/${resultado.id}/active`);
+            if (res.session) {
+              showToast(`La clase de ${competencia.nombre} - ${resultado.nombre} ha iniciado. ¡Asegúrate de registrar tu asistencia!`, 'info');
+            }
+          } catch {}
+        });
       });
     }).catch(console.error);
 
@@ -96,15 +98,23 @@ export default function AprendizDashboard() {
   const pendientes = excusas.filter(e => e.estado === 'Pendiente').length;
   const ficha      = fichas[0];
 
-  // Gráfica por materia
-  const chartData = materias.map(m => {
-    const misRegistros = historial.filter(r => r.asistencia?.materia?.nombre === m.nombre);
-    return {
-      name: m.nombre.length > 12 ? m.nombre.substring(0, 12) + '…' : m.nombre,
-      Presentes: misRegistros.filter(r => r.presente).length,
-      Ausentes:  misRegistros.filter(r => !r.presente).length,
-    };
-  }).filter(d => d.Presentes + d.Ausentes > 0);
+  // Gráfica por resultado de aprendizaje
+  const chartData = [];
+  materias.forEach(comp => {
+    (comp.resultados || []).forEach(resObj => {
+      const misRegistros = historial.filter(r => 
+        r.asistencia?.resultado?.nombre === resObj.nombre && 
+        r.asistencia?.resultado?.competencia?.nombre === comp.nombre
+      );
+      const displayName = `${comp.nombre.substring(0, 10)} - ${resObj.nombre.substring(0, 10)}`;
+      chartData.push({
+        name: displayName.length > 15 ? displayName.substring(0, 15) + '…' : displayName,
+        Presentes: misRegistros.filter(r => r.presente).length,
+        Ausentes:  misRegistros.filter(r => !r.presente).length,
+      });
+    });
+  });
+  const filteredChartData = chartData.filter(d => d.Presentes + d.Ausentes > 0);
 
   if (loadingBasic) return (
     <div className="flex items-center justify-center h-64">
@@ -220,11 +230,11 @@ export default function AprendizDashboard() {
           </div>
 
           {/* Gráfica de asistencia por materia */}
-          {chartData.length > 0 && (
+          {filteredChartData.length > 0 && (
             <div className="card dark:bg-gray-900 dark:border-gray-800">
               <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white mb-4">{t('dashboard', 'attendanceBySubject')}</h2>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <BarChart data={filteredChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} />
@@ -254,7 +264,9 @@ export default function AprendizDashboard() {
                         : <XCircle size={16} className="text-[#EA4335] shrink-0"/>
                       }
                       <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{r.asistencia?.materia?.nombre}</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {r.asistencia?.resultado ? `${r.asistencia.resultado.competencia.nombre} - ${r.asistencia.resultado.nombre}` : ''}
+                        </p>
                         <p className="text-xs text-gray-400">{r.asistencia?.fecha} · {r.metodo}</p>
                       </div>
                     </div>

@@ -58,7 +58,7 @@ export default function Backup() {
             </h3>
             <ul className="list-disc pl-5 space-y-2 text-sm">
               <li>Todos los usuarios registrados en el sistema (Administradores, Instructores, Aprendices).</li>
-              <li>Todas las Fichas y Materias creadas.</li>
+              <li>Todas las Fichas y Competencias creadas.</li>
               <li>El historial completo e inmutable de Asistencias (NFC).</li>
               <li>Estructura base de horarios.</li>
             </ul>

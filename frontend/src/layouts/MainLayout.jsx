@@ -167,15 +167,15 @@ export default function MainLayout({ allowedRoles }) {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
-    if (user?.userType === 'aprendiz') {
+    if (user?.id && user?.userType === 'aprendiz') {
       import('../services/api').then(({ default: fetchApi }) => {
         fetchApi('/notifications').then(res => {
           setUnreadNotifications(res.unreadCount || 0);
           window.__UNREAD_NOTIFICATIONS__ = res.unreadCount || 0;
-        }).catch(err => console.error(err));
+        }).catch(() => {});
       });
     }
-  }, [user]);
+  }, [user?.id]);
 
   if (loading) {
     return (

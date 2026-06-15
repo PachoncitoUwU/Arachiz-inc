@@ -23,7 +23,24 @@ export default function AprendizFichaDetalle() {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
   
-  const [ficha, setFicha] = useState(null);
+  const [ficha, _setFicha] = useState(null);
+  const setFicha = (val) => {
+    if (val) {
+      val.materias = (val.competencias || []).map(comp => ({
+        ...comp,
+        instructor: comp.resultados?.[0]?.instructor || null,
+        instructorId: comp.resultados?.[0]?.instructorId || null
+      }));
+      if (val.horarios) {
+        val.horarios = val.horarios.map(h => ({
+          ...h,
+          materiaId: h.resultadoId,
+          materia: h.resultado
+        }));
+      }
+    }
+    _setFicha(val);
+  };
   const [loading, setLoading] = useState(true);
   const [modalMateriaInfo, setModalMateriaInfo] = useState(false);
   const [selectedMateria, setSelectedMateria] = useState(null);
@@ -34,6 +51,8 @@ export default function AprendizFichaDetalle() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState('all');
   const [filterInstructor, setFilterInstructor] = useState('all');
+  const [currentMateriaView, setCurrentMateriaView] = useState('competencias');
+  const [selectedCompetenciaView, setSelectedCompetenciaView] = useState(null);
   
   // Estado para fichas ancladas
   const [isPinned, setIsPinned] = useState(false);
@@ -94,8 +113,8 @@ export default function AprendizFichaDetalle() {
 
   const loadMateriasEvitadas = async () => {
     try {
-      const data = await fetchApi('/materias-evitadas/my-materias-evitadas');
-      setMateriasEvitadas(data.materiasEvitadas.map(me => me.materiaId));
+      const data = await fetchApi('/resultados-evitados/my-resultados-evitados');
+      setMateriasEvitadas(data.resultadosEvitados.map(me => me.resultadoId));
     } catch (err) {
       console.error('Error al cargar materias evitadas:', err);
     }
@@ -200,7 +219,7 @@ export default function AprendizFichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
-  const filteredMaterias = (ficha.materias || []).filter(materia => {
+  const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
     if (searchQuery) {
@@ -219,9 +238,9 @@ export default function AprendizFichaDetalle() {
     return matches;
   });
 
-  const uniqueInstructors = [...new Set((ficha.materias || []).map(m => m.instructorId))]
+  const uniqueInstructors = [...new Set((ficha.competencias || []).map(m => m.instructorId))]
     .map(id => {
-      const materia = ficha.materias.find(m => m.instructorId === id);
+      const materia = ficha.competencias.find(m => m.instructorId === id);
       return {
         id,
         name: materia?.instructor?.fullName || 'Desconocido'
@@ -309,7 +328,7 @@ export default function AprendizFichaDetalle() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide mb-1">
-                Materias
+                Competencias
               </p>
               <p className="text-xl md:text-2xl  font-bold text-[#34A853]">
                 {ficha.materias?.length || 0}
@@ -419,7 +438,7 @@ export default function AprendizFichaDetalle() {
             >
               <div className="flex items-center gap-2">
                 <BookOpen size={16} />
-                Materias ({ficha.materias?.length || 0})
+                Competencias ({ficha.materias?.length || 0})
               </div>
               {activeTab === 'materias' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
@@ -522,40 +541,85 @@ export default function AprendizFichaDetalle() {
                 <BookOpen size={32} className="text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">
                   {searchQuery || filterTipo !== 'all' || filterInstructor !== 'all' 
-                    ? 'No se encontraron materias con esos filtros' 
-                    : 'Sin materias asignadas aún'}
+                    ? 'No se encontraron competencias con esos filtros' 
+                    : 'Sin competencias asignadas aún'}
                 </p>
               </div>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {filteredMaterias.map(materia => {
-                  const isEvitada = materiasEvitadas.includes(materia.id);
-                  return (
-                    <div 
-                      key={materia.id} 
-                      className={`flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border cursor-pointer ${
-                        isEvitada 
-                          ? 'border-red-200 dark:border-red-800 opacity-60' 
-                          : 'border-gray-100 dark:border-gray-700'
-                      }`}
-                      onClick={() => handleOpenMateriaInfo(materia, isEvitada)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{materia.nombre}</p>
-                          {isEvitada && (
-                            <span className="badge bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs">
+            ) : currentMateriaView === 'resultados' && selectedCompetenciaView ? (
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <button onClick={() => { setCurrentMateriaView('competencias'); setSelectedCompetenciaView(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 font-medium flex items-center gap-2">
+                    ← Volver
+                  </button>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Competencia</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCompetenciaView.nombre}</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {selectedCompetenciaView.resultados?.map(r => {
+                    const rIsEvitada = materiasEvitadas.includes(r.id);
+                    return (
+                      <div 
+                        key={r.id} 
+                        onClick={() => handleOpenMateriaInfo({...r, competencia: selectedCompetenciaView, competenciaId: selectedCompetenciaView.id, ficha: { numero: ficha.numero, nombre: ficha.nombre }}, rIsEvitada)} 
+                        className={`p-4 rounded-xl border ${rIsEvitada ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 opacity-60' : 'border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-900'} hover:shadow-md transition-shadow cursor-pointer flex items-center justify-between gap-4`}
+                      >
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{r.nombre}</p>
+                          {rIsEvitada && (
+                            <span className="badge bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs shrink-0">
                               Evitada
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400">{materia.tipo}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Instructor</p>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
-                          {materia.instructor?.fullName}
+                        <p className="text-sm font-medium flex-shrink-0 text-gray-600 dark:text-gray-400">
+                          {r.instructor ? r.instructor.fullName : 'Sin instructor asignado'}
                         </p>
+                      </div>
+                    );
+                  })}
+                  {(!selectedCompetenciaView.resultados || selectedCompetenciaView.resultados.length === 0) && (
+                    <div className="p-8 text-center text-gray-500 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
+                      Esta competencia aún no tiene resultados de aprendizaje asignados.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredMaterias.map(materia => {
+                  const isEvitada = materia.resultados && materia.resultados.length > 0 && materia.resultados.every(r => materiasEvitadas.includes(r.id));
+                  return (
+                    <div 
+                      key={materia.id} 
+                      className={`p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border ${
+                        isEvitada 
+                          ? 'border-red-200 dark:border-red-800 opacity-60' 
+                          : 'border-gray-100 dark:border-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between cursor-pointer" onClick={() => handleOpenMateriaInfo(materia, isEvitada)}>
+                        <div className="flex-1 min-w-0 pr-4">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{materia.nombre}</p>
+                            {isEvitada && (
+                              <span className="badge bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs shrink-0">
+                                Evitada
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400">{materia.tipo}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedCompetenciaView(materia); setCurrentMateriaView('resultados'); }}
+                            className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Ver resultados de aprendizaje ({materia.resultados?.length || 0})
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

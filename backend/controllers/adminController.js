@@ -23,7 +23,7 @@ const getFichasAdmin = async (req, res) => {
           select: {
             aprendices: true,
             instructores: true,
-            materias: true
+            competencias: true
           }
         }
       },
@@ -77,20 +77,24 @@ const getFichaDetalle = async (req, res) => {
             }
           }
         },
-        materias: {
+        competencias: {
           include: {
-            instructor: {
-              select: { id: true, fullName: true }
-            },
-            horarios: true,
-            _count: {
-              select: { asistencias: true }
+            resultados: {
+              include: {
+                instructor: {
+                  select: { id: true, fullName: true }
+                },
+                horarios: true,
+                _count: {
+                  select: { asistencias: true }
+                }
+              }
             }
           }
         },
         horarios: {
           include: {
-            materia: {
+            resultado: {
               select: { id: true, nombre: true }
             }
           }
@@ -102,22 +106,28 @@ const getFichaDetalle = async (req, res) => {
       return res.status(404).json({ error: 'Ficha no encontrada' });
     }
 
-    // Cargar materias evitadas para cada aprendiz
-    const aprendicesConMateriasEvitadas = await Promise.all(
+    // Cargar resultados evitados para cada aprendiz
+    const aprendicesConResultadosEvitados = await Promise.all(
       ficha.aprendices.map(async (aprendiz) => {
-        const materiasEvitadas = await prisma.materiaEvitada.findMany({
+        const resultadosEvitados = await prisma.resultadoEvitado.findMany({
           where: { 
             aprendizId: aprendiz.id,
-            materia: {
-              fichaId: fichaId
+            resultado: {
+              competencia: {
+                fichaId: fichaId
+              }
             }
           },
           include: {
-            materia: {
+            resultado: {
               select: {
                 id: true,
                 nombre: true,
-                tipo: true
+                competencia: {
+                  select: {
+                    nombre: true
+                  }
+                }
               }
             }
           }
@@ -125,13 +135,13 @@ const getFichaDetalle = async (req, res) => {
         
         return {
           ...aprendiz,
-          materiasEvitadas
+          resultadosEvitados
         };
       })
     );
 
-    // Reemplazar aprendices con los que tienen materias evitadas
-    ficha.aprendices = aprendicesConMateriasEvitadas;
+    // Reemplazar aprendices con los que tienen resultados evitados
+    ficha.aprendices = aprendicesConResultadosEvitados;
 
     res.json({ ficha });
   } catch (err) {
@@ -255,30 +265,34 @@ const cambiarLiderFicha = async (req, res) => {
 /**
  * Cambiar el instructor a cargo de una materia
  */
-const cambiarInstructorMateria = async (req, res) => {
+const asignarInstructorResultado = async (req, res) => {
   try {
-    const { materiaId } = req.params;
+    const { resultadoId } = req.params;
     const { nuevoInstructorId } = req.body;
 
     if (!nuevoInstructorId) {
       return res.status(400).json({ error: 'ID del nuevo instructor es requerido' });
     }
 
-    // Obtener la materia y verificar que pertenece a una ficha del admin
-    const materia = await prisma.materia.findUnique({
-      where: { id: materiaId },
+    // Obtener el resultado y verificar que pertenece a una ficha del admin
+    const resultado = await prisma.resultadoAprendizaje.findUnique({
+      where: { id: resultadoId },
       include: {
-        ficha: true,
+        competencia: {
+          include: {
+            ficha: true
+          }
+        },
         instructor: { select: { fullName: true } }
       }
     });
 
-    if (!materia) {
-      return res.status(404).json({ error: 'Materia no encontrada' });
+    if (!resultado) {
+      return res.status(404).json({ error: 'Resultado de aprendizaje no encontrado' });
     }
 
-    if (materia.ficha.administradorId !== req.user.id) {
-      return res.status(403).json({ error: 'No tienes permisos sobre esta materia' });
+    if (resultado.competencia.ficha.administradorId !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permisos sobre este resultado de aprendizaje' });
     }
 
     // Verificar que el nuevo instructor existe y es instructor
@@ -294,7 +308,7 @@ const cambiarInstructorMateria = async (req, res) => {
     const fichaInstructor = await prisma.fichaInstructor.findUnique({
       where: {
         fichaId_instructorId: {
-          fichaId: materia.fichaId,
+          fichaId: resultado.competencia.fichaId,
           instructorId: nuevoInstructorId
         }
       }
@@ -305,8 +319,8 @@ const cambiarInstructorMateria = async (req, res) => {
     }
 
     // Cambiar el instructor
-    const materiaActualizada = await prisma.materia.update({
-      where: { id: materiaId },
+    const resultadoActualizado = await prisma.resultadoAprendizaje.update({
+      where: { id: resultadoId },
       data: { instructorId: nuevoInstructorId },
       include: {
         instructor: {
@@ -320,8 +334,8 @@ const cambiarInstructorMateria = async (req, res) => {
     const { detectarConflictos, crearConflicto } = require('../utils/horarioConflictos');
     let conflictosGenerados = [];
     
-    if (materiaActualizada.horarios && materiaActualizada.horarios.length > 0) {
-      for (const horario of materiaActualizada.horarios) {
+    if (resultadoActualizado.horarios && resultadoActualizado.horarios.length > 0) {
+      for (const horario of resultadoActualizado.horarios) {
         const conflictos = await detectarConflictos(
           nuevoInstructorId,
           horario.dia,
@@ -350,20 +364,20 @@ const cambiarInstructorMateria = async (req, res) => {
     // Registrar en historial
     await prisma.historialCambios.create({
       data: {
-        fichaId: materia.fichaId,
+        fichaId: resultado.competencia.fichaId,
         usuarioId: req.user.id,
         tipoEvento: 'cambio_instructor',
-        entidad: 'materia',
-        entidadId: materiaId,
-        descripcion: `Cambió el instructor de la materia "${materia.nombre}" de "${materia.instructor?.fullName || 'Sin instructor'}" a "${nuevoInstructor.fullName}"${conflictosGenerados.length > 0 ? ` (generó ${conflictosGenerados.length} conflicto(s))` : ''}`,
-        datosAnteriores: { instructorId: materia.instructorId },
+        entidad: 'resultado_aprendizaje',
+        entidadId: resultadoId,
+        descripcion: `Cambió el instructor del resultado "${resultado.nombre}" de la competencia "${resultado.competencia.nombre}" de "${resultado.instructor?.fullName || 'Sin instructor'}" a "${nuevoInstructor.fullName}"${conflictosGenerados.length > 0 ? ` (generó ${conflictosGenerados.length} conflicto(s))` : ''}`,
+        datosAnteriores: { instructorId: resultado.instructorId },
         datosNuevos: { instructorId: nuevoInstructorId }
       }
     });
 
     res.json({ 
-      message: 'Instructor de materia actualizado correctamente',
-      materia: materiaActualizada,
+      message: 'Instructor de resultado de aprendizaje actualizado correctamente',
+      resultado: resultadoActualizado,
       conflictos: conflictosGenerados.length > 0 ? {
         count: conflictosGenerados.length,
         message: `Se generaron ${conflictosGenerados.length} conflicto(s) de horario para el instructor`,
@@ -645,13 +659,17 @@ const getHorariosDeInstructor = async (req, res) => {
 
     const horarios = await prisma.horario.findMany({
       where: {
-        materia: { instructorId }
+        resultado: { instructorId }
       },
       include: {
-        materia: { 
+        resultado: { 
           include: { 
             instructor: { select: { fullName: true } },
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              include: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         }
       },
@@ -667,7 +685,7 @@ const getHorariosDeInstructor = async (req, res) => {
 /**
  * Obtener materias de un instructor específico (para admin)
  */
-const getMateriasDeInstructor = async (req, res) => {
+const getResultadosDeInstructor = async (req, res) => {
   try {
     const { instructorId } = req.params;
 
@@ -685,18 +703,22 @@ const getMateriasDeInstructor = async (req, res) => {
       return res.status(403).json({ error: 'No tienes acceso a este instructor' });
     }
 
-    const materias = await prisma.materia.findMany({
+    const resultados = await prisma.resultadoAprendizaje.findMany({
       where: { instructorId },
       include: {
         instructor: { select: { id: true, fullName: true } },
-        ficha: { select: { id: true, numero: true, nombre: true } },
+        competencia: {
+          include: {
+            ficha: { select: { id: true, numero: true, nombre: true } }
+          }
+        },
         _count: { select: { asistencias: true } }
       }
     });
 
-    res.json({ materias });
+    res.json({ resultados });
   } catch (err) {
-    res.status(500).json({ error: 'Error obteniendo materias: ' + err.message });
+    res.status(500).json({ error: 'Error obteniendo resultados: ' + err.message });
   }
 };
 
@@ -1045,11 +1067,13 @@ const eliminarInstructorDeFicha = async (req, res) => {
       });
     }
 
-    // Poner instructorId en null en todas las materias del instructor en esta ficha
-    await prisma.materia.updateMany({
+    // Poner instructorId en null en todos los resultados del instructor en esta ficha
+    await prisma.resultadoAprendizaje.updateMany({
       where: {
-        fichaId,
-        instructorId
+        instructorId,
+        competencia: {
+          fichaId
+        }
       },
       data: {
         instructorId: null
@@ -1179,12 +1203,14 @@ const salirDeFicha = async (req, res) => {
       userFullName = user.fullName;
       tipoSalida = userType;
 
-      // Si es instructor, poner instructorId en null en todas sus materias de esta ficha
+      // Si es instructor, poner instructorId en null en todos sus resultados de esta ficha
       if (userType === 'instructor' && fichaInstructor) {
-        await prisma.materia.updateMany({
+        await prisma.resultadoAprendizaje.updateMany({
           where: {
-            fichaId,
-            instructorId: userId
+            instructorId: userId,
+            competencia: {
+              fichaId
+            }
           },
           data: {
             instructorId: null
@@ -1255,7 +1281,7 @@ const eliminarFicha = async (req, res) => {
           select: {
             aprendices: true,
             instructores: true,
-            materias: true,
+            competencias: true,
             horarios: true
           }
         }
@@ -1277,7 +1303,7 @@ const eliminarFicha = async (req, res) => {
       fichaId,
       userId,
       'administrador',
-      `Ficha ${ficha.numero} eliminada con ${ficha._count.aprendices} aprendices, ${ficha._count.instructores} instructores, ${ficha._count.materias} materias`
+      `Ficha ${ficha.numero} eliminada con ${ficha._count.aprendices} aprendices, ${ficha._count.instructores} instructores, ${ficha._count.competencias} competencias`
     );
 
     // Eliminar ficha (esto eliminará en cascada todo lo relacionado)
@@ -1394,8 +1420,10 @@ const getExcusasAdmin = async (req, res) => {
 
     // Construir filtros
     const where = {
-      materia: {
-        fichaId: { in: fichasIds }
+      resultado: {
+        competencia: {
+          fichaId: { in: fichasIds }
+        }
       }
     };
 
@@ -1406,17 +1434,17 @@ const getExcusasAdmin = async (req, res) => {
 
     // Filtro por ficha
     if (fichaId && fichaId !== 'all') {
-      where.materia.fichaId = fichaId;
+      where.resultado.competencia.fichaId = fichaId;
     }
 
-    // Filtro por materia
+    // Filtro por resultado
     if (materiaId && materiaId !== 'all') {
-      where.materiaId = materiaId;
+      where.resultadoId = materiaId;
     }
 
     // Filtro por instructor
     if (instructorId && instructorId !== 'all') {
-      where.materia.instructorId = instructorId;
+      where.resultado.instructorId = instructorId;
     }
 
     // Filtro por aprendiz
@@ -1447,7 +1475,7 @@ const getExcusasAdmin = async (req, res) => {
             avatarUrl: true 
           }
         },
-        materia: {
+        resultado: {
           select: {
             id: true,
             nombre: true,
@@ -1457,12 +1485,17 @@ const getExcusasAdmin = async (req, res) => {
                 fullName: true
               }
             },
-            ficha: { 
-              select: { 
-                id: true,
-                numero: true, 
-                nombre: true 
-              } 
+            competencia: {
+              select: {
+                nombre: true,
+                ficha: { 
+                  select: { 
+                    id: true,
+                    numero: true, 
+                    nombre: true 
+                  } 
+                }
+              }
             }
           }
         }
@@ -1519,7 +1552,7 @@ const getEstadisticasExcusas = async (req, res) => {
         porcentajeAprobacion: 0,
         porcentajeRechazo: 0,
         topAprendices: [],
-        topMaterias: [],
+        topResultados: [],
         topInstructores: [],
         excusasPorMes: []
       });
@@ -1527,14 +1560,16 @@ const getEstadisticasExcusas = async (req, res) => {
 
     // Construir filtros base
     const where = {
-      materia: {
-        fichaId: { in: fichasIds }
+      resultado: {
+        competencia: {
+          fichaId: { in: fichasIds }
+        }
       }
     };
 
     // Aplicar filtros específicos
     if (fichaId && fichaId !== 'all') {
-      where.materia.fichaId = fichaId;
+      where.resultado.competencia.fichaId = fichaId;
     }
 
     if (aprendizId && aprendizId !== 'all') {
@@ -1542,11 +1577,11 @@ const getEstadisticasExcusas = async (req, res) => {
     }
 
     if (instructorId && instructorId !== 'all') {
-      where.materia.instructorId = instructorId;
+      where.resultado.instructorId = instructorId;
     }
 
     if (materiaId && materiaId !== 'all') {
-      where.materiaId = materiaId;
+      where.resultadoId = materiaId;
     }
 
     // Obtener todas las excusas con filtros
@@ -1556,12 +1591,17 @@ const getEstadisticasExcusas = async (req, res) => {
         aprendiz: {
           select: { id: true, fullName: true }
         },
-        materia: {
+        resultado: {
           select: {
             id: true,
             nombre: true,
             instructor: {
               select: { id: true, fullName: true }
+            },
+            competencia: {
+              select: {
+                nombre: true
+              }
             }
           }
         }
@@ -1602,41 +1642,41 @@ const getEstadisticasExcusas = async (req, res) => {
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
 
-    // Top 5 materias con más excusas
-    const materiasMap = {};
+    // Top 5 resultados con más excusas
+    const resultadosMap = {};
     excusas.forEach(e => {
-      const key = e.materia.id;
-      if (!materiasMap[key]) {
-        materiasMap[key] = {
-          id: e.materia.id,
-          nombre: e.materia.nombre,
+      const key = e.resultado.id;
+      if (!resultadosMap[key]) {
+        resultadosMap[key] = {
+          id: e.resultado.id,
+          nombre: `${e.resultado.competencia.nombre} - ${e.resultado.nombre}`,
           total: 0,
           aprobadas: 0,
           rechazadas: 0,
           pendientes: 0
         };
       }
-      materiasMap[key].total++;
-      if (e.estado === 'Aprobada') materiasMap[key].aprobadas++;
-      if (e.estado === 'Rechazada') materiasMap[key].rechazadas++;
-      if (e.estado === 'Pendiente') materiasMap[key].pendientes++;
+      resultadosMap[key].total++;
+      if (e.estado === 'Aprobada') resultadosMap[key].aprobadas++;
+      if (e.estado === 'Rechazada') resultadosMap[key].rechazadas++;
+      if (e.estado === 'Pendiente') resultadosMap[key].pendientes++;
     });
 
-    const topMaterias = Object.values(materiasMap)
+    const topResultados = Object.values(resultadosMap)
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
 
     // Top 5 instructores con más excusas recibidas
     const instructoresMap = {};
     excusas.forEach(e => {
-      // Validar que la materia tenga instructor asignado
-      if (!e.materia.instructor) return;
+      // Validar que el resultado tenga instructor asignado
+      if (!e.resultado.instructor) return;
       
-      const key = e.materia.instructor.id;
+      const key = e.resultado.instructor.id;
       if (!instructoresMap[key]) {
         instructoresMap[key] = {
-          id: e.materia.instructor.id,
-          nombre: e.materia.instructor.fullName,
+          id: e.resultado.instructor.id,
+          nombre: e.resultado.instructor.fullName,
           total: 0,
           aprobadas: 0,
           rechazadas: 0,
@@ -1684,7 +1724,7 @@ const getEstadisticasExcusas = async (req, res) => {
       porcentajeAprobacion: parseFloat(porcentajeAprobacion),
       porcentajeRechazo: parseFloat(porcentajeRechazo),
       topAprendices,
-      topMaterias,
+      topResultados,
       topInstructores,
       excusasPorMes
     });
@@ -1821,14 +1861,14 @@ module.exports = {
   eliminarNfcAprendiz,
   salirDeFicha,
   cambiarLiderFicha,
-  cambiarInstructorMateria,
+  asignarInstructorResultado,
   getInstructores,
   getAprendices,
   getFichasDeAprendiz,
   getFichasDeInstructor,
   getConflictosDeInstructor,
   getHorariosDeInstructor,
-  getMateriasDeInstructor,
+  getResultadosDeInstructor,
   getExcusasAdmin,
   getEstadisticasExcusas,
   getHistorialFicha,

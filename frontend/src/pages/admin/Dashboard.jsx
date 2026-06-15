@@ -78,7 +78,7 @@ export default function AdminDashboard() {
           color="gray"
         />
         <StatCard
-          label="Materias"
+          label="Competencias"
           value={stats.totalMaterias}
           icon={<BookOpen size={22} />}
           color="yellow"
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="text-right text-sm text-gray-600">
                     <div>{ficha._count?.aprendices || 0} aprendices</div>
-                    <div>{ficha._count?.materias || 0} materias</div>
+                    <div>{ficha._count?.materias || 0} competencias</div>
                   </div>
                 </div>
               </Link>
