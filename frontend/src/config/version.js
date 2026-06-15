@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.348';
+export const VERSION = '1.4.350';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.350',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.350',
+    changes: [
+      'fix: CORS - soportar multiples origenes en FRONTEND_URL separados por coma'
+    ]
+  },
   {
     version: '1.4.348',
     date: '2026-06-15',
