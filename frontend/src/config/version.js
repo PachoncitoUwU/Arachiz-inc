@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.350';
+export const VERSION = '1.4.352';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.352',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.352',
+    changes: [
+      'fix: WorldCupContext fallback seguro + vercel.json rewrite simplificado para SPA'
+    ]
+  },
   {
     version: '1.4.350',
     date: '2026-06-15',
