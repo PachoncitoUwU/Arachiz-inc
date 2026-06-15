@@ -252,7 +252,6 @@ export default function Login() {
         .grass-color-4 { background: linear-gradient(to top, #165016, #267326); }
         .grass-color-5 { background: linear-gradient(to top, #145214, #1f6f1f); }
         .grass-color-6 { background: linear-gradient(to top, #1d7a1d, #38b838); }
-      `}
         @keyframes float-up {
           0% {
             transform: translateY(0) rotate(0deg);
