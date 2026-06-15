@@ -3,7 +3,10 @@
   "buildCommand": "vite build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(?!.*\\.(?:glb|gltf|png|jpg|jpeg|svg|ico|webp|gif|woff|woff2|ttf|otf|css|js|json|txt|xml|html|mp4|webm|mp3|wav|pdf|zip)$)(.*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
@@ -21,6 +24,19 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.glb)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "model/gltf-binary"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
