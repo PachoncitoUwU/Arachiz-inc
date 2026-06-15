@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.335';
+export const VERSION = '1.4.337';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.337',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.337',
+    changes: [
+      '.'
+    ]
+  },
   {
     version: '1.4.335',
     date: '2026-06-15',
