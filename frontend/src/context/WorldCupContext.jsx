@@ -26,7 +26,8 @@ export function WorldCupProvider({ children }) {
 export function useWorldCup() {
   const context = useContext(WorldCupContext);
   if (!context) {
-    throw new Error('useWorldCup must be used within WorldCupProvider');
+    // Fallback seguro si se usa fuera del provider
+    return { worldCupMode: false, toggleWorldCupMode: () => {} };
   }
   return context;
 }
