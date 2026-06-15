@@ -177,6 +177,7 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
 export default function MainLayout({ allowedRoles }) {
   const { user, isAuthenticated, logout, updateUser, loading } = useContext(AuthContext);
   const { settings } = useSettings();
+  const { worldCupMode } = useWorldCup();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);

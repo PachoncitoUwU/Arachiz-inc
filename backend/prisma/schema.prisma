@@ -10,70 +10,71 @@ datasource db {
 }
 
 model User {
-  id                   String               @id @default(cuid())
+  id                   String                 @id @default(cuid())
   userType             String
   fullName             String
-  document             String               @unique
-  email                String               @unique
+  document             String                 @unique
+  email                String                 @unique
   password             String
   avatarUrl            String?
-  nfcUid               String?              @unique
-  huellas              Int[]                @default([])
-  createdAt            DateTime             @default(now())
-  faceDescriptor       Float[]              @default([])
-  asistencias          Asistencia[]         @relation("InstructorAsistencia")
+  nfcUid               String?                @unique
+  huellas              Int[]                  @default([])
+  createdAt            DateTime               @default(now())
+  faceDescriptor       Float[]                @default([])
+  rachaAsistencia      Int                    @default(0)
+  asistencias          Asistencia[]           @relation("InstructorAsistencia")
   breakoutScore        BreakoutScore?
+  conflictosCreados    ConflictoHorario[]     @relation("ConflictosCreados")
+  conflictosInstructor ConflictoHorario[]     @relation("ConflictosInstructor")
   excusas              Excusa[]
-  fichasAdmin          Ficha[]              @relation("InstructorAdmin")
-  fichasAdministradas  Ficha[]              @relation("Administrador")
+  fichasAdministradas  Ficha[]                @relation("Administrador")
+  fichasAdmin          Ficha[]                @relation("InstructorAdmin")
   fichasInst           FichaInstructor[]
   flappyScore          FlappyScore?
-  materias             Materia[]            @relation("InstructorMaterias")
+  historialCambios     HistorialCambios[]     @relation("UsuarioCambios")
   memoryScore          MemoryScore?
+  mensajesEnviados     MensajeChat[]
+  notifications        Notification[]
+  papeleraEliminados   Papelera[]             @relation("EliminadoPor")
+  pushSubscriptions    PushSubscription[]
   reactionScore        ReactionScore?
   registros            RegistroAsistencia[]
+  respuestasRapidas    RespuestaRapida[]      @relation("RespuestasRapidas")
+
   snakeScore           SnakeScore?
+  superUserLogs        SuperUserAuditLog[]    @relation("SuperUserLogs")
   towerScore           TowerScore?
   userSkins            UserSkin[]
   wordleScore          WordleScore?
-  fichasApr            Ficha[]              @relation("Aprendices")
+  fichasApr            Ficha[]                @relation("Aprendices")
+  materias             Materia[]              @relation("InstructorMaterias")
   materiasEvitadas     MateriaEvitada[]
-  respuestasRapidas    RespuestaRapida[]    @relation("RespuestasRapidas")
-  papeleraEliminados   Papelera[]           @relation("EliminadoPor")
-  historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
-  conflictosInstructor ConflictoHorario[]   @relation("ConflictosInstructor")
-  conflictosCreados    ConflictoHorario[]   @relation("ConflictosCreados")
-  rachaAsistencia      Int                  @default(0)
-  pushSubscriptions    PushSubscription[]
-  mensajesEnviados     MensajeChat[]
-  superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
-  notifications        Notification[]
 }
 
 model Ficha {
-  id                String              @id @default(cuid())
-  numero            String              @unique
+  id                String             @id @default(cuid())
+  numero            String             @unique
   nivel             String
   centro            String
   jornada           String
-  region            String              @default("")
-  duracion          Int                 @default(0)
+  region            String             @default("")
+  duracion          Int                @default(0)
+  code              String             @unique
+  createdAt         DateTime           @default(now())
+  instructorAdminId String?
+  nombre            String             @default("Programa sin nombre")
+  administradorId   String?
   fechaInicio       DateTime?
   fechaFin          DateTime?
-  code              String              @unique
-  createdAt         DateTime            @default(now())
-  instructorAdminId String?
-  administradorId   String?
-  nombre            String              @default("Programa sin nombre")
-  instructorAdmin   User?               @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
-  administrador     User?               @relation("Administrador", fields: [administradorId], references: [id])
+  administrador     User?              @relation("Administrador", fields: [administradorId], references: [id])
+  instructorAdmin   User?              @relation("InstructorAdmin", fields: [instructorAdminId], references: [id])
   instructores      FichaInstructor[]
+  historialCambios  HistorialCambios[] @relation("FichaHistorial")
   horarios          Horario[]
   materias          Materia[]
-  aprendices        User[]              @relation("Aprendices")
-  papelera          Papelera[]          @relation("FichaPapelera")
-  historialCambios  HistorialCambios[]  @relation("FichaHistorial")
   mensajesChat      MensajeChat[]
+  papelera          Papelera[]         @relation("FichaPapelera")
+  aprendices        User[]             @relation("Aprendices")
 
   @@index([administradorId])
 }
@@ -87,20 +88,6 @@ model FichaInstructor {
   instructor   User   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 
   @@unique([fichaId, instructorId])
-}
-
-model Materia {
-  id               String             @id @default(cuid())
-  nombre           String
-  tipo             String
-  fichaId          String
-  instructorId     String?
-  asistencias      Asistencia[]
-  horarios         Horario[]
-  excusas          Excusa[]
-  ficha            Ficha              @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  instructor       User?              @relation("InstructorMaterias", fields: [instructorId], references: [id])
-  materiasEvitadas MateriaEvitada[]
 }
 
 model Horario {
@@ -121,13 +108,13 @@ model Asistencia {
   timestamp    DateTime             @default(now())
   materiaId    String
   instructorId String
+  aula         String?
+  descripcion  String?
+  duracion     Int                  @default(120)
+  llegadaTarde Int                  @default(15)
   instructor   User                 @relation("InstructorAsistencia", fields: [instructorId], references: [id])
   materia      Materia              @relation(fields: [materiaId], references: [id], onDelete: Cascade)
   registros    RegistroAsistencia[]
-  llegadaTarde Int                  @default(15)
-  duracion     Int                  @default(120)
-  aula         String?
-  descripcion  String?
 }
 
 model RegistroAsistencia {
@@ -135,13 +122,13 @@ model RegistroAsistencia {
   presente     Boolean    @default(true)
   metodo       String     @default("manual")
   timestamp    DateTime   @default(now())
-  justificado  Boolean    @default(false)
-  tarde        Boolean    @default(false)
   asistenciaId String
   aprendizId   String
+  justificado  Boolean    @default(false)
+  tarde        Boolean    @default(false)
+  excusas      Excusa[]
   aprendiz     User       @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
   asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
-  excusas      Excusa[]
 
   @@unique([asistenciaId, aprendizId])
 }
@@ -161,22 +148,11 @@ model Excusa {
   registroAsistenciaId String?
   aprendiz             User                @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
   materia              Materia             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
+  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id])
 
   @@index([aprendizId])
-  @@index([materiaId])
   @@index([estado])
-}
-
-model MateriaEvitada {
-  id         String   @id @default(cuid())
-  aprendizId String
-  materiaId  String
-  createdAt  DateTime @default(now())
-  aprendiz   User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
-  materia    Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-
-  @@unique([aprendizId, materiaId])
+  @@index([materiaId])
 }
 
 model SnakeScore {
@@ -269,12 +245,12 @@ model SkinOrder {
   userId        String?
   skinId        String?
   amount        Float
-  currency      String    @default("COP")
+  currency      String     @default("COP")
   status        String
   paymentMethod String?
   externalId    String?
   preferenceId  String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime   @default(now())
   approvedAt    DateTime?
   skin          SnakeSkin? @relation(fields: [skinId], references: [id])
 
@@ -295,17 +271,17 @@ model RespuestaRapida {
 }
 
 model Papelera {
-  id                String   @id @default(cuid())
-  tipoElemento      String
-  elementoId        String
-  fichaId           String
-  eliminadoPor      String
-  rolEliminador     String
-  fechaEliminacion  DateTime @default(now())
-  datosOriginales   Json
-  razonEliminacion  String?
-  ficha             Ficha    @relation("FichaPapelera", fields: [fichaId], references: [id], onDelete: Cascade)
-  usuario           User     @relation("EliminadoPor", fields: [eliminadoPor], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  tipoElemento     String
+  elementoId       String
+  fichaId          String
+  eliminadoPor     String
+  rolEliminador    String
+  fechaEliminacion DateTime @default(now())
+  datosOriginales  Json
+  razonEliminacion String?
+  usuario          User     @relation("EliminadoPor", fields: [eliminadoPor], references: [id], onDelete: Cascade)
+  ficha            Ficha    @relation("FichaPapelera", fields: [fichaId], references: [id], onDelete: Cascade)
 
   @@index([fichaId])
   @@index([eliminadoPor])
@@ -340,13 +316,13 @@ model ConflictoHorario {
   instructorId String
   dia          String
   descripcion  String
-  horarioIds   Json      // Array de IDs de horarios en conflicto
+  horarioIds   Json
   resuelto     Boolean   @default(false)
   creadoPor    String?
   createdAt    DateTime  @default(now())
   resolvedAt   DateTime?
+  admin        User?     @relation("ConflictosCreados", fields: [creadoPor], references: [id])
   instructor   User      @relation("ConflictosInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
-  admin        User?     @relation("ConflictosCreados", fields: [creadoPor], references: [id], onDelete: SetNull)
 
   @@index([instructorId])
   @@index([resuelto])
@@ -378,19 +354,18 @@ model MensajeChat {
 }
 
 model SuperUserAuditLog {
-  id                String   @id @default(cuid())
-  superUserId       String
-  accion            String
-  entidad           String
-  entidadId         String?
-  descripcion       String
-  datosAnteriores   Json?
-  datosNuevos       Json?
-  ipAddress         String?
-  fechaHora         DateTime @default(now())
-  navegador         String?
-
-  superUser         User     @relation("SuperUserLogs", fields: [superUserId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  superUserId     String
+  accion          String
+  entidad         String
+  entidadId       String?
+  descripcion     String
+  datosAnteriores Json?
+  datosNuevos     Json?
+  ipAddress       String?
+  fechaHora       DateTime @default(now())
+  navegador       String?
+  superUser       User     @relation("SuperUserLogs", fields: [superUserId], references: [id], onDelete: Cascade)
 
   @@index([superUserId])
   @@index([fechaHora])
@@ -409,4 +384,29 @@ model Notification {
 
   @@index([userId])
   @@index([read])
+}
+
+model Materia {
+  id               String           @id(map: "Materia_pkey")
+  nombre           String
+  tipo             String
+  fichaId          String
+  instructorId     String?
+  asistencias      Asistencia[]
+  horarios         Horario[]
+  excusas          Excusa[]
+  ficha            Ficha            @relation(fields: [fichaId], references: [id], onDelete: Cascade, map: "Materia_fichaId_fkey")
+  instructor       User?            @relation("InstructorMaterias", fields: [instructorId], references: [id])
+  materiasEvitadas MateriaEvitada[]
+}
+
+model MateriaEvitada {
+  id         String   @id(map: "MateriaEvitada_pkey")
+  aprendizId String
+  materiaId  String
+  createdAt  DateTime @default(now())
+  aprendiz   User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade, map: "MateriaEvitada_aprendizId_fkey")
+  materia    Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+
+  @@unique([aprendizId, materiaId], map: "MateriaEvitada_aprendizId_materiaId_key")
 }
