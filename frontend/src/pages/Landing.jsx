@@ -2,8 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Fingerprint, ScanFace, QrCode, ShieldCheck } from 'lucide-react';
+import { useWorldCup } from '../context/WorldCupContext';
 
 export default function Landing() {
+  const { worldCupMode } = useWorldCup();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -68,7 +70,7 @@ export default function Landing() {
           {/* Logo Section */}
           <motion.div variants={itemVariants} className="flex items-center justify-center lg:justify-start gap-4 mb-8">
              <img 
-               src="/ArachizLogoPNG.png" 
+               src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
                alt="Arachiz Logo" 
                className="h-16 md:h-20 object-contain dark:invert transition-all duration-300" 
              />

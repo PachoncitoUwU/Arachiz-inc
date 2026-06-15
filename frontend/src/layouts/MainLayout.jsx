@@ -72,7 +72,11 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center">
-          <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-8 object-contain dark:invert transition-all duration-300" />
+          <img 
+            src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+            alt="Arachiz" 
+            className="h-8 object-contain dark:invert transition-all duration-300" 
+          />
         </div>
         <div className="flex items-center gap-1">
           {user?.userType === 'aprendiz' && (
@@ -261,7 +265,11 @@ export default function MainLayout({ allowedRoles }) {
                 <Menu size={20} />
               </button>
               <div className="flex items-center">
-                <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain dark:invert transition-all duration-300" />
+                <img 
+                  src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+                  alt="Arachiz" 
+                  className="h-6 object-contain dark:invert transition-all duration-300" 
+                />
               </div>
               <div className="flex items-center gap-1">
                 {user?.userType === 'aprendiz' && (

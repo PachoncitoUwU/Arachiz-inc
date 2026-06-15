@@ -237,7 +237,7 @@ export default function AboutUs() {
           <motion.div variants={itemVariants} className="text-center space-y-3 md:space-y-4">
             <div className="flex items-center justify-center gap-3 md:gap-4 mb-4 md:mb-6">
               <img 
-                src="/ArachizLogoPNG.png" 
+                src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
                 alt="Arachiz Logo" 
                 className="h-12 sm:h-14 md:h-16 lg:h-20 object-contain dark:invert transition-all duration-300" 
               />

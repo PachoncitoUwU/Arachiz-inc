@@ -1,6 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useWorldCup } from '../context/WorldCupContext';
 import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -1432,6 +1433,7 @@ const translations = {
 export default function Configuracion() {
   const { user } = useContext(AuthContext);
   const { settings, updateSetting, toggleDark } = useSettings();
+  const { worldCupMode } = useWorldCup();
   const { showToast } = useToast();
   const { isSubscribed, subscribeUser } = usePushNotifications();
   const [showReleaseNotes, setShowReleaseNotes] = useState(false);
@@ -1729,7 +1731,11 @@ export default function Configuracion() {
       </Section>
 
       <div className="flex items-center justify-center gap-2 pt-8 pb-12 cursor-pointer select-none hover:opacity-75 transition-opacity" onClick={() => setShowReleaseNotes(true)}>
-        <img src="/ArachizLogoPNG.png" alt="Arachiz Logo" className="w-5 h-5 object-contain dark:invert" />
+        <img 
+          src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+          alt="Arachiz Logo" 
+          className="w-5 h-5 object-contain dark:invert" 
+        />
         <p className="text-gray-500 dark:text-gray-400 text-xs font-medium hover:text-gray-700 dark:hover:text-gray-300">Arachiz Version {VERSION}</p>
         <Info size={12} className="text-gray-400 dark:text-gray-500" />
       </div>
