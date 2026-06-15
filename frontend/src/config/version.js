@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.329';
+export const VERSION = '1.4.331';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.331',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.331',
+    changes: [
+      'yerba'
+    ]
+  },
   {
     version: '1.4.329',
     date: '2026-06-14',
