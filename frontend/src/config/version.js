@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.331';
+export const VERSION = '1.4.333';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.333',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.333',
+    changes: [
+      'feat: replace caja_deadpool model with hongito suabe in presentation'
+    ]
+  },
   {
     version: '1.4.331',
     date: '2026-06-15',
