@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.337';
+export const VERSION = '1.4.339';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.339',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.339',
+    changes: [
+      'fix: renombrar hongito suabe.glb a hongito-suabe.glb para evitar problemas con espacios en URL'
+    ]
+  },
   {
     version: '1.4.337',
     date: '2026-06-15',
