@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.380';
+export const VERSION = '1.4.382';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.382',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.382',
+    changes: [
+      'fix: no-cache header for presentacion-embed.html + cache-buster in iframe src'
+    ]
+  },
   {
     version: '1.4.380',
     date: '2026-06-16',
