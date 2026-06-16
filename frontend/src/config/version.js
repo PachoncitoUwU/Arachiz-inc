@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.384';
+export const VERSION = '1.4.386';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.386',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.386',
+    changes: [
+      'fix: restore JoinFicha import + redirect unknown routes to / instead of /login'
+    ]
+  },
   {
     version: '1.4.384',
     date: '2026-06-16',
