@@ -30,8 +30,9 @@ unsigned long lastPoll    = 0;
 unsigned long lastNFC     = 0;
 uint8_t       erroresSensor = 0;
 
-const unsigned long POLL_INTERVAL = 600;
-const unsigned long NFC_INTERVAL  = 200;
+// Intervalos optimizados para menor latencia
+const unsigned long POLL_INTERVAL = 400;   // era 600ms → ahora 400ms
+const unsigned long NFC_INTERVAL  = 150;   // era 200ms → ahora 150ms
 const uint8_t       MAX_ERRORES   = 6;
 
 // ── PROTOTIPOS ────────────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ void setup() {
   wdt_disable();
 
   Serial.begin(9600);
-  espSerial.begin(4800);
+  espSerial.begin(9600);   // 9600 baud — sincronizado con ESP8266Master.ino
 
   pinMode(PIN_BUZZER,  OUTPUT);
   pinMode(PIN_BUZZER2, OUTPUT);
@@ -149,13 +150,13 @@ void enviarEvento(String msg) {
   if (digitalRead(PIN_SWITCH) == LOW) {
     while (espSerial.available()) espSerial.read(); // limpiar basura
     espSerial.listen();
-    delay(10);
+    delay(5);
     espSerial.println("EVT:" + msg);
-    // A 4800 baud ~2.1ms/byte; "EVT:READ_FINGER:128\n" ~22 bytes = ~47ms
-    delay(80);
+    // A 9600 baud ~1ms/byte; "EVT:READ_FINGER:128\n" ~22 bytes = ~22ms
+    delay(35);                  // margen seguro sobre los 22ms a 9600 baud
     Serial.println("WiFi -> " + msg);
     mySerial.listen();
-    delay(10);
+    delay(5);
   } else {
     Serial.println(msg);
   }
@@ -167,26 +168,26 @@ void esperarRetiroDedo(unsigned long timeoutMs) {
   uint8_t estado;
   do {
     mySerial.listen();
-    delay(80);
+    delay(50);                  // era 80ms → 50ms: más rápido para detectar retiro
     estado = finger.getImage();
     if (estado == FINGERPRINT_PACKETRECIEVEERR) {
       erroresSensor++;
       break;
     }
   } while (estado != FINGERPRINT_NOFINGER && millis() - t0 < timeoutMs);
-  delay(120);
+  delay(60);                    // era 120ms → 60ms
 }
 
 // ── POLL AL ESP ───────────────────────────────────────────────────────────────
 String pollESP() {
   while (espSerial.available()) espSerial.read();
   espSerial.listen();
-  delay(5);
+  delay(3);
   espSerial.println("POLL");
   unsigned long t0 = millis();
-  while (millis() - t0 < 300) {
+  while (millis() - t0 < 200) { // 200ms suficiente a 9600 baud
     if (espSerial.available()) {
-      delay(20);
+      delay(10);                // a 9600 baud la respuesta llega en ~5ms
       String r = espSerial.readStringUntil('\n');
       r.trim();
       String clean = "";
@@ -214,7 +215,7 @@ void loop() {
   // ── B. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
   if (!enrollando) {
     mySerial.listen();          // ceder el SoftwareSerial al AS608
-    delay(10);                  // Pequeña pausa para estabilizar el cambio de escucha
+    delay(5);                   // era 10ms → 5ms: suficiente para estabilizar
     uint8_t imgResult = finger.getImage();
 
     if (imgResult == FINGERPRINT_OK) {

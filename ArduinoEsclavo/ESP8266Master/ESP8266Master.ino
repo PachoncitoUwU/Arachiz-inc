@@ -36,6 +36,10 @@ const char* URL_LOCAL_EVENT  = "http://192.168.18.74:3000/api/hardware/event";
 const char* URL_LOCAL_CMD    = "http://192.168.18.74:3000/api/hardware/commands";
 const char* API_KEY          = "arachiz-esp-2024";
 
+// Cliente TLS persistente — reutiliza la conexión TCP/TLS entre llamadas
+// Esto elimina el handshake TLS (~300-600ms) en envíos consecutivos
+WiFiClientSecure persistentClient;
+
 // --- PANTALLA OLED ---
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -496,51 +500,50 @@ bool enviarEvento(String type, String payload, bool online) {
   String body;
   serializeJson(doc, body);
 
-  // IMPORTANTE: declarar ambos clientes fuera del if/else para evitar
-  // destrucción prematura (bug de scope con HTTPClient)
   bool ok = false;
-  WiFiClientSecure secureClient;
-  WiFiClient plainClient;
   HTTPClient http;
 
   if (online) {
-    secureClient.setInsecure();
-    http.begin(secureClient, url);
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-hardware-key", API_KEY);
-    http.setTimeout(10000);
-    int code = http.POST(body);
-    ok = (code == 200);
-    Serial.println("POST Render -> " + String(code));
+    // Reutilizar cliente TLS persistente — evita re-handshake (~300ms ahorrados)
+    persistentClient.setInsecure();
+    if (http.begin(persistentClient, url)) {
+      http.addHeader("Content-Type", "application/json");
+      http.addHeader("x-hardware-key", API_KEY);
+      http.addHeader("Connection", "keep-alive");  // mantener conexión TCP viva
+      http.setTimeout(6000);  // era 10000ms → 6000ms
+      int code = http.POST(body);
+      ok = (code == 200);
+      Serial.println("POST Render -> " + String(code));
+      // NO llamar http.end() para mantener la conexión TCP viva (keep-alive)
+      // Solo liberar si falló para evitar estado inconsistente
+      if (!ok) http.end();
+    }
   } else {
+    WiFiClient plainClient;
     http.begin(plainClient, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("x-hardware-key", API_KEY);
+    http.setTimeout(3000);
     int code = http.POST(body);
     ok = (code == 200);
     Serial.println("POST Local -> " + String(code));
+    http.end();
   }
-  http.end();
   return ok;
 }
 
 void consultarEstadoSesion() {
-  // Al reconectar, sincroniza el estado de sesión con el backend
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
   String url = String(USE_RENDER_BACKEND ? URL_RENDER_CMD : URL_LOCAL_CMD);
-  // Construir URL de session-status desde la base de URL_RENDER_CMD
   url.replace("/commands", "/session-status");
 
-  // IMPORTANTE: declarar el cliente FUERA del if/else para que no se destruya
-  // antes de que http.GET() lo use (bug de scope)
-  WiFiClientSecure secureClient;
-  WiFiClient plainClient;
   if (USE_RENDER_BACKEND) {
-    secureClient.setInsecure();
-    http.begin(secureClient, url);
+    persistentClient.setInsecure();
+    http.begin(persistentClient, url);
   } else {
+    WiFiClient plainClient;
     http.begin(plainClient, url);
   }
 
@@ -554,29 +557,27 @@ void consultarEstadoSesion() {
     deserializeJson(doc, payload);
     bool active = doc["sessionActive"] | false;
     String cmd = active ? "SESSION ON" : "SESSION OFF";
-    pendingCommand = cmd; // El Arduino lo recoge con POLL
+    pendingCommand = cmd;
     Serial.println("Estado sesion sincronizado: " + cmd);
   }
-  http.end();
+  // No cerrar http para mantener keep-alive
 }
 
 void consultarComandos() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
-  // IMPORTANTE: declarar el cliente FUERA del if/else para evitar destrucción
-  // prematura del objeto antes de que http.GET() lo use (bug de scope)
-  WiFiClientSecure secureClient;
-  WiFiClient plainClient;
   if (USE_RENDER_BACKEND) {
-    secureClient.setInsecure();
-    http.begin(secureClient, URL_RENDER_CMD);
+    persistentClient.setInsecure();
+    http.begin(persistentClient, URL_RENDER_CMD);
   } else {
+    WiFiClient plainClient;
     http.begin(plainClient, URL_LOCAL_CMD);
   }
 
   http.addHeader("x-hardware-key", API_KEY);
-  http.setTimeout(8000);
+  http.addHeader("Connection", "keep-alive");
+  http.setTimeout(5000);  // era 8000ms → 5000ms
   
   int code = http.GET();
   Serial.println("[CMD] HTTP " + String(code));
@@ -597,20 +598,20 @@ void consultarComandos() {
     
     if (cmd != nullptr && strlen(cmd) > 0) {
       Serial.println("[CMD] Guardando para Arduino: " + String(cmd));
-      pendingCommand = String(cmd); // El Arduino lo recoge con POLL
+      pendingCommand = String(cmd);
       mostrarMensaje("CMD listo", String(cmd), "esp. Arduino...");
     } else {
       Serial.println("[CMD] Sin comandos pendientes");
     }
   } else {
     Serial.println("[CMD] Error HTTP: " + String(code));
+    http.end(); // solo cerrar en error para liberar recursos
   }
-  http.end();
 }
 
 void setup() {
   Serial.begin(115200);
-  arduinoSerial.begin(4800);   // debe coincidir con el Arduino
+  arduinoSerial.begin(9600);   // 9600 baud — sincronizado con ArduinoEsclavo.ino
 
   Wire.begin(OLED_SDA, OLED_SCL);
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -652,16 +653,16 @@ void loop() {
     mostrarLogo();
   }
 
-  // Consultar comandos al backend cada 800ms (el Arduino hace POLL cada 600ms)
+  // Consultar comandos al backend cada 500ms (el Arduino hace POLL cada 400ms)
   static unsigned long lastCheck = 0;
-  if (millis() - lastCheck > 800) {
+  if (millis() - lastCheck > 500) {
     lastCheck = millis();
     consultarComandos();
   }
 
   // Leer mensajes del Arduino
   if (arduinoSerial.available()) {
-    arduinoSerial.setTimeout(200); // timeout corto para no bloquear el loop
+    arduinoSerial.setTimeout(100); // a 9600 baud la línea llega en <30ms
     String msg = arduinoSerial.readStringUntil('\n');
     msg.trim();
     // Filtrar solo ASCII imprimible
@@ -679,11 +680,11 @@ void loop() {
     if (msg == "POLL") {
       if (pendingCommand.length() > 0) {
         Serial.println("[POLL] -> " + pendingCommand);
-        delay(10);                    // pausa antes de responder
+        delay(5);                     // era 10ms → 5ms
         arduinoSerial.println(pendingCommand);
         pendingCommand = "";
       } else {
-        delay(10);
+        delay(5);                     // era 10ms → 5ms
         arduinoSerial.println("NONE");
       }
       return;

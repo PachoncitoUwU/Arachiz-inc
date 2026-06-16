@@ -17,6 +17,10 @@ exports.handleEvent = (req, res) => {
     return res.status(400).json({ error: 'Faltan type o payload' });
   }
 
+  // Keep-alive para que el ESP reutilice la conexión TCP y ahorre el re-handshake TLS
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Keep-Alive', 'timeout=10, max=100');
+
   if (type === 'nfc') {
     io.emit('arduino_read_nfc', { uid: payload });
   } else if (type === 'finger') {
@@ -36,11 +40,13 @@ exports.handleEvent = (req, res) => {
 
 let espLastSeen = 0;
 
-// El ESP consulta esta ruta cada 2 segundos para ver si hay comandos
+// El ESP consulta esta ruta cada 500ms para ver si hay comandos
 exports.getCommands = (req, res) => {
   espLastSeen = Date.now();
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Keep-Alive', 'timeout=10, max=100');
   if (commandQueue.length > 0) {
-    const command = commandQueue.shift(); // saca el primero
+    const command = commandQueue.shift();
     res.json({ command });
   } else {
     res.json({ command: null });
