@@ -1,5 +1,21 @@
 const prisma = require('../lib/prisma');
 const { uploadToSupabase, isSupabaseConfigured } = require('../utils/supabaseStorage');
+const nodemailer = require('nodemailer');
+const templates = require('../utils/emailTemplates');
+
+// ── Transporter de email (fire-and-forget) ───────────────────────────────────
+const sendMail = async (to, subject, html) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) return;
+  try {
+    const t = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+    });
+    await t.sendMail({ from: `"Arachiz" <${process.env.EMAIL_USER}>`, to, subject, html });
+  } catch (err) {
+    console.error('[Excusa Email]', err.message);
+  }
+};
 
 // Crear excusa
 const createExcusa = async (req, res) => {
@@ -116,6 +132,29 @@ const createExcusa = async (req, res) => {
     });
 
     res.status(201).json({ message: 'Excusa enviada correctamente', excusa });
+
+    // Notificar al instructor por email (fire-and-forget)
+    const instructor = await prisma.user.findUnique({
+      where: { id: resultado.instructorId },
+      select: { email: true, fullName: true }
+    }).catch(() => null);
+
+    if (instructor?.email) {
+      const fechasTexto = JSON.parse(excusa.fechas || '[]').join(', ');
+      const panelLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/instructor/excusas`;
+      sendMail(
+        instructor.email,
+        '📝 Nueva excusa pendiente de revisión - Arachiz',
+        templates.nuevaExcusaPendiente(
+          instructor.fullName,
+          excusa.aprendiz.fullName,
+          excusa.resultado.nombre,
+          fechasTexto,
+          excusa.motivo,
+          panelLink
+        )
+      );
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al enviar excusa: ' + err.message });
@@ -245,6 +284,33 @@ const updateExcusaEstado = async (req, res) => {
     });
 
     res.json({ message: `Excusa ${estado.toLowerCase()} correctamente`, excusa: excusaActualizada });
+
+    // Notificar al aprendiz por email si la excusa fue aprobada o rechazada (fire-and-forget)
+    if (estado !== 'Pendiente') {
+      const excusaCompleta = await prisma.excusa.findUnique({
+        where: { id },
+        include: {
+          aprendiz: { select: { email: true, fullName: true } },
+          resultado: { select: { nombre: true } }
+        }
+      }).catch(() => null);
+
+      if (excusaCompleta?.aprendiz?.email) {
+        const fechasTexto = JSON.parse(excusaCompleta.fechas || '[]').join(', ');
+        sendMail(
+          excusaCompleta.aprendiz.email,
+          `${estado === 'Aprobada' ? '✅' : '❌'} Tu excusa fue ${estado.toLowerCase()} - Arachiz`,
+          templates.excusaResuelta(
+            excusaCompleta.aprendiz.fullName,
+            estado,
+            excusaCompleta.resultado.nombre,
+            fechasTexto,
+            excusaCompleta.motivo,
+            respuesta || null
+          )
+        );
+      }
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar excusa: ' + err.message });

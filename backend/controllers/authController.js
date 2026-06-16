@@ -260,6 +260,11 @@ const completeProfile = async (req, res) => {
     const { password: _, ...userWithoutPassword } = updatedUser;
     res.json({ message: 'Perfil completado con éxito', token, user: userWithoutPassword });
 
+    // Enviar correo de bienvenida ahora que tenemos el userType real
+    if (updatedUser.userType === 'aprendiz' || updatedUser.userType === 'instructor') {
+      sendWelcomeEmail(updatedUser.userType, updatedUser.fullName, updatedUser.email);
+    }
+
   } catch (err) {
     res.status(500).json({ error: 'Error del servidor: ' + err.message });
   }

@@ -515,6 +515,55 @@ const closeSessionById = async (id, io, serialService) => {
         'automatico'
       ).catch(err => console.error(`[EmailService] Error al enviar correo a ${a.email}:`, err))
     ));
+
+    // Verificar si algún aprendiz supera el 30% de ausencias → alerta
+    Promise.all(ausentes.map(async (a) => {
+      try {
+        const [totalSesiones, ausencias] = await Promise.all([
+          prisma.asistencia.count({ where: { resultadoId: asistencia.resultadoId, activa: false } }),
+          prisma.registroAsistencia.count({
+            where: { aprendizId: a.id, asistencia: { resultadoId: asistencia.resultadoId }, presente: false }
+          })
+        ]);
+        if (totalSesiones < 2) return; // no alertar con 1 sola sesión
+        const pct = Math.round((ausencias / totalSesiones) * 100);
+        if (pct < 20) return; // solo alertar desde 20%
+
+        const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/aprendiz/asistencia`;
+        const nodemailer = require('nodemailer');
+        const templates = require('../utils/emailTemplates');
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) return;
+        const t = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+        });
+
+        // Correo al aprendiz
+        t.sendMail({
+          from: `"Arachiz" <${process.env.EMAIL_USER}>`,
+          to: a.email,
+          subject: `⚠️ Alerta de inasistencias en ${asistencia.resultado.nombre} - Arachiz`,
+          html: templates.alertaAusencias(a.fullName, asistencia.resultado.nombre, pct, ausencias, totalSesiones, loginLink, false)
+        }).catch(() => {});
+
+        // Correo al instructor también
+        const instructor = await prisma.user.findUnique({
+          where: { id: asistencia.instructorId },
+          select: { email: true, fullName: true }
+        });
+        if (instructor?.email) {
+          const panelLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/instructor/asistencia`;
+          t.sendMail({
+            from: `"Arachiz" <${process.env.EMAIL_USER}>`,
+            to: instructor.email,
+            subject: `🚨 ${a.fullName} tiene ${pct}% de inasistencias - Arachiz`,
+            html: templates.alertaAusencias(a.fullName, asistencia.resultado.nombre, pct, ausencias, totalSesiones, panelLink, true)
+          }).catch(() => {});
+        }
+      } catch (e) {
+        console.error('[AlertaAusencias]', e.message);
+      }
+    }));
   }
 
   const updatedAsistencia = await prisma.asistencia.update({

@@ -142,6 +142,23 @@ exports.resetPassword = async (req, res) => {
     // Eliminar token usado
     resetTokens.delete(token);
 
+    // Enviar confirmación de cambio de contraseña (fire-and-forget)
+    try {
+      const transporter = createTransporter();
+      const user = await prisma.user.findUnique({
+        where: { id: tokenData.userId },
+        select: { fullName: true, email: true }
+      });
+      if (user) {
+        transporter.sendMail({
+          from: `"Arachiz" <${process.env.EMAIL_USER}>`,
+          to: user.email,
+          subject: '🔐 Tu contraseña fue actualizada - Arachiz',
+          html: templates.passwordCambiado(user.fullName)
+        }).catch(err => console.error('[PassReset Email]', err.message));
+      }
+    } catch (e) { /* no bloquear la respuesta */ }
+
     res.json({ message: 'Contraseña actualizada exitosamente' });
   } catch (error) {
     console.error('Error restableciendo contraseña:', error);

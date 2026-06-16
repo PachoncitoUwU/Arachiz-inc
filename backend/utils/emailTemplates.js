@@ -361,6 +361,273 @@ const templates = {
     </p>
   `, '#4285F4'),
 
+  // ── Excusa aprobada / rechazada → al aprendiz ───────────────────────────
+  excusaResuelta: (name, estado, materia, fechas, motivo, respuesta) => {
+    const aprobada = estado === 'Aprobada';
+    const accent = aprobada ? '#34A853' : '#EA4335';
+    const bgAlert = aprobada ? '#F0FDF4' : '#FEF2F2';
+    const textAlert = aprobada ? '#14532D' : '#991B1B';
+    const icon = aprobada ? '✅' : '❌';
+    const label = aprobada ? 'APROBADA' : 'RECHAZADA';
+    return base(`
+    <!-- Estado badge -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:${accent};border-radius:14px;padding:28px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
+               style="display:block;margin:0 auto 12px;border-radius:12px;
+                      box-shadow:0 6px 20px rgba(0,0,0,0.25);"/>
+          <span style="display:inline-block;background:rgba(255,255,255,0.2);
+                       color:#fff;font-size:13px;font-weight:800;letter-spacing:2px;
+                       text-transform:uppercase;padding:6px 18px;border-radius:9999px;">
+            ${icon} EXCUSA ${label}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:22px;font-weight:900;color:#111827;text-align:center;">
+      Tu excusa fue ${label.toLowerCase()}
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${name}</strong>, tu instructor revisó
+      la excusa que enviaste para <strong style="color:#111827;">${materia}</strong>.
+    </p>
+
+    ${infoBox([
+      ['📅 Fecha(s)', fechas],
+      ['📋 Motivo enviado', motivo],
+      ['📌 Estado', `<span style="background:${accent};color:#fff;padding:3px 12px;
+                       border-radius:9999px;font-size:12px;font-weight:800;">
+                       ${icon} ${label}</span>`]
+    ])}
+
+    ${respuesta ? alert(
+        `💬 <strong>Respuesta del instructor:</strong> ${respuesta}`,
+        accent, bgAlert, textAlert
+      ) : ''}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
+      Puedes ver el historial completo de tus excusas en tu panel.
+    </p>
+  `, accent);
+  },
+
+  // ── Alerta de ausencias acumuladas ──────────────────────────────────────
+  alertaAusencias: (name, materia, porcentaje, ausencias, totalSesiones, loginLink, esInstructor = false) => {
+    const critico = porcentaje >= 30;
+    const accent = critico ? '#EA4335' : '#FBBC05';
+    const bgAlert = critico ? '#FEF2F2' : '#FFFBEB';
+    const textAlert = critico ? '#991B1B' : '#92400E';
+    const nivel = critico ? '🚨 NIVEL CRÍTICO' : '⚠️ NIVEL DE ALERTA';
+    return base(`
+    <!-- Hero alerta -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,${accent} 0%,${critico ? '#7F1D1D' : '#78350F'} 100%);
+                   border-radius:14px;padding:28px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
+               style="display:block;margin:0 auto 12px;border-radius:12px;
+                      box-shadow:0 6px 20px rgba(0,0,0,0.25);"/>
+          <span style="display:inline-block;background:rgba(255,255,255,0.2);
+                       color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;
+                       text-transform:uppercase;padding:6px 18px;border-radius:9999px;">
+            ${nivel}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:22px;font-weight:900;color:#111827;text-align:center;">
+      ${esInstructor ? 'Aprendiz con alto ausentismo' : 'Tus inasistencias están aumentando'}
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
+      ${esInstructor
+        ? `<strong style="color:#111827;">${name}</strong> ha acumulado un <strong>${porcentaje}%</strong>
+           de inasistencias en <strong>${materia}</strong>.`
+        : `Hola <strong style="color:#111827;">${name}</strong>, tienes un <strong>${porcentaje}%</strong>
+           de inasistencias en <strong>${materia}</strong>.`
+      }
+    </p>
+
+    ${infoBox([
+      ['📚 Materia / Resultado', materia],
+      ['❌ Ausencias', `${ausencias} de ${totalSesiones} sesiones`],
+      ['📊 Porcentaje de inasistencia', `<span style="font-size:18px;font-weight:900;color:${accent};">${porcentaje}%</span>`]
+    ])}
+
+    <!-- Barra de progreso visual -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin:0 0 24px;">
+      <tr>
+        <td style="padding:0 0 8px;font-size:12px;font-weight:700;color:#6B7280;
+                   text-transform:uppercase;letter-spacing:1px;">
+          Nivel de inasistencia
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#E5E7EB;border-radius:9999px;height:12px;overflow:hidden;">
+          <div style="width:${Math.min(porcentaje, 100)}%;height:12px;background:${accent};
+                      border-radius:9999px;"></div>
+        </td>
+      </tr>
+    </table>
+
+    ${alert(
+      critico
+        ? '🚨 <strong>Riesgo de reprobación:</strong> superar el 30% de inasistencias puede afectar tu habilitación para las competencias. Comunícate con tu instructor.'
+        : '⚠️ <strong>Atención:</strong> si continúa esta tendencia podrías entrar en riesgo académico.',
+      accent, bgAlert, textAlert
+    )}
+
+    ${ctaButton(esInstructor ? '📊 Ver Asistencia' : '📋 Ver mi Asistencia', loginLink, accent)}
+  `, accent);
+  },
+
+  // ── Nueva excusa pendiente → al instructor ───────────────────────────────
+  nuevaExcusaPendiente: (instructorName, aprendizName, materia, fechas, motivo, panelLink) => base(`
+    <!-- Hero -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,#4285F4 0%,#1e3a8a 100%);
+                   border-radius:14px;padding:28px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
+               style="display:block;margin:0 auto 12px;border-radius:12px;
+                      box-shadow:0 6px 20px rgba(0,0,0,0.25);"/>
+          <span style="display:inline-block;background:rgba(255,255,255,0.2);
+                       color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;
+                       text-transform:uppercase;padding:6px 18px;border-radius:9999px;">
+            📝 NUEVA EXCUSA PENDIENTE
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:22px;font-weight:900;color:#111827;text-align:center;">
+      Tienes una excusa por revisar
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${instructorName}</strong>, un aprendiz
+      ha enviado una excusa que requiere tu revisión.
+    </p>
+
+    ${infoBox([
+      ['👤 Aprendiz', aprendizName],
+      ['📚 Materia / Resultado', materia],
+      ['📅 Fecha(s) solicitada(s)', fechas],
+      ['📋 Motivo', motivo]
+    ])}
+
+    ${alert('⏳ Las excusas pendientes quedan visibles en tu panel hasta que las apruebes o rechaces.',
+            '#4285F4', '#EFF6FF', '#1E40AF')}
+
+    ${ctaButton('📋 Revisar Excusa', panelLink, '#4285F4')}
+  `, '#4285F4'),
+
+  // ── Reporte exportado listo → al instructor ──────────────────────────────
+  reporteListo: (instructorName, tipoReporte, fichaNumero, downloadLink) => base(`
+    <!-- Hero -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,#FBBC05 0%,#78350F 100%);
+                   border-radius:14px;padding:28px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
+               style="display:block;margin:0 auto 12px;border-radius:12px;
+                      box-shadow:0 6px 20px rgba(0,0,0,0.25);"/>
+          <span style="display:inline-block;background:rgba(255,255,255,0.2);
+                       color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;
+                       text-transform:uppercase;padding:6px 18px;border-radius:9999px;">
+            📊 REPORTE LISTO
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:22px;font-weight:900;color:#111827;text-align:center;">
+      Tu reporte está listo para descargar
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${instructorName}</strong>, el reporte
+      que solicitaste ha sido generado exitosamente.
+    </p>
+
+    ${infoBox([
+      ['📁 Tipo de reporte', tipoReporte],
+      ['🗂️ Ficha', `N° ${fichaNumero}`],
+      ['📅 Generado el', new Date().toLocaleDateString('es-CO', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      })]
+    ])}
+
+    ${alert('🔗 El enlace de descarga es válido por <strong>24 horas</strong>. Descárgalo antes de que expire.',
+            '#FBBC05', '#FFFBEB', '#92400E')}
+
+    ${ctaButton('⬇️ Descargar Reporte', downloadLink, '#FBBC05')}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
+      Si el botón no funciona, copia y pega este enlace:<br/>
+      <a href="${downloadLink}" style="color:#4285F4;word-break:break-all;">${downloadLink}</a>
+    </p>
+  `, '#FBBC05'),
+
+  // ── Cambio de contraseña exitoso ─────────────────────────────────────────
+  passwordCambiado: (name) => base(`
+    <!-- Hero -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,#34A853 0%,#14532D 100%);
+                   border-radius:14px;padding:28px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
+               style="display:block;margin:0 auto 12px;border-radius:12px;
+                      box-shadow:0 6px 20px rgba(0,0,0,0.25);"/>
+          <span style="display:inline-block;background:rgba(255,255,255,0.2);
+                       color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;
+                       text-transform:uppercase;padding:6px 18px;border-radius:9999px;">
+            🔐 CONTRASEÑA ACTUALIZADA
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:22px;font-weight:900;color:#111827;text-align:center;">
+      Tu contraseña fue cambiada
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${name}</strong>, te confirmamos que
+      la contraseña de tu cuenta en <strong style="color:#34A853;">Arachiz</strong>
+      fue actualizada exitosamente.
+    </p>
+
+    ${infoBox([
+      ['📅 Fecha del cambio', new Date().toLocaleDateString('es-CO', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      })],
+      ['⏰ Hora', new Date().toLocaleTimeString('es-CO', {
+        hour: '2-digit', minute: '2-digit'
+      })]
+    ])}
+
+    ${alert(
+      '🚨 <strong>¿No fuiste tú?</strong> Si no realizaste este cambio, contacta de inmediato a tu instructor o administrador del sistema para proteger tu cuenta.',
+      '#EA4335', '#FEF2F2', '#991B1B'
+    )}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
+      Si tú realizaste este cambio, puedes ignorar este mensaje. Tu cuenta está segura.
+    </p>
+  `, '#34A853'),
+
   // ── Bienvenida al registrarse (instructor) ───────────────────────────────
   welcomeInstructor: (name, loginLink) => base(`
     <!-- Hero visual -->

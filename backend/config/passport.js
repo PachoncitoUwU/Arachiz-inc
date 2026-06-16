@@ -1,7 +1,30 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { PrismaClient } = require('@prisma/client');
+const nodemailer = require('nodemailer');
 const prisma = new PrismaClient();
+
+// ── Correo de bienvenida Google (fire-and-forget) ────────────────────────────
+const sendGoogleWelcome = async (fullName, email) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) return;
+  try {
+    const templates = require('../utils/emailTemplates');
+    const t = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+    });
+    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
+    await t.sendMail({
+      from: `"Arachiz" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '¡Bienvenido a Arachiz! Tu cuenta está lista 🎉',
+      html: templates.welcomeAprendiz(fullName, loginLink)
+    });
+    console.log(`[Passport] Correo de bienvenida enviado a ${email}`);
+  } catch (err) {
+    console.error('[Passport] Error enviando correo de bienvenida Google:', err.message);
+  }
+};
 
 // Solo configurar Google OAuth si las credenciales están disponibles
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -28,7 +51,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           return done(null, user);
         }
 
-        // Usuario no existe, crear nuevo
+        // Usuario no existe → crear nuevo y enviar correo de bienvenida
         user = await prisma.user.create({
           data: {
             email: profile.emails[0].value,
@@ -39,6 +62,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             avatarUrl: profile.photos?.[0]?.value || null
           }
         });
+
+        // Enviar correo de bienvenida al nuevo usuario de Google
+        sendGoogleWelcome(user.fullName, user.email);
 
         return done(null, user);
       } catch (error) {
