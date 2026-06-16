@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.401';
+export const VERSION = '1.4.404';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.404',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.404',
+    changes: [
+      'feat: sistema completo de emails transaccionales Arachiz',
+      'pruebas de email'
+    ]
+  },
   {
     version: '1.4.401',
     date: '2026-06-16',
