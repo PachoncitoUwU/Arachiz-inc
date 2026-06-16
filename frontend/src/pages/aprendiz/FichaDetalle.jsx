@@ -57,10 +57,12 @@ export default function AprendizFichaDetalle() {
   // Estado para fichas ancladas
   const [isPinned, setIsPinned] = useState(false);
   
-  // Estados para historial
   const [historial, setHistorial] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
+  
+  // Eventos activos de esta ficha
+  const [eventosFicha, setEventosFicha] = useState([]);
   
   // Estado para salir de ficha
   const [showSalirDialog, setShowSalirDialog] = useState(false);
@@ -68,6 +70,7 @@ export default function AprendizFichaDetalle() {
   useEffect(() => {
     loadFicha();
     loadMateriasEvitadas();
+    loadEventos();
   }, [id]);
   
   useEffect(() => {
@@ -88,6 +91,20 @@ export default function AprendizFichaDetalle() {
       navigate('/aprendiz/fichas');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadEventos = async () => {
+    try {
+      const data = await fetchApi('/eventos/aprendiz');
+      if (data.eventos) {
+        const activosParaFicha = data.eventos.filter(ev => 
+          ev.fichas.some(f => f.fichaId === id)
+        );
+        setEventosFicha(activosParaFicha);
+      }
+    } catch (err) {
+      console.error('Error al cargar eventos:', err);
     }
   };
 
@@ -255,17 +272,42 @@ export default function AprendizFichaDetalle() {
   }));
 
   return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/aprendiz/fichas')} 
-            className="btn-icon text-gray-400 hover:bg-gray-100"
-            title="Volver a fichas"
-          >
-            <ArrowLeft size={20} />
-          </button>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Botón volver */}
+      <button 
+        onClick={() => navigate('/aprendiz/fichas')}
+        className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+      >
+        <ArrowLeft size={20} />
+        Volver a Fichas
+      </button>
+
+      {/* Banner de Eventos Activos */}
+      {eventosFicha.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 right-0 p-4 opacity-20">
+            <Star size={100} />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-full">
+              <Star size={32} className="text-yellow-300" fill="currentColor" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold mb-1">¡Tu ficha está participando en un evento!</h2>
+              {eventosFicha.map(ev => (
+                <p key={ev.id} className="text-blue-100 font-medium">
+                  {ev.nombre} • Creado por {ev.creador?.fullName} • {new Date(ev.fechaHora).toLocaleString()}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header Ficha */}
+      <div className="card">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
@@ -295,6 +337,7 @@ export default function AprendizFichaDetalle() {
           <ArrowLeft size={16} />
           Salir de ficha
         </button>
+      </div>
       </div>
 
       {/* Estadísticas */}

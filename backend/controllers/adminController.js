@@ -1621,6 +1621,7 @@ const getEstadisticasExcusas = async (req, res) => {
     // Top 5 aprendices con más excusas
     const aprendicesMap = {};
     excusas.forEach(e => {
+      if (!e.aprendiz) return;
       const key = e.aprendiz.id;
       if (!aprendicesMap[key]) {
         aprendicesMap[key] = {
@@ -1645,11 +1646,12 @@ const getEstadisticasExcusas = async (req, res) => {
     // Top 5 resultados con más excusas
     const resultadosMap = {};
     excusas.forEach(e => {
+      if (!e.resultado) return;
       const key = e.resultado.id;
       if (!resultadosMap[key]) {
         resultadosMap[key] = {
           id: e.resultado.id,
-          nombre: `${e.resultado.competencia.nombre} - ${e.resultado.nombre}`,
+          nombre: `${e.resultado.competencia?.nombre || 'Competencia'} - ${e.resultado.nombre}`,
           total: 0,
           aprobadas: 0,
           rechazadas: 0,
@@ -1670,7 +1672,7 @@ const getEstadisticasExcusas = async (req, res) => {
     const instructoresMap = {};
     excusas.forEach(e => {
       // Validar que el resultado tenga instructor asignado
-      if (!e.resultado.instructor) return;
+      if (!e.resultado || !e.resultado.instructor) return;
       
       const key = e.resultado.instructor.id;
       if (!instructoresMap[key]) {
