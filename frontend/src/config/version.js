@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.414';
+export const VERSION = '1.4.417';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.417',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.417',
+    changes: [
+      'eventos',
+      'ya se puede ver ficha'
+    ]
+  },
   {
     version: '1.4.414',
     date: '2026-06-16',
