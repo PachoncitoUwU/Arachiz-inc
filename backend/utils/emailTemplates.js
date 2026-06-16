@@ -1,6 +1,6 @@
-﻿// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 //  Arachiz — Email Templates
-//  Colores: Azul #4285F4 · Verde #34A853 · Rojo #EA4335 · Amarillo #FBBC05
+//  Colores Arachiz: Azul #3b82f6 · Verde #22c55e · Rojo #ef4444 · Amarillo #eab308
 //  Logo: Cloudinary CDN (siempre disponible en producción)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -11,19 +11,19 @@ const LOGO_URL =
 const APP_ICON_URL =
   'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
 
-// Cuatro colores de la barra de marca Google-style
+// Cuatro colores de la barra de marca Arachiz
 const BRAND_BAR = `
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
     <tr>
-      <td width="25%" height="4" style="background:#4285F4; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#EA4335; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#FBBC05; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#34A853; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#3b82f6; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#22c55e; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#eab308; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#ef4444; line-height:4px; font-size:4px;">&nbsp;</td>
     </tr>
   </table>`;
 
 // ─── Plantilla base ───────────────────────────────────────────────────────────
-const base = (content, accentHex = '#4285F4') => `<!DOCTYPE html>
+const base = (content, accentHex = '#3b82f6') => `<!DOCTYPE html>
 <html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8"/>
@@ -106,7 +106,7 @@ const base = (content, accentHex = '#4285F4') => `<!DOCTYPE html>
           </p>
           <p style="margin:0;font-size:12px;color:#9CA3AF;">
             &copy; ${new Date().getFullYear()}&nbsp;
-            <span style="color:#4285F4;font-weight:600;">Arachiz Inc.</span>
+            <span style="color:#3b82f6;font-weight:600;">Arachiz Inc.</span>
             &nbsp;— Sistema de Gestión de Asistencia
           </p>
         </td>
@@ -122,7 +122,7 @@ const base = (content, accentHex = '#4285F4') => `<!DOCTYPE html>
 </html>`;
 
 // ─── Botón CTA ────────────────────────────────────────────────────────────────
-const ctaButton = (text, url, color = '#4285F4') => `
+const ctaButton = (text, url, color = '#3b82f6') => `
   <table class="btn-table" cellpadding="0" cellspacing="0" role="presentation"
          style="margin:32px auto 4px;">
     <tr>
@@ -157,7 +157,7 @@ const infoBox = (rows) => `
   </table>`;
 
 // ─── Alerta inline ────────────────────────────────────────────────────────────
-const alert = (text, color = '#FBBC05', bgColor = '#FFFBEB', textColor = '#92400E') => `
+const alert = (text, color = '#eab308', bgColor = '#FFFBEB', textColor = '#92400E') => `
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
          style="margin:20px 0;">
     <tr>
@@ -205,8 +205,8 @@ const templates = {
     </table>
 
     ${alert('⏱ Este código expira en <strong>10 minutos</strong>. No lo compartas con nadie.',
-            '#EA4335', '#FEF2F2', '#991B1B')}
-  `, '#34A853'),
+            '#ef4444', '#FEF2F2', '#991B1B')}
+  `, '#22c55e'),
 
   // ── Recuperación de contraseña ───────────────────────────────────────────
   resetPassword: (name, resetLink) => base(`
@@ -216,23 +216,23 @@ const templates = {
     <p style="margin:0 0 16px;color:#4B5563;">
       Hola <strong style="color:#111827;">${name}</strong>, recibimos una solicitud
       para restablecer la contraseña de tu cuenta en
-      <strong style="color:#4285F4;">Arachiz</strong>.
+      <strong style="color:#3b82f6;">Arachiz</strong>.
     </p>
     <p style="margin:0 0 8px;color:#4B5563;">
       Haz clic en el botón para crear una nueva contraseña:
     </p>
 
-    ${ctaButton('🔑 Restablecer Contraseña', resetLink, '#EA4335')}
+    ${ctaButton('🔑 Restablecer Contraseña', resetLink, '#ef4444')}
 
     ${alert('⏱ Este enlace expira en <strong>1 hora</strong>. Si no solicitaste este cambio, ignora este mensaje.',
-            '#FBBC05', '#FFFBEB', '#92400E')}
+            '#eab308', '#FFFBEB', '#92400E')}
 
     <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;">
       Si el botón no funciona, copia y pega este enlace en tu navegador:<br/>
       <a href="${resetLink}"
-         style="color:#4285F4;word-break:break-all;">${resetLink}</a>
+         style="color:#3b82f6;word-break:break-all;">${resetLink}</a>
     </p>
-  `, '#EA4335'),
+  `, '#ef4444'),
 
   // ── Bienvenida (importación masiva) ─────────────────────────────────────
   welcomeImport: (name, document, tempPassword, loginLink) => base(`
@@ -241,7 +241,7 @@ const templates = {
     </h2>
     <p style="margin:0 0 20px;color:#4B5563;">
       Hola <strong style="color:#111827;">${name}</strong>, tu instructor ha creado
-      una cuenta para ti en <strong style="color:#4285F4;">Arachiz</strong>, el
+      una cuenta para ti en <strong style="color:#3b82f6;">Arachiz</strong>, el
       sistema de gestión de asistencia de tu ficha.
     </p>
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#6B7280;
@@ -258,10 +258,10 @@ const templates = {
     ])}
 
     ${alert('🔐 Por tu seguridad, <strong>cambia tu contraseña</strong> al iniciar sesión por primera vez.',
-            '#FBBC05', '#FFFBEB', '#92400E')}
+            '#eab308', '#FFFBEB', '#92400E')}
 
-    ${ctaButton('🚀 Iniciar Sesión en Arachiz', loginLink, '#34A853')}
-  `, '#34A853'),
+    ${ctaButton('🚀 Iniciar Sesión en Arachiz', loginLink, '#22c55e')}
+  `, '#22c55e'),
 
   // ── Bienvenida al registrarse (aprendiz) ─────────────────────────────────
   welcomeAprendiz: (name, loginLink) => base(`
@@ -270,7 +270,7 @@ const templates = {
            style="margin-bottom:28px;">
       <tr>
         <td align="center"
-            style="background:linear-gradient(135deg,#4285F4 0%,#1e3a8a 100%);
+            style="background:linear-gradient(135deg,#3b82f6 0%,#1e3a8a 100%);
                    border-radius:14px;padding:32px 20px;">
           <img src="${APP_ICON_URL}" alt="Arachiz" width="72"
                style="display:block;margin:0 auto 14px;border-radius:14px;
@@ -288,7 +288,7 @@ const templates = {
     </h2>
     <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:16px;line-height:1.7;">
       Hola <strong style="color:#111827;">${name}</strong>, ya formas parte de
-      <strong style="color:#4285F4;">Arachiz</strong>. Desde aquí podrás consultar
+      <strong style="color:#3b82f6;">Arachiz</strong>. Desde aquí podrás consultar
       tu asistencia, gestionar excusas y mucho más.
     </p>
 
@@ -354,17 +354,17 @@ const templates = {
       </tr>
     </table>
 
-    ${ctaButton('🚀 Ingresar a Arachiz', loginLink, '#4285F4')}
+    ${ctaButton('🚀 Ingresar a Arachiz', loginLink, '#3b82f6')}
 
     <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
       Si tienes problemas para ingresar, contacta a tu instructor.
     </p>
-  `, '#4285F4'),
+  `, '#3b82f6'),
 
   // ── Excusa aprobada / rechazada → al aprendiz ───────────────────────────
   excusaResuelta: (name, estado, materia, fechas, motivo, respuesta) => {
     const aprobada = estado === 'Aprobada';
-    const accent = aprobada ? '#34A853' : '#EA4335';
+    const accent = aprobada ? '#22c55e' : '#ef4444';
     const bgAlert = aprobada ? '#F0FDF4' : '#FEF2F2';
     const textAlert = aprobada ? '#14532D' : '#991B1B';
     const icon = aprobada ? '✅' : '❌';
@@ -418,7 +418,7 @@ const templates = {
   // ── Alerta de ausencias acumuladas ──────────────────────────────────────
   alertaAusencias: (name, materia, porcentaje, ausencias, totalSesiones, loginLink, esInstructor = false) => {
     const critico = porcentaje >= 30;
-    const accent = critico ? '#EA4335' : '#FBBC05';
+    const accent = critico ? '#ef4444' : '#eab308';
     const bgAlert = critico ? '#FEF2F2' : '#FFFBEB';
     const textAlert = critico ? '#991B1B' : '#92400E';
     const nivel = critico ? '🚨 NIVEL CRÍTICO' : '⚠️ NIVEL DE ALERTA';
@@ -495,7 +495,7 @@ const templates = {
            style="margin-bottom:28px;">
       <tr>
         <td align="center"
-            style="background:linear-gradient(135deg,#4285F4 0%,#1e3a8a 100%);
+            style="background:linear-gradient(135deg,#3b82f6 0%,#1e3a8a 100%);
                    border-radius:14px;padding:28px 20px;">
           <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
                style="display:block;margin:0 auto 12px;border-radius:12px;
@@ -525,10 +525,10 @@ const templates = {
     ])}
 
     ${alert('⏳ Las excusas pendientes quedan visibles en tu panel hasta que las apruebes o rechaces.',
-            '#4285F4', '#EFF6FF', '#1E40AF')}
+            '#3b82f6', '#EFF6FF', '#1E40AF')}
 
-    ${ctaButton('📋 Revisar Excusa', panelLink, '#4285F4')}
-  `, '#4285F4'),
+    ${ctaButton('📋 Revisar Excusa', panelLink, '#3b82f6')}
+  `, '#3b82f6'),
 
   // ── Reporte exportado listo → al instructor ──────────────────────────────
   reporteListo: (instructorName, tipoReporte, fichaNumero, downloadLink) => base(`
@@ -537,7 +537,7 @@ const templates = {
            style="margin-bottom:28px;">
       <tr>
         <td align="center"
-            style="background:linear-gradient(135deg,#FBBC05 0%,#78350F 100%);
+            style="background:linear-gradient(135deg,#eab308 0%,#78350F 100%);
                    border-radius:14px;padding:28px 20px;">
           <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
                style="display:block;margin:0 auto 12px;border-radius:12px;
@@ -569,15 +569,15 @@ const templates = {
     ])}
 
     ${alert('🔗 El enlace de descarga es válido por <strong>24 horas</strong>. Descárgalo antes de que expire.',
-            '#FBBC05', '#FFFBEB', '#92400E')}
+            '#eab308', '#FFFBEB', '#92400E')}
 
-    ${ctaButton('⬇️ Descargar Reporte', downloadLink, '#FBBC05')}
+    ${ctaButton('⬇️ Descargar Reporte', downloadLink, '#eab308')}
 
     <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
       Si el botón no funciona, copia y pega este enlace:<br/>
-      <a href="${downloadLink}" style="color:#4285F4;word-break:break-all;">${downloadLink}</a>
+      <a href="${downloadLink}" style="color:#3b82f6;word-break:break-all;">${downloadLink}</a>
     </p>
-  `, '#FBBC05'),
+  `, '#eab308'),
 
   // ── Cambio de contraseña exitoso ─────────────────────────────────────────
   passwordCambiado: (name) => base(`
@@ -586,7 +586,7 @@ const templates = {
            style="margin-bottom:28px;">
       <tr>
         <td align="center"
-            style="background:linear-gradient(135deg,#34A853 0%,#14532D 100%);
+            style="background:linear-gradient(135deg,#22c55e 0%,#14532D 100%);
                    border-radius:14px;padding:28px 20px;">
           <img src="${APP_ICON_URL}" alt="Arachiz" width="60"
                style="display:block;margin:0 auto 12px;border-radius:12px;
@@ -605,7 +605,7 @@ const templates = {
     </h2>
     <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:15px;line-height:1.7;">
       Hola <strong style="color:#111827;">${name}</strong>, te confirmamos que
-      la contraseña de tu cuenta en <strong style="color:#34A853;">Arachiz</strong>
+      la contraseña de tu cuenta en <strong style="color:#22c55e;">Arachiz</strong>
       fue actualizada exitosamente.
     </p>
 
@@ -620,13 +620,13 @@ const templates = {
 
     ${alert(
       '🚨 <strong>¿No fuiste tú?</strong> Si no realizaste este cambio, contacta de inmediato a tu instructor o administrador del sistema para proteger tu cuenta.',
-      '#EA4335', '#FEF2F2', '#991B1B'
+      '#ef4444', '#FEF2F2', '#991B1B'
     )}
 
     <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
       Si tú realizaste este cambio, puedes ignorar este mensaje. Tu cuenta está segura.
     </p>
-  `, '#34A853'),
+  `, '#22c55e'),
 
   // ── Bienvenida al registrarse (instructor) ───────────────────────────────
   welcomeInstructor: (name, loginLink) => base(`
@@ -635,7 +635,7 @@ const templates = {
            style="margin-bottom:28px;">
       <tr>
         <td align="center"
-            style="background:linear-gradient(135deg,#34A853 0%,#14532D 100%);
+            style="background:linear-gradient(135deg,#22c55e 0%,#14532D 100%);
                    border-radius:14px;padding:32px 20px;">
           <img src="${APP_ICON_URL}" alt="Arachiz" width="72"
                style="display:block;margin:0 auto 14px;border-radius:14px;
@@ -653,7 +653,7 @@ const templates = {
     </h2>
     <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:16px;line-height:1.7;">
       Hola <strong style="color:#111827;">${name}</strong>, tu cuenta de instructor
-      en <strong style="color:#34A853;">Arachiz</strong> ha sido creada exitosamente.
+      en <strong style="color:#22c55e;">Arachiz</strong> ha sido creada exitosamente.
       Ahora tienes acceso completo al panel de gestión de tu ficha.
     </p>
 
@@ -719,12 +719,12 @@ const templates = {
       </tr>
     </table>
 
-    ${ctaButton('🎓 Ir a mi Panel', loginLink, '#34A853')}
+    ${ctaButton('🎓 Ir a mi Panel', loginLink, '#22c55e')}
 
     <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
       Si necesitas soporte técnico, contacta al administrador del sistema.
     </p>
-  `, '#34A853'),
+  `, '#22c55e'),
 
 };
 
