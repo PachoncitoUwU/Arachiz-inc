@@ -25,7 +25,16 @@ export default function GoogleCallback() {
         if (payload.document && payload.document.startsWith('GOOGLE-')) {
           navigate(`/complete-profile?token=${token}`);
         } else {
-          login(token, userPayload);
+          // Guardar token en localStorage para que la app de destino lo lea
+          localStorage.setItem('token', token);
+          // Redirigir al dominio de producción principal con Google
+          const destino = 'https://arachiz-inc-pi.vercel.app';
+          const dashboardPath =
+            payload.userType === 'instructor' ? '/instructor/dashboard'
+            : payload.userType === 'administrador' ? '/admin/dashboard'
+            : payload.userType === 'super_usuario' ? '/super-usuario/dashboard'
+            : '/aprendiz/dashboard';
+          window.location.href = `${destino}${dashboardPath}?token=${token}`;
         }
       } catch (error) {
         console.error('Error procesando token:', error);

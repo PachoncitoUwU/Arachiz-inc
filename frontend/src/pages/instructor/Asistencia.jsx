@@ -1843,31 +1843,19 @@ export default function InstructorAsistencia() {
                       {llegadaTarde} min
                     </span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="5" 
-                    max="60" 
-                    step="5"
-                    value={llegadaTarde} 
-                    onChange={e => setLlegadaTarde(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#34A853] focus:outline-none"
-                  />
-                  {/* Marcas de referencia alineadas con los ticks reales del slider (min=5, max=60, step=5 => 12 posiciones) */}
-                  <div className="relative h-4 mt-1">
-                    {[5, 15, 30, 45, 60].map(val => {
-                      const pct = ((val - 5) / (60 - 5)) * 100;
-                      return (
-                        <span
-                          key={val}
-                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
-                          className={`absolute text-[10px] font-semibold ${
-                            val === 15 ? 'text-[#34A853]' : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                        >
-                          {val}m{val === 15 ? ' ✓' : ''}
-                        </span>
-                      );
-                    })}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="420"
+                      value={llegadaTarde}
+                      onChange={e => {
+                        const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
+                        setLlegadaTarde(val);
+                      }}
+                      className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition-all"
+                    />
+                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos <span className="text-yellow-500">(máx. 7h = 420 min)</span></span>
                   </div>
                 </div>
 
@@ -1881,65 +1869,36 @@ export default function InstructorAsistencia() {
                       {Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''}
                     </span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="30" 
-                    max="240" 
-                    step="15"
-                    value={duracion} 
-                    onChange={e => setDuracion(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#34A853] focus:outline-none"
-                  />
-                  {/* Marcas de referencia alineadas con ticks reales del slider (min=30, max=240, step=15 => 15 posiciones) */}
-                  <div className="relative h-4 mt-1">
-                    {[30, 60, 90, 120, 180, 240].map(val => {
-                      const pct = ((val - 30) / (240 - 30)) * 100;
-                      const label = val < 60 ? `${val}m` : val % 60 === 0 ? `${val/60}h` : `${Math.floor(val/60)}h${val%60}m`;
-                      return (
-                        <span
-                          key={val}
-                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
-                          className={`absolute text-[10px] font-semibold ${
-                            val === 120 ? 'text-[#34A853]' : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                        >
-                          {label}{val === 120 ? ' ✓' : ''}
-                        </span>
-                      );
-                    })}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="420"
+                      value={duracion}
+                      onChange={e => {
+                        const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
+                        setDuracion(val);
+                      }}
+                      className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/40 focus:border-[#34A853] transition-all"
+                    />
+                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos <span className="text-[#34A853]">(máx. 7h = 420 min)</span></span>
                   </div>
                 </div>
               </div>
 
-              {/* Input de Aula y Tema */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[#34A853]" />
-                    Aula / Ubicación
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="Ej. Aula 104, Lab 3..." 
-                    value={aula} 
-                    onChange={e => setAula(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <BookOpen size={14} className="text-purple-500" />
-                    Tema de la Clase
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="Ej. Taller de APIs..." 
-                    value={descripcion} 
-                    onChange={e => setDescripcion(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  />
-                </div>
+              {/* Input de Ambiente de Formación */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <MapPin size={14} className="text-[#34A853]" />
+                  Ambiente de Formación / Aula
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ej. Ambiente 104, Laboratorio 3..." 
+                  value={aula} 
+                  onChange={e => setAula(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                />
               </div>
 
               {/* Botones de acción */}

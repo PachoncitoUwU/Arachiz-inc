@@ -13,9 +13,26 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Leer token desde query param (viene de Google OAuth redirect entre dominios)
+  const getInitialToken = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get('token');
+      if (urlToken) {
+        localStorage.setItem('token', urlToken);
+        // Limpiar el token de la URL sin recargar la página
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        return urlToken;
+      }
+    } catch { /* noop */ }
+    return localStorage.getItem('token') || null;
+  };
+
+  const [token, setToken] = useState(getInitialToken);
 
   // RNF18 - Expiración de sesión por inactividad (8h via JWT, pero también chequeamos expiración)
   const decodeToken = useCallback((t) => {
