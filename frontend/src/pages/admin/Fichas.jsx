@@ -59,7 +59,7 @@ function FichaCard({ ficha, currentUserId, onViewDetails, color, isPinned }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-2">
         {[
           { label: 'Aprendices', value: ficha._count?.aprendices || 0 },
-          { label: 'Materias', value: ficha._count?.materias || 0 },
+          { label: 'Competencias', value: ficha._count?.materias || 0 },
           { label: 'Instructores', value: ficha._count?.instructores || 0 },
         ].map(s => (
           <div key={s.label} className="text-center p-2 bg-gray-50 rounded-xl">
