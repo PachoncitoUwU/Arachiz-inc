@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.412';
+export const VERSION = '1.4.414';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.414',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.414',
+    changes: [
+      'fix: bug critico de hooks en Register + CORS en rate limiter'
+    ]
+  },
   {
     version: '1.4.412',
     date: '2026-06-16',
