@@ -7,6 +7,9 @@ const templates = require('../utils/emailTemplates');
 
 // Configurar transporter de nodemailer
 const createTransporter = () => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error('Variables EMAIL_USER o EMAIL_PASSWORD no configuradas en el servidor');
+  }
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -183,6 +186,8 @@ exports.sendEmailOTP = async (req, res) => {
     setTimeout(() => otpTokens.delete(email), 10 * 60 * 1000);
 
     const transporter = createTransporter();
+    // Verificar conexión antes de enviar
+    await transporter.verify();
     await transporter.sendMail({
       from: `"Arachiz" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -192,8 +197,18 @@ exports.sendEmailOTP = async (req, res) => {
 
     res.json({ message: 'Código enviado' });
   } catch (error) {
-    console.error('Error enviando OTP:', error);
-    res.status(500).json({ error: 'Error al enviar código' });
+    console.error('[OTP Error]', error.message, error.code || '');
+    // Mensajes de error específicos para ayudar a diagnosticar
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      return res.status(500).json({ error: 'El servidor no tiene configurado el correo. Contacta al administrador.' });
+    }
+    if (error.code === 'EAUTH' || error.responseCode === 535) {
+      return res.status(500).json({ error: 'Las credenciales del correo son incorrectas. El administrador debe revisar la contraseña de aplicación de Gmail.' });
+    }
+    if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+      return res.status(500).json({ error: 'No se pudo conectar al servidor de correo. Intenta de nuevo en unos minutos.' });
+    }
+    res.status(500).json({ error: 'Error al enviar el código de verificación: ' + error.message });
   }
 };
 
