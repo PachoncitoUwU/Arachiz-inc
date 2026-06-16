@@ -5,11 +5,23 @@ const { getCurrentColombiaTime } = require('../utils/timeService');
 // Almacén temporal de códigos QR activos (en producción usar Redis)
 const activeQRCodes = new Map();
 
-// Generar código QR único para una sesión
+// Generar código QR único para una sesión o evento
 exports.generateQR = async (req, res) => {
   try {
-    const { asistenciaId } = req.body;
+    const { asistenciaId, eventoId } = req.body;
     const instructorId = req.user.id;
+
+    if (eventoId) {
+      const evento = await prisma.evento.findUnique({ where: { id: eventoId } });
+      if (!evento || evento.estado !== 'en_curso') {
+        return res.status(404).json({ error: 'Evento no encontrado o no activo' });
+      }
+      const code = crypto.randomBytes(32).toString('hex');
+      const timestamp = Date.now();
+      activeQRCodes.set(code, { eventoId, instructorId, timestamp, used: false });
+      setTimeout(() => activeQRCodes.delete(code), 30000);
+      return res.json({ code, expiresIn: 30000 });
+    }
 
     // Verificar que la sesión existe y pertenece al instructor
     const session = await prisma.asistencia.findFirst({
@@ -80,6 +92,36 @@ exports.validateQR = async (req, res) => {
     // Marcar como usado
     qrData.used = true;
 
+    if (qrData.eventoId) {
+      const eventoFichas = await prisma.eventoFicha.findMany({ where: { eventoId: qrData.eventoId } });
+      const fichasIds = eventoFichas.map(f => f.fichaId);
+      const isEnrolled = await prisma.ficha.findFirst({
+        where: { id: { in: fichasIds }, aprendices: { some: { id: aprendizId } } }
+      });
+      if (!isEnrolled) return res.status(403).json({ error: 'No estás invitado a este evento' });
+
+      const registro = await prisma.eventoRegistro.upsert({
+        where: { eventoId_aprendizId: { eventoId: qrData.eventoId, aprendizId } },
+        update: { presente: true, metodo: 'qr', timestamp: new Date() },
+        create: { eventoId: qrData.eventoId, aprendizId, presente: true, metodo: 'qr' }
+      });
+
+      const user = await prisma.user.findUnique({ where: { id: aprendizId } });
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`evento_${qrData.eventoId}`).emit('nuevaAsistenciaEvento', {
+          id: registro.id,
+          aprendizId,
+          presente: true,
+          metodo: 'qr',
+          timestamp: registro.timestamp,
+          aprendiz: { fullName: user.fullName }
+        });
+      }
+      activeQRCodes.delete(code);
+      return res.json({ success: true, message: 'Asistencia registrada correctamente', registro });
+    }
+
     // Verificar que el aprendiz pertenece a la ficha de la materia
     const session = await prisma.asistencia.findFirst({
       where: { id: qrData.asistenciaId },
@@ -147,10 +189,6 @@ exports.validateQR = async (req, res) => {
     // Emitir evento socket
     const io = req.app.get('io');
     if (io) {
-      console.log(`[QR] Emitiendo nuevaAsistencia a session_${qrData.asistenciaId}`, {
-        aprendizId: registro.aprendizId,
-        fullName: registro.aprendiz.fullName
-      });
       io.to(`session_${qrData.asistenciaId}`).emit('nuevaAsistencia', {
         id: registro.id,
         aprendizId: registro.aprendizId,
@@ -159,8 +197,6 @@ exports.validateQR = async (req, res) => {
         metodo: 'qr',
         timestamp: registro.timestamp
       });
-    } else {
-      console.log('[QR] Socket.io no disponible');
     }
 
     // Eliminar el código usado

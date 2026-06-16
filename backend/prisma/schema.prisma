@@ -430,6 +430,7 @@ model Evento {
   fechaHora        DateTime
   creadorId        String
   codigoInvitacion String   @unique
+  estado           String   @default("programado")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 
