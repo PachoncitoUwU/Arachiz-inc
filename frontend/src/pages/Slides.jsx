@@ -26,7 +26,7 @@ export default function Slides() {
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'fixed', inset: 0 }}>
       <iframe
         ref={iframeRef}
-        src="/presentacion-embed.html"
+        src={`/presentacion-embed.html?v=${import.meta.env.VITE_APP_VERSION || Date.now()}`}
         title="Arachiz Slides"
         style={{
           width: '100%',
