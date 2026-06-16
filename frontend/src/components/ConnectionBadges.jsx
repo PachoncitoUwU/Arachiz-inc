@@ -23,8 +23,8 @@ export default function ConnectionBadges() {
 
   useEffect(() => {
     fetchStatus();
-    // Polling cada 10 segundos para mantener el estado actualizado
-    const interval = setInterval(fetchStatus, 10000);
+    // Polling cada 5 segundos — el ESP hace poll cada ~2s, así lo detectamos rápido
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 

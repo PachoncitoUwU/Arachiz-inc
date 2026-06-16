@@ -48,8 +48,8 @@ exports.getCommands = (req, res) => {
 exports.getStatus = (req, res) => {
   const serialService = req.app.get('serialService');
   const usbConnected = serialService ? serialService.isConnected : false;
-  // Consideramos ESP conectado si hizo ping en los últimos 10 segundos
-  const espConnected = (Date.now() - espLastSeen) < 10000;
+  // ESP conectado si hizo ping en los últimos 20 segundos (el ESP hace poll cada ~2s)
+  const espConnected = espLastSeen > 0 && (Date.now() - espLastSeen) < 20000;
   
   res.json({ usbConnected, espConnected });
 };

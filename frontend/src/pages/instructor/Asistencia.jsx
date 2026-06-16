@@ -1847,7 +1847,18 @@ export default function InstructorAsistencia() {
                       {llegadaTarde} min
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  {/* Slider */}
+                  <input
+                    type="range"
+                    min="1"
+                    max="60"
+                    step="1"
+                    value={Math.min(llegadaTarde, 60)}
+                    onChange={e => setLlegadaTarde(parseInt(e.target.value))}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
+                    style={{ accentColor: '#FBBC05' }}
+                  />
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min="1"
@@ -1857,9 +1868,9 @@ export default function InstructorAsistencia() {
                         const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
                         setLlegadaTarde(val);
                       }}
-                      className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition-all"
+                      className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition-all"
                     />
-                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos <span className="text-yellow-500">(máx. 7h = 420 min)</span></span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos</span>
                   </div>
                 </div>
 
@@ -1873,7 +1884,18 @@ export default function InstructorAsistencia() {
                       {Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  {/* Slider (máx visual 240 min = 4h, el input acepta hasta 420) */}
+                  <input
+                    type="range"
+                    min="30"
+                    max="240"
+                    step="10"
+                    value={Math.min(duracion, 240)}
+                    onChange={e => setDuracion(parseInt(e.target.value))}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
+                    style={{ accentColor: '#34A853' }}
+                  />
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min="1"
@@ -1883,9 +1905,9 @@ export default function InstructorAsistencia() {
                         const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
                         setDuracion(val);
                       }}
-                      className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/40 focus:border-[#34A853] transition-all"
+                      className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/40 focus:border-[#34A853] transition-all"
                     />
-                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos <span className="text-[#34A853]">(máx. 7h = 420 min)</span></span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos</span>
                   </div>
                 </div>
               </div>

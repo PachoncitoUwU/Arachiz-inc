@@ -151,15 +151,22 @@ void loop() {
 
   // D. Lectura Huella (solo con sesión activa)
   if (!enrollando && sesionActiva) {
+    // Siempre activar mySerial antes de cualquier operación con el sensor
     mySerial.listen();
-    if (finger.getImage() == FINGERPRINT_OK) {
+    delayMicroseconds(500);                // estabilización mínima
+    uint8_t imgResult = finger.getImage();
+    if (imgResult == FINGERPRINT_OK) {
+      mySerial.listen();                   // re-activar por si el stack cambió
       if (finger.image2Tz() == FINGERPRINT_OK) {
+        mySerial.listen();
         if (finger.fingerFastSearch() == FINGERPRINT_OK) {
-          enviarEvento("READ_FINGER: " + String(finger.fingerID));
+          int fid = finger.fingerID;
+          enviarEvento("READ_FINGER: " + String(fid));
           sonidoHuella();
-          delay(400);
-        } else {
-          delay(200);
+          delay(500);
+          // Vaciar buffer para evitar lecturas fantasma
+          mySerial.listen();
+          while (mySerial.available()) mySerial.read();
         }
       }
     }
