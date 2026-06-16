@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.419';
+export const VERSION = '1.4.422';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.422',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.422',
+    changes: [
+      'Merge pull request #61 from PachoncitoUwU/eventos',
+      'ahi a medias'
+    ]
+  },
   {
     version: '1.4.419',
     date: '2026-06-16',
