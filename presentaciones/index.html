@@ -230,7 +230,12 @@ model-viewer{width:100%;height:320px;background:transparent;--poster-color:trans
     <div class="mth"><div class="mi">👆</div><div class="mn">Huella</div><div class="mt">2s</div></div>
     <div class="mth"><div class="mi">👤</div><div class="mn">Facial</div><div class="mt">2s</div></div>
   </div>
-  <div class="a4"><div class="url-pill">🌐 arachiz.vercel.app</div></div>
+  <div class="stat-grid a4" style="margin-top:1.2rem">
+    <div class="stc"><div class="stn grad">30</div><div class="stl">aprendices registrados</div></div>
+    <div class="stc"><div class="stn" style="color:var(--green)">1 min</div><div class="stl">tiempo total</div></div>
+    <div class="stc"><div class="stn" style="color:var(--blue)">2s</div><div class="stl">por aprendiz</div></div>
+  </div>
+  <div class="a5"><div class="url-pill">🌐 arachiz.vercel.app</div></div>
 </div>
 </div>
 
@@ -443,45 +448,6 @@ model-viewer{width:100%;height:320px;background:transparent;--poster-color:trans
 </div>
 </div>
 
-<!-- TECH STACK — 2 filas de 6 con logos reales -->
-<div class="slide" id="s8">
-<div class="sc center">
-  <span class="eyebrow a1">Stack Tecnológico</span>
-  <h2 class="a2"><span class="grad">Las herramientas</span></h2>
-  <div class="tg-2rows a3">
-    <div class="trow">
-      <div class="ti" data-tech="React 19|Frontend|Librería de UI de Meta para construir interfaces reactivas. Usamos React 19 con hooks, contexto global y optimistic updates para reflejar la asistencia en tiempo real sin recargar la página."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React"><div class="tin">React 19</div></div>
-      <div class="ti" data-tech="Vite|Build Tool|Empaquetador ultrarrápido que reemplaza Webpack. Redujo el tiempo de arranque en desarrollo a menos de 500ms y permitió bajar el bundle de 900KB a 209KB gracias al tree-shaking agresivo."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite"><div class="tin">Vite</div></div>
-      <div class="ti" data-tech="Tailwind CSS|Estilos|Framework CSS de clases utilitarias. Permite diseñar directamente en el HTML sin escribir CSS personalizado, garantizando consistencia visual y rapidez en el desarrollo de la UI."><img class="timg" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" alt="Tailwind"><div class="tin">Tailwind</div></div>
-      <div class="ti" data-tech="Node.js|Backend|Entorno de ejecución JavaScript del lado del servidor. Es la base de toda la API REST de Arachiz: gestiona autenticación, sesiones de asistencia, WebSockets y la comunicación con el hardware IoT."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js"><div class="tin">Node.js</div></div>
-      <div class="ti" data-tech="Express|Backend|Framework minimalista de Node.js para construir APIs. Define todas las rutas HTTP del sistema: auth, asistencia, fichas, hardware, exportaciones y más, con middlewares de autenticación JWT."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" alt="Express" style="filter:brightness(0)"><div class="tin">Express</div></div>
-      <div class="ti" data-tech="Prisma ORM|Base de datos|ORM de nueva generación para Node.js. Genera queries tipadas a partir del schema de la base de datos, evita inyecciones SQL y simplifica las migraciones del esquema PostgreSQL en producción."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" alt="Prisma"><div class="tin">Prisma</div></div>
-    </div>
-    <div class="trow">
-      <div class="ti" data-tech="PostgreSQL|Base de datos|Sistema de base de datos relacional robusto y open source. Almacena aprendices, fichas, horarios, asistencias y excusas. Hospedado en Supabase con backups automáticos y acceso en tiempo real."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL"><div class="tin">PostgreSQL</div></div>
-      <div class="ti" data-tech="Docker|DevOps|Plataforma de contenedores que empaqueta el backend con todas sus dependencias. Garantiza que el servidor funcione igual en desarrollo, staging y producción sin problemas de entorno."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker"><div class="tin">Docker</div></div>
-      <div class="ti" data-tech="GitHub|Control de versiones|Plataforma de control de versiones con CI/CD automático. Cada push a main dispara el workflow de GitHub Actions que actualiza las release notes y despliega automáticamente en Render y Vercel."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub"><div class="tin">GitHub</div></div>
-      <div class="ti" data-tech="Arduino|Hardware IoT|Microcontrolador de código abierto. El Arduino Uno coordina el sensor de huellas AS608 y el módulo NFC PN532, enviando los datos al ESP8266 que los retransmite al servidor vía WiFi."><img class="timg" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" alt="Arduino"><div class="tin">Arduino</div></div>
-      <div class="ti" data-tech="Socket.io|Tiempo Real|Librería de WebSockets bidireccionales. Permite que el dashboard del instructor se actualice al instante cuando un aprendiz registra asistencia, sin necesidad de refrescar la página."><div class="tii">🔌</div><div class="tin">Socket.io</div></div>
-      <div class="ti" data-tech="Supabase|Cloud|Plataforma BaaS (Backend as a Service) que hospeda la base de datos PostgreSQL. Proporciona autenticación de respaldo, almacenamiento de archivos y API REST automática. Costo: $0/mes en el plan gratuito."><div class="tii">☁️</div><div class="tin">Supabase</div></div>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- OPTIMIZACIÓN -->
-<div class="slide" id="s9">
-<div class="sc center">
-  <span class="eyebrow a1">Rendimiento</span>
-  <h2 class="a2">Bundle reducido <span class="grad">77%</span></h2>
-  <p class="subtitle a3">Carga rápida. Experiencia fluida. Costo operativo cero.</p>
-  <div class="mr a4">
-    <div class="mc"><div class="mv" style="color:var(--red)">900KB</div><div class="ml">Bundle original</div></div>
-    <div class="mc"><div class="mv" style="color:var(--green)">209KB</div><div class="ml">Bundle optimizado ↓ 77%</div></div>
-    <div class="mc"><div class="mv" style="color:var(--blue)">$0</div><div class="ml">Costo mensual total</div></div>
-  </div>
-</div>
-</div>
 
 <!-- PERMISOS -->
 <div class="slide" id="s13">
