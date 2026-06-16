@@ -44,8 +44,15 @@ const server = http.createServer(app);
 
 // ── CORS: solo el dominio oficial ────────────────────────────────────────────
 const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map(u => u.trim())
-  : ['http://localhost:5173'];
+  ? process.env.FRONTEND_URL.split(',').map(u => u.trim().replace(/\/$/, ''))
+  : ['http://localhost:5173', 'https://arachiz.vercel.app'];
+
+if (!allowedOrigins.includes('https://arachiz.vercel.app')) {
+  allowedOrigins.push('https://arachiz.vercel.app');
+}
+if (!allowedOrigins.includes('http://localhost:5173')) {
+  allowedOrigins.push('http://localhost:5173');
+}
 
 const io = new Server(server, {
   cors: { origin: allowedOrigins, credentials: true }
