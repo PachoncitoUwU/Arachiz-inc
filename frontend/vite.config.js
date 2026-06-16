@@ -27,6 +27,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         maximumFileSizeToCacheInBytes: 4000000, // Permitir precaché de hasta 4MB para assets grandes
+        skipWaiting: true,
+        clientsClaim: true,
+        // No cachear el html principal ni el SW mismo para que siempre se actualicen
+        navigateFallback: null,
       },
       manifest: {
         name: 'Arachiz',

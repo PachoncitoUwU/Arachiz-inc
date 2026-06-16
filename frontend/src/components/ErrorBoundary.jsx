@@ -14,6 +14,19 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
     this.setState({ hasError: true, error, errorInfo });
+
+    // Si es un error de chunk caducado (SW sirviendo assets viejos), forzar recarga
+    const isChunkError = error?.message?.includes('Failed to fetch dynamically imported module')
+      || error?.message?.includes('Importing a module script failed')
+      || error?.name === 'ChunkLoadError';
+
+    if (isChunkError) {
+      const alreadyReloaded = sessionStorage.getItem('chunk-error-reload');
+      if (!alreadyReloaded) {
+        sessionStorage.setItem('chunk-error-reload', '1');
+        window.location.reload();
+      }
+    }
   }
 
   render() {
