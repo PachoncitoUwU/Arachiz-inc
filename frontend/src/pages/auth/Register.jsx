@@ -16,7 +16,7 @@ export default function Register() {
   // ── Datos del formulario ─────────────────────────────────────────────────
   const [userType, setUserType]               = useState('aprendiz');
   const [fullName, setFullName]               = useState('');
-  const [document, setDocument]               = useState('');
+  const [docNumber, setDocNumber]             = useState('');
   const [email, setEmail]                     = useState('');
   const [password, setPassword]               = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -111,7 +111,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
     if (!fullName.trim())    return setError('Ingresa tu nombre completo.');
-    if (!document.trim())    return setError('Ingresa tu número de documento.');
+    if (!docNumber.trim())   return setError('Ingresa tu número de documento.');
     setStep(2);
   };
 
@@ -199,7 +199,7 @@ export default function Register() {
     try {
       await fetchApi('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ userType, fullName, document, email, password }),
+        body: JSON.stringify({ userType, fullName, document: docNumber, email, password }),
       });
       navigate('/login');
     } catch (err) {
@@ -435,7 +435,7 @@ export default function Register() {
                   </div>
                   <input type="text" required placeholder={t('register', 'document')}
                     className="input-field pl-11 bg-gray-50 dark:bg-zinc-700 dark:text-white dark:border-zinc-600 focus:bg-white dark:focus:bg-zinc-600"
-                    value={document} onChange={e => setDocument(e.target.value)} />
+                    value={docNumber} onChange={e => setDocNumber(e.target.value)} />
                 </div>
 
                 <button type="submit"
