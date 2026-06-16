@@ -95,7 +95,7 @@ export default function ImportModal({ isOpen, onClose, type, fichaId, onSuccess 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl w-full max-w-lg border border-gray-100 dark:border-zinc-700 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>

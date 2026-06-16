@@ -95,7 +95,7 @@ export default function MobileNFCReader({ asistenciaId, onClose, onRegistered })
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4">
       <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-4 md:p-6  animate-scale-in mx-2">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">

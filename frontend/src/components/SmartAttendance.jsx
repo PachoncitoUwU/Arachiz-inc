@@ -344,7 +344,7 @@ export default function SmartAttendance({
 
   if (capabilities.loading) {
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
         <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl p-4 md:p-6  sm:p-4 md:p-8  max-w-sm w-full mx-4">
           <div className="text-center">
             <Loader2 size={40} className="text-blue-500 animate-spin mx-auto mb-4 sm:w-12 sm:h-12" />
@@ -365,7 +365,7 @@ export default function SmartAttendance({
   return (
     <>
       {!activeMethod ? (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4">
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-4 md:p-6  border-b border-gray-100 dark:border-zinc-700  dark:border-gray-800">

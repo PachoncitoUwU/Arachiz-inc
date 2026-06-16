@@ -1395,7 +1395,7 @@ export default function InstructorAsistencia() {
 
       {/* Modal QR */}
       {qrActive && activeSession && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in">
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 md:p-6  animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -1451,7 +1451,7 @@ export default function InstructorAsistencia() {
 
       {/* Modal Registro Manual - Lista Clickeable */}
       {manualRegisterOpen && activeSession && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in">
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700">
             <div className="flex items-center justify-between p-4 md:p-6  border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
               <div className="flex items-center gap-3">
@@ -1556,7 +1556,7 @@ export default function InstructorAsistencia() {
 
       {/* Modal Detalle de Sesión con GRÁFICAS */}
       {selectedSessionDetail && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in" onClick={() => setSelectedSessionDetail(null)}>
           <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white dark:bg-zinc-800  dark:bg-gray-900 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 p-4 md:p-6  z-10">
               <div className="flex items-center justify-between">
@@ -1803,7 +1803,7 @@ export default function InstructorAsistencia() {
 
       {/* Modal Configuración de Sesión — Estilo Arachiz adaptativo claro/oscuro */}
       {showConfigModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
           <div className="relative bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-200 dark:border-zinc-700  dark:border-gray-700" onClick={e => e.stopPropagation()}>
             
             {/* Destello decorativo sutil */}

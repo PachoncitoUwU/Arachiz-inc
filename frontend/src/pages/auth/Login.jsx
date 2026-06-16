@@ -218,40 +218,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
-        /* Pasto realista para modo mundialista */
-        .grass-container {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 120px;
-          overflow: hidden;
-          z-index: 1;
-        }
-        .grass-blade {
-          position: absolute;
-          bottom: 0;
-          width: 4px;
-          border-radius: 50% 50% 0 0;
-          transform-origin: bottom center;
-          animation: grass-sway 3s ease-in-out infinite;
-        }
-        @keyframes grass-sway {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(2deg); }
-        }
-        /* Variaciones de altura y color */
-        .grass-short { height: 40px; }
-        .grass-medium { height: 60px; }
-        .grass-tall { height: 80px; }
-        .grass-very-tall { height: 100px; }
-        
-        .grass-color-1 { background: linear-gradient(to top, #1a5f1a, #2d8a2d); }
-        .grass-color-2 { background: linear-gradient(to top, #1e6b1e, #33a033); }
-        .grass-color-3 { background: linear-gradient(to top, #1a7a1a, #3db83d); }
-        .grass-color-4 { background: linear-gradient(to top, #165016, #267326); }
-        .grass-color-5 { background: linear-gradient(to top, #145214, #1f6f1f); }
-        .grass-color-6 { background: linear-gradient(to top, #1d7a1d, #38b838); }
+        /* Animaciones */
         @keyframes float-up {
           0% {
             transform: translateY(0) rotate(0deg);

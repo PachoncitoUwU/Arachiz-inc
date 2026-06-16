@@ -104,7 +104,7 @@ export default function AttendanceDemo() {
     const Icon = scenario.icon;
     
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
         <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-4 md:p-6 ">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">

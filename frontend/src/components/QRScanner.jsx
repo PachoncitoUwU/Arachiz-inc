@@ -128,7 +128,7 @@ export default function QRScanner({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999]">
       <div className="relative w-full h-full max-w-lg">
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/80 to-transparent">
