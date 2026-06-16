@@ -289,17 +289,6 @@ export default function FichaDetalle() {
     }
   };
 
-  const handleRemoveInstructor = async (instructorId) => {
-    try {
-      await fetchApi(`/admin/fichas/${id}/aprendices/${confirmModal.data}`, { method: 'DELETE' });
-      showToast('Aprendiz enviado a la papelera', 'success');
-      setModalPerfil(false); // Cerrar modal de perfil
-      loadFicha(); // Recargar vista
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
   const handleRemoveInstructor = async (instructorId, instructorName) => {
     setConfirmModal({
       isOpen: true,
