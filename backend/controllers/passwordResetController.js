@@ -68,7 +68,7 @@ exports.requestPasswordReset = async (req, res) => {
     // Enviar email
     const transporter = createTransporter();
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Arachiz" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Recuperación de Contraseña - Arachiz',
       html: templates.resetPassword(user.fullName, resetLink)
@@ -167,7 +167,7 @@ exports.sendEmailOTP = async (req, res) => {
 
     const transporter = createTransporter();
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"Arachiz" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Verifica tu correo electrónico - Arachiz',
       html: templates.verifyEmail(fullName, otp)

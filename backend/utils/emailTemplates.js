@@ -7,6 +7,10 @@
 const LOGO_URL =
   'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
 
+// Ícono cuadrado de la PWA (la "A" de Arachiz que aparece en celulares)
+const APP_ICON_URL =
+  'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
+
 // Cuatro colores de la barra de marca Google-style
 const BRAND_BAR = `
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -257,6 +261,202 @@ const templates = {
             '#FBBC05', '#FFFBEB', '#92400E')}
 
     ${ctaButton('🚀 Iniciar Sesión en Arachiz', loginLink, '#34A853')}
+  `, '#34A853'),
+
+  // ── Bienvenida al registrarse (aprendiz) ─────────────────────────────────
+  welcomeAprendiz: (name, loginLink) => base(`
+    <!-- Hero visual -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,#4285F4 0%,#1e3a8a 100%);
+                   border-radius:14px;padding:32px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="72"
+               style="display:block;margin:0 auto 14px;border-radius:14px;
+                      box-shadow:0 8px 24px rgba(0,0,0,0.25);"/>
+          <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:3px;
+                    text-transform:uppercase;color:#bfdbfe;">
+            Sistema de Gestión Académica
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:24px;font-weight:900;color:#111827;text-align:center;">
+      ¡Tu cuenta está lista! 🎉
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:16px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${name}</strong>, ya formas parte de
+      <strong style="color:#4285F4;">Arachiz</strong>. Desde aquí podrás consultar
+      tu asistencia, gestionar excusas y mucho más.
+    </p>
+
+    <!-- Qué puedo hacer -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:14px;
+                  margin:0 0 28px;overflow:hidden;">
+      <tr>
+        <td style="padding:20px 24px;border-bottom:1px solid #E5E7EB;">
+          <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;
+                    text-transform:uppercase;color:#9CA3AF;">
+            ¿Qué puedes hacer en Arachiz?
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">📋</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Consultar tu asistencia</strong> en tiempo real
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">📝</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Enviar excusas</strong> digitales con soporte fotográfico
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">🎮</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Juegos y gamificación</strong> integrados en tu plataforma
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">🤖</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Asistente IA</strong> para resolver tus dudas académicas
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton('🚀 Ingresar a Arachiz', loginLink, '#4285F4')}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
+      Si tienes problemas para ingresar, contacta a tu instructor.
+    </p>
+  `, '#4285F4'),
+
+  // ── Bienvenida al registrarse (instructor) ───────────────────────────────
+  welcomeInstructor: (name, loginLink) => base(`
+    <!-- Hero visual -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="margin-bottom:28px;">
+      <tr>
+        <td align="center"
+            style="background:linear-gradient(135deg,#34A853 0%,#14532D 100%);
+                   border-radius:14px;padding:32px 20px;">
+          <img src="${APP_ICON_URL}" alt="Arachiz" width="72"
+               style="display:block;margin:0 auto 14px;border-radius:14px;
+                      box-shadow:0 8px 24px rgba(0,0,0,0.25);"/>
+          <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:3px;
+                    text-transform:uppercase;color:#bbf7d0;">
+            Panel de Gestión Docente
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="margin:0 0 10px;font-size:24px;font-weight:900;color:#111827;text-align:center;">
+      ¡Bienvenido, Instructor! 👨‍🏫
+    </h2>
+    <p style="margin:0 0 24px;color:#4B5563;text-align:center;font-size:16px;line-height:1.7;">
+      Hola <strong style="color:#111827;">${name}</strong>, tu cuenta de instructor
+      en <strong style="color:#34A853;">Arachiz</strong> ha sido creada exitosamente.
+      Ahora tienes acceso completo al panel de gestión de tu ficha.
+    </p>
+
+    <!-- Funcionalidades del instructor -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+           style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:14px;
+                  margin:0 0 28px;overflow:hidden;">
+      <tr>
+        <td style="padding:20px 24px;border-bottom:1px solid #E5E7EB;">
+          <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;
+                    text-transform:uppercase;color:#9CA3AF;">
+            Tu panel como instructor incluye
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">📊</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Control de asistencia</strong> con biometría, QR y NFC
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">👥</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Gestión de aprendices</strong> y fichas formativas
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #E5E7EB;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">📈</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Reportes y estadísticas</strong> exportables
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 24px;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-right:12px;font-size:20px;vertical-align:middle;">⏰</td>
+              <td style="font-size:14px;color:#374151;vertical-align:middle;">
+                <strong style="color:#111827;">Gestión de horarios</strong> y competencias por materia
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton('🎓 Ir a mi Panel', loginLink, '#34A853')}
+
+    <p style="margin:20px 0 0;font-size:13px;color:#9CA3AF;text-align:center;">
+      Si necesitas soporte técnico, contacta al administrador del sistema.
+    </p>
   `, '#34A853'),
 
 };

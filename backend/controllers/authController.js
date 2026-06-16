@@ -1,7 +1,39 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const prisma = require('../lib/prisma');
 const { uploadToSupabase, isSupabaseConfigured } = require('../utils/supabaseStorage');
+const templates = require('../utils/emailTemplates');
+
+// Transporter compartido para correos de auth
+const createAuthTransporter = () => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) return null;
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+  });
+};
+
+// Enviar correo de bienvenida al registrarse (no bloquea el registro si falla)
+const sendWelcomeEmail = async (userType, fullName, email) => {
+  try {
+    const transporter = createAuthTransporter();
+    if (!transporter) return;
+    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
+    const templateFn = userType === 'instructor'
+      ? templates.welcomeInstructor
+      : templates.welcomeAprendiz;
+    await transporter.sendMail({
+      from: `"Arachiz" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '¡Bienvenido a Arachiz! Tu cuenta está lista 🎉',
+      html: templateFn(fullName, loginLink)
+    });
+    console.log(`[Auth] Correo de bienvenida enviado a ${email}`);
+  } catch (err) {
+    console.error('[Auth] Error enviando correo de bienvenida:', err.message);
+  }
+};
 
 // RF01 - Registro
 const register = async (req, res) => {
@@ -49,6 +81,12 @@ const register = async (req, res) => {
     }
     
     const { password: _, ...userWithoutPassword } = newUser;
+
+    // Enviar correo de bienvenida (solo para registro manual, no importación masiva)
+    if (userType === 'aprendiz' || userType === 'instructor') {
+      sendWelcomeEmail(userType, fullName, email); // fire-and-forget, no bloquea
+    }
+
     res.status(201).json({ message: 'Usuario registrado con éxito', user: userWithoutPassword });
   } catch (err) {
     res.status(500).json({ error: 'Error del servidor: ' + err.message });
