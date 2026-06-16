@@ -276,7 +276,7 @@ export default function MainLayout({ allowedRoles }) {
           {/* Main */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {/* Mobile topbar */}
-            <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0 shadow-sm transition-all duration-300">
+            <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0 shadow-sm transition-all duration-300 relative z-10">
               <button onClick={() => setSidebarOpen(true)} className="btn-icon text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <Menu size={20} />
               </button>
