@@ -10,10 +10,11 @@ import MateriaInfoModal from '../../components/MateriaInfoModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import NotificacionesModal from '../../components/NotificacionesModal';
 import { 
-  ArrowLeft, Users, BookOpen, Clock, Settings, UserPlus, 
+  ArrowLeft, Users, BookOpen, Clock, Settings, UserPlus, UserMinus,
   Trash2, Mail, Edit2, Search, Filter, Shield, MoreVertical, 
   CheckCircle2, AlertCircle, RefreshCw, X, Download, UserX, Star, HelpCircle,
-  Pin, Plus, ListChecks, MapPin, Building, Activity, Copy, Calendar, MessageSquare, QrCode, Ticket
+  Pin, Plus, ListChecks, MapPin, Building, Activity, Copy, Calendar, MessageSquare, QrCode, Ticket, Loader, Bell,
+  Eye, EyeOff, Link, Check
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -55,6 +56,8 @@ export default function FichaDetalle() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [showSalirDialog, setShowSalirDialog] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   // Eventos de la ficha
   const [eventosFicha, setEventosFicha] = useState([]);
@@ -286,17 +289,6 @@ export default function FichaDetalle() {
       showToast(err.message, 'error');
     } finally {
       setUniendoEvento(false);
-    }
-  };
-
-  const handleRemoveInstructor = async (instructorId) => {
-    try {
-      await fetchApi(`/admin/fichas/${id}/aprendices/${confirmModal.data}`, { method: 'DELETE' });
-      showToast('Aprendiz enviado a la papelera', 'success');
-      setModalPerfil(false); // Cerrar modal de perfil
-      loadFicha(); // Recargar vista
-    } catch (err) {
-      showToast(err.message, 'error');
     }
   };
 
