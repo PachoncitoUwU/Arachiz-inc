@@ -3,9 +3,19 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.357';
+export const VERSION = '1.4.361';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.361',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.361',
+    changes: [
+      'competencias-y-resultados',
+      'Merge branch main into competencias-y-resultados',
+      'ya puedo crear competencias con resultados de aprendizaje'
+    ]
+  },
   {
     version: '1.4.357',
     date: '2026-06-15',
