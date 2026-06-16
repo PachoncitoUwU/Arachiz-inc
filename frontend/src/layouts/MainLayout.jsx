@@ -88,7 +88,13 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
             </NavLink>
           )}
           <button 
-            onClick={toggleWorldCupMode} 
+            onClick={() => {
+              // Si modo oscuro está activo, desactivarlo antes de activar modo mundialista
+              if (settings.darkMode && !worldCupMode) {
+                toggleDark();
+              }
+              toggleWorldCupMode();
+            }} 
             className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             title={worldCupMode ? "Desactivar modo mundialista" : "Activar modo mundialista"}
           >
@@ -98,7 +104,16 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
               <span className="text-base opacity-50">⚽</span>
             )}
           </button>
-          <button onClick={toggleDark} className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <button 
+            onClick={() => {
+              // Si modo mundialista está activo, desactivarlo antes de activar modo oscuro
+              if (worldCupMode && !settings.darkMode) {
+                toggleWorldCupMode();
+              }
+              toggleDark();
+            }} 
+            className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
             {settings.darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           {onClose && (

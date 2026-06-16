@@ -239,42 +239,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
-        /* Pasto realista para modo mundialista */
-        .grass-container {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 120px;
-          overflow: hidden;
-          z-index: 1;
-        }
-        .grass-blade {
-          position: absolute;
-          bottom: 0;
-          width: 4px;
-          border-radius: 50% 50% 0 0;
-          transform-origin: bottom center;
-          animation: grass-sway 3s ease-in-out infinite;
-        }
-        @keyframes grass-sway {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(2deg); }
-        }
-        /* Variaciones de altura y color */
-        .grass-short { height: 40px; }
-        .grass-medium { height: 60px; }
-        .grass-tall { height: 80px; }
-        .grass-very-tall { height: 100px; }
-        
-        .grass-color-1 { background: linear-gradient(to top, #1a5f1a, #2d8a2d); }
-        .grass-color-2 { background: linear-gradient(to top, #1e6b1e, #33a033); }
-        .grass-color-3 { background: linear-gradient(to top, #1a7a1a, #3db83d); }
-        .grass-color-4 { background: linear-gradient(to top, #165016, #267326); }
-        .grass-color-5 { background: linear-gradient(to top, #145214, #1f6f1f); }
-        .grass-color-6 { background: linear-gradient(to top, #1d7a1d, #38b838); }
-        
-        /* Animaciones existentes */
+        /* Animaciones */
         @keyframes float-up {
           0%   { transform: translateY(0) rotate(0deg);      opacity: 1; }
           100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
@@ -646,38 +611,6 @@ export default function Register() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Pasto en la parte inferior (solo modo mundialista) */}
-      {worldCupMode && (
-        <div className="grass-container">
-          {/* Base de tierra */}
-          <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#3d2817] to-[#5c3d1f]"></div>
-          
-          {/* Generar briznas de pasto */}
-          {Array.from({ length: 150 }).map((_, i) => {
-            const heights = ['grass-short', 'grass-medium', 'grass-tall', 'grass-very-tall'];
-            const colors = ['grass-color-1', 'grass-color-2', 'grass-color-3', 'grass-color-4', 'grass-color-5', 'grass-color-6'];
-            const randomHeight = heights[Math.floor(Math.random() * heights.length)];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            const randomLeft = (i / 150) * 100;
-            const randomDelay = Math.random() * 3;
-            const randomDuration = 2 + Math.random() * 2;
-            
-            return (
-              <div
-                key={i}
-                className={`grass-blade ${randomHeight} ${randomColor}`}
-                style={{
-                  left: `${randomLeft}%`,
-                  animationDelay: `${randomDelay}s`,
-                  animationDuration: `${randomDuration}s`,
-                  opacity: 0.7 + Math.random() * 0.3,
-                }}
-              />
-            );
-          })}
         </div>
       )}
     </div>

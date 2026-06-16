@@ -1537,7 +1537,7 @@ export default function FichaDetalle() {
                 <X size={18} />
               </button>
             </div>
-            <div className="bg-white p-4 rounded-xl border-4 border-[#4285F4] flex items-center justify-center mb-4">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border-4 border-[#4285F4] flex items-center justify-center mb-4">
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}/unirse/${ficha.code}`)}`}
                 alt="QR Code Invitación"

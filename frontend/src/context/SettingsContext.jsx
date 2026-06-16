@@ -37,7 +37,20 @@ export function SettingsProvider({ children }) {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const toggleDark = () => updateSetting('darkMode', !settings.darkMode);
+  const toggleDark = () => {
+    const newDarkMode = !settings.darkMode;
+    updateSetting('darkMode', newDarkMode);
+    
+    // Si se activa modo oscuro, desactivar modo mundialista
+    if (newDarkMode) {
+      const worldCupMode = localStorage.getItem('worldCupMode');
+      if (worldCupMode === 'true') {
+        localStorage.setItem('worldCupMode', 'false');
+        // Forzar recarga del WorldCupContext
+        window.dispatchEvent(new Event('storage'));
+      }
+    }
+  };
 
   const t = (nsOrPath, key) => {
     const lang = settings.language || 'es';

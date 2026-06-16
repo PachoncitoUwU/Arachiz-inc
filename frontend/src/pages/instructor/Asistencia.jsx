@@ -1463,7 +1463,7 @@ export default function InstructorAsistencia() {
                   <p className="text-xs text-gray-400">Haz clic en un estudiante para registrar su asistencia</p>
                 </div>
               </div>
-              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-white dark:bg-zinc-800  dark:hover:bg-gray-800 transition-all hover:rotate-90">
+              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hover:rotate-90">
                 <X size={18} />
               </button>
             </div>

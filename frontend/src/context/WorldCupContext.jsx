@@ -10,7 +10,28 @@ export function WorldCupProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('worldCupMode', worldCupMode);
+    
+    // Si se activa modo mundialista, desactivar modo oscuro
+    if (worldCupMode) {
+      const settings = JSON.parse(localStorage.getItem('arachiz_settings') || '{}');
+      if (settings.darkMode) {
+        settings.darkMode = false;
+        localStorage.setItem('arachiz_settings', JSON.stringify(settings));
+        document.documentElement.classList.remove('dark');
+      }
+    }
   }, [worldCupMode]);
+
+  // Escuchar cambios desde otros contextos (como SettingsContext)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('worldCupMode');
+      setWorldCupMode(saved === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const toggleWorldCupMode = () => {
     setWorldCupMode(prev => !prev);

@@ -699,38 +699,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-
-      {/* Pasto en la parte inferior (solo modo mundialista) */}
-      {worldCupMode && (
-        <div className="grass-container">
-          {/* Base de tierra */}
-          <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#3d2817] to-[#5c3d1f]"></div>
-          
-          {/* Generar briznas de pasto */}
-          {Array.from({ length: 150 }).map((_, i) => {
-            const heights = ['grass-short', 'grass-medium', 'grass-tall', 'grass-very-tall'];
-            const colors = ['grass-color-1', 'grass-color-2', 'grass-color-3', 'grass-color-4', 'grass-color-5', 'grass-color-6'];
-            const randomHeight = heights[Math.floor(Math.random() * heights.length)];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            const randomLeft = (i / 150) * 100;
-            const randomDelay = Math.random() * 3;
-            const randomDuration = 2 + Math.random() * 2;
-            
-            return (
-              <div
-                key={i}
-                className={`grass-blade ${randomHeight} ${randomColor}`}
-                style={{
-                  left: `${randomLeft}%`,
-                  animationDelay: `${randomDelay}s`,
-                  animationDuration: `${randomDuration}s`,
-                  opacity: 0.7 + Math.random() * 0.3,
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
