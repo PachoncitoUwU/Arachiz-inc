@@ -50,6 +50,7 @@ export default function FichaDetalle() {
     _setFicha(val);
   };
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showCode, setShowCode] = useState(false);
@@ -89,6 +90,10 @@ export default function FichaDetalle() {
   // Estado para salir de ficha
   const [showSalirDialog, setShowSalirDialog] = useState(false);
 
+  // Estados para nuevo resultado
+  const [modalNuevoResultado, setModalNuevoResultado] = useState({ open: false, competenciaId: null, nombre: '' });
+  const [savingNuevoResultado, setSavingNuevoResultado] = useState(false);
+
   useEffect(() => {
     loadFicha();
   }, [id]);
@@ -101,20 +106,55 @@ export default function FichaDetalle() {
     }
   }, [ficha, user]);
 
-  const loadFicha = async () => {
+  const loadFicha = async (showSkeleton = true) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
+      else setIsRefreshing(true);
       const data = await fetchApi(`/fichas/${id}`);
       setFicha(data.ficha);
+      setSelectedCompetenciaView(prev => {
+        if (!prev) return prev;
+        const comps = data.ficha.competencias || [];
+        const updated = comps.find(c => c.id === prev.id);
+        if (updated) {
+          return {
+            ...updated,
+            instructor: updated.resultados?.[0]?.instructor || null,
+            instructorId: updated.resultados?.[0]?.instructorId || null
+          };
+        }
+        return prev;
+      });
     } catch (err) {
       showToast(err.message || 'Error al cargar la ficha', 'error');
       navigate('/instructor/fichas');
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
+      else setIsRefreshing(false);
     }
   };
 
-
+  const handleCreateNuevoResultado = async (e) => {
+    e.preventDefault();
+    if (!modalNuevoResultado.nombre.trim()) return;
+    try {
+      setSavingNuevoResultado(true);
+      await fetchApi('/resultados', {
+        method: 'POST',
+        body: JSON.stringify({
+          competenciaId: modalNuevoResultado.competenciaId,
+          nombre: modalNuevoResultado.nombre
+        })
+      });
+      showToast('Resultado de aprendizaje creado exitosamente', 'success');
+      setModalNuevoResultado({ open: false, competenciaId: null, nombre: '' });
+      loadFicha(true); // Mostrar el spinner principal
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setSavingNuevoResultado(false);
+    }
+  };
 
   const copyCode = () => {
     navigator.clipboard.writeText(ficha.code);
@@ -246,10 +286,10 @@ export default function FichaDetalle() {
           tipo: formMateria.tipo
         })
       });
+      showToast('Competencia creada exitosamente', 'success');
+      await loadFicha(false);
       setModalMateria(false);
       setFormMateria({ nombre: '', tipo: 'Técnica' });
-      showToast('Competencia creada exitosamente', 'success');
-      loadFicha();
     } catch (err) {
       setErrorMateria(err.message);
     } finally {
@@ -340,7 +380,8 @@ export default function FichaDetalle() {
   };
 
   const handleMateriaUpdate = async () => {
-    // Recargar solo los datos sin mostrar loading completo
+    // Mostrar loading o refreshing
+    setIsRefreshing(true);
     try {
       const data = await fetchApi(`/fichas/${id}`);
       setFicha(data.ficha);
@@ -352,6 +393,8 @@ export default function FichaDetalle() {
       }
     } catch (err) {
       console.error('Error al actualizar datos:', err);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -487,6 +530,7 @@ export default function FichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
+  // Filtrar materias
   const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
@@ -503,21 +547,27 @@ export default function FichaDetalle() {
     
     // Filtro de instructor
     if (filterInstructor !== 'all') {
-      matches = matches && materia.instructorId === filterInstructor;
+      const hasInstructor = (materia.resultados || []).some(r => r.instructorId === filterInstructor);
+      matches = matches && hasInstructor;
     }
     
     return matches;
   });
 
-  // Obtener instructores únicos para el filtro
-  const uniqueInstructors = [...new Set((ficha.competencias || []).map(m => m.instructorId))]
-    .map(id => {
-      const materia = ficha.competencias.find(m => m.instructorId === id);
-      return {
-        id,
-        name: materia?.instructor?.fullName || 'Desconocido'
-      };
+  // Obtener instructores únicos para el filtro a partir de los resultados
+  const uniqueInstructorsMap = new Map();
+  (ficha.competencias || []).forEach(comp => {
+    (comp.resultados || []).forEach(res => {
+      if (res.instructorId && res.instructor) {
+        uniqueInstructorsMap.set(res.instructorId, res.instructor.fullName);
+      }
     });
+  });
+  
+  const uniqueInstructors = Array.from(uniqueInstructorsMap.entries()).map(([id, name]) => ({
+    id,
+    name
+  }));
 
   // Agrupar horarios por día y filtrar días sin materias
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -856,31 +906,42 @@ export default function FichaDetalle() {
 
           </div>
 
-          {/* Botones de Materias */}
-          {activeTab === 'materias' && isInstructor && (
-            <div className="flex gap-2">
-              {isLider && (
+          <div className="flex items-center gap-2 pb-2">
+            {/* Botón recargar listado */}
+            <button 
+              onClick={() => loadFicha(false)} 
+              className="btn-icon p-2 text-gray-500 hover:text-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700"
+              title="Recargar ficha"
+            >
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
+
+            {/* Botones de Materias */}
+            {activeTab === 'materias' && isInstructor && (
+              <div className="flex gap-2">
+                {isLider && (
+                  <button 
+                    onClick={() => setShowImportMaterias(true)}
+                    className="btn-secondary py-1.5 text-sm flex items-center gap-2"
+                  >
+                    <Upload size={16} />
+                    Importar
+                  </button>
+                )}
                 <button 
-                  onClick={() => setShowImportMaterias(true)}
-                  className="btn-secondary text-sm md:text-base  flex items-center gap-2 text-sm"
+                  onClick={() => {
+                    setModalMateria(true);
+                    setErrorMateria('');
+                    setFormMateria({ nombre: '', tipo: 'Técnica' });
+                  }}
+                  className="btn-primary py-1.5 text-sm flex items-center gap-2"
                 >
-                  <Upload size={16} />
-                  Importar
+                  <Plus size={16} />
+                  Agregar
                 </button>
-              )}
-              <button 
-                onClick={() => {
-                  setModalMateria(true);
-                  setErrorMateria('');
-                  setFormMateria({ nombre: '', tipo: 'Técnica' });
-                }}
-                className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
-              >
-                <Plus size={16} />
-                Agregar
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Contenido de Aprendices */}
@@ -888,13 +949,15 @@ export default function FichaDetalle() {
           <>
             {/* Búsqueda y acciones */}
             <div className="mb-4 flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                placeholder="Buscar por nombre, correo o documento..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field flex-1"
-              />
+              <div className="flex flex-1 items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, correo o documento..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-field flex-1"
+                />
+              </div>
               {isLider && (
                 <button 
                   onClick={() => setShowImportAprendices(true)}
@@ -1040,6 +1103,15 @@ export default function FichaDetalle() {
                     </div>
                   )}
                 </div>
+                {/* Botón crear resultado */}
+                {isInstructor && (
+                  <button
+                    onClick={() => setModalNuevoResultado({ open: true, competenciaId: selectedCompetenciaView.id, nombre: '' })}
+                    className="mt-4 btn-primary text-sm flex items-center gap-2"
+                  >
+                    <Plus size={14} /> Agregar Resultado de Aprendizaje
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -1190,7 +1262,13 @@ export default function FichaDetalle() {
                 </div>
                 <div className="flex flex-col gap-2 flex-1">
                   {diaData.horarios.map((horario, idx) => {
-                    const colorIdx = (ficha.materias || []).findIndex(m => m.id === horario.materiaId);
+                    const getHash = (str) => {
+                      if (!str) return 0;
+                      let hash = 0;
+                      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                      return Math.abs(hash);
+                    };
+                    const colorIdx = getHash(horario.materiaId || horario.id);
                     const bgColor = MATERIA_COLORS[colorIdx % MATERIA_COLORS.length];
                     
                     return (
@@ -1199,10 +1277,18 @@ export default function FichaDetalle() {
                         className="p-2.5 rounded-lg text-white flex-1 flex flex-col justify-center"
                         style={{ backgroundColor: bgColor }}
                       >
-                        <p className="text-xs font-bold mb-0.5 truncate">
+                        <p className="text-[10px] uppercase tracking-wider opacity-75 mb-0.5 truncate leading-tight">
+                          {horario.materia?.competencia?.nombre}
+                        </p>
+                        <p className="text-xs font-bold mb-1 truncate leading-tight">
                           {horario.materia?.nombre}
                         </p>
-                        <p className="text-xs opacity-90 font-mono">
+                        <p className="text-[10px] font-medium text-white/90 truncate flex items-center gap-1 mb-1.5">
+                          <Users size={10} />
+                          {horario.materia?.instructor?.fullName || 'Sin instructor'}
+                        </p>
+                        <p className="text-[10px] opacity-90 font-mono flex items-center gap-1">
+                          <Clock size={10} />
                           {horario.horaInicio} - {horario.horaFin}
                         </p>
                       </div>
@@ -1256,7 +1342,29 @@ export default function FichaDetalle() {
               Cancelar
             </button>
             <button type="submit" disabled={savingMateria} className="btn-primary text-sm md:text-base  flex-1">
-              {savingMateria ? 'Creando...' : 'Crear Competencia'}
+              {savingMateria ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Crear Nuevo Resultado de Aprendizaje */}
+      <Modal open={modalNuevoResultado.open} onClose={() => setModalNuevoResultado({ ...modalNuevoResultado, open: false })} title="Nuevo Resultado de Aprendizaje">
+        <form onSubmit={handleCreateNuevoResultado} className="space-y-4">
+          <div>
+            <label className="input-label">Nombre del Resultado</label>
+            <input 
+              required 
+              className="input-field" 
+              placeholder="Escribe el nombre aquí..."
+              value={modalNuevoResultado.nombre} 
+              onChange={e => setModalNuevoResultado({...modalNuevoResultado, nombre: e.target.value})} 
+            />
+          </div>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <button type="button" onClick={() => setModalNuevoResultado({ ...modalNuevoResultado, open: false })} className="btn-secondary text-sm md:text-base flex-1">Cancelar</button>
+            <button type="submit" disabled={savingNuevoResultado} className="btn-primary text-sm md:text-base flex-1">
+              {savingNuevoResultado ? 'Creando...' : 'Crear Resultado'}
             </button>
           </div>
         </form>

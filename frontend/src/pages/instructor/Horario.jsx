@@ -239,7 +239,8 @@ export default function InstructorHorario() {
           competenciaNombre: comp.nombre,
           nombre: `${res.nombre} (${comp.nombre})`,
           fichaId: comp.fichaId,
-          ficha: comp.ficha
+          ficha: comp.ficha,
+          competencia: comp
         }))
       );
       setMaterias(resultadosDisponibles);

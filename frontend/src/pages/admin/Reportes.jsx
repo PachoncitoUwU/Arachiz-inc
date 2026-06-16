@@ -287,8 +287,8 @@ export default function AdminReportes() {
         <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => setVistaActual('reportes')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              vistaActual === 'reportes' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              vistaActual === 'reportes' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <Download size={16} />
@@ -296,8 +296,8 @@ export default function AdminReportes() {
           </button>
           <button
             onClick={() => setVistaActual('sesiones')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              vistaActual === 'sesiones' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              vistaActual === 'sesiones' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <Calendar size={16} />

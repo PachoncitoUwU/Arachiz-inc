@@ -161,6 +161,7 @@ export default function AdminHorarios() {
                 nombre: `${comp.nombre} - ${res.nombre}`,
                 tipo: comp.tipo,
                 ficha: { id: ficha.id, numero: ficha.numero, nombre: ficha.nombre },
+                competencia: comp,
                 instructor: res.instructor
               });
             });
@@ -201,6 +202,7 @@ export default function AdminHorarios() {
         nombre: `${res.competencia?.nombre || ''} - ${res.nombre}`,
         tipo: res.competencia?.tipo || 'Técnica',
         ficha: res.competencia?.ficha,
+        competencia: res.competencia,
         instructor: res.instructor
       }));
       setMaterias(mappedResultados);
@@ -500,7 +502,8 @@ export default function AdminHorarios() {
         return;
       }
 
-      const fichaId = selectedFicha?.id || selectedInstructor?.fichas[0]?.id;
+      const selectedMateriaObj = materias.find(m => m.id === formAgregarMateria.materiaId);
+      const fichaId = selectedFicha?.id || selectedMateriaObj?.ficha?.id || selectedInstructor?.fichas?.[0]?.id;
 
       // Crear horario
       const horarioResponse = await fetchApi('/horarios', {
@@ -513,8 +516,6 @@ export default function AdminHorarios() {
           horaFin: formAgregarMateria.horaFin
         })
       });
-
-      const selectedMateriaObj = materias.find(m => m.id === formAgregarMateria.materiaId);
 
       const mappedNewHorario = {
         ...horarioResponse.horario,
@@ -592,8 +593,8 @@ export default function AdminHorarios() {
                 loadFichas();
               }
             }}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              viewMode === 'ficha' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              viewMode === 'ficha' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <Users size={16} />
@@ -610,8 +611,8 @@ export default function AdminHorarios() {
                 loadInstructores();
               }
             }}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              viewMode === 'instructor' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              viewMode === 'instructor' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <BookOpen size={16} />
