@@ -42,7 +42,7 @@ export default function ArachizAssist() {
       console.error(err);
       setMessages(prev => [...prev, { 
         role: 'model', 
-        content: 'Hubo un error de conexión con mi servidor o falta configurar la GEMINI_API_KEY en el backend.' 
+        content: err.message || 'Hubo un error de conexión con mi servidor.'
       }]);
     } finally {
       setLoading(false);

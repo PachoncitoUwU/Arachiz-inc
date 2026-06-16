@@ -3,9 +3,139 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.326';
+export const VERSION = '1.4.357';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.357',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.357',
+    changes: [
+      'Merge branch main of https://github.com/PachoncitoUwU/Arachiz-inc',
+      'tiktok'
+    ]
+  },
+  {
+    version: '1.4.354',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.354',
+    changes: [
+      'ci: forzar redeploy en Vercel'
+    ]
+  },
+  {
+    version: '1.4.352',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.352',
+    changes: [
+      'fix: WorldCupContext fallback seguro + vercel.json rewrite simplificado para SPA'
+    ]
+  },
+  {
+    version: '1.4.350',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.350',
+    changes: [
+      'fix: CORS - soportar multiples origenes en FRONTEND_URL separados por coma'
+    ]
+  },
+  {
+    version: '1.4.348',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.348',
+    changes: [
+      'fix: corregir template string CSS roto en Login.jsx que causaba fallo en build de Vercel'
+    ]
+  },
+  {
+    version: '1.4.346',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.346',
+    changes: [
+      'elimacion de vercel'
+    ]
+  },
+  {
+    version: '1.4.344',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.344',
+    changes: [
+      'fix: vercel.json - excluir archivos estaticos del rewrite y agregar header para GLB'
+    ]
+  },
+  {
+    version: '1.4.342',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.342',
+    changes: [
+      'Merge branch main of https://github.com/PachoncitoUwU/Arachiz-inc',
+      'ash'
+    ]
+  },
+  {
+    version: '1.4.339',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.339',
+    changes: [
+      'fix: renombrar hongito suabe.glb a hongito-suabe.glb para evitar problemas con espacios en URL'
+    ]
+  },
+  {
+    version: '1.4.337',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.337',
+    changes: [
+      '.'
+    ]
+  },
+  {
+    version: '1.4.335',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.335',
+    changes: [
+      'caja hongito'
+    ]
+  },
+  {
+    version: '1.4.333',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.333',
+    changes: [
+      'feat: replace caja_deadpool model with hongito suabe in presentation'
+    ]
+  },
+  {
+    version: '1.4.331',
+    date: '2026-06-15',
+    title: 'Actualización 1.4.331',
+    changes: [
+      'yerba'
+    ]
+  },
+  {
+    version: '1.4.329',
+    date: '2026-06-14',
+    title: 'Actualización 1.4.329',
+    changes: [
+      'Fiebre Mundialista',
+      'feat: Implementar modo mundialista con toggle, balones Copa Mundial y loading animado'
+    ]
+  },
+  {
+    version: '1.4.327',
+    date: '2026-06-14',
+    title: 'Fiebre Mundialista ⚽',
+    changes: [
+      '⚽ Modo Mundialista: Activa/desactiva el tema del mundial con un solo click',
+      '🎨 Logo dinámico: Cambia entre logo Arachiz y logo con gorra de Colombia',
+      '🏆 Balones Copa Mundial: Balones flotantes interactivos reemplazan burbujas',
+      '⚡ Efecto de patada: Los balones vuelan al hacer click (modo mundial)',
+      '💥 Efecto de explosión: Burbujas explotan en partículas (modo base)',
+      '🎮 Loading animado: Balón rebotando con chispas al tocar el suelo',
+      '🔄 Persistencia: El modo elegido se guarda automáticamente',
+      '🎯 Toggle fácil: Botón ⚽ junto al modo oscuro en todas las vistas'
+    ]
+  },
   {
     version: '1.4.326',
     date: '2026-06-14',

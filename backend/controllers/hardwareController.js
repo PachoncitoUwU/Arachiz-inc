@@ -32,14 +32,26 @@ exports.handleEvent = (req, res) => {
   res.json({ success: true });
 };
 
+let espLastSeen = 0;
+
 // El ESP consulta esta ruta cada 2 segundos para ver si hay comandos
 exports.getCommands = (req, res) => {
+  espLastSeen = Date.now();
   if (commandQueue.length > 0) {
     const command = commandQueue.shift(); // saca el primero
     res.json({ command });
   } else {
     res.json({ command: null });
   }
+};
+
+exports.getStatus = (req, res) => {
+  const serialService = req.app.get('serialService');
+  const usbConnected = serialService ? serialService.isConnected : false;
+  // Consideramos ESP conectado si hizo ping en los últimos 10 segundos
+  const espConnected = (Date.now() - espLastSeen) < 10000;
+  
+  res.json({ usbConnected, espConnected });
 };
 
 // Agregar comando a la cola (llamado desde serialController y asistenciaController via serialService)

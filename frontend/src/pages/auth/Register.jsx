@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, IdCard, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
+import { useWorldCup } from '../../context/WorldCupContext';
 import fetchApi from '../../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
   const { t } = useSettings();
+  const { worldCupMode } = useWorldCup();
 
   // ── Paso actual: 1 | 2 | 3 ──────────────────────────────────────────────
   const [step, setStep] = useState(1);
@@ -36,42 +38,72 @@ export default function Register() {
   // ── Burbujas decorativas ─────────────────────────────────────────────────
   const [particles, setParticles] = useState([]);
   const [bubbles, setBubbles] = useState([
-    { id: 1,  left: '10%', size: 48, color: '#4285F4', duration: 12, delay: 0    },
-    { id: 2,  left: '20%', size: 64, color: '#EA4335', duration: 10, delay: 1    },
-    { id: 3,  left: '30%', size: 72, color: '#FBBC05', duration: 14, delay: 2    },
-    { id: 4,  left: '40%', size: 56, color: '#34A853', duration: 11, delay: 0    },
-    { id: 5,  left: '50%', size: 80, color: '#4285F4', duration: 13, delay: 1.5  },
-    { id: 6,  left: '60%', size: 52, color: '#EA4335', duration: 12, delay: 0.5  },
-    { id: 7,  left: '70%', size: 68, color: '#FBBC05', duration: 10, delay: 2.5  },
-    { id: 8,  left: '80%', size: 60, color: '#34A853', duration: 11, delay: 1    },
-    { id: 9,  left: '85%', size: 76, color: '#4285F4', duration: 13, delay: 0    },
-    { id: 10, left: '15%', size: 44, color: '#EA4335', duration: 12, delay: 2    },
-    { id: 11, left: '25%', size: 88, color: '#34A853', duration: 14, delay: 0.5  },
-    { id: 12, left: '45%', size: 70, color: '#FBBC05', duration: 11, delay: 1.5  },
-    { id: 13, left: '65%', size: 58, color: '#4285F4', duration: 12, delay: 2    },
-    { id: 14, left: '75%', size: 84, color: '#EA4335', duration: 13, delay: 0.5  },
-    { id: 15, left: '90%', size: 66, color: '#34A853', duration: 10, delay: 1    },
+    { id: 1, left: '5%', size: 60, color: '#4285F4', duration: 12, delay: 0 },
+    { id: 2, left: '18%', size: 45, color: '#EA4335', duration: 14, delay: 2 },
+    { id: 3, left: '32%', size: 70, color: '#FBBC05', duration: 11, delay: 4 },
+    { id: 4, left: '48%', size: 55, color: '#34A853', duration: 13, delay: 1 },
+    { id: 5, left: '63%', size: 50, color: '#4285F4', duration: 12, delay: 3 },
+    { id: 6, left: '77%', size: 65, color: '#EA4335', duration: 14, delay: 0 },
+    { id: 7, left: '91%', size: 48, color: '#FBBC05', duration: 13, delay: 2.5 },
   ]);
 
   const accentColor = userType === 'instructor' ? '#4285F4' : userType === 'administrador' ? '#EA4335' : '#34A853';
 
   // ── Handlers burbujas ────────────────────────────────────────────────────
+  const [kickedBalls, setKickedBalls] = useState([]);
+
   const handleBubbleClick = (bubble, event) => {
     event.stopPropagation();
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const newParticles = Array.from({ length: 12 }, (_, i) => ({
-      id: `particle-${Date.now()}-${i}`,
-      x, y,
-      color: bubble.color,
-      angle: (i * 360) / 12,
-      size: Math.random() * 6 + 3,
-    }));
-    setParticles(prev => [...prev, ...newParticles]);
-    setBubbles(prev => prev.filter(b => b.id !== bubble.id));
-    setTimeout(() => setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id))), 800);
-    setTimeout(() => setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]), 2000);
+    
+    if (worldCupMode) {
+      // Efecto de patada (modo mundialista)
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left;
+      const y = rect.top;
+      
+      const kickedBall = {
+        id: `kicked-${Date.now()}`,
+        x, y,
+        size: bubble.size,
+        left: bubble.left,
+      };
+      
+      setKickedBalls(prev => [...prev, kickedBall]);
+      setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      
+      setTimeout(() => {
+        setKickedBalls(prev => prev.filter(kb => kb.id !== kickedBall.id));
+      }, 3000);
+      
+      setTimeout(() => {
+        setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+      }, 4000);
+    } else {
+      // Efecto de explosión (modo base)
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      
+      const newParticles = Array.from({ length: 12 }, (_, i) => ({
+        id: `${Date.now()}-${i}`,
+        x,
+        y,
+        color: bubble.color,
+        size: Math.random() * 8 + 4,
+        angle: (360 / 12) * i,
+      }));
+      
+      setParticles(prev => [...prev, ...newParticles]);
+      setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      
+      setTimeout(() => {
+        setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+      }, 800);
+      
+      setTimeout(() => {
+        setBubbles(prev => [...prev, { ...bubble, id: Date.now() }]);
+      }, 2000);
+    }
   };
 
   // ── Paso 1 → 2 ──────────────────────────────────────────────────────────
@@ -207,6 +239,42 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#34A853]/[0.05] to-[#4285F4]/[0.08] dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 flex items-center justify-center p-4 relative overflow-hidden">
       <style>{`
+        /* Pasto realista para modo mundialista */
+        .grass-container {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 120px;
+          overflow: hidden;
+          z-index: 1;
+        }
+        .grass-blade {
+          position: absolute;
+          bottom: 0;
+          width: 4px;
+          border-radius: 50% 50% 0 0;
+          transform-origin: bottom center;
+          animation: grass-sway 3s ease-in-out infinite;
+        }
+        @keyframes grass-sway {
+          0%, 100% { transform: rotate(-2deg); }
+          50% { transform: rotate(2deg); }
+        }
+        /* Variaciones de altura y color */
+        .grass-short { height: 40px; }
+        .grass-medium { height: 60px; }
+        .grass-tall { height: 80px; }
+        .grass-very-tall { height: 100px; }
+        
+        .grass-color-1 { background: linear-gradient(to top, #1a5f1a, #2d8a2d); }
+        .grass-color-2 { background: linear-gradient(to top, #1e6b1e, #33a033); }
+        .grass-color-3 { background: linear-gradient(to top, #1a7a1a, #3db83d); }
+        .grass-color-4 { background: linear-gradient(to top, #165016, #267326); }
+        .grass-color-5 { background: linear-gradient(to top, #145214, #1f6f1f); }
+        .grass-color-6 { background: linear-gradient(to top, #1d7a1d, #38b838); }
+        
+        /* Animaciones existentes */
         @keyframes float-up {
           0%   { transform: translateY(0) rotate(0deg);      opacity: 1; }
           100% { transform: translateY(-120vh) rotate(720deg); opacity: 0; }
@@ -217,6 +285,43 @@ export default function Register() {
           transition: transform 0.2s ease;
         }
         .circle-float:hover { transform: scale(1.2); }
+        @keyframes kick-ball {
+          0% {
+            transform: translateY(0) translateZ(0) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          20% {
+            transform: translateY(-200px) translateZ(100px) scale(1.1) rotate(-180deg);
+          }
+          40% {
+            transform: translateY(-300px) translateZ(200px) scale(0.9) rotate(-360deg);
+          }
+          50% {
+            transform: translateY(-280px) translateZ(250px) scale(0.8) rotate(-450deg);
+          }
+          60% {
+            transform: translateY(-320px) translateZ(300px) scale(0.7) rotate(-540deg);
+          }
+          70% {
+            transform: translateY(-310px) translateZ(320px) scale(0.6) rotate(-630deg);
+          }
+          80% {
+            transform: translateY(-340px) translateZ(350px) scale(0.5) rotate(-720deg);
+          }
+          90% {
+            transform: translateY(-330px) translateZ(360px) scale(0.3) rotate(-810deg);
+          }
+          100% {
+            transform: translateY(-360px) translateZ(400px) scale(0.1) rotate(-900deg);
+            opacity: 0;
+          }
+        }
+        .kicked-ball {
+          position: fixed;
+          animation: kick-ball 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          z-index: 1000;
+          pointer-events: none;
+        }
         @keyframes particle-burst {
           0%   { transform: translate(0,0) scale(1); opacity: 1; }
           100% { transform: translate(var(--tx),var(--ty)) scale(0); opacity: 0; }
@@ -232,24 +337,57 @@ export default function Register() {
         .step-enter { animation: fadeSlide 0.3s ease forwards; }
       `}</style>
 
-      {/* Burbujas */}
+      {/* Balones */}
       <div className="absolute inset-0 overflow-hidden">
         {bubbles.map(bubble => (
-          <div
-            key={bubble.id}
-            className="circle-float opacity-10 hover:opacity-20"
-            style={{
-              left: bubble.left,
-              width: `${bubble.size}px`,
-              height: `${bubble.size}px`,
-              backgroundColor: bubble.color,
-              animationDuration: `${bubble.duration}s`,
-              animationDelay: `${bubble.delay}s`,
-            }}
-            onClick={(e) => handleBubbleClick(bubble, e)}
-          />
+          worldCupMode ? (
+            <img
+              key={bubble.id}
+              src="/world cup.png"
+              alt="Balón Copa Mundial"
+              className="circle-float opacity-30 hover:opacity-50 cursor-pointer"
+              style={{
+                left: bubble.left,
+                width: `${bubble.size}px`,
+                height: `${bubble.size}px`,
+                animationDuration: `${bubble.duration}s`,
+                animationDelay: `${bubble.delay}s`,
+              }}
+              onClick={(e) => handleBubbleClick(bubble, e)}
+            />
+          ) : (
+            <div
+              key={bubble.id}
+              className="circle-float opacity-70 hover:opacity-100 cursor-pointer"
+              style={{
+                left: bubble.left,
+                width: `${bubble.size}px`,
+                height: `${bubble.size}px`,
+                backgroundColor: bubble.color,
+                animationDuration: `${bubble.duration}s`,
+                animationDelay: `${bubble.delay}s`,
+              }}
+              onClick={(e) => handleBubbleClick(bubble, e)}
+            />
+          )
         ))}
       </div>
+
+      {/* Balones pateados (solo modo mundialista) */}
+      {worldCupMode && kickedBalls.map(ball => (
+        <img
+          key={ball.id}
+          src="/world cup.png"
+          alt="Balón pateado"
+          className="kicked-ball"
+          style={{
+            left: `${ball.x}px`,
+            top: `${ball.y}px`,
+            width: `${ball.size}px`,
+            height: `${ball.size}px`,
+          }}
+        />
+      ))}
 
       {/* Partículas */}
       {particles.map(particle => {
@@ -270,12 +408,16 @@ export default function Register() {
         );
       })}
 
-      <div className="w-full max-w-sm relative">
+      <div className="w-full max-w-sm relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Link to="/" className="hover:scale-105 transition-transform active:scale-95">
-              <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" />
+              <img 
+                src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+                alt="Arachiz" 
+                className="h-14 md:h-16 object-contain dark:invert transition-all duration-300" 
+              />
             </Link>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
@@ -504,6 +646,38 @@ export default function Register() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Pasto en la parte inferior (solo modo mundialista) */}
+      {worldCupMode && (
+        <div className="grass-container">
+          {/* Base de tierra */}
+          <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#3d2817] to-[#5c3d1f]"></div>
+          
+          {/* Generar briznas de pasto */}
+          {Array.from({ length: 150 }).map((_, i) => {
+            const heights = ['grass-short', 'grass-medium', 'grass-tall', 'grass-very-tall'];
+            const colors = ['grass-color-1', 'grass-color-2', 'grass-color-3', 'grass-color-4', 'grass-color-5', 'grass-color-6'];
+            const randomHeight = heights[Math.floor(Math.random() * heights.length)];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const randomLeft = (i / 150) * 100;
+            const randomDelay = Math.random() * 3;
+            const randomDuration = 2 + Math.random() * 2;
+            
+            return (
+              <div
+                key={i}
+                className={`grass-blade ${randomHeight} ${randomColor}`}
+                style={{
+                  left: `${randomLeft}%`,
+                  animationDelay: `${randomDelay}s`,
+                  animationDuration: `${randomDuration}s`,
+                  opacity: 0.7 + Math.random() * 0.3,
+                }}
+              />
+            );
+          })}
         </div>
       )}
     </div>

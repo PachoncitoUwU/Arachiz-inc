@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useWorldCup } from '../context/WorldCupContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PerfilPropioModal from '../components/PerfilPropioModal';
 import ArachizAssist from '../components/ArachizAssist';
@@ -56,6 +57,7 @@ const SUPER_USUARIO_LINKS = [
 
 function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClick, onProfileClick }) {
   const { settings, toggleDark, t } = useSettings();
+  const { worldCupMode, toggleWorldCupMode } = useWorldCup();
 
   const initials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
@@ -70,7 +72,11 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center">
-          <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-8 object-contain dark:invert transition-all duration-300" />
+          <img 
+            src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+            alt="Arachiz" 
+            className="h-8 object-contain dark:invert transition-all duration-300" 
+          />
         </div>
         <div className="flex items-center gap-1">
           {user?.userType === 'aprendiz' && (
@@ -81,6 +87,17 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
               )}
             </NavLink>
           )}
+          <button 
+            onClick={toggleWorldCupMode} 
+            className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            title={worldCupMode ? "Desactivar modo mundialista" : "Activar modo mundialista"}
+          >
+            {worldCupMode ? (
+              <span className="text-base">⚽</span>
+            ) : (
+              <span className="text-base opacity-50">⚽</span>
+            )}
+          </button>
           <button onClick={toggleDark} className="btn-icon text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
             {settings.darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -160,6 +177,7 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
 export default function MainLayout({ allowedRoles }) {
   const { user, isAuthenticated, logout, updateUser, loading } = useContext(AuthContext);
   const { settings } = useSettings();
+  const { worldCupMode } = useWorldCup();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -248,7 +266,11 @@ export default function MainLayout({ allowedRoles }) {
                 <Menu size={20} />
               </button>
               <div className="flex items-center">
-                <img src="/ArachizLogoPNG.png" alt="Arachiz" className="h-6 object-contain dark:invert transition-all duration-300" />
+                <img 
+                  src={worldCupMode ? "/Arachiz-worldcup.png" : "/ArachizLogoPNG.png"} 
+                  alt="Arachiz" 
+                  className="h-6 object-contain dark:invert transition-all duration-300" 
+                />
               </div>
               <div className="flex items-center gap-1">
                 {user?.userType === 'aprendiz' && (

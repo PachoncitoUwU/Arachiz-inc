@@ -69,6 +69,12 @@ const askArachizAssist = async (req, res) => {
     res.json({ reply: responseText });
   } catch (err) {
     console.error('Error con Gemini API:', err);
+    if (err.status === 503) {
+      return res.status(503).json({ error: 'La IA está experimentando alta demanda en este momento. Por favor, intenta de nuevo en unos segundos.' });
+    }
+    if (err.status === 401 || err.status === 403) {
+      return res.status(401).json({ error: 'La API Key de Gemini es inválida o no tiene permisos.' });
+    }
     res.status(500).json({ error: 'Hubo un error procesando tu mensaje con IA.' });
   }
 };

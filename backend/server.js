@@ -44,7 +44,7 @@ const server = http.createServer(app);
 
 // ── CORS: solo el dominio oficial ────────────────────────────────────────────
 const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
+  ? process.env.FRONTEND_URL.split(',').map(u => u.trim())
   : ['http://localhost:5173'];
 
 const io = new Server(server, {

@@ -23,6 +23,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { WorldCupProvider } from './context/WorldCupContext';
 import MainLayout from './layouts/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
@@ -103,6 +104,7 @@ export default function App() {
     <ErrorBoundary>
       <Toaster position="top-right" />
       <BrowserRouter>
+        <WorldCupProvider>
         <SettingsProvider>
         <ToastProvider>
           <AuthProvider>
@@ -186,6 +188,7 @@ export default function App() {
           </AuthProvider>
         </ToastProvider>
       </SettingsProvider>
+      </WorldCupProvider>
     </BrowserRouter>
     </ErrorBoundary>
   );
