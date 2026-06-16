@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.417';
+export const VERSION = '1.4.419';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.419',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.419',
+    changes: [
+      'supuetsa mejora de qr'
+    ]
+  },
   {
     version: '1.4.417',
     date: '2026-06-16',
