@@ -34,6 +34,19 @@ export const AuthProvider = ({ children }) => {
 
   const [token, setToken] = useState(getInitialToken);
 
+  // Efecto de respaldo: si el token llega por URL pero el estado ya se inicializó sin él
+  // (puede ocurrir en algunos entornos SSR o con hydration)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken && urlToken !== token) {
+      localStorage.setItem('token', urlToken);
+      setToken(urlToken);
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
+
   // RNF18 - Expiración de sesión por inactividad (8h via JWT, pero también chequeamos expiración)
   const decodeToken = useCallback((t) => {
     try {
