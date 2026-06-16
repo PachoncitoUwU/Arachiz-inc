@@ -69,10 +69,8 @@ const importAprendices = async (req, res) => {
     const resultados = { creados: 0, unidos: 0, errores: [], filas: 0 };
     const transporter = createTransporter();
 
-    // Recorrer filas omitiendo el header
     for (let i = 2; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
-      // Ignorar filas vacías
       if (!row.hasValues) continue;
       
       resultados.filas++;
@@ -81,7 +79,6 @@ const importAprendices = async (req, res) => {
       let document = row.getCell(docIdx).value?.toString().trim();
       let email = row.getCell(emailIdx).value?.toString().trim().toLowerCase();
 
-      // Excel a veces parsea emails como objetos { text, hyperlink }
       if (email && typeof row.getCell(emailIdx).value === 'object') {
         email = row.getCell(emailIdx).value.text?.trim().toLowerCase();
       }
@@ -91,13 +88,11 @@ const importAprendices = async (req, res) => {
         continue;
       }
 
-      // Validar si el aprendiz ya está en la ficha
       if (ficha.aprendices.some(a => a.document === document || a.email === email)) {
         resultados.errores.push(`Fila ${i}: ${fullName} ya pertenece a esta ficha`);
         continue;
       }
 
-      // Buscar si el usuario ya existe en Arachiz
       const existingUser = await prisma.user.findFirst({
         where: { OR: [{ document }, { email }] }
       });
@@ -108,13 +103,11 @@ const importAprendices = async (req, res) => {
           continue;
         }
 
-        // Si existe, pero el documento o email no coinciden exactamente, reportar conflicto
         if (existingUser.document !== document || existingUser.email !== email) {
           resultados.errores.push(`Fila ${i}: Hay un conflicto con el email o documento de ${fullName}. Verifica que correspondan al mismo usuario.`);
           continue;
         }
 
-        // Unir a la ficha
         await prisma.ficha.update({
           where: { id: fichaId },
           data: { aprendices: { connect: { id: existingUser.id } } }
@@ -129,7 +122,6 @@ const importAprendices = async (req, res) => {
         });
         resultados.unidos++;
       } else {
-        // Crear nuevo usuario
         const tempPassword = `Arachiz_${document.substring(document.length - 4)}`;
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
@@ -153,7 +145,6 @@ const importAprendices = async (req, res) => {
         });
         resultados.creados++;
 
-        // Enviar email con credenciales
         try {
           await transporter.sendMail({
             from: process.env.EMAIL_USER,
@@ -175,7 +166,7 @@ const importAprendices = async (req, res) => {
   }
 };
 
-const importMaterias = async (req, res) => {
+const importCompetencias = async (req, res) => {
   const { fichaId } = req.params;
   const instructorId = req.user.id;
 
@@ -184,7 +175,7 @@ const importMaterias = async (req, res) => {
       where: { id: fichaId },
       include: {
         instructores: true,
-        materias: true
+        competencias: { include: { resultados: true } }
       }
     });
 
@@ -194,7 +185,7 @@ const importMaterias = async (req, res) => {
                     ficha.instructores.some(i => i.instructorId === instructorId && i.role === 'admin');
 
     if (!isLider) {
-      return res.status(403).json({ error: 'Solo el instructor líder puede importar materias' });
+      return res.status(403).json({ error: 'Solo el instructor líder puede importar competencias' });
     }
 
     if (!req.file) {
@@ -212,23 +203,22 @@ const importMaterias = async (req, res) => {
     if (!worksheet) return res.status(400).json({ error: 'El archivo está vacío' });
 
     let headers = [];
-    let nameIdx = -1, tipoIdx = -1;
+    let compIdx = -1, resIdx = -1, tipoIdx = -1;
 
     worksheet.getRow(1).eachCell((cell, colNumber) => {
       const val = cell.value?.toString().toLowerCase().trim() || '';
       headers[colNumber] = val;
-      if (val.includes('nombre')) nameIdx = colNumber;
+      if (val.includes('competencia') || val.includes('nombre')) compIdx = colNumber;
+      if (val.includes('resultado')) resIdx = colNumber;
       if (val.includes('tipo')) tipoIdx = colNumber;
     });
 
-    if (nameIdx === -1) {
-      return res.status(400).json({ error: 'El archivo debe contener una columna Nombre' });
+    if (compIdx === -1) {
+      return res.status(400).json({ error: 'El archivo debe contener una columna para la Competencia' });
     }
 
-    const resultados = { creados: 0, errores: [], filas: 0 };
-
-    // Recopilar materias válidas primero para insertarlas en lote
-    const materiasACrear = [];
+    const resultados = { creadas: 0, resultadosCreados: 0, errores: [], filas: 0 };
+    const incomingCompetencies = new Map();
 
     for (let i = 2; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
@@ -236,52 +226,73 @@ const importMaterias = async (req, res) => {
       
       resultados.filas++;
 
-      const nombre = row.getCell(nameIdx).value?.toString().trim();
-      const tipo = tipoIdx !== -1 ? row.getCell(tipoIdx).value?.toString().trim() : 'Transversal';
+      const compNombre = row.getCell(compIdx).value?.toString().trim();
+      const resNombre = resIdx !== -1 ? row.getCell(resIdx).value?.toString().trim() : '';
+      const tipo = tipoIdx !== -1 ? row.getCell(tipoIdx).value?.toString().trim() : 'Técnica';
 
-      if (!nombre) {
-        resultados.errores.push(`Fila ${i}: Nombre de materia en blanco`);
+      if (!compNombre) {
+        resultados.errores.push(`Fila ${i}: Nombre de competencia en blanco`);
         continue;
       }
 
-      // Validar si ya existe en la ficha (comparar con las existentes Y las que ya vamos a crear)
-      const yaExiste = ficha.materias.some(m => m.nombre.toLowerCase() === nombre.toLowerCase())
-        || materiasACrear.some(m => m.nombre.toLowerCase() === nombre.toLowerCase());
+      const cleanedComp = cleanName(compNombre);
+      const cleanedRes = cleanName(resNombre);
 
-      if (yaExiste) {
-        resultados.errores.push(`Fila ${i}: La materia ${nombre} ya existe en la ficha`);
-        continue;
+      if (!incomingCompetencies.has(cleanedComp)) {
+        incomingCompetencies.set(cleanedComp, { tipo: tipo || 'Técnica', resultados: new Set() });
       }
-
-      materiasACrear.push({
-        nombre,
-        tipo: tipo || 'Transversal',
-        fichaId,
-        instructorId
-      });
+      if (cleanedRes) {
+        incomingCompetencies.get(cleanedComp).resultados.add(cleanedRes);
+      }
     }
 
-    // Inserción en lote (una sola query en lugar de N queries)
-    if (materiasACrear.length > 0) {
-      await prisma.materia.createMany({
-        data: materiasACrear,
-        skipDuplicates: true
-      });
-      resultados.creados = materiasACrear.length;
-
-      await prisma.historialCambios.create({
-        data: {
-          fichaId, usuarioId: instructorId,
-          tipoEvento: 'IMPORTACION_MATERIA', entidad: 'Ficha', entidadId: fichaId,
-          descripcion: `${materiasACrear.length} materias importadas masivamente`
+    for (const [compName, info] of incomingCompetencies.entries()) {
+      let competencia = ficha.competencias.find(c => c.nombre.toLowerCase() === compName.toLowerCase());
+      
+      if (!competencia) {
+        competencia = await prisma.competencia.create({
+          data: {
+            nombre: compName,
+            tipo: info.tipo,
+            fichaId
+          },
+          include: { resultados: true }
+        });
+        resultados.creadas++;
+      }
+      
+      const existingResults = competencia.resultados.map(r => r.nombre.toLowerCase());
+      const resultsToCreate = [];
+      
+      for (const resName of info.resultados) {
+        if (!existingResults.includes(resName.toLowerCase())) {
+          resultsToCreate.push({
+            nombre: resName,
+            competenciaId: competencia.id
+          });
         }
-      });
+      }
+      
+      if (resultsToCreate.length > 0) {
+        await prisma.resultadoAprendizaje.createMany({
+          data: resultsToCreate
+        });
+        resultados.resultadosCreados += resultsToCreate.length;
+      }
     }
+
+    await prisma.historialCambios.create({
+      data: {
+        fichaId, usuarioId: instructorId,
+        tipoEvento: 'IMPORTACION_COMPETENCIA', entidad: 'Ficha', entidadId: fichaId,
+        descripcion: `${resultados.creadas} competencias y ${resultados.resultadosCreados} resultados importados masivamente`
+      }
+    });
 
     res.json({ message: 'Importación finalizada', resultados });
 
   } catch (error) {
-    console.error('Error importando materias:', error);
+    console.error('Error importando competencias:', error);
     res.status(500).json({ error: 'Error al procesar el archivo: ' + error.message });
   }
 };
@@ -309,23 +320,25 @@ const downloadPlantillaAprendices = async (req, res) => {
   res.end();
 };
 
-const downloadPlantillaMaterias = async (req, res) => {
+const downloadPlantillaCompetencias = async (req, res) => {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Materias');
+  const worksheet = workbook.addWorksheet('Competencias');
   
   worksheet.columns = [
-    { header: 'Nombre de la Materia', key: 'nombre', width: 40 },
-    { header: 'Tipo (Técnica/Transversal)', key: 'tipo', width: 25 }
+    { header: 'Nombre de la Competencia', key: 'competencia', width: 40 },
+    { header: 'Resultado de Aprendizaje', key: 'resultado', width: 45 },
+    { header: 'Tipo (Técnica/Transversal/Básica)', key: 'tipo', width: 30 }
   ];
   
-  worksheet.addRow({ nombre: 'Desarrollo de Software', tipo: 'Técnica' });
-  worksheet.addRow({ nombre: 'Ética Profesional', tipo: 'Transversal' });
+  worksheet.addRow({ competencia: 'Desarrollo de Software', resultado: 'Diseñar la estructura de datos y componentes del sistema.', tipo: 'Técnica' });
+  worksheet.addRow({ competencia: 'Desarrollo de Software', resultado: 'Desarrollar el código fuente de acuerdo con el diseño.', tipo: 'Técnica' });
+  worksheet.addRow({ competencia: 'Ética Profesional', resultado: 'Interactuar en los contextos Productivo y Social.', tipo: 'Transversal' });
   
   worksheet.getRow(1).font = { bold: true };
   worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="Plantilla_Materias_Arachiz.xlsx"`);
+  res.setHeader('Content-Disposition', `attachment; filename="Plantilla_Competencias_Arachiz.xlsx"`);
   
   await workbook.xlsx.write(res);
   res.end();
@@ -347,11 +360,10 @@ function parseExcelDate(cellValue) {
 
   const str = cellValue.toString().trim();
   
-  // Format DD/MM/YYYY
   const parts = str.split('/');
   if (parts.length === 3) {
     const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+    const month = parseInt(parts[1], 10) - 1;
     const year = parseInt(parts[2], 10);
     if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
       const date = new Date(year, month, day);
@@ -359,7 +371,6 @@ function parseExcelDate(cellValue) {
     }
   }
   
-  // Format YYYY-MM-DD
   const partsDash = str.split('-');
   if (partsDash.length === 3) {
     const year = parseInt(partsDash[0], 10);
@@ -379,22 +390,50 @@ function cleanName(val) {
   if (!val) return '';
   return val.toString()
     .trim()
-    .replace(/^\d+\s*[-–—]\s*/, '') // Remove starting digits followed by dash
-    .replace(/^\d+\s+/, '')         // Remove starting digits followed by space
+    .replace(/^\d+\s*[-–—]\s*/, '')
+    .replace(/^\d+\s+/, '')
     .trim();
 }
 
 const parseExcelFicha = async (req, res) => {
+  console.log('[importController] parseExcelFicha iniciado');
+  
   if (!req.file) {
+    console.log('[importController] No file received');
     return res.status(400).json({ error: 'No se subió ningún archivo' });
   }
 
+  console.log('[importController] File received:', {
+    originalname: req.file.originalname,
+    mimetype: req.file.mimetype,
+    size: req.file.buffer?.length
+  });
+
   try {
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(req.file.buffer);
+    
+    // Verificar que el buffer existe y tiene contenido
+    if (!req.file.buffer || req.file.buffer.length === 0) {
+      console.log('[importController] Buffer is empty');
+      return res.status(400).json({ error: 'El archivo está vacío o no se pudo leer' });
+    }
+
+    console.log('[importController] Loading Excel workbook...');
+    try {
+      await workbook.xlsx.load(req.file.buffer);
+      console.log('[importController] Workbook loaded successfully');
+    } catch (xlsxErr) {
+      console.error('[importController] Error loading Excel:', xlsxErr);
+      return res.status(400).json({ error: 'No se pudo leer el archivo Excel. Asegúrate de que sea un archivo .xlsx válido y no esté protegido con contraseña.' });
+    }
 
     const worksheet = workbook.worksheets[0];
-    if (!worksheet) return res.status(400).json({ error: 'El archivo está vacío' });
+    if (!worksheet) {
+      console.log('[importController] Worksheet is empty');
+      return res.status(400).json({ error: 'El archivo está vacío' });
+    }
+
+    console.log('[importController] Worksheet found, parsing cells...');
 
     const getCellValue = (cellRef) => {
       const cell = worksheet.getCell(cellRef);
@@ -422,6 +461,8 @@ const parseExcelFicha = async (req, res) => {
     const rawRegional = getCellValue('C11');
     const rawCentro = getCellValue('C12');
 
+    console.log('[importController] Parsed basic data:', { numero, nombre, modalidad });
+
     if (!numero || !nombre) {
       return res.status(400).json({ 
         error: 'El formato del archivo no coincide. Se espera el número de ficha en C3 y la denominación del programa en C6.' 
@@ -434,34 +475,49 @@ const parseExcelFicha = async (req, res) => {
     const region = cleanName(rawRegional);
     const centro = cleanName(rawCentro);
 
-    // Read materias from column F (6th column) starting at row 14
-    const materiasSet = new Set();
+    // Group competencies and results from columns F (competencia) and G (resultado)
+    const competenciesMap = new Map();
     const rowCount = worksheet.rowCount;
+
+    console.log('[importController] Processing competencies and results, total rows:', rowCount);
+
     for (let r = 14; r <= rowCount; r++) {
-      const cell = worksheet.getCell(`F${r}`);
-      if (cell && cell.value !== null && cell.value !== undefined) {
-        let val = '';
-        if (typeof cell.value === 'object') {
-          if (cell.value.result !== undefined && cell.value.result !== null) {
-            val = cell.value.result.toString();
-          } else if (cell.value.richText) {
-            val = cell.value.richText.map(t => t.text).join('');
-          } else if (cell.value.text) {
-            val = cell.value.text.toString();
-          } else {
-            val = cell.value.toString();
-          }
-        } else {
-          val = cell.value.toString();
+      const compCell = worksheet.getCell(`F${r}`);
+      const resCell = worksheet.getCell(`G${r}`);
+      
+      let compVal = '';
+      if (compCell && compCell.value !== null && compCell.value !== undefined) {
+        compVal = getCellValue(`F${r}`);
+      }
+      
+      let resVal = '';
+      if (resCell && resCell.value !== null && resCell.value !== undefined) {
+        resVal = getCellValue(`G${r}`);
+      }
+      
+      compVal = cleanName(compVal);
+      resVal = cleanName(resVal);
+      
+      if (compVal) {
+        if (!competenciesMap.has(compVal)) {
+          competenciesMap.set(compVal, new Set());
         }
-        val = cleanName(val);
-        if (val) {
-          materiasSet.add(val);
+        if (resVal) {
+          competenciesMap.get(compVal).add(resVal);
         }
       }
     }
 
-    const materias = Array.from(materiasSet);
+    const competencias = [];
+    for (const [nombreComp, resultadosSet] of competenciesMap.entries()) {
+      competencias.push({
+        nombre: nombreComp,
+        resultados: Array.from(resultadosSet)
+      });
+    }
+
+    console.log('[importController] Successfully parsed', competencias.length, 'competencias');
+    console.log('[importController] Sending response...');
 
     res.json({
       ficha: {
@@ -473,7 +529,7 @@ const parseExcelFicha = async (req, res) => {
         region,
         centro
       },
-      materias
+      competencias
     });
   } catch (error) {
     console.error('Error al analizar archivo Excel:', error);
@@ -482,7 +538,7 @@ const parseExcelFicha = async (req, res) => {
 };
 
 const confirmExcelFicha = async (req, res) => {
-  const { ficha, materias } = req.body;
+  const { ficha, competencias } = req.body;
   const instructorId = req.user.id;
 
   if (!ficha || !ficha.numero || !ficha.nombre || !ficha.nivel || !ficha.centro || !ficha.jornada || !ficha.region) {
@@ -513,37 +569,52 @@ const confirmExcelFicha = async (req, res) => {
       }
     }
 
+    const isAdministrador = req.user.userType === 'administrador';
+    const fichaData = {
+      numero: ficha.numero.toString(),
+      nombre: ficha.nombre,
+      nivel: ficha.nivel,
+      centro: ficha.centro,
+      jornada: ficha.jornada,
+      region: ficha.region,
+      duracion,
+      fechaInicio: ficha.fechaInicio ? new Date(ficha.fechaInicio) : null,
+      fechaFin: ficha.fechaFin ? new Date(ficha.fechaFin) : null,
+      code,
+      ...(isAdministrador 
+        ? { administrador: { connect: { id: instructorId } } } 
+        : { 
+            instructorAdmin: { connect: { id: instructorId } },
+            instructores: { create: [{ instructorId, role: 'admin' }] }
+          })
+    };
+
     const result = await prisma.$transaction(async (tx) => {
       const newFicha = await tx.ficha.create({
-        data: {
-          numero: ficha.numero.toString(),
-          nombre: ficha.nombre,
-          nivel: ficha.nivel,
-          centro: ficha.centro,
-          jornada: ficha.jornada,
-          region: ficha.region,
-          duracion,
-          fechaInicio: ficha.fechaInicio ? new Date(ficha.fechaInicio) : null,
-          fechaFin: ficha.fechaFin ? new Date(ficha.fechaFin) : null,
-          code,
-          administrador: { connect: { id: instructorId } },
-          instructorAdmin: { connect: { id: instructorId } },
-          instructores: {
-            create: [{ instructorId, role: 'admin' }]
-          }
-        }
+        data: fichaData
       });
 
-      if (materias && materias.length > 0) {
-        await tx.materia.createMany({
-          data: materias.map((materiaNombre) => ({
-            nombre: materiaNombre,
-            tipo: 'Técnica',
-            fichaId: newFicha.id,
-            instructorId: instructorId
-          })),
-          skipDuplicates: true
-        });
+      let totalResultados = 0;
+      if (competencias && competencias.length > 0) {
+        for (const comp of competencias) {
+          const createdComp = await tx.competencia.create({
+            data: {
+              nombre: comp.nombre,
+              tipo: 'Técnica',
+              fichaId: newFicha.id
+            }
+          });
+
+          if (comp.resultados && comp.resultados.length > 0) {
+            await tx.resultadoAprendizaje.createMany({
+              data: comp.resultados.map(resNombre => ({
+                nombre: resNombre,
+                competenciaId: createdComp.id
+              }))
+            });
+            totalResultados += comp.resultados.length;
+          }
+        }
       }
 
       await tx.historialCambios.create({
@@ -553,15 +624,18 @@ const confirmExcelFicha = async (req, res) => {
           tipoEvento: 'CREACION_IMPORTACION',
           entidad: 'Ficha',
           entidadId: newFicha.id,
-          descripcion: `Ficha ${newFicha.numero} y ${materias ? materias.length : 0} materias creadas e importadas desde Excel`
+          descripcion: `Ficha ${newFicha.numero}, ${competencias ? competencias.length : 0} competencias y ${totalResultados} resultados creados e importados desde Excel`
         }
       });
 
       return newFicha;
+    }, {
+      maxWait: 10000,
+      timeout: 120000 // 120 seconds
     });
 
     res.status(201).json({
-      message: 'Ficha y materias importadas exitosamente',
+      message: 'Ficha, competencias y resultados importados exitosamente',
       ficha: result
     });
   } catch (error) {
@@ -572,9 +646,9 @@ const confirmExcelFicha = async (req, res) => {
 
 module.exports = { 
   importAprendices, 
-  importMaterias, 
+  importCompetencias, 
   downloadPlantillaAprendices, 
-  downloadPlantillaMaterias,
+  downloadPlantillaCompetencias,
   parseExcelFicha,
   confirmExcelFicha
 };

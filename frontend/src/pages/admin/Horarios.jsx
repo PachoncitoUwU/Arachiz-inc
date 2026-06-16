@@ -139,11 +139,35 @@ export default function AdminHorarios() {
     
     try {
       const data = await fetchApi(`/horarios/ficha/${ficha.id}`);
-      setHorarios(data.horarios || []);
+      const mappedHorarios = (data.horarios || []).map(h => ({
+        ...h,
+        materiaId: h.resultadoId,
+        materia: h.resultado ? {
+          nombre: `${h.resultado.competencia?.nombre || ''} - ${h.resultado.nombre}`,
+          instructor: h.resultado.instructor
+        } : null
+      }));
+      setHorarios(mappedHorarios);
       
       // Cargar materias de la ficha para poder agregar
       const fichaDetalle = await fetchApi(`/admin/fichas/${ficha.id}`);
-      setMaterias(fichaDetalle.ficha?.materias || []);
+      const flatResultados = [];
+      if (fichaDetalle.ficha && fichaDetalle.ficha.competencias) {
+        fichaDetalle.ficha.competencias.forEach(comp => {
+          if (comp.resultados) {
+            comp.resultados.forEach(res => {
+              flatResultados.push({
+                id: res.id,
+                nombre: `${comp.nombre} - ${res.nombre}`,
+                tipo: comp.tipo,
+                ficha: { id: ficha.id, numero: ficha.numero, nombre: ficha.nombre },
+                instructor: res.instructor
+              });
+            });
+          }
+        });
+      }
+      setMaterias(flatResultados);
     } catch (err) {
       showToast(err.message || 'Error al cargar horario', 'error');
     } finally {
@@ -160,11 +184,26 @@ export default function AdminHorarios() {
     try {
       // Cargar horarios del instructor usando endpoint de admin
       const horariosData = await fetchApi(`/admin/instructores/${instructor.id}/horarios`);
-      setHorarios(horariosData.horarios || []);
+      const mappedHorarios = (horariosData.horarios || []).map(h => ({
+        ...h,
+        materiaId: h.resultadoId,
+        materia: h.resultado ? {
+          nombre: `${h.resultado.competencia?.nombre || ''} - ${h.resultado.nombre}`,
+          instructor: h.resultado.instructor
+        } : null
+      }));
+      setHorarios(mappedHorarios);
       
       // Cargar materias del instructor usando endpoint de admin
-      const materiasData = await fetchApi(`/admin/instructores/${instructor.id}/materias`);
-      setMaterias(materiasData.materias || []);
+      const materiasData = await fetchApi(`/admin/instructores/${instructor.id}/resultados`);
+      const mappedResultados = (materiasData.resultados || []).map(res => ({
+        id: res.id,
+        nombre: `${res.competencia?.nombre || ''} - ${res.nombre}`,
+        tipo: res.competencia?.tipo || 'Técnica',
+        ficha: res.competencia?.ficha,
+        instructor: res.instructor
+      }));
+      setMaterias(mappedResultados);
       
       // Cargar conflictos del instructor
       const conflictosData = await fetchApi(`/admin/instructores/${instructor.id}/conflictos`);
@@ -249,12 +288,28 @@ export default function AdminHorarios() {
       );
       
       // Recargar horarios según la vista actual en lugar de filtrar del estado
-      if (vista === 'ficha' && fichaSeleccionada) {
-        const data = await fetchApi(`/horarios/ficha/${fichaSeleccionada.id}`);
-        setHorarios(data.horarios || []);
-      } else if (vista === 'instructor' && instructorSeleccionado) {
-        const horariosData = await fetchApi(`/admin/instructores/${instructorSeleccionado.id}/horarios`);
-        setHorarios(horariosData.horarios || []);
+      if (viewMode === 'ficha' && selectedFicha) {
+        const data = await fetchApi(`/horarios/ficha/${selectedFicha.id}`);
+        const mappedHorarios = (data.horarios || []).map(h => ({
+          ...h,
+          materiaId: h.resultadoId,
+          materia: h.resultado ? {
+            nombre: `${h.resultado.competencia?.nombre || ''} - ${h.resultado.nombre}`,
+            instructor: h.resultado.instructor
+          } : null
+        }));
+        setHorarios(mappedHorarios);
+      } else if (viewMode === 'instructor' && selectedInstructor) {
+        const horariosData = await fetchApi(`/admin/instructores/${selectedInstructor.id}/horarios`);
+        const mappedHorarios = (horariosData.horarios || []).map(h => ({
+          ...h,
+          materiaId: h.resultadoId,
+          materia: h.resultado ? {
+            nombre: `${h.resultado.competencia?.nombre || ''} - ${h.resultado.nombre}`,
+            instructor: h.resultado.instructor
+          } : null
+        }));
+        setHorarios(mappedHorarios);
       }
       
       setHorariosSeleccionados([]);
@@ -314,7 +369,7 @@ export default function AdminHorarios() {
       });
 
       if (conflictoVisible) {
-        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia.nombre} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
+        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia?.nombre || ''} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
         setSaving(false);
         return;
       }
@@ -327,33 +382,72 @@ export default function AdminHorarios() {
         return;
       }
 
-      // Crear materia
-      const materiaResponse = await fetchApi('/materias', {
+      // 1. Crear competencia
+      const competenciaResponse = await fetchApi('/competencias', {
         method: 'POST',
         body: JSON.stringify({
           nombre: formCrearMateria.nombre,
           tipo: formCrearMateria.tipo,
-          fichaId: fichaId,
-          instructorId: formCrearMateria.instructorId
+          fichaId: fichaId
         })
       });
 
-      // Crear horario
+      // 2. Crear resultado de aprendizaje
+      const resultadoResponse = await fetchApi('/resultados', {
+        method: 'POST',
+        body: JSON.stringify({
+          competenciaId: competenciaResponse.competencia.id,
+          nombre: 'Único resultado de aprendizaje'
+        })
+      });
+
+      const resultadoId = resultadoResponse.resultado.id;
+
+      // 3. Asignar instructor si se especificó
+      if (formCrearMateria.instructorId) {
+        await fetchApi(`/resultados/${resultadoId}/asignar-instructor`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            instructorId: formCrearMateria.instructorId
+          })
+        });
+      }
+
+      // 4. Crear horario
       const horarioResponse = await fetchApi('/horarios', {
         method: 'POST',
         body: JSON.stringify({
           fichaId: fichaId,
-          materiaId: materiaResponse.materia.id,
+          resultadoId: resultadoId,
           dia: formCrearMateria.dia,
           horaInicio: formCrearMateria.horaInicio,
           horaFin: formCrearMateria.horaFin
         })
       });
 
-      setHorarios(prev => [...prev, horarioResponse.horario]);
-      setMaterias(prev => [...prev, materiaResponse.materia]);
+      // Mapear el nuevo horario para el estado
+      const instructorObj = formCrearMateria.instructorId 
+        ? instructores.find(i => i.id === formCrearMateria.instructorId) 
+        : null;
+
+      const newMateria = {
+        id: resultadoId,
+        nombre: `${competenciaResponse.competencia.nombre} - Único resultado de aprendizaje`,
+        tipo: competenciaResponse.competencia.tipo,
+        ficha: { id: fichaId },
+        instructor: instructorObj
+      };
+
+      const mappedNewHorario = {
+        ...horarioResponse.horario,
+        materiaId: resultadoId,
+        materia: newMateria
+      };
+
+      setHorarios(prev => [...prev, mappedNewHorario]);
+      setMaterias(prev => [...prev, newMateria]);
       setModalCrearMateria(false);
-      showToast('Materia y horario creados exitosamente', 'success');
+      showToast('Competencia, resultado y horario creados exitosamente', 'success');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -401,24 +495,34 @@ export default function AdminHorarios() {
       });
 
       if (conflictoVisible) {
-        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia.nombre} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
+        setError(`Ya hay una clase en ese horario: ${conflictoVisible.materia?.nombre || ''} (${conflictoVisible.horaInicio} - ${conflictoVisible.horaFin})`);
         setSaving(false);
         return;
       }
+
+      const fichaId = selectedFicha?.id || selectedInstructor?.fichas[0]?.id;
 
       // Crear horario
       const horarioResponse = await fetchApi('/horarios', {
         method: 'POST',
         body: JSON.stringify({
-          fichaId: selectedFicha?.id || selectedInstructor?.fichas[0]?.id,
-          materiaId: formAgregarMateria.materiaId,
+          fichaId: fichaId,
+          resultadoId: formAgregarMateria.materiaId,
           dia: formAgregarMateria.dia,
           horaInicio: formAgregarMateria.horaInicio,
           horaFin: formAgregarMateria.horaFin
         })
       });
 
-      setHorarios(prev => [...prev, horarioResponse.horario]);
+      const selectedMateriaObj = materias.find(m => m.id === formAgregarMateria.materiaId);
+
+      const mappedNewHorario = {
+        ...horarioResponse.horario,
+        materiaId: formAgregarMateria.materiaId,
+        materia: selectedMateriaObj
+      };
+
+      setHorarios(prev => [...prev, mappedNewHorario]);
       setModalAgregarMateria(false);
       showToast('Horario agregado exitosamente', 'success');
     } catch (err) {

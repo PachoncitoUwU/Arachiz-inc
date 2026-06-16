@@ -48,10 +48,14 @@ export default function AprendizHorario() {
         
         const allHorarios = await Promise.all(horariosPromises);
         const combinedHorarios = allHorarios.flatMap(h => 
-          h.horarios.map(horario => ({
+          (h.horarios || []).map(horario => ({
             ...horario,
             fichaId: h.fichaId,
-            fichaNumero: h.fichaNumero
+            fichaNumero: h.fichaNumero,
+            materia: horario.resultado ? {
+              nombre: `${horario.resultado.competencia?.nombre || ''} - ${horario.resultado.nombre}`,
+              instructor: horario.resultado.instructor
+            } : null
           }))
         );
         

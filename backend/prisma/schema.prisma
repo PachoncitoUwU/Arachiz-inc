@@ -31,7 +31,7 @@ model User {
   fichasAdmin          Ficha[]                @relation("InstructorAdmin")
   fichasInst           FichaInstructor[]
   flappyScore          FlappyScore?
-  historialCambios     HistorialCambios[]     @relation("UsuarioCambios")
+  resultados           ResultadoAprendizaje[] @relation("InstructorResultados")
   memoryScore          MemoryScore?
   mensajesEnviados     MensajeChat[]
   notifications        Notification[]
@@ -46,9 +46,18 @@ model User {
   towerScore           TowerScore?
   userSkins            UserSkin[]
   wordleScore          WordleScore?
-  fichasApr            Ficha[]                @relation("Aprendices")
-  materias             Materia[]              @relation("InstructorMaterias")
-  materiasEvitadas     MateriaEvitada[]
+  fichasApr            Ficha[]              @relation("Aprendices")
+  resultadosEvitados   ResultadoEvitado[]
+  respuestasRapidas    RespuestaRapida[]    @relation("RespuestasRapidas")
+  papeleraEliminados   Papelera[]           @relation("EliminadoPor")
+  historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
+  conflictosInstructor ConflictoHorario[]   @relation("ConflictosInstructor")
+  conflictosCreados    ConflictoHorario[]   @relation("ConflictosCreados")
+  rachaAsistencia      Int                  @default(0)
+  pushSubscriptions    PushSubscription[]
+  mensajesEnviados     MensajeChat[]
+  superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
+  notifications        Notification[]
 }
 
 model Ficha {
@@ -71,7 +80,10 @@ model Ficha {
   instructores      FichaInstructor[]
   historialCambios  HistorialCambios[] @relation("FichaHistorial")
   horarios          Horario[]
-  materias          Materia[]
+  competencias      Competencia[]
+  aprendices        User[]              @relation("Aprendices")
+  papelera          Papelera[]          @relation("FichaPapelera")
+  historialCambios  HistorialCambios[]  @relation("FichaHistorial")
   mensajesChat      MensajeChat[]
   papelera          Papelera[]         @relation("FichaPapelera")
   aprendices        User[]             @relation("Aprendices")
@@ -90,15 +102,37 @@ model FichaInstructor {
   @@unique([fichaId, instructorId])
 }
 
+model Competencia {
+  id          String                 @id @default(cuid())
+  nombre      String
+  tipo        String
+  fichaId     String
+  ficha       Ficha                  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  resultados  ResultadoAprendizaje[]
+}
+
+model ResultadoAprendizaje {
+  id                 String             @id @default(cuid())
+  nombre             String
+  competenciaId      String
+  instructorId       String?
+  competencia        Competencia        @relation(fields: [competenciaId], references: [id], onDelete: Cascade)
+  instructor         User?              @relation("InstructorResultados", fields: [instructorId], references: [id])
+  horarios           Horario[]
+  asistencias        Asistencia[]
+  excusas            Excusa[]
+  resultadosEvitados ResultadoEvitado[]
+}
+
 model Horario {
-  id         String  @id @default(cuid())
-  dia        String
-  horaInicio String
-  horaFin    String
-  fichaId    String
-  materiaId  String
-  ficha      Ficha   @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  materia    Materia @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  id          String               @id @default(cuid())
+  dia         String
+  horaInicio  String
+  horaFin     String
+  fichaId     String
+  resultadoId String
+  ficha       Ficha                @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  resultado   ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
 }
 
 model Asistencia {
@@ -106,14 +140,14 @@ model Asistencia {
   fecha        String
   activa       Boolean              @default(true)
   timestamp    DateTime             @default(now())
-  materiaId    String
+  resultadoId  String
   instructorId String
   aula         String?
   descripcion  String?
   duracion     Int                  @default(120)
   llegadaTarde Int                  @default(15)
   instructor   User                 @relation("InstructorAsistencia", fields: [instructorId], references: [id])
-  materia      Materia              @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  resultado    ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
   registros    RegistroAsistencia[]
 }
 
@@ -144,15 +178,26 @@ model Excusa {
   updatedAt            DateTime            @default(now()) @updatedAt
   respondedAt          DateTime?
   aprendizId           String
-  materiaId            String
+  resultadoId          String
   registroAsistenciaId String?
   aprendiz             User                @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
-  materia              Materia             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id])
+  resultado            ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
+  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
 
   @@index([aprendizId])
+  @@index([resultadoId])
   @@index([estado])
-  @@index([materiaId])
+}
+
+model ResultadoEvitado {
+  id          String               @id @default(cuid())
+  aprendizId  String
+  resultadoId String
+  createdAt   DateTime             @default(now())
+  aprendiz    User                 @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  resultado   ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
+
+  @@unique([aprendizId, resultadoId])
 }
 
 model SnakeScore {

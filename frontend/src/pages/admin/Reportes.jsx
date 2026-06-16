@@ -91,7 +91,7 @@ export default function AdminReportes() {
       setMateriasVista(data.ficha?.materias || []);
     } catch (err) {
       setErrorMateriasVista(true);
-      showToast('Error cargando materias', 'error');
+      showToast('Error cargando competencias', 'error');
     } finally {
       setLoadingMateriasVista(false);
     }
@@ -171,13 +171,13 @@ export default function AdminReportes() {
       setFechaDesde('');
       setFechaHasta('');
     } catch (err) {
-      showToast('Error cargando materias', 'error');
+      showToast('Error cargando competencias', 'error');
     }
   };
 
   const handleDownloadReporteMateria = async () => {
     if (!materiaSeleccionada) {
-      showToast('Selecciona una materia', 'warning');
+      showToast('Selecciona una competencia', 'warning');
       return;
     }
 

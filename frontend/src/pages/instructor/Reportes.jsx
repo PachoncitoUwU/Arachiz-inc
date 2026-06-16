@@ -8,26 +8,42 @@ const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 export default function InstructorReportes() {
   const { showToast } = useToast();
-  const [materias, setMaterias] = useState([]);
-  const [selectedMateria, setSelectedMateria] = useState('');
+  const [resultados, setResultados] = useState([]);
+  const [selectedResultado, setSelectedResultado] = useState('');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState('');
 
   useEffect(() => {
-    fetchApi('/materias/my-materias')
+    fetchApi('/competencias/my-competencias')
       .then(d => {
-        setMaterias(d.materias || []);
-        if (d.materias?.length > 0) setSelectedMateria(d.materias[0].id);
+        const list = [];
+        if (d.competencias) {
+          d.competencias.forEach(comp => {
+            if (comp.resultados) {
+              comp.resultados.forEach(res => {
+                list.push({
+                  id: res.id,
+                  nombre: `${comp.nombre} – ${res.nombre}`,
+                  nombreCompetencia: comp.nombre,
+                  nombreResultado: res.nombre,
+                  fichaNumero: comp.ficha?.numero || '',
+                });
+              });
+            }
+          });
+        }
+        setResultados(list);
+        if (list.length > 0) setSelectedResultado(list[0].id);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   const exportar = async (tipo) => {
-    if (!selectedMateria) {
-      showToast('Selecciona una materia primero', 'error');
+    if (!selectedResultado) {
+      showToast('Selecciona un resultado de aprendizaje primero', 'error');
       return;
     }
 
@@ -41,12 +57,13 @@ export default function InstructorReportes() {
         const params = new URLSearchParams();
         if (fechaDesde) params.append('desde', fechaDesde);
         if (fechaHasta) params.append('hasta', fechaHasta);
-        url = `${API_BASE}/api/export/materia/${selectedMateria}/rango?${params}`;
+        url = `${API_BASE}/api/export/resultado/${selectedResultado}/rango?${params}`;
         filename = `Asistencia_Rango_${fechaDesde || 'inicio'}_${fechaHasta || 'hoy'}.csv`;
       } else if (tipo === 'consolidado') {
-        url = `${API_BASE}/api/export/materia/${selectedMateria}/consolidado`;
-        const nombreMateria = materias.find(m => m.id === selectedMateria)?.nombre || 'Materia';
-        filename = `Consolidado_${nombreMateria}.xlsx`;
+        url = `${API_BASE}/api/export/resultado/${selectedResultado}/consolidado`;
+        const item = resultados.find(r => r.id === selectedResultado);
+        const name = item ? `${item.nombreCompetencia}_${item.nombreResultado}` : 'Resultado';
+        filename = `Consolidado_${name}.xlsx`;
       }
 
       const res = await fetch(url, {
@@ -85,27 +102,27 @@ export default function InstructorReportes() {
           </div>
           <div>
             <h2 className="font-bold text-gray-900 dark:text-white">Configurar Reporte</h2>
-            <p className="text-xs text-gray-500">Selecciona materia y rango de fechas</p>
+            <p className="text-xs text-gray-500">Selecciona competencia y rango de fechas</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              Materia
+              Resultado de Aprendizaje
             </label>
             <select
-              value={selectedMateria}
-              onChange={e => setSelectedMateria(e.target.value)}
+              value={selectedResultado}
+              onChange={e => setSelectedResultado(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             >
               {loading ? (
                 <option>Cargando...</option>
-              ) : materias.length === 0 ? (
-                <option>Sin materias disponibles</option>
+              ) : resultados.length === 0 ? (
+                <option>Sin resultados disponibles</option>
               ) : (
-                materias.map(m => (
-                  <option key={m.id} value={m.id}>{m.nombre} – Ficha {m.ficha?.numero}</option>
+                resultados.map(r => (
+                  <option key={r.id} value={r.id}>{r.nombre} – Ficha {r.fichaNumero}</option>
                 ))
               )}
             </select>
@@ -174,7 +191,7 @@ export default function InstructorReportes() {
 
           <button
             onClick={() => exportar('rango')}
-            disabled={exporting === 'rango' || !selectedMateria}
+            disabled={exporting === 'rango' || !selectedResultado}
             className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
           >
             {exporting === 'rango' ? (
@@ -213,7 +230,7 @@ export default function InstructorReportes() {
 
           <button
             onClick={() => exportar('consolidado')}
-            disabled={exporting === 'consolidado' || !selectedMateria}
+            disabled={exporting === 'consolidado' || !selectedResultado}
             className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg hover:shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
           >
             {exporting === 'consolidado' ? (
@@ -232,7 +249,7 @@ export default function InstructorReportes() {
         <div>
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">Consejo</p>
           <p className="text-xs text-amber-700/80 dark:text-amber-500 mt-1">
-            El <strong>Reporte Consolidado</strong> incluye todas las sesiones cerradas de la materia seleccionada, sin importar el rango de fechas. Para exportar un período específico, usa el <strong>Reporte por Rango</strong>.
+            El <strong>Reporte Consolidado</strong> incluye todas las sesiones cerradas del resultado de aprendizaje seleccionado, sin importar el rango de fechas. Para exportar un período específico, usa el <strong>Reporte por Rango</strong>.
           </p>
         </div>
       </div>

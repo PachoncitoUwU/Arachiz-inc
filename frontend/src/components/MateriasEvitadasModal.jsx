@@ -12,13 +12,36 @@ export default function MateriasEvitadasModal({
   materias,
   onUpdate 
 }) {
-  const [materiasEvitadasIds, setMateriasEvitadasIds] = useState([]);
+  const [resultadosEvitadosIds, setResultadosEvitadosIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [initialMateriasEvitadas, setInitialMateriasEvitadas] = useState([]);
+
+  // Flatten results from competencies passed in materias prop
+  const flatResultados = [];
+  (materias || []).forEach(comp => {
+    if (comp.resultados && comp.resultados.length > 0) {
+      comp.resultados.forEach(res => {
+        flatResultados.push({
+          id: res.id,
+          nombre: `${comp.nombre} – ${res.nombre}`,
+          tipo: comp.tipo,
+          instructor: res.instructor
+        });
+      });
+    } else {
+      // Fallback
+      flatResultados.push({
+        id: comp.id,
+        nombre: comp.nombre,
+        tipo: comp.tipo || 'Técnica',
+        instructor: comp.instructor
+      });
+    }
+  });
 
   useEffect(() => {
     if (open && aprendiz) {
@@ -28,38 +51,37 @@ export default function MateriasEvitadasModal({
 
   useEffect(() => {
     // Detectar cambios comparando con el estado inicial
-    const changed = JSON.stringify(materiasEvitadasIds.sort()) !== JSON.stringify(initialMateriasEvitadas.sort());
+    const changed = JSON.stringify(resultadosEvitadosIds.sort()) !== JSON.stringify(initialMateriasEvitadas.sort());
     setHasChanges(changed);
-  }, [materiasEvitadasIds, initialMateriasEvitadas]);
+  }, [resultadosEvitadosIds, initialMateriasEvitadas]);
 
   const loadMateriasEvitadas = async () => {
     try {
       setLoading(true);
       setError('');
       
-      // Las materias evitadas ya vienen en el objeto aprendiz
-      if (aprendiz.materiasEvitadas) {
-        const ids = aprendiz.materiasEvitadas.map(me => me.materiaId);
-        setMateriasEvitadasIds(ids);
+      if (aprendiz.resultadosEvitados) {
+        const ids = aprendiz.resultadosEvitados.map(re => re.resultadoId);
+        setResultadosEvitadosIds(ids);
         setInitialMateriasEvitadas(ids);
       } else {
-        setMateriasEvitadasIds([]);
+        setResultadosEvitadosIds([]);
         setInitialMateriasEvitadas([]);
       }
       setHasChanges(false);
     } catch (err) {
-      setError(err.message || 'Error al cargar materias evitadas');
+      setError(err.message || 'Error al cargar resultados evitados');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleMateria = (materiaId) => {
-    setMateriasEvitadasIds(prev => {
-      if (prev.includes(materiaId)) {
-        return prev.filter(id => id !== materiaId);
+  const handleToggleMateria = (resultadoId) => {
+    setResultadosEvitadosIds(prev => {
+      if (prev.includes(resultadoId)) {
+        return prev.filter(id => id !== resultadoId);
       } else {
-        return [...prev, materiaId];
+        return [...prev, resultadoId];
       }
     });
   };
@@ -82,15 +104,15 @@ export default function MateriasEvitadasModal({
       setSaving(true);
       setError('');
 
-      // Validar que al menos una materia quede activa
-      if (materiasEvitadasIds.length >= materias.length) {
-        setError('El aprendiz debe participar en al menos una materia');
+      // Validar que al menos un resultado de aprendizaje quede activo
+      if (resultadosEvitadosIds.length >= flatResultados.length) {
+        setError('El aprendiz debe participar en al menos un resultado de aprendizaje');
         return;
       }
 
-      await fetchApi(`/materias-evitadas/fichas/${fichaId}/aprendices/${aprendiz.id}/materias-evitadas`, {
+      await fetchApi(`/resultados-evitados/fichas/${fichaId}/aprendices/${aprendiz.id}/resultados-evitados`, {
         method: 'PUT',
-        body: JSON.stringify({ materiasEvitadasIds })
+        body: JSON.stringify({ resultadosEvitadosIds })
       });
 
       if (onUpdate) {
@@ -98,7 +120,7 @@ export default function MateriasEvitadasModal({
       }
       onClose();
     } catch (err) {
-      setError(err.message || 'Error al guardar materias evitadas');
+      setError(err.message || 'Error al guardar resultados evitados');
     } finally {
       setSaving(false);
     }
@@ -106,7 +128,7 @@ export default function MateriasEvitadasModal({
 
   if (!aprendiz) return null;
 
-  const materiasActivas = materias.length - materiasEvitadasIds.length;
+  const materiasActivas = flatResultados.length - resultadosEvitadosIds.length;
 
   return (
     <>
@@ -136,7 +158,7 @@ export default function MateriasEvitadasModal({
               Las materias no marcadas son aquellas en las que el aprendiz participará normalmente.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-              Materias activas: <strong className="text-[#34A853]">{materiasActivas}</strong> de {materias.length}
+              Materias activas: <strong className="text-[#34A853]">{materiasActivas}</strong> de {flatResultados.length}
             </p>
           </div>
 
@@ -147,8 +169,8 @@ export default function MateriasEvitadasModal({
             </div>
           ) : (
             <div className="space-y-2">
-              {materias.map(materia => {
-                const isEvitada = materiasEvitadasIds.includes(materia.id);
+              {flatResultados.map(materia => {
+                const isEvitada = resultadosEvitadosIds.includes(materia.id);
                 return (
                   <label 
                     key={materia.id}
@@ -172,7 +194,7 @@ export default function MateriasEvitadasModal({
                         </p>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                        {materia.tipo} · {materia.instructor?.fullName}
+                        {materia.tipo} {materia.instructor ? `· ${materia.instructor.fullName}` : ''}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${

@@ -118,7 +118,7 @@ export default function Notificaciones() {
           <div className="p-12 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
             <Bell size={48} className="text-gray-300 dark:text-gray-700 mb-4" />
             <p className="text-lg">No tienes notificaciones</p>
-            <p className="text-sm mt-2">Te avisaremos cuando haya novedades en tus materias o excusas.</p>
+            <p className="text-sm mt-2">Te avisaremos cuando haya novedades en tus competencias o excusas.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50 dark:divide-zinc-800">

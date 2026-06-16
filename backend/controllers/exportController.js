@@ -5,40 +5,43 @@ const prisma = new PrismaClient();
 
 // Generador para exportar Asistencias de la clase
 function* generarFilasExportacion(ficha) {
-  // Iteramos sobre las materias
-  for (const materia of ficha.materias) {
-    for (const asistencia of materia.asistencias) {
-      for (const aprendiz of ficha.aprendices) {
-        // Buscar el registro de ese aprendiz
-        const registro = asistencia.registros.find(r => r.aprendizId === aprendiz.id);
-        
-        // Determinar asistencia y hora
-        let status = 'No Asistió';
-        let horaIngreso = 'N/A';
-        let metodo = 'N/A';
-        if (registro && registro.presente) {
-          status = 'Asistió';
-          if (registro.timestamp) {
-            const fecha = new Date(registro.timestamp);
-            horaIngreso = fecha.toLocaleTimeString('es-CO', { 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              second: '2-digit',
-              hour12: false 
-            });
+  // Iteramos sobre las competencias
+  for (const competencia of ficha.competencias || []) {
+    for (const resultado of competencia.resultados || []) {
+      for (const asistencia of resultado.asistencias || []) {
+        for (const aprendiz of ficha.aprendices || []) {
+          // Buscar el registro de ese aprendiz
+          const registro = asistencia.registros.find(r => r.aprendizId === aprendiz.id);
+          
+          // Determinar asistencia y hora
+          let status = 'No Asistió';
+          let horaIngreso = 'N/A';
+          let metodo = 'N/A';
+          if (registro && registro.presente) {
+            status = 'Asistió';
+            if (registro.timestamp) {
+              const fecha = new Date(registro.timestamp);
+              horaIngreso = fecha.toLocaleTimeString('es-CO', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+              });
+            }
+            metodo = registro.metodo || 'código';
           }
-          metodo = registro.metodo || 'código';
-        }
 
-        yield {
-          Clase: materia.nombre,
-          'Fecha Sesión': asistencia.fecha,
-          Nombre: aprendiz.fullName,
-          Documento: aprendiz.document,
-          Estado: status,
-          'Hora Ingreso': horaIngreso,
-          'Método': metodo
-        };
+          yield {
+            Competencia: competencia.nombre,
+            Resultado: resultado.nombre,
+            'Fecha Sesión': asistencia.fecha,
+            Nombre: aprendiz.fullName,
+            Documento: aprendiz.document,
+            Estado: status,
+            'Hora Ingreso': horaIngreso,
+            'Método': metodo
+          };
+        }
       }
     }
   }
@@ -71,14 +74,18 @@ const exportAsistenciaFicha = async (req, res) => {
         aprendices: {
           select: { id: true, fullName: true, document: true }
         },
-        materias: {
+        competencias: {
           include: {
-            asistencias: {
-              orderBy: { timestamp: 'desc' },
+            resultados: {
               include: {
-                registros: {
+                asistencias: {
+                  orderBy: { timestamp: 'desc' },
                   include: {
-                    aprendiz: { select: { id: true, fullName: true, document: true } }
+                    registros: {
+                      include: {
+                        aprendiz: { select: { id: true, fullName: true, document: true } }
+                      }
+                    }
                   }
                 }
               }
@@ -120,12 +127,16 @@ const exportSessionAsistencia = async (req, res) => {
     const asistencia = await prisma.asistencia.findUnique({
       where: { id: sessionId },
       include: {
-        materia: {
+        resultado: {
           include: {
-            ficha: {
+            competencia: {
               include: {
-                instructores: true,
-                aprendices: { select: { id: true, fullName: true, document: true } }
+                ficha: {
+                  include: {
+                    instructores: true,
+                    aprendices: { select: { id: true, fullName: true, document: true } }
+                  }
+                }
               }
             }
           }
@@ -135,11 +146,11 @@ const exportSessionAsistencia = async (req, res) => {
     });
 
     if (!asistencia) return res.status(404).json({ error: 'Sesión no encontrada' });
-    if (!asistencia.materia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+    if (!asistencia.resultado.competencia.ficha.instructores.some(i => i.instructorId === instructorId)) {
       return res.status(403).json({ error: 'Sin permiso' });
     }
 
-    const rows = asistencia.materia.ficha.aprendices.map(aprendiz => {
+    const rows = asistencia.resultado.competencia.ficha.aprendices.map(aprendiz => {
       const registro = asistencia.registros.find(r => r.aprendizId === aprendiz.id);
       let status = 'No Asistió';
       let horaIngreso = 'N/A';
@@ -158,7 +169,7 @@ const exportSessionAsistencia = async (req, res) => {
         metodo = registro.metodo || 'código';
       }
       return {
-        Clase: asistencia.materia.nombre,
+        Clase: asistencia.resultado.nombre,
         'Fecha Sesión': asistencia.fecha,
         Nombre: aprendiz.fullName,
         Documento: aprendiz.document,
@@ -201,15 +212,19 @@ const exportFichaInfo = async (req, res) => {
           select: { id: true, fullName: true, document: true, email: true },
           orderBy: { fullName: 'asc' }
         },
-        materias: {
+        competencias: {
           include: {
-            instructor: { select: { fullName: true } }
+            resultados: {
+              include: {
+                instructor: { select: { fullName: true } }
+              }
+            }
           },
           orderBy: { nombre: 'asc' }
         },
         horarios: {
           include: {
-            materia: { select: { nombre: true } }
+            resultado: { select: { nombre: true } }
           },
           orderBy: [{ dia: 'asc' }, { horaInicio: 'asc' }]
         }
@@ -221,14 +236,14 @@ const exportFichaInfo = async (req, res) => {
       return res.status(403).json({ error: 'Sin permiso' });
     }
 
-    // Obtener materias evitadas por cada aprendiz
-    const materiasEvitadasPorAprendiz = {};
+    // Obtener resultados evitados por cada aprendiz
+    const resultadosEvitadosPorAprendiz = {};
     for (const aprendiz of ficha.aprendices) {
-      const evitadas = await prisma.materiaEvitada.findMany({
+      const evitadas = await prisma.resultadoEvitado.findMany({
         where: { aprendizId: aprendiz.id },
-        include: { materia: { select: { nombre: true } } }
+        include: { resultado: { select: { nombre: true } } }
       });
-      materiasEvitadasPorAprendiz[aprendiz.id] = evitadas.map(e => e.materia.nombre);
+      resultadosEvitadosPorAprendiz[aprendiz.id] = evitadas.map(e => e.resultado.nombre);
     }
 
     const fechaDescarga = new Date().toLocaleString('es-CO', { 
@@ -292,19 +307,32 @@ const exportFichaInfo = async (req, res) => {
     });
     headerStyle(sheetInstructores);
 
-    // HOJA 3: MATERIAS
-    const sheetMaterias = workbook.addWorksheet('Materias');
+    // HOJA 3: COMPETENCIAS Y RESULTADOS
+    const sheetMaterias = workbook.addWorksheet('Competencias');
     sheetMaterias.columns = [
-      { header: 'Nombre', key: 'nombre', width: 35 },
+      { header: 'Competencia', key: 'competencia', width: 35 },
       { header: 'Tipo', key: 'tipo', width: 15 },
+      { header: 'Resultado de Aprendizaje', key: 'resultado', width: 35 },
       { header: 'Instructor a cargo', key: 'instructor', width: 30 }
     ];
-    ficha.materias.forEach(materia => {
-      sheetMaterias.addRow({
-        nombre: materia.nombre,
-        tipo: materia.tipo,
-        instructor: materia.instructor?.fullName || 'N/A'
-      });
+    ficha.competencias.forEach(comp => {
+      if (comp.resultados?.length > 0) {
+        comp.resultados.forEach(res => {
+          sheetMaterias.addRow({
+            competencia: comp.nombre,
+            tipo: comp.tipo,
+            resultado: res.nombre,
+            instructor: res.instructor?.fullName || 'N/A'
+          });
+        });
+      } else {
+        sheetMaterias.addRow({
+          competencia: comp.nombre,
+          tipo: comp.tipo,
+          resultado: 'N/A',
+          instructor: 'N/A'
+        });
+      }
     });
     headerStyle(sheetMaterias);
 
@@ -317,7 +345,7 @@ const exportFichaInfo = async (req, res) => {
       { header: 'Materias Evitadas', key: 'evitadas', width: 40 }
     ];
     ficha.aprendices.forEach(aprendiz => {
-      const evitadas = materiasEvitadasPorAprendiz[aprendiz.id] || [];
+      const evitadas = resultadosEvitadosPorAprendiz[aprendiz.id] || [];
       sheetAprendices.addRow({
         nombre: aprendiz.fullName,
         documento: aprendiz.document,
@@ -338,7 +366,7 @@ const exportFichaInfo = async (req, res) => {
     ficha.horarios.forEach(horario => {
       sheetHorarios.addRow({
         dia: horario.dia,
-        materia: horario.materia?.nombre || 'N/A',
+        materia: horario.resultado?.nombre || 'N/A',
         horaInicio: horario.horaInicio,
         horaFin: horario.horaFin
       });
@@ -366,9 +394,16 @@ const exportFichaInfoPdf = async (req, res) => {
     const ficha = await prisma.ficha.findUnique({
       where: { id: fichaId },
       include: {
-        instructores: { include: { instructor: { select: { fullName: true, email: true, document: true } } } },
-        aprendices: { select: { fullName: true, document: true, email: true }, orderBy: { fullName: 'asc' } },
-        materias: { include: { instructor: { select: { fullName: true } } }, orderBy: { nombre: 'asc' } }
+        competencias: {
+          include: {
+            resultados: {
+              include: {
+                instructor: { select: { fullName: true } }
+              }
+            }
+          },
+          orderBy: { nombre: 'asc' }
+        }
       }
     });
 
@@ -413,11 +448,17 @@ const exportFichaInfoPdf = async (req, res) => {
 
     doc.moveDown(2);
 
-    // Tabla de Materias
-    doc.fontSize(14).font('Helvetica-Bold').text('Materias').moveDown(0.5);
+    // Tabla de Resultados
+    doc.fontSize(14).font('Helvetica-Bold').text('Resultados de Aprendizaje').moveDown(0.5);
+    const rowsCompetencias = [];
+    ficha.competencias.forEach(comp => {
+      (comp.resultados || []).forEach(res => {
+        rowsCompetencias.push([comp.nombre, comp.tipo, res.nombre, res.instructor?.fullName || 'N/A']);
+      });
+    });
     const tableMaterias = {
-      headers: ['Nombre de Materia', 'Tipo', 'Instructor a cargo'],
-      rows: ficha.materias.map(m => [m.nombre, m.tipo, m.instructor?.fullName || 'N/A'])
+      headers: ['Competencia', 'Tipo', 'Resultado', 'Instructor a cargo'],
+      rows: rowsCompetencias
     };
     await doc.table(tableMaterias, { 
       prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
@@ -445,20 +486,24 @@ const exportFichaInfoPdf = async (req, res) => {
   }
 };
 
-// GET /api/export/materia/:materiaId/rango?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+// GET /api/export/resultado/:resultadoId/rango?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
 const exportAsistenciaRango = async (req, res) => {
-  const { materiaId } = req.params;
+  const { resultadoId } = req.params;
   const { desde, hasta } = req.query;
   const instructorId = req.user.id;
 
   try {
-    const materia = await prisma.materia.findUnique({
-      where: { id: materiaId },
+    const resultado = await prisma.resultadoAprendizaje.findUnique({
+      where: { id: resultadoId },
       include: {
-        ficha: {
+        competencia: {
           include: {
-            instructores: true,
-            aprendices: { select: { id: true, fullName: true, document: true } }
+            ficha: {
+              include: {
+                instructores: true,
+                aprendices: { select: { id: true, fullName: true, document: true } }
+              }
+            }
           }
         },
         asistencias: {
@@ -478,17 +523,18 @@ const exportAsistenciaRango = async (req, res) => {
       }
     });
 
-    if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
-    if (!materia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+    if (!resultado) return res.status(404).json({ error: 'Resultado de aprendizaje no encontrado' });
+    if (!resultado.competencia.ficha.instructores.some(i => i.instructorId === instructorId)) {
       return res.status(403).json({ error: 'Sin permiso' });
     }
 
     const rows = [];
-    for (const sesion of materia.asistencias) {
-      for (const aprendiz of materia.ficha.aprendices) {
+    for (const sesion of resultado.asistencias) {
+      for (const aprendiz of resultado.competencia.ficha.aprendices) {
         const reg = sesion.registros.find(r => r.aprendizId === aprendiz.id);
         rows.push({
-          Materia: materia.nombre,
+          Competencia: resultado.competencia.nombre,
+          Resultado: resultado.nombre,
           'Fecha Sesión': sesion.fecha,
           Nombre: aprendiz.fullName,
           Documento: aprendiz.document,
@@ -506,7 +552,7 @@ const exportAsistenciaRango = async (req, res) => {
     }
 
     const csv = toCSV(rows);
-    const filename = `Asistencia_${materia.nombre}_${desde || 'inicio'}_${hasta || 'fin'}.csv`;
+    const filename = `Asistencia_${resultado.nombre}_${desde || 'inicio'}_${hasta || 'fin'}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -516,21 +562,25 @@ const exportAsistenciaRango = async (req, res) => {
   }
 };
 
-// GET /api/export/materia/:materiaId/consolidado
+// GET /api/export/resultado/:resultadoId/consolidado
 const exportReporteConsolidado = async (req, res) => {
-  const { materiaId } = req.params;
+  const { resultadoId } = req.params;
   const instructorId = req.user.id;
 
   try {
-    const materia = await prisma.materia.findUnique({
-      where: { id: materiaId },
+    const resultado = await prisma.resultadoAprendizaje.findUnique({
+      where: { id: resultadoId },
       include: {
-        ficha: {
+        competencia: {
           include: {
-            instructores: true,
-            aprendices: {
-              select: { id: true, fullName: true, document: true },
-              orderBy: { fullName: 'asc' }
+            ficha: {
+              include: {
+                instructores: true,
+                aprendices: {
+                  select: { id: true, fullName: true, document: true },
+                  orderBy: { fullName: 'asc' }
+                }
+              }
             }
           }
         },
@@ -544,12 +594,12 @@ const exportReporteConsolidado = async (req, res) => {
       }
     });
 
-    if (!materia) return res.status(404).json({ error: 'Materia no encontrada' });
-    if (!materia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+    if (!resultado) return res.status(404).json({ error: 'Resultado no encontrado' });
+    if (!resultado.competencia.ficha.instructores.some(i => i.instructorId === instructorId)) {
       return res.status(403).json({ error: 'Sin permiso' });
     }
 
-    const totalSesiones = materia.asistencias.length;
+    const totalSesiones = resultado.asistencias.length;
     if (totalSesiones === 0) {
       return res.status(404).json({ error: 'No hay sesiones cerradas para generar el reporte.' });
     }
@@ -564,7 +614,7 @@ const exportReporteConsolidado = async (req, res) => {
       { header: 'Documento', key: 'documento', width: 15 }
     ];
 
-    materia.asistencias.forEach((sesion, idx) => {
+    resultado.asistencias.forEach((sesion, idx) => {
       columns.push({ header: sesion.fecha, key: `s${idx}`, width: 12 });
     });
 
@@ -581,7 +631,7 @@ const exportReporteConsolidado = async (req, res) => {
     };
 
     // Data rows
-    materia.ficha.aprendices.forEach(aprendiz => {
+    resultado.competencia.ficha.aprendices.forEach(aprendiz => {
       const rowData = {
         nombre: aprendiz.fullName,
         documento: aprendiz.document
@@ -590,7 +640,7 @@ const exportReporteConsolidado = async (req, res) => {
       let presencias = 0;
       let tardanzas = 0;
 
-      materia.asistencias.forEach((sesion, idx) => {
+      resultado.asistencias.forEach((sesion, idx) => {
         const reg = sesion.registros.find(r => r.aprendizId === aprendiz.id);
         if (reg?.presente) {
           presencias++;
@@ -631,7 +681,7 @@ const exportReporteConsolidado = async (req, res) => {
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
-    const filename = `Consolidado_${materia.nombre}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `Consolidado_${resultado.nombre}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

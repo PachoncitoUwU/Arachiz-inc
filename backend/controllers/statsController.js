@@ -1,17 +1,20 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const getInstructorStats = async (req, res) => {
   try {
     const instructorId = req.user.id;
 
-    // Obtener las materias del instructor
-    const materias = await prisma.materia.findMany({
+    // Obtener los resultados de aprendizaje del instructor
+    const resultados = await prisma.resultadoAprendizaje.findMany({
       where: { instructorId },
       include: {
-        ficha: {
+        competencia: {
           include: {
-            aprendices: true
+            ficha: {
+              include: {
+                aprendices: true
+              }
+            }
           }
         },
         asistencias: {
@@ -29,9 +32,9 @@ const getInstructorStats = async (req, res) => {
     // Lógica para riesgo de deserción:
     // Si un estudiante tiene > 3 inasistencias en la misma materia, se marca en riesgo.
     
-    materias.forEach(materia => {
-      const asistenciasSesiones = materia.asistencias;
-      const aprendices = materia.ficha?.aprendices || [];
+    resultados.forEach(resultado => {
+      const asistenciasSesiones = resultado.asistencias;
+      const aprendices = resultado.competencia?.ficha?.aprendices || [];
       
       const faltasPorEstudiante = {};
       
@@ -56,7 +59,7 @@ const getInstructorStats = async (req, res) => {
           estudiantesEnRiesgo.push({
             id: aprendiz.id,
             fullName: aprendiz.fullName,
-            materia: materia.nombre,
+            materia: `${resultado.competencia?.nombre || 'Desconocida'} - ${resultado.nombre}`,
             faltas,
             riesgo: faltas >= 5 ? 'Crítico' : 'Alto'
           });
@@ -70,7 +73,7 @@ const getInstructorStats = async (req, res) => {
     res.json({
       porcentajeAsistencia,
       estudiantesEnRiesgo,
-      totalMaterias: materias.length
+      totalMaterias: resultados.length
     });
   } catch (error) {
     console.error('Error getting instructor stats:', error);

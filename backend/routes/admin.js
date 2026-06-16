@@ -53,11 +53,11 @@ router.post('/fichas/:fichaId/salir', adminController.salirDeFicha);
 router.put('/fichas/:fichaId/cambiar-lider', isAdminDeFicha, adminController.cambiarLiderFicha);
 
 // =====================================================
-// RUTAS DE MATERIAS
+// RUTAS DE RESULTADOS
 // =====================================================
 
-// Cambiar el instructor de una materia
-router.put('/materias/:materiaId/cambiar-instructor', adminController.cambiarInstructorMateria);
+// Cambiar el instructor de un resultado de aprendizaje
+router.put('/resultados/:resultadoId/asignar-instructor', adminController.asignarInstructorResultado);
 
 // =====================================================
 // RUTAS DE USUARIOS
@@ -81,8 +81,8 @@ router.get('/instructores/:instructorId/conflictos', adminController.getConflict
 // Obtener horarios de un instructor
 router.get('/instructores/:instructorId/horarios', adminController.getHorariosDeInstructor);
 
-// Obtener materias de un instructor
-router.get('/instructores/:instructorId/materias', adminController.getMateriasDeInstructor);
+// Obtener resultados de un instructor
+router.get('/instructores/:instructorId/resultados', adminController.getResultadosDeInstructor);
 
 // Eliminar NFC de un aprendiz
 router.delete('/fichas/:fichaId/aprendices/:aprendizId/nfc', isAdminDeFicha, adminController.eliminarNfcAprendiz);
@@ -106,8 +106,11 @@ const reporteController = require('../controllers/reporteController');
 // Generar reporte de una ficha
 router.get('/reportes/ficha/:fichaId', reporteController.generarReporteFicha);
 
-// Generar reporte de asistencias de una materia
-router.get('/reportes/materia/:materiaId', reporteController.generarReporteMateria);
+// Generar reporte de asistencias de un resultado
+router.get('/reportes/resultado/:resultadoId', reporteController.generarReporteResultado);
+
+// Generar reporte de asistencias de una competencia
+router.get('/reportes/competencia/:competenciaId', reporteController.generarReporteCompetencia);
 
 // Generar reporte consolidado
 router.get('/reportes/consolidado', reporteController.generarReporteConsolidado);
@@ -115,8 +118,8 @@ router.get('/reportes/consolidado', reporteController.generarReporteConsolidado)
 // Obtener estadísticas avanzadas (Deprecated/Reemplazado por sesiones)
 router.get('/reportes/estadisticas', reporteController.getEstadisticasReportes);
 
-// Obtener sesiones de asistencia de una materia
-router.get('/reportes/sesiones/:materiaId', reporteController.getSesionesAsistenciaMateria);
+// Obtener sesiones de asistencia de un resultado
+router.get('/reportes/sesiones/:resultadoId', reporteController.getSesionesAsistenciaResultado);
 
 // Generar reporte excel de una sola sesión
 router.get('/reportes/sesion/:sesionId/excel', reporteController.generarReporteSesionIndividual);

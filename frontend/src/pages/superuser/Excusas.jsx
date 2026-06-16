@@ -100,7 +100,7 @@ export default function Excusas() {
                 <tr>
                   <th className="px-6 py-4 font-semibold text-sm">Fecha</th>
                   <th className="px-6 py-4 font-semibold text-sm">Aprendiz</th>
-                  <th className="px-6 py-4 font-semibold text-sm">Materia/Ficha</th>
+                  <th className="px-6 py-4 font-semibold text-sm">Competencia/Ficha</th>
                   <th className="px-6 py-4 font-semibold text-sm">Estado</th>
                   <th className="px-6 py-4 font-semibold text-sm text-center">Acciones</th>
                 </tr>

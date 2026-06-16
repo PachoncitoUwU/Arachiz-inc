@@ -96,7 +96,7 @@ const updateFicha = async (req, res) => {
       include: {
         aprendices: true,
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
-        materias: true
+        competencias: { include: { resultados: { include: { instructor: { select: { id: true, fullName: true } } } } } }
       }
     });
     
@@ -150,7 +150,7 @@ const getUserFichas = async (req, res) => {
         },
         instructores: { include: { instructor: { select: { id: true, fullName: true, email: true, avatarUrl: true } } } },
         aprendices: { select: { id: true } },
-        materias: { include: { instructor: { select: { fullName: true } } } }
+        competencias: { include: { resultados: { include: { instructor: { select: { id: true, fullName: true } } } } } }
       }
     });
     res.json({ fichas: userFichas });
@@ -183,20 +183,23 @@ const getFichaById = async (req, res) => {
             nfcUid: true, 
             huellas: true, 
             faceDescriptor: true,
-            materiasEvitadas: {
-              where: { materia: { fichaId: id } },
-              include: { materia: true }
+            resultadosEvitados: {
+              where: { resultado: { competencia: { fichaId: id } } },
+              include: { resultado: { include: { competencia: true } } }
             }
           } 
         },
-        materias: { 
+        competencias: { 
           include: { 
-            instructor: { select: { id: true, fullName: true } },
-            horarios: true,
-            ficha: { select: { numero: true } }
+            resultados: {
+              include: {
+                instructor: { select: { id: true, fullName: true } },
+                horarios: true
+              }
+            }
           } 
         },
-        horarios: { include: { materia: { select: { nombre: true } } } }
+        horarios: { include: { resultado: { select: { nombre: true, competencia: { select: { nombre: true } } } } } }
       }
     });
     

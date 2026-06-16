@@ -69,7 +69,15 @@ export default function AprendizExcusas() {
       if (filtroEstado !== 'Todas') params.append('estado', filtroEstado);
       
       const d = await fetchApi(`/excusas/my-excusas?${params.toString()}`);
-      setExcusas(d.excusas);
+      const mapped = (d.excusas || []).map(excusa => ({
+        ...excusa,
+        materia: excusa.resultado ? {
+          nombre: `${excusa.resultado.competencia?.nombre || ''} - ${excusa.resultado.nombre}`,
+          ficha: excusa.resultado.competencia?.ficha || { numero: 'N/A' }
+        } : { nombre: 'N/A', ficha: { numero: 'N/A' } },
+        materiaId: excusa.resultadoId
+      }));
+      setExcusas(mapped);
     } catch (err) {
       console.error(err);
       showToast(err.message, 'error');
@@ -80,8 +88,8 @@ export default function AprendizExcusas() {
 
   const loadMaterias = async () => {
     try {
-      const d = await fetchApi('/excusas/materias-con-horarios');
-      setMaterias(d.materias);
+      const d = await fetchApi('/excusas/resultados-con-horarios');
+      setMaterias(d.resultados || []);
     } catch (err) {
       console.error(err);
     }
@@ -132,7 +140,7 @@ export default function AprendizExcusas() {
       const body = new FormData();
       body.append('fechas', JSON.stringify(fechasValidas));
       body.append('motivo', form.motivo);
-      body.append('materiaId', form.materiaId);
+      body.append('resultadoId', form.materiaId);
       archivos.forEach(archivo => body.append('archivos', archivo));
 
       await fetchApi('/excusas', { method: 'POST', body });
@@ -326,7 +334,7 @@ export default function AprendizExcusas() {
             </select>
           </div>
           <div>
-            <label className="input-label">Materia</label>
+            <label className="input-label">Competencia</label>
             <select className="input-field" value={filtroMateria} onChange={e => setFiltroMateria(e.target.value)}>
               <option value="Todas">Todas</option>
               {materias.map(m => (
@@ -413,10 +421,10 @@ export default function AprendizExcusas() {
             {/* Formulario principal */}
             <div className="lg:col-span-2 space-y-4">
               <div>
-                <label className="input-label">Materia *</label>
+                <label className="input-label">Competencia *</label>
                 <select required className="input-field" value={form.materiaId}
                   onChange={e => setForm({...form, materiaId: e.target.value})}>
-                  <option value="">Selecciona una materia</option>
+                  <option value="">Selecciona una competencia</option>
                   {materias.map(m => (
                     <option key={m.id} value={m.id}>{m.nombre} - Ficha {m.ficha.numero}</option>
                   ))}
@@ -489,7 +497,7 @@ export default function AprendizExcusas() {
             <div className="lg:block hidden">
               <div className="card bg-gray-50 sticky top-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
-                  <Calendar size={16}/> Horario de la Materia
+                  <Calendar size={16}/> Horario de la Competencia
                 </h3>
                 {materiaSeleccionada ? (
                   materiaSeleccionada.horarios.length > 0 ? (
@@ -505,7 +513,7 @@ export default function AprendizExcusas() {
                     <p className="text-sm text-gray-500">No hay horarios configurados</p>
                   )
                 ) : (
-                  <p className="text-sm text-gray-500">Selecciona una materia para ver su horario</p>
+                  <p className="text-sm text-gray-500">Selecciona una competencia para ver su horario</p>
                 )}
               </div>
             </div>
@@ -531,7 +539,7 @@ export default function AprendizExcusas() {
       </Modal>
 
       {/* Modal horario móvil */}
-      <Modal open={modalHorario} onClose={() => setModalHorario(false)} title="Horario de la Materia" maxWidth="max-w-md">
+      <Modal open={modalHorario} onClose={() => setModalHorario(false)} title="Horario de la Competencia" maxWidth="max-w-md">
         {materiaSeleccionada ? (
           materiaSeleccionada.horarios.length > 0 ? (
             <div className="space-y-2">
@@ -546,7 +554,7 @@ export default function AprendizExcusas() {
             <p className="text-sm text-gray-500">No hay horarios configurados</p>
           )
         ) : (
-          <p className="text-sm text-gray-500">Selecciona una materia primero</p>
+          <p className="text-sm text-gray-500">Selecciona una competencia primero</p>
         )}
       </Modal>
 
@@ -585,7 +593,7 @@ export default function AprendizExcusas() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Solo puedes seleccionar fechas con clase de esta materia</p>
+                  <p className="text-xs text-gray-500 mt-1">Solo puedes seleccionar fechas con clase de esta competencia</p>
                 </div>
 
                 <div>
@@ -628,7 +636,7 @@ export default function AprendizExcusas() {
               <div className="lg:block hidden">
                 <div className="card bg-gray-50 sticky top-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
-                    <Calendar size={16}/> Horario de la Materia
+                    <Calendar size={16}/> Horario de la Competencia
                   </h3>
                   {(() => {
                     const materiaExcusa = materias.find(m => m.id === modalEditar.materiaId);

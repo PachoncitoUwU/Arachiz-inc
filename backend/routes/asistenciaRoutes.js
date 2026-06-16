@@ -8,8 +8,8 @@ router.use(authMiddleware);
 
 router.post('/', roleMiddleware(['instructor']), asistenciaController.createSession);
 router.get('/my-history', roleMiddleware(['aprendiz']), asistenciaController.getMyAttendance);
-router.get('/materia/:materiaId', asistenciaController.getSessionsByMateria);
-router.get('/materia/:materiaId/active', asistenciaController.getActiveSession);
+router.get('/resultado/:resultadoId', asistenciaController.getSessionsByResultado);
+router.get('/resultado/:resultadoId/active', asistenciaController.getActiveSession);
 router.get('/my-active-any', roleMiddleware(['instructor']), asistenciaController.getMyActiveAnySession);
 router.get('/:id', asistenciaController.getSessionById);
 router.post('/registrar', roleMiddleware(['aprendiz']), asistenciaController.registerAttendance);

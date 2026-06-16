@@ -4,11 +4,11 @@ const { enviarAPapelera, crearHistorialCambio } = require('./papeleraController'
 
 // RF07/RF57 - Crear clase en horario
 const createHorario = async (req, res) => {
-  const { fichaId, materiaId, dia, horaInicio, horaFin } = req.body;
+  const { fichaId, resultadoId, dia, horaInicio, horaFin } = req.body;
   const userId = req.user.id;
   const userType = req.user.userType;
   
-  if (!fichaId || !materiaId || !dia || !horaInicio || !horaFin) {
+  if (!fichaId || !resultadoId || !dia || !horaInicio || !horaFin) {
     return res.status(400).json({ error: 'Faltan datos' });
   }
   
@@ -34,10 +34,10 @@ const createHorario = async (req, res) => {
         return res.status(403).json({ error: 'No tienes permiso' });
       }
       
-      // Verificar que la materia pertenece al instructor
-      const materia = await prisma.materia.findUnique({ where: { id: materiaId } });
-      if (!materia || materia.instructorId !== userId) {
-        return res.status(403).json({ error: 'Solo puedes agregar horarios para tus propias materias' });
+      // Verificar que el resultado de aprendizaje pertenece al instructor
+      const resultado = await prisma.resultadoAprendizaje.findUnique({ where: { id: resultadoId } });
+      if (!resultado || resultado.instructorId !== userId) {
+        return res.status(403).json({ error: 'Solo puedes agregar horarios para tus propios resultados de aprendizaje' });
       }
     } else if (userType === 'administrador') {
       // El admin debe ser administrador de la ficha
@@ -48,26 +48,24 @@ const createHorario = async (req, res) => {
       return res.status(403).json({ error: 'No tienes permiso' });
     }
     
-    // Obtener la materia para validar conflictos
-    const materia = await prisma.materia.findUnique({ 
-      where: { id: materiaId },
+    // Obtener el resultado para validar conflictos
+    const resultado = await prisma.resultadoAprendizaje.findUnique({ 
+      where: { id: resultadoId },
       select: { instructorId: true }
     });
     
-    if (!materia) {
-      return res.status(404).json({ error: 'Materia no encontrada' });
+    if (!resultado) {
+      return res.status(404).json({ error: 'Resultado de aprendizaje no encontrado' });
     }
     
-    // Si la materia no tiene instructor asignado, no se pueden validar conflictos
-    // pero se permite crear el horario
     let conflictos = [];
     
-    if (materia.instructorId) {
-      // Validar conflictos de horario para el instructor de la materia (en TODAS las fichas)
+    if (resultado.instructorId) {
+      // Validar conflictos de horario para el instructor (en TODAS las fichas)
       conflictos = await prisma.horario.findMany({
         where: {
           dia,
-          materia: { instructorId: materia.instructorId },
+          resultado: { instructorId: resultado.instructorId },
           OR: [
             // Caso 1: El nuevo horario empieza durante una clase existente
             { AND: [{ horaInicio: { lte: horaInicio } }, { horaFin: { gt: horaInicio } }] },
@@ -78,10 +76,15 @@ const createHorario = async (req, res) => {
           ]
         },
         include: { 
-          materia: { 
+          resultado: { 
             select: { 
               nombre: true,
-              ficha: { select: { numero: true, nombre: true } }
+              competencia: {
+                select: {
+                  nombre: true,
+                  ficha: { select: { numero: true, nombre: true } }
+                }
+              }
             } 
           },
           ficha: { select: { numero: true, nombre: true } }
@@ -91,30 +94,34 @@ const createHorario = async (req, res) => {
       // Si es instructor, bloquear si hay conflictos
       if (conflictos.length > 0 && userType === 'instructor') {
         const conflictoInfo = conflictos[0];
-        const fichaConflicto = conflictoInfo.ficha || conflictoInfo.materia.ficha;
+        const fichaConflicto = conflictoInfo.ficha || conflictoInfo.resultado.competencia.ficha;
         return res.status(400).json({ 
-          error: `Ya tienes una clase programada en ese horario: ${conflictoInfo.materia.nombre} (${conflictoInfo.horaInicio} - ${conflictoInfo.horaFin}) en Ficha ${fichaConflicto.numero}` 
+          error: `Ya tienes una clase programada en ese horario: ${conflictoInfo.resultado.nombre} (${conflictoInfo.horaInicio} - ${conflictoInfo.horaFin}) en Ficha ${fichaConflicto.numero}` 
         });
       }
     }
     
     const horario = await prisma.horario.create({
-      data: { fichaId, materiaId, dia, horaInicio, horaFin },
+      data: { fichaId, resultadoId, dia, horaInicio, horaFin },
       include: { 
-        materia: { 
+        resultado: { 
           include: { 
             instructor: { select: { fullName: true } },
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              include: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         },
         ficha: { select: { numero: true, nombre: true } }
       }
     });
     
-    // Si es admin, hay conflictos y la materia tiene instructor, crear registro de conflicto
-    if (conflictos.length > 0 && userType === 'administrador' && materia.instructorId) {
+    // Si es admin, hay conflictos y el resultado tiene instructor, crear registro de conflicto
+    if (conflictos.length > 0 && userType === 'administrador' && resultado.instructorId) {
       await crearConflicto(
-        materia.instructorId,
+        resultado.instructorId,
         dia,
         conflictos,
         userId
@@ -124,7 +131,7 @@ const createHorario = async (req, res) => {
     res.status(201).json({ 
       message: 'Clase agregada al horario', 
       horario,
-      conflictos: conflictos.length > 0 && userType === 'administrador' && materia.instructorId ? {
+      conflictos: conflictos.length > 0 && userType === 'administrador' && resultado.instructorId ? {
         count: conflictos.length,
         message: `Se generaron ${conflictos.length} conflicto(s) de horario para el instructor`
       } : null
@@ -146,7 +153,7 @@ const deleteHorario = async (req, res) => {
       where: { id },
       include: { 
         ficha: { include: { instructores: true } },
-        materia: { 
+        resultado: { 
           select: { 
             instructorId: true, 
             nombre: true,
@@ -174,7 +181,7 @@ const deleteHorario = async (req, res) => {
     }
     
     const dia = horario.dia;
-    const materiaInstructorId = horario.materia?.instructorId;
+    const resultadoInstructorId = horario.resultado?.instructorId;
     
     // Enviar a papelera antes de eliminar
     await enviarAPapelera(
@@ -183,15 +190,15 @@ const deleteHorario = async (req, res) => {
       horario.fichaId,
       userId,
       userType,
-      `Horario ${dia} ${horario.horaInicio}-${horario.horaFin} de ${horario.materia?.nombre} eliminado`
+      `Horario ${dia} ${horario.horaInicio}-${horario.horaFin} de ${horario.resultado?.nombre} eliminado`
     );
     
     await prisma.horario.delete({ where: { id } });
     
     // Verificar si se resolvieron conflictos en este día
-    if (materiaInstructorId) {
+    if (resultadoInstructorId) {
       const conflictosRestantes = await detectarConflictos(
-        materiaInstructorId,
+        resultadoInstructorId,
         dia,
         '00:00',
         '23:59'
@@ -201,7 +208,7 @@ const deleteHorario = async (req, res) => {
       if (conflictosRestantes.length === 0) {
         await prisma.conflictoHorario.updateMany({
           where: {
-            instructorId: materiaInstructorId,
+            instructorId: resultadoInstructorId,
             dia,
             resuelto: false
           },
@@ -220,7 +227,7 @@ const deleteHorario = async (req, res) => {
       'enviar_papelera',
       'horario',
       id,
-      `Envió el horario ${dia} ${horario.horaInicio}-${horario.horaFin} de ${horario.materia?.nombre} a la papelera`
+      `Envió el horario ${dia} ${horario.horaInicio}-${horario.horaFin} de ${horario.resultado?.nombre} a la papelera`
     );
     
     res.json({ message: 'Clase enviada a la papelera exitosamente' });
@@ -236,24 +243,29 @@ const getHorarioByFicha = async (req, res) => {
   const userType = req.user?.userType;
   
   try {
-    let materiasEvitadasIds = [];
+    let resultadosEvitadosIds = [];
     
-    // Si es un aprendiz, obtener sus materias evitadas
+    // Si es un aprendiz, obtener sus resultados evitados
     if (userType === 'aprendiz' && userId) {
-      const materiasEvitadas = await prisma.materiaEvitada.findMany({
+      const resultadosEvitados = await prisma.resultadoEvitado.findMany({
         where: { aprendizId: userId },
-        select: { materiaId: true }
+        select: { resultadoId: true }
       });
-      materiasEvitadasIds = materiasEvitadas.map(me => me.materiaId);
+      resultadosEvitadosIds = resultadosEvitados.map(re => re.resultadoId);
     }
     
     const horarios = await prisma.horario.findMany({
       where: { 
         fichaId,
-        ...(materiasEvitadasIds.length > 0 && { materiaId: { notIn: materiasEvitadasIds } })
+        ...(resultadosEvitadosIds.length > 0 && { resultadoId: { notIn: resultadosEvitadosIds } })
       },
       include: {
-        materia: { include: { instructor: { select: { fullName: true } } } }
+        resultado: {
+          include: {
+            instructor: { select: { fullName: true } },
+            competencia: { select: { nombre: true } }
+          }
+        }
       },
       orderBy: [{ dia: 'asc' }, { horaInicio: 'asc' }]
     });
@@ -269,13 +281,17 @@ const getMyHorarios = async (req, res) => {
   try {
     const horarios = await prisma.horario.findMany({
       where: {
-        materia: { instructorId }
+        resultado: { instructorId }
       },
       include: {
-        materia: { 
+        resultado: { 
           include: { 
             instructor: { select: { fullName: true } },
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              include: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         }
       },
@@ -303,7 +319,7 @@ const updateHorario = async (req, res) => {
       where: { id },
       include: { 
         ficha: { include: { instructores: true } },
-        materia: { select: { instructorId: true } }
+        resultado: { select: { instructorId: true } }
       }
     });
     if (!horario) return res.status(404).json({ error: 'Clase no encontrada' });
@@ -311,9 +327,9 @@ const updateHorario = async (req, res) => {
       return res.status(403).json({ error: 'No tienes permiso' });
     }
     
-    // Solo el instructor de la materia puede editar el horario
-    if (horario.materia.instructorId !== instructorId) {
-      return res.status(403).json({ error: 'Solo puedes editar horarios de tus propias materias' });
+    // Solo el instructor del resultado puede editar el horario
+    if (horario.resultado.instructorId !== instructorId) {
+      return res.status(403).json({ error: 'Solo puedes editar horarios de tus propios resultados de aprendizaje' });
     }
     
     // Preparar datos para actualizar
@@ -331,7 +347,7 @@ const updateHorario = async (req, res) => {
       where: {
         id: { not: id },
         dia: finalDia,
-        materia: { instructorId },
+        resultado: { instructorId },
         OR: [
           { AND: [{ horaInicio: { lte: finalHoraInicio } }, { horaFin: { gt: finalHoraInicio } }] },
           { AND: [{ horaInicio: { lt: finalHoraFin } }, { horaFin: { gte: finalHoraFin } }] },
@@ -339,10 +355,14 @@ const updateHorario = async (req, res) => {
         ]
       },
       include: { 
-        materia: { 
+        resultado: { 
           select: { 
             nombre: true,
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              select: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         },
         ficha: { select: { numero: true, nombre: true } }
@@ -358,10 +378,14 @@ const updateHorario = async (req, res) => {
         ...(horaFin && { horaFin }),
       },
       include: { 
-        materia: { 
+        resultado: { 
           include: { 
             instructor: { select: { fullName: true } },
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              include: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         },
         ficha: { select: { numero: true, nombre: true } }
@@ -410,9 +434,9 @@ const updateHorario = async (req, res) => {
         message: `Se generaron ${conflictos.length} conflicto(s) de horario. Puedes resolverlos ajustando tus horarios.`,
         detalles: conflictos.map(c => ({
           dia: c.dia,
-          materia: c.materia.nombre,
+          resultado: c.resultado?.nombre,
           horario: `${c.horaInicio} - ${c.horaFin}`,
-          ficha: c.ficha?.numero || c.materia?.ficha?.numero
+          ficha: c.ficha?.numero || c.resultado?.competencia?.ficha?.numero
         }))
       } : null
     });
@@ -420,9 +444,6 @@ const updateHorario = async (req, res) => {
     res.status(500).json({ error: 'Error: ' + err.message });
   }
 };
-
-module.exports = { createHorario, deleteHorario, getHorarioByFicha, getMyHorarios, updateHorario };
-
 
 // Actualizar horario por admin (permite conflictos)
 const updateHorarioAdmin = async (req, res) => {
@@ -440,7 +461,7 @@ const updateHorarioAdmin = async (req, res) => {
       where: { id },
       include: { 
         ficha: true,
-        materia: { 
+        resultado: { 
           select: { 
             instructorId: true,
             instructor: { select: { fullName: true } }
@@ -467,13 +488,16 @@ const updateHorarioAdmin = async (req, res) => {
     }
     
     // Detectar conflictos (pero NO bloquear la actualización)
-    const conflictos = await detectarConflictos(
-      horario.materia.instructorId,
-      finalDia,
-      finalHoraInicio,
-      finalHoraFin,
-      id
-    );
+    let conflictos = [];
+    if (horario.resultado.instructorId) {
+      conflictos = await detectarConflictos(
+        horario.resultado.instructorId,
+        finalDia,
+        finalHoraInicio,
+        finalHoraFin,
+        id
+      );
+    }
     
     // Actualizar el horario
     const updated = await prisma.horario.update({
@@ -484,19 +508,23 @@ const updateHorarioAdmin = async (req, res) => {
         ...(horaFin && { horaFin }),
       },
       include: { 
-        materia: { 
+        resultado: { 
           include: { 
             instructor: { select: { fullName: true } },
-            ficha: { select: { numero: true, nombre: true } }
+            competencia: {
+              include: {
+                ficha: { select: { numero: true, nombre: true } }
+              }
+            }
           } 
         } 
       }
     });
     
     // Si hay conflictos, crear registro de conflicto
-    if (conflictos.length > 0) {
+    if (conflictos.length > 0 && horario.resultado.instructorId) {
       await crearConflicto(
-        horario.materia.instructorId,
+        horario.resultado.instructorId,
         finalDia,
         conflictos,
         adminId
@@ -511,7 +539,7 @@ const updateHorarioAdmin = async (req, res) => {
         tipoEvento: 'editar_horario',
         entidad: 'horario',
         entidadId: id,
-        descripcion: `Editó el horario de ${horario.materia.instructor.fullName} - ${updated.materia.nombre}`,
+        descripcion: `Editó el horario de ${horario.resultado.instructor?.fullName || 'Sin instructor'} - ${updated.resultado.nombre}`,
         datosAnteriores: { dia: horario.dia, horaInicio: horario.horaInicio, horaFin: horario.horaFin },
         datosNuevos: { dia: finalDia, horaInicio: finalHoraInicio, horaFin: finalHoraFin }
       }

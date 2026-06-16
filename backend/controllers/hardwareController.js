@@ -65,3 +65,13 @@ exports.queueCommand = (command) => {
 exports.getSessionStatus = (req, res) => {
   res.json({ sessionActive });
 };
+
+exports.getHardwareStatus = (req, res) => {
+  try {
+    const serialService = req.app.get('serialService');
+    const usbConnected = serialService && typeof serialService.isConnected === 'function' ? serialService.isConnected() : false;
+    res.json({ usbConnected, wifiAvailable: true });
+  } catch (error) {
+    res.json({ usbConnected: false, wifiAvailable: false });
+  }
+};
