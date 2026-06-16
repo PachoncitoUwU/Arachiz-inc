@@ -1,17 +1,117 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
-import { Award, Target, Flame, Activity, Clock, Calendar, CheckCircle, XCircle, AlertCircle, Info, Bell, BellOff } from 'lucide-react';
+import { Award, Target, Flame, Activity, Clock, Calendar, CheckCircle, XCircle, AlertCircle, Info, Bell, BellOff, Edit2, Upload, Trash2 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useToast } from '../context/ToastContext';
+import Modal from '../components/Modal';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export default function Perfil() {
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isSupported, permission, subscribe, loading: pushLoading } = usePushNotifications();
+  const { showToast } = useToast();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: '', document: '', avatarBase64: null, deleteAvatar: false, currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [saving, setSaving] = useState(false);
+
+  const handleOpenEdit = () => {
+    setEditForm({
+      fullName: stats?.fullName || user?.fullName || '',
+      document: stats?.document || user?.document || '',
+      avatarBase64: null,
+      deleteAvatar: false,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setIsEditing(true);
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditForm(prev => ({ ...prev, avatarBase64: reader.result, deleteAvatar: false }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+
+    if (editForm.newPassword || editForm.currentPassword) {
+      if (editForm.newPassword !== editForm.confirmPassword) {
+        return showToast('Las contraseñas nuevas no coinciden', 'error');
+      }
+      if (!editForm.currentPassword) {
+        return showToast('Debes ingresar tu contraseña actual para cambiarla', 'error');
+      }
+      if (editForm.newPassword.length < 6) {
+        return showToast('La nueva contraseña debe tener al menos 6 caracteres', 'error');
+      }
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/profile`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify({
+          fullName: editForm.fullName,
+          document: editForm.document,
+          avatarBase64: editForm.avatarBase64,
+          deleteAvatar: editForm.deleteAvatar
+        })
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al guardar perfil');
+      }
+      
+      const data = await res.json();
+
+      if (editForm.newPassword && editForm.currentPassword) {
+        const pwRes = await fetch(`${API_BASE}/auth/change-password`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}` 
+          },
+          body: JSON.stringify({
+            currentPassword: editForm.currentPassword,
+            newPassword: editForm.newPassword
+          })
+        });
+        
+        if (!pwRes.ok) {
+          const err = await pwRes.json();
+          throw new Error('Perfil guardado, pero error en contraseña: ' + (err.error || 'Inválida'));
+        }
+      }
+
+      showToast('Perfil actualizado correctamente', 'success');
+      
+      setStats(prev => ({ ...prev, fullName: data.user.fullName, document: data.user.document, avatarUrl: data.user.avatarUrl }));
+      updateUser(data.user);
+      setIsEditing(false);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -66,7 +166,16 @@ export default function Perfil() {
         </div>
 
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats?.fullName || 'Usuario'}</h1>
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stats?.fullName || 'Usuario'}</h1>
+            <button 
+              onClick={handleOpenEdit} 
+              className="btn-icon text-gray-400 hover:text-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              title="Editar Perfil"
+            >
+              <Edit2 size={18} />
+            </button>
+          </div>
           <p className="text-gray-500 dark:text-gray-400 font-medium capitalize mt-1 text-lg">{stats?.userType || 'Rol Desconocido'}</p>
           <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold shadow-sm">
@@ -235,6 +344,115 @@ export default function Perfil() {
           </div>
         </div>
       </div>
+
+      <Modal open={isEditing} onClose={() => setIsEditing(false)} title="Editar Perfil">
+        <form onSubmit={handleSaveProfile} className="space-y-4">
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-sm relative group">
+              {(editForm.avatarBase64 && !editForm.deleteAvatar) || (stats?.avatarUrl && !editForm.deleteAvatar) ? (
+                <img 
+                  src={editForm.avatarBase64 || stats.avatarUrl} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold">
+                  {(editForm.fullName || stats?.fullName || user?.email || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <label className="cursor-pointer p-2 text-white hover:text-blue-300">
+                  <Upload size={20} />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                </label>
+                {(editForm.avatarBase64 || stats?.avatarUrl) && !editForm.deleteAvatar && (
+                  <button type="button" onClick={() => setEditForm(p => ({ ...p, avatarBase64: null, deleteAvatar: true }))} className="p-2 text-white hover:text-red-400">
+                    <Trash2 size={20} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">Haz clic en la imagen para cambiarla</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre Completo</label>
+            <input
+              type="text"
+              value={editForm.fullName}
+              onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+              className="input-field w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Documento</label>
+            <input
+              type="text"
+              value={editForm.document}
+              onChange={(e) => setEditForm({ ...editForm, document: e.target.value })}
+              className="input-field w-full"
+              required
+            />
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Cambiar Contraseña (Opcional)</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña Actual</label>
+                <input
+                  type="password"
+                  value={editForm.currentPassword}
+                  onChange={(e) => setEditForm({ ...editForm, currentPassword: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Dejar en blanco si no quieres cambiarla"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nueva Contraseña</label>
+                  <input
+                    type="password"
+                    value={editForm.newPassword}
+                    onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                    className="input-field w-full"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Nueva</label>
+                  <input
+                    type="password"
+                    value={editForm.confirmPassword}
+                    onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
+                    className="input-field w-full"
+                    placeholder="Repetir contraseña"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100 dark:border-zinc-700">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="btn-secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-primary"
+            >
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

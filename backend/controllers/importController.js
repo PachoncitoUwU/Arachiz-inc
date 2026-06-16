@@ -15,6 +15,23 @@ const createTransporter = () => {
   });
 };
 
+const getCellValueText = (cell) => {
+  if (!cell || cell.value === null || cell.value === undefined) return '';
+  if (typeof cell.value === 'object') {
+    if (cell.value.result !== undefined && cell.value.result !== null) {
+      return cell.value.result.toString().trim();
+    }
+    if (cell.value.richText) {
+      return cell.value.richText.map(t => t.text).join('').trim();
+    }
+    if (cell.value.text) {
+      return cell.value.text.toString().trim();
+    }
+    return cell.value.toString().trim();
+  }
+  return cell.value.toString().trim();
+};
+
 const importAprendices = async (req, res) => {
   const { fichaId } = req.params;
   const instructorId = req.user.id;
@@ -30,11 +47,12 @@ const importAprendices = async (req, res) => {
 
     if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
 
+    const isAdmin = req.user.userType === 'administrador';
     const isLider = ficha.instructorAdminId === instructorId || 
                     ficha.instructores.some(i => i.instructorId === instructorId && i.role === 'admin');
 
-    if (!isLider) {
-      return res.status(403).json({ error: 'Solo el instructor líder puede importar aprendices' });
+    if (!isLider && !isAdmin) {
+      return res.status(403).json({ error: 'Solo el administrador o instructor líder pueden importar aprendices' });
     }
 
     if (!req.file) {
@@ -53,35 +71,44 @@ const importAprendices = async (req, res) => {
 
     let headers = [];
     let nameIdx = -1, docIdx = -1, emailIdx = -1;
+    let headerRowIdx = -1;
 
-    worksheet.getRow(1).eachCell((cell, colNumber) => {
-      const val = cell.value?.toString().toLowerCase().trim() || '';
-      headers[colNumber] = val;
-      if (val.includes('nombre')) nameIdx = colNumber;
-      if (val.includes('documento') || val.includes('identificación')) docIdx = colNumber;
-      if (val.includes('correo') || val.includes('email')) emailIdx = colNumber;
-    });
+    for (let r = 1; r <= Math.min(5, worksheet.rowCount); r++) {
+      worksheet.getRow(r).eachCell((cell, colNumber) => {
+        const val = getCellValueText(cell).toLowerCase();
+        if (val.includes('nombre')) nameIdx = colNumber;
+        if (val.includes('documento') || val.includes('identificación')) docIdx = colNumber;
+        if (val.includes('correo') || val.includes('email')) emailIdx = colNumber;
+      });
+
+      if (nameIdx !== -1 && docIdx !== -1 && emailIdx !== -1) {
+        headerRowIdx = r;
+        break;
+      } else {
+        // Reset if not a complete header row
+        nameIdx = -1; docIdx = -1; emailIdx = -1;
+      }
+    }
+
+    console.log('[importAprendices] Headers detectados en fila:', headerRowIdx, { nameIdx, docIdx, emailIdx });
 
     if (nameIdx === -1 || docIdx === -1 || emailIdx === -1) {
-      return res.status(400).json({ error: 'El archivo debe contener columnas: Nombre, Documento y Email' });
+      console.log('[importAprendices] Error de columnas. Faltan requeridas.');
+      return res.status(400).json({ error: 'El archivo debe contener columnas: Nombre, Documento y Email. Asegúrate de usar la plantilla descargada.' });
     }
 
     const resultados = { creados: 0, unidos: 0, errores: [], filas: 0 };
     const transporter = createTransporter();
 
-    for (let i = 2; i <= worksheet.rowCount; i++) {
+    for (let i = headerRowIdx + 1; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
       if (!row.hasValues) continue;
       
       resultados.filas++;
 
-      const fullName = row.getCell(nameIdx).value?.toString().trim();
-      let document = row.getCell(docIdx).value?.toString().trim();
-      let email = row.getCell(emailIdx).value?.toString().trim().toLowerCase();
-
-      if (email && typeof row.getCell(emailIdx).value === 'object') {
-        email = row.getCell(emailIdx).value.text?.trim().toLowerCase();
-      }
+      const fullName = getCellValueText(row.getCell(nameIdx));
+      const document = getCellValueText(row.getCell(docIdx));
+      const email = getCellValueText(row.getCell(emailIdx)).toLowerCase();
 
       if (!fullName || !document || !email) {
         resultados.errores.push(`Fila ${i}: Datos incompletos`);
@@ -146,14 +173,16 @@ const importAprendices = async (req, res) => {
         resultados.creados++;
 
         try {
-          await transporter.sendMail({
+          transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
             subject: 'Bienvenido a Arachiz - Tus credenciales',
             html: templates.welcomeImport(fullName, document, tempPassword, process.env.FRONTEND_URL)
+          }).catch(emailErr => {
+            console.error(`Error enviando email a ${email}:`, emailErr);
           });
-        } catch (emailErr) {
-          console.error(`Error enviando email a ${email}:`, emailErr);
+        } catch (syncEmailErr) {
+          console.error(`Error síncrono enviando email a ${email}:`, syncEmailErr);
         }
       }
     }
@@ -181,11 +210,12 @@ const importCompetencias = async (req, res) => {
 
     if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
 
+    const isAdmin = req.user.userType === 'administrador';
     const isLider = ficha.instructorAdminId === instructorId || 
                     ficha.instructores.some(i => i.instructorId === instructorId && i.role === 'admin');
 
-    if (!isLider) {
-      return res.status(403).json({ error: 'Solo el instructor líder puede importar competencias' });
+    if (!isLider && !isAdmin) {
+      return res.status(403).json({ error: 'Solo el administrador o instructor líder pueden importar competencias' });
     }
 
     if (!req.file) {
@@ -204,14 +234,23 @@ const importCompetencias = async (req, res) => {
 
     let headers = [];
     let compIdx = -1, resIdx = -1, tipoIdx = -1;
+    let headerRowIdx = -1;
 
-    worksheet.getRow(1).eachCell((cell, colNumber) => {
-      const val = cell.value?.toString().toLowerCase().trim() || '';
-      headers[colNumber] = val;
-      if (val.includes('competencia') || val.includes('nombre')) compIdx = colNumber;
-      if (val.includes('resultado')) resIdx = colNumber;
-      if (val.includes('tipo')) tipoIdx = colNumber;
-    });
+    for (let r = 1; r <= Math.min(5, worksheet.rowCount); r++) {
+      worksheet.getRow(r).eachCell((cell, colNumber) => {
+        const val = getCellValueText(cell).toLowerCase();
+        if (val.includes('competencia') || val.includes('nombre')) compIdx = colNumber;
+        if (val.includes('resultado')) resIdx = colNumber;
+        if (val.includes('tipo')) tipoIdx = colNumber;
+      });
+
+      if (compIdx !== -1) {
+        headerRowIdx = r;
+        break;
+      } else {
+        compIdx = -1; resIdx = -1; tipoIdx = -1;
+      }
+    }
 
     if (compIdx === -1) {
       return res.status(400).json({ error: 'El archivo debe contener una columna para la Competencia' });
@@ -220,15 +259,15 @@ const importCompetencias = async (req, res) => {
     const resultados = { creadas: 0, resultadosCreados: 0, errores: [], filas: 0 };
     const incomingCompetencies = new Map();
 
-    for (let i = 2; i <= worksheet.rowCount; i++) {
+    for (let i = headerRowIdx + 1; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
       if (!row.hasValues) continue;
       
       resultados.filas++;
 
-      const compNombre = row.getCell(compIdx).value?.toString().trim();
-      const resNombre = resIdx !== -1 ? row.getCell(resIdx).value?.toString().trim() : '';
-      const tipo = tipoIdx !== -1 ? row.getCell(tipoIdx).value?.toString().trim() : 'Técnica';
+      const compNombre = getCellValueText(row.getCell(compIdx));
+      const resNombre = resIdx !== -1 ? getCellValueText(row.getCell(resIdx)) : '';
+      const tipo = tipoIdx !== -1 ? getCellValueText(row.getCell(tipoIdx)) : 'Técnica';
 
       if (!compNombre) {
         resultados.errores.push(`Fila ${i}: Nombre de competencia en blanco`);
@@ -306,9 +345,6 @@ const downloadPlantillaAprendices = async (req, res) => {
     { header: 'Documento', key: 'documento', width: 20 },
     { header: 'Email', key: 'email', width: 35 }
   ];
-  
-  worksheet.addRow({ nombre: 'Juan Pérez', documento: '1020304050', email: 'juan.perez@example.com' });
-  worksheet.addRow({ nombre: 'María Gómez', documento: '1098765432', email: 'maria.gomez@example.com' });
   
   worksheet.getRow(1).font = { bold: true };
   worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };

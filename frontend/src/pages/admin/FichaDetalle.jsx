@@ -14,7 +14,7 @@ import {
   Trash2, Mail, Edit2, Search, Filter, Shield, MoreVertical, 
   CheckCircle2, AlertCircle, RefreshCw, X, Download, UserX, Star, HelpCircle,
   Pin, Plus, ListChecks, MapPin, Building, Activity, Copy, Calendar, MessageSquare, QrCode, Ticket, Loader, Bell,
-  Eye, EyeOff, Link, Check
+  Eye, EyeOff, Link, Check, UploadCloud
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
@@ -98,6 +98,13 @@ export default function FichaDetalle() {
   const [currentMateriaView, setCurrentMateriaView] = useState('competencias');
   const [selectedCompetenciaView, setSelectedCompetenciaView] = useState(null);
   const [modalNuevoResultado, setModalNuevoResultado] = useState({ open: false, competenciaId: null, nombre: '' });
+
+  // Estados para Importar Aprendices
+  const [modalImportAprendices, setModalImportAprendices] = useState(false);
+  const [fileAprendices, setFileAprendices] = useState(null);
+  const [importandoAprendices, setImportandoAprendices] = useState(false);
+  const [resultadoImportAprendices, setResultadoImportAprendices] = useState(null);
+  const [isDraggingAprendices, setIsDraggingAprendices] = useState(false);
   const [savingNuevoResultado, setSavingNuevoResultado] = useState(false);
 
   // Estados para Unirse a Evento
@@ -382,6 +389,77 @@ export default function FichaDetalle() {
       setErrorEdit(err.message);
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteCompetencia = async () => {
+    try {
+      setConfirmModal(p => ({ ...p, loading: true }));
+      await fetchApi(`/fichas/${id}/competencias/${confirmModal.data}`, {
+        method: 'DELETE'
+      });
+      showToast('Competencia eliminada exitosamente', 'success');
+      loadFicha(false);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setConfirmModal({ isOpen: false, action: null, data: null, loading: false });
+    }
+  };
+
+  const handleImportAprendices = async () => {
+    if (!fileAprendices) return;
+    setImportandoAprendices(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', fileAprendices);
+      const data = await fetchApi(`/import/ficha/${id}/aprendices`, {
+        method: 'POST',
+        body: formData
+      });
+      setResultadoImportAprendices(data);
+      showToast(`${data.resultados.creados} aprendices creados, ${data.resultados.unidos} unidos`, 'success');
+      loadFicha(false); // Recargar datos
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setImportandoAprendices(false);
+    }
+  };
+
+  const handleDragOverAprendices = (e) => {
+    e.preventDefault();
+    setIsDraggingAprendices(true);
+  };
+
+  const handleDragLeaveAprendices = (e) => {
+    e.preventDefault();
+    setIsDraggingAprendices(false);
+  };
+
+  const handleDropAprendices = (e) => {
+    e.preventDefault();
+    setIsDraggingAprendices(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFileAprendices(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDescargarPlantillaAprendices = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/import/plantilla/aprendices`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Plantilla_Aprendices.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast('Error al descargar plantilla', 'error');
     }
   };
 
@@ -1110,14 +1188,27 @@ export default function FichaDetalle() {
         {activeTab === 'aprendices' && (
           <>
             {/* Búsqueda */}
-            <div className="mb-4">
+            <div className="mb-4 flex gap-2">
               <input
                 type="text"
                 placeholder="Buscar por nombre, correo o documento..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field"
+                className="input-field flex-1"
               />
+              {(isAdmin || isInstructor) && (
+                <button
+                  onClick={() => {
+                    setFileAprendices(null);
+                    setResultadoImportAprendices(null);
+                    setModalImportAprendices(true);
+                  }}
+                  className="btn-secondary flex items-center gap-2 whitespace-nowrap"
+                >
+                  <UploadCloud size={18} />
+                  <span className="hidden sm:inline">Importar Aprendices</span>
+                </button>
+              )}
             </div>
 
             {/* Lista de aprendices */}
@@ -1807,12 +1898,98 @@ export default function FichaDetalle() {
       />
 
       {/* Modal de Notificaciones */}
-      <NotificacionesModal
-        isOpen={showNotificaciones}
-        onClose={() => setShowNotificaciones(false)}
+      <NotificacionesModal 
+        isOpen={showNotificaciones} 
+        onClose={() => setShowNotificaciones(false)} 
         fichaId={id}
-        userRole="administrador"
       />
+
+      {/* Modal Importar Aprendices */}
+      <Modal open={modalImportAprendices} onClose={() => setModalImportAprendices(false)} title="Importar Aprendices desde Excel">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+            <div>
+              <h4 className="font-semibold text-blue-800 dark:text-blue-300">Plantilla Requerida</h4>
+              <p className="text-sm text-blue-600 dark:text-blue-400">Descarga la plantilla con las columnas: Nombre Completo, Documento, Email.</p>
+            </div>
+            <button onClick={handleDescargarPlantillaAprendices} className="btn-secondary flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-100">
+              <Download size={18} />
+              Descargar
+            </button>
+          </div>
+
+          <div 
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+              isDraggingAprendices 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-500'
+            }`}
+            onDragOver={handleDragOverAprendices}
+            onDragLeave={handleDragLeaveAprendices}
+            onDrop={handleDropAprendices}
+          >
+            <UploadCloud size={48} className={`mx-auto mb-4 ${isDraggingAprendices ? 'text-blue-500' : 'text-gray-400'}`} />
+            <p className="text-gray-600 dark:text-gray-300 mb-2">
+              Arrastra tu archivo Excel aquí o
+            </p>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={(e) => setFileAprendices(e.target.files[0])}
+              className="hidden"
+              id="file-upload-aprendices"
+            />
+            <label htmlFor="file-upload-aprendices" className="btn-secondary cursor-pointer inline-flex">
+              Seleccionar Archivo
+            </label>
+            {fileAprendices && (
+              <p className="mt-4 text-sm font-medium text-blue-600">
+                Archivo seleccionado: {fileAprendices.name}
+              </p>
+            )}
+          </div>
+
+          {resultadoImportAprendices && (
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800">
+              <h4 className="font-semibold text-green-800 dark:text-green-300 flex items-center gap-2">
+                <CheckCircle2 size={18} />
+                Importación Exitosa
+              </h4>
+              <ul className="mt-2 text-sm text-green-700 dark:text-green-400 space-y-1">
+                <li>• {resultadoImportAprendices.resultados?.creados || 0} aprendices nuevos creados</li>
+                <li>• {resultadoImportAprendices.resultados?.unidos || 0} aprendices existentes unidos a la ficha</li>
+              </ul>
+              {resultadoImportAprendices.resultados?.errores?.length > 0 && (
+                <div className="mt-3">
+                  <p className="font-semibold text-red-600">Errores ({resultadoImportAprendices.resultados.errores.length}):</p>
+                  <ul className="text-xs text-red-500 mt-1 max-h-24 overflow-y-auto space-y-1">
+                    {resultadoImportAprendices.resultados.errores.map((err, i) => (
+                      <li key={i}>Fila {err.fila}: {err.error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <button onClick={() => {
+              setModalImportAprendices(false);
+              setResultadoImportAprendices(null);
+              setFileAprendices(null);
+            }} className="btn-secondary">
+              Cerrar
+            </button>
+            <button 
+              onClick={handleImportAprendices}
+              disabled={!fileAprendices || importandoAprendices}
+              className="btn-primary flex items-center gap-2"
+            >
+              {importandoAprendices ? 'Importando...' : 'Importar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal Unirse a Evento */}
       <Modal open={showUnirseEventoModal} onClose={() => setShowUnirseEventoModal(false)} title="Unirse a un Evento">
