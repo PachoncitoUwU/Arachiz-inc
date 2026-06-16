@@ -323,7 +323,8 @@ const getResultadosConHorarios = async (req, res) => {
           include: {
             resultados: {
               include: {
-                horarios: true
+                horarios: true,
+                instructor: { select: { fullName: true } }
               }
             }
           }
@@ -346,7 +347,9 @@ const getResultadosConHorarios = async (req, res) => {
           if (!resultadosEvitadosIds.includes(resultado.id)) {
             resultados.push({
               id: resultado.id,
-              nombre: `${competencia.nombre} - ${resultado.nombre}`,
+              nombre: resultado.nombre,
+              competencia: { nombre: competencia.nombre },
+              instructor: resultado.instructor,
               ficha: { numero: ficha.numero, nombre: ficha.nombre },
               horarios: resultado.horarios
             });

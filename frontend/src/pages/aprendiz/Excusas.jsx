@@ -5,7 +5,7 @@ import EmptyState from '../../components/EmptyState';
 import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useToast } from '../../context/ToastContext';
-import { Send, Clock, CheckCircle, XCircle, Paperclip, Edit2, FileText, X, Calendar, Plus, Trash2 } from 'lucide-react';
+import { Send, Clock, CheckCircle, XCircle, Paperclip, Edit2, FileText, X, Calendar, Plus, Trash2, Search } from 'lucide-react';
 
 const STATUS_MAP = {
   Pendiente: { badge: 'badge-pending', icon: Clock },
@@ -17,6 +17,7 @@ export default function AprendizExcusas() {
   const { showToast } = useToast();
   const [excusas, setExcusas] = useState([]);
   const [materias, setMaterias] = useState([]);
+  const [loadingMaterias, setLoadingMaterias] = useState(true);
   const [loading, setLoading] = useState(true);
   const [modalNueva, setModalNueva] = useState(false);
   const [modalEditar, setModalEditar] = useState(null);
@@ -27,6 +28,7 @@ export default function AprendizExcusas() {
   const [saving, setSaving] = useState(false);
   const [errorModal, setErrorModal] = useState('');
   const [confirmClose, setConfirmClose] = useState(false);
+  const [busquedaResultado, setBusquedaResultado] = useState('');
   
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState('Todas');
@@ -88,10 +90,13 @@ export default function AprendizExcusas() {
 
   const loadMaterias = async () => {
     try {
+      setLoadingMaterias(true);
       const d = await fetchApi('/excusas/resultados-con-horarios');
       setMaterias(d.resultados || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoadingMaterias(false);
     }
   };
 
@@ -334,9 +339,9 @@ export default function AprendizExcusas() {
             </select>
           </div>
           <div>
-            <label className="input-label">Competencia</label>
+            <label className="input-label">Resultado de Aprendizaje</label>
             <select className="input-field" value={filtroMateria} onChange={e => setFiltroMateria(e.target.value)}>
-              <option value="Todas">Todas</option>
+              <option value="Todas">Todos</option>
               {materias.map(m => (
                 <option key={m.id} value={m.id}>{m.nombre}</option>
               ))}
@@ -421,14 +426,79 @@ export default function AprendizExcusas() {
             {/* Formulario principal */}
             <div className="lg:col-span-2 space-y-4">
               <div>
-                <label className="input-label">Competencia *</label>
-                <select required className="input-field" value={form.materiaId}
-                  onChange={e => setForm({...form, materiaId: e.target.value})}>
-                  <option value="">Selecciona una competencia</option>
-                  {materias.map(m => (
-                    <option key={m.id} value={m.id}>{m.nombre} - Ficha {m.ficha.numero}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="input-label mb-0">Resultado de Aprendizaje *</label>
+                  {!form.materiaId && (
+                    <div className="relative w-1/2">
+                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Buscar resultado..." 
+                        value={busquedaResultado}
+                        onChange={e => setBusquedaResultado(e.target.value)}
+                        className="w-full text-xs py-1.5 pl-8 pr-3 border border-gray-200 dark:border-zinc-700 rounded-lg bg-gray-50 dark:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#4285F4]"
+                      />
+                    </div>
+                  )}
+                </div>
+                {!form.materiaId ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-200 dark:border-zinc-700 rounded-xl p-2 bg-white dark:bg-zinc-900">
+                    {loadingMaterias ? (
+                      <div className="flex flex-col items-center justify-center py-6">
+                        <div className="w-6 h-6 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-xs text-gray-500 mt-2">Cargando resultados...</p>
+                      </div>
+                    ) : (() => {
+                      const filtrados = materias.filter(m => 
+                        m.nombre.toLowerCase().includes(busquedaResultado.toLowerCase()) || 
+                        (m.competencia?.nombre && m.competencia.nombre.toLowerCase().includes(busquedaResultado.toLowerCase()))
+                      );
+                      
+                      if (materias.length === 0) {
+                        return <p className="text-sm text-gray-500 p-2 text-center">No hay resultados disponibles</p>;
+                      }
+                      
+                      if (filtrados.length === 0) {
+                        return <p className="text-sm text-gray-500 p-2 text-center">No se encontraron resultados para tu búsqueda</p>;
+                      }
+
+                      return filtrados.map(m => (
+                        <div key={m.id} 
+                          onClick={() => setForm({...form, materiaId: m.id})} 
+                          className="p-3 border border-gray-100 dark:border-zinc-800 hover:border-[#4285F4] dark:hover:border-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer rounded-lg transition-colors">
+                          <p className="font-bold text-gray-900 dark:text-white text-sm">
+                            {m.nombre} 
+                          </p>
+                          <div className="mt-1 space-y-0.5">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Competencia:</span> {m.competencia?.nombre || 'N/A'}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Instructor:</span> {m.instructor?.fullName || 'Sin instructor asignado'}
+                            </p>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                ) : (
+                  <div className="p-3 border border-[#4285F4] bg-blue-50 dark:bg-blue-900/10 rounded-xl flex items-center justify-between">
+                    {(() => {
+                      const selected = materias.find(m => m.id === form.materiaId);
+                      return selected ? (
+                        <div className="min-w-0 pr-2">
+                          <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{selected.nombre}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">Instructor: {selected.instructor?.fullName || 'N/A'}</p>
+                        </div>
+                      ) : (
+                        <p>Seleccionado</p>
+                      );
+                    })()}
+                    <button type="button" onClick={() => setForm({...form, materiaId: ''})} className="text-[#4285F4] hover:underline text-sm font-medium whitespace-nowrap">
+                      Cambiar
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -497,7 +567,7 @@ export default function AprendizExcusas() {
             <div className="lg:block hidden">
               <div className="card bg-gray-50 sticky top-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
-                  <Calendar size={16}/> Horario de la Competencia
+                  <Calendar size={16}/> Horario del Resultado
                 </h3>
                 {materiaSeleccionada ? (
                   materiaSeleccionada.horarios.length > 0 ? (
@@ -513,7 +583,7 @@ export default function AprendizExcusas() {
                     <p className="text-sm text-gray-500">No hay horarios configurados</p>
                   )
                 ) : (
-                  <p className="text-sm text-gray-500">Selecciona una competencia para ver su horario</p>
+                  <p className="text-sm text-gray-500">Selecciona un resultado para ver su horario</p>
                 )}
               </div>
             </div>
@@ -539,7 +609,7 @@ export default function AprendizExcusas() {
       </Modal>
 
       {/* Modal horario móvil */}
-      <Modal open={modalHorario} onClose={() => setModalHorario(false)} title="Horario de la Competencia" maxWidth="max-w-md">
+      <Modal open={modalHorario} onClose={() => setModalHorario(false)} title="Horario del Resultado" maxWidth="max-w-md">
         {materiaSeleccionada ? (
           materiaSeleccionada.horarios.length > 0 ? (
             <div className="space-y-2">
@@ -554,7 +624,7 @@ export default function AprendizExcusas() {
             <p className="text-sm text-gray-500">No hay horarios configurados</p>
           )
         ) : (
-          <p className="text-sm text-gray-500">Selecciona una competencia primero</p>
+          <p className="text-sm text-gray-500">Selecciona un resultado primero</p>
         )}
       </Modal>
 
@@ -593,7 +663,7 @@ export default function AprendizExcusas() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Solo puedes seleccionar fechas con clase de esta competencia</p>
+                  <p className="text-xs text-gray-500 mt-1">Solo puedes seleccionar fechas con clase de este resultado</p>
                 </div>
 
                 <div>
@@ -636,7 +706,7 @@ export default function AprendizExcusas() {
               <div className="lg:block hidden">
                 <div className="card bg-gray-50 sticky top-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white  mb-3 flex items-center gap-2">
-                    <Calendar size={16}/> Horario de la Competencia
+                    <Calendar size={16}/> Horario del Resultado
                   </h3>
                   {(() => {
                     const materiaExcusa = materias.find(m => m.id === modalEditar.materiaId);

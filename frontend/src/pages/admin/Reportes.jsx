@@ -23,10 +23,12 @@ export default function AdminReportes() {
   
   // Estados para sesiones (reemplaza estadísticas)
   const [fichaSeleccionadaVista, setFichaSeleccionadaVista] = useState('');
-  const [materiasVista, setMateriasVista] = useState([]);
-  const [loadingMateriasVista, setLoadingMateriasVista] = useState(false);
-  const [errorMateriasVista, setErrorMateriasVista] = useState(false);
-  const [materiaSeleccionadaVista, setMateriaSeleccionadaVista] = useState('');
+  const [competenciasVista, setCompetenciasVista] = useState([]);
+  const [loadingCompetenciasVista, setLoadingCompetenciasVista] = useState(false);
+  const [errorCompetenciasVista, setErrorCompetenciasVista] = useState(false);
+  const [competenciaSeleccionadaVista, setCompetenciaSeleccionadaVista] = useState('');
+  const [resultadosVista, setResultadosVista] = useState([]);
+  const [resultadoSeleccionadoVista, setResultadoSeleccionadoVista] = useState('');
   const [sesiones, setSesiones] = useState([]);
   const [loadingSesiones, setLoadingSesiones] = useState(false);
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
@@ -38,10 +40,10 @@ export default function AdminReportes() {
   }, []);
 
   useEffect(() => {
-    if (vistaActual === 'sesiones' && materiaSeleccionadaVista) {
+    if (vistaActual === 'sesiones' && resultadoSeleccionadoVista) {
       loadSesiones();
     }
-  }, [vistaActual, materiaSeleccionadaVista, filtroFechaDesde, filtroFechaHasta]);
+  }, [vistaActual, resultadoSeleccionadoVista, filtroFechaDesde, filtroFechaHasta]);
 
   const loadFichas = async () => {
     try {
@@ -57,14 +59,14 @@ export default function AdminReportes() {
   };
 
   const loadSesiones = async () => {
-    if (!materiaSeleccionadaVista) return;
+    if (!resultadoSeleccionadoVista) return;
     try {
       setLoadingSesiones(true);
       const params = new URLSearchParams();
       if (filtroFechaDesde) params.append('fechaDesde', filtroFechaDesde);
       if (filtroFechaHasta) params.append('fechaHasta', filtroFechaHasta);
       
-      const data = await fetchApi(`/admin/reportes/sesiones/${materiaSeleccionadaVista}?${params.toString()}`);
+      const data = await fetchApi(`/admin/reportes/sesiones/${resultadoSeleccionadoVista}?${params.toString()}`);
       setSesiones(data.sesiones || []);
     } catch (err) {
       console.error('Error cargando sesiones:', err);
@@ -77,24 +79,41 @@ export default function AdminReportes() {
   const handleFichaVistaChange = async (e) => {
     const fichaId = e.target.value;
     setFichaSeleccionadaVista(fichaId);
-    setMateriaSeleccionadaVista('');
+    setCompetenciaSeleccionadaVista('');
+    setResultadoSeleccionadoVista('');
+    setResultadosVista([]);
     setSesiones([]);
     if (!fichaId) {
-      setMateriasVista([]);
-      setErrorMateriasVista(false);
+      setCompetenciasVista([]);
+      setErrorCompetenciasVista(false);
       return;
     }
     try {
-      setLoadingMateriasVista(true);
-      setErrorMateriasVista(false);
+      setLoadingCompetenciasVista(true);
+      setErrorCompetenciasVista(false);
       const data = await fetchApi(`/admin/fichas/${fichaId}`);
-      setMateriasVista(data.ficha?.materias || []);
+      setCompetenciasVista(data.ficha?.competencias || []);
     } catch (err) {
-      setErrorMateriasVista(true);
+      setErrorCompetenciasVista(true);
       showToast('Error cargando competencias', 'error');
     } finally {
-      setLoadingMateriasVista(false);
+      setLoadingCompetenciasVista(false);
     }
+  };
+
+  const handleCompetenciaVistaChange = (e) => {
+    const compId = e.target.value;
+    setCompetenciaSeleccionadaVista(compId);
+    setResultadoSeleccionadoVista('');
+    setSesiones([]);
+    
+    if (!compId) {
+      setResultadosVista([]);
+      return;
+    }
+    
+    const comp = competenciasVista.find(c => c.id === compId);
+    setResultadosVista(comp?.resultados || []);
   };
 
   const handleDownloadReporteSesionIndividual = async (sesionId, materiaNombre, fecha) => {
@@ -444,41 +463,58 @@ export default function AdminReportes() {
               </div>
 
               <div className="relative">
-                <label className="input-label">Materia</label>
+                <label className="input-label">Competencia</label>
                 <div className="relative">
                   <select
-                    value={materiaSeleccionadaVista}
-                    onChange={(e) => {
-                      setMateriaSeleccionadaVista(e.target.value);
-                      setSesiones([]);
-                    }}
-                    disabled={!fichaSeleccionadaVista || loadingMateriasVista || errorMateriasVista || materiasVista.length === 0}
-                    className={`input-field ${loadingMateriasVista ? 'pl-10' : ''} ${errorMateriasVista ? 'border-red-500' : ''}`}
+                    value={competenciaSeleccionadaVista}
+                    onChange={handleCompetenciaVistaChange}
+                    disabled={!fichaSeleccionadaVista || loadingCompetenciasVista || errorCompetenciasVista || competenciasVista.length === 0}
+                    className={`input-field ${loadingCompetenciasVista ? 'pl-10' : ''} ${errorCompetenciasVista ? 'border-red-500' : ''}`}
                   >
-                    {loadingMateriasVista ? (
-                      <option value="">Cargando materias...</option>
-                    ) : errorMateriasVista ? (
-                      <option value="">Error al cargar materias</option>
+                    {loadingCompetenciasVista ? (
+                      <option value="">Cargando competencias...</option>
+                    ) : errorCompetenciasVista ? (
+                      <option value="">Error al cargar competencias</option>
                     ) : (
                       <>
-                        <option value="">Seleccione una materia...</option>
-                        {materiasVista.map(m => (
-                          <option key={m.id} value={m.id}>
-                            {m.nombre} - {m.instructor?.fullName || 'Sin asignar'}
+                        <option value="">Seleccione una competencia...</option>
+                        {competenciasVista.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.nombre}
                           </option>
                         ))}
                       </>
                     )}
                   </select>
-                  {loadingMateriasVista && (
+                  {loadingCompetenciasVista && (
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-red-500">
                       <Loader2 size={18} className="animate-spin" />
                     </div>
                   )}
                 </div>
-                {errorMateriasVista && (
+                {errorCompetenciasVista && (
                   <p className="mt-1 text-sm text-red-500">Intenta seleccionar la ficha nuevamente.</p>
                 )}
+              </div>
+
+              <div className="relative">
+                <label className="input-label">Resultado de Aprendizaje</label>
+                <select
+                  value={resultadoSeleccionadoVista}
+                  onChange={(e) => {
+                    setResultadoSeleccionadoVista(e.target.value);
+                    setSesiones([]);
+                  }}
+                  disabled={!competenciaSeleccionadaVista || resultadosVista.length === 0}
+                  className="input-field"
+                >
+                  <option value="">Seleccione un resultado...</option>
+                  {resultadosVista.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.nombre} - {r.instructor?.fullName || 'Sin asignar'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -505,7 +541,7 @@ export default function AdminReportes() {
           </div>
 
           {/* Resultados de Sesiones */}
-          {materiaSeleccionadaVista && (
+          {resultadoSeleccionadoVista && (
             <div className="card">
               <div className="p-4 md:p-6 border-b border-gray-200 dark:border-zinc-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -522,13 +558,13 @@ export default function AdminReportes() {
                   <button
                     onClick={async () => {
                       try {
-                        setDownloading(`materia-${materiaSeleccionadaVista}`);
+                        setDownloading(`resultado-${resultadoSeleccionadoVista}`);
                         showToast('Generando reporte de asistencias...', 'info');
                         const params = new URLSearchParams();
                         if (filtroFechaDesde) params.append('fechaDesde', filtroFechaDesde);
                         if (filtroFechaHasta) params.append('fechaHasta', filtroFechaHasta);
                         const response = await fetch(
-                          `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/materia/${materiaSeleccionadaVista}?${params.toString()}`,
+                          `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/reportes/resultado/${resultadoSeleccionadoVista}?${params.toString()}`,
                           { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
                         );
                         if (!response.ok) throw new Error('Error al generar reporte');
@@ -548,11 +584,11 @@ export default function AdminReportes() {
                         setDownloading(null);
                       }
                     }}
-                    disabled={downloading === `materia-${materiaSeleccionadaVista}`}
+                    disabled={downloading === `resultado-${resultadoSeleccionadoVista}`}
                     className="btn-secondary text-sm flex items-center gap-2"
                   >
                     <Download size={16} />
-                    {downloading === `materia-${materiaSeleccionadaVista}` ? 'Generando...' : 'Descargar Materia Completa'}
+                    {downloading === `resultado-${resultadoSeleccionadoVista}` ? 'Generando...' : 'Descargar Resultado Completo'}
                   </button>
                 )}
               </div>

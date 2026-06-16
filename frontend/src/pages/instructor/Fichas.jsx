@@ -275,21 +275,7 @@ export default function InstructorFichas() {
             >
               <Upload size={16} /> Importar desde Excel
             </button>
-            <button 
-              onClick={() => {
-                const liderFichas = fichas.filter(f => f.instructorAdminId === user?.id);
-                if (liderFichas.length === 0) {
-                  showToast('No eres líder de ninguna ficha', 'error');
-                } else if (liderFichas.length === 1) {
-                  setModalImport({ open: true, fichaId: liderFichas[0].id, fichaNumero: liderFichas[0].numero });
-                } else {
-                  setModalSelectFicha(true);
-                }
-              }} 
-              className="btn-secondary text-sm md:text-base flex items-center gap-2"
-            >
-              <UploadCloud size={16}/> Importar Competencias
-            </button>
+
             <button onClick={() => { setModalCreate(true); setForm(EMPTY_FORM); setError(''); }} className="btn-primary text-sm md:text-base  flex items-center gap-2">
               <Plus size={16}/> Nueva Ficha
             </button>

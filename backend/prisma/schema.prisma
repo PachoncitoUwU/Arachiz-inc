@@ -40,15 +40,18 @@ model User {
   reactionScore        ReactionScore?
   registros            RegistroAsistencia[]
   respuestasRapidas    RespuestaRapida[]      @relation("RespuestasRapidas")
-  
-  snakeScore           SnakeScore?
-  superUserLogs        SuperUserAuditLog[]    @relation("SuperUserLogs")
-  towerScore           TowerScore?
-  userSkins            UserSkin[]
-  wordleScore          WordleScore?
-  fichasApr            Ficha[]              @relation("Aprendices")
-  resultadosEvitados   ResultadoEvitado[]
-  historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
+
+  snakeScore         SnakeScore?
+  superUserLogs      SuperUserAuditLog[] @relation("SuperUserLogs")
+  towerScore         TowerScore?
+  userSkins          UserSkin[]
+  wordleScore        WordleScore?
+  fichasApr          Ficha[]             @relation("Aprendices")
+  resultadosEvitados ResultadoEvitado[]
+  historialCambios   HistorialCambios[]  @relation("UsuarioCambios")
+  eventosCreados     Evento[]            @relation("EventosCreados")
+  fichasUnidas       EventoFicha[]       @relation("UnidaPor")
+  eventoRegistros    EventoRegistro[]    @relation("AprendizEventoRegistro")
 }
 
 model Ficha {
@@ -72,9 +75,10 @@ model Ficha {
   historialCambios  HistorialCambios[] @relation("FichaHistorial")
   horarios          Horario[]
   competencias      Competencia[]
-  aprendices        User[]              @relation("Aprendices")
-  papelera          Papelera[]          @relation("FichaPapelera")
+  aprendices        User[]             @relation("Aprendices")
+  papelera          Papelera[]         @relation("FichaPapelera")
   mensajesChat      MensajeChat[]
+  eventos           EventoFicha[]
 
   @@index([administradorId])
 }
@@ -91,12 +95,12 @@ model FichaInstructor {
 }
 
 model Competencia {
-  id          String                 @id @default(cuid())
-  nombre      String
-  tipo        String
-  fichaId     String
-  ficha       Ficha                  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  resultados  ResultadoAprendizaje[]
+  id         String                 @id @default(cuid())
+  nombre     String
+  tipo       String
+  fichaId    String
+  ficha      Ficha                  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  resultados ResultadoAprendizaje[]
 }
 
 model ResultadoAprendizaje {
@@ -156,21 +160,21 @@ model RegistroAsistencia {
 }
 
 model Excusa {
-  id                   String              @id @default(cuid())
+  id                   String               @id @default(cuid())
   fechas               String
   motivo               String
   archivosUrls         String?
-  estado               String              @default("Pendiente")
+  estado               String               @default("Pendiente")
   respuesta            String?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @default(now()) @updatedAt
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @default(now()) @updatedAt
   respondedAt          DateTime?
   aprendizId           String
   resultadoId          String
   registroAsistenciaId String?
-  aprendiz             User                @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
+  aprendiz             User                 @relation(fields: [aprendizId], references: [id], onDelete: Cascade)
   resultado            ResultadoAprendizaje @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
-  registroAsistencia   RegistroAsistencia? @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
+  registroAsistencia   RegistroAsistencia?  @relation(fields: [registroAsistenciaId], references: [id], onDelete: SetNull)
 
   @@index([aprendizId])
   @@index([resultadoId])
@@ -419,4 +423,45 @@ model Notification {
   @@index([read])
 }
 
+model Evento {
+  id               String   @id @default(cuid())
+  nombre           String
+  descripcion      String?
+  fechaHora        DateTime
+  creadorId        String
+  codigoInvitacion String   @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 
+  creador   User             @relation("EventosCreados", fields: [creadorId], references: [id])
+  fichas    EventoFicha[]
+  registros EventoRegistro[]
+}
+
+model EventoFicha {
+  id         String   @id @default(cuid())
+  eventoId   String
+  fichaId    String
+  unidaPorId String
+  createdAt  DateTime @default(now())
+
+  evento   Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  ficha    Ficha  @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  unidaPor User   @relation("UnidaPor", fields: [unidaPorId], references: [id])
+
+  @@unique([eventoId, fichaId])
+}
+
+model EventoRegistro {
+  id         String   @id @default(cuid())
+  eventoId   String
+  aprendizId String
+  presente   Boolean  @default(false)
+  metodo     String   @default("manual")
+  timestamp  DateTime @default(now())
+
+  evento   Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  aprendiz User   @relation("AprendizEventoRegistro", fields: [aprendizId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, aprendizId])
+}

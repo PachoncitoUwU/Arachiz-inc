@@ -10,7 +10,7 @@ import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../context/ToastContext';
-import { Calendar, Plus, Trash2, Clock, Edit2, GripVertical, CheckCircle2, Check, AlertTriangle } from 'lucide-react';
+import { Calendar, Plus, Trash2, Clock, Edit2, GripVertical, CheckCircle2, Check, AlertTriangle, RefreshCw } from 'lucide-react';
 import ConflictosAlert from '../../components/ConflictosAlert';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -522,6 +522,18 @@ export default function InstructorHorario() {
           >
             <Edit2 size={16} />
             {modoEditar ? 'Salir de Edición' : 'Modo Editar'}
+          </button>
+
+          <button
+            onClick={() => {
+              loadConflictos();
+              showToast('Conflictos validados', 'info');
+            }}
+            className="btn-secondary flex items-center gap-2"
+            title="Recargar y validar si los conflictos pendientes ya fueron resueltos"
+          >
+            <RefreshCw size={16} />
+            Validar Conflictos
           </button>
 
           <button

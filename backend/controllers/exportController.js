@@ -691,11 +691,148 @@ const exportReporteConsolidado = async (req, res) => {
   }
 };
 
+// GET /api/export/competencia/:competenciaId/consolidado
+const exportReporteCompetencia = async (req, res) => {
+  const { competenciaId } = req.params;
+  const instructorId = req.user.id;
+
+  try {
+    const competencia = await prisma.competencia.findUnique({
+      where: { id: competenciaId },
+      include: {
+        ficha: {
+          include: {
+            instructores: true,
+            aprendices: {
+              select: { id: true, fullName: true, document: true },
+              orderBy: { fullName: 'asc' }
+            }
+          }
+        },
+        resultados: {
+          where: { instructorId },
+          include: {
+            asistencias: {
+              where: { activa: false },
+              orderBy: { timestamp: 'asc' },
+              include: {
+                registros: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!competencia) return res.status(404).json({ error: 'Competencia no encontrada' });
+    if (!competencia.ficha.instructores.some(i => i.instructorId === instructorId)) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    if (competencia.resultados.length === 0) {
+      return res.status(404).json({ error: 'No tienes resultados de aprendizaje en esta competencia.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Arachiz';
+
+    competencia.resultados.forEach((resultado) => {
+      const sheetName = resultado.nombre.substring(0, 31).replace(/[\\/*?:[\]]/g, ''); // Nombres de hoja Excel limitados a 31 chars
+      const sheet = workbook.addWorksheet(sheetName);
+      
+      const totalSesiones = resultado.asistencias.length;
+
+      const columns = [
+        { header: 'Nombre', key: 'nombre', width: 30 },
+        { header: 'Documento', key: 'documento', width: 15 }
+      ];
+
+      if (totalSesiones > 0) {
+        resultado.asistencias.forEach((sesion, idx) => {
+          columns.push({ header: sesion.fecha, key: `s${idx}`, width: 12 });
+        });
+      }
+
+      columns.push({ header: 'Presencias', key: 'total', width: 12 });
+      columns.push({ header: '% Asistencia', key: 'porcentaje', width: 14 });
+      columns.push({ header: 'Tardanzas', key: 'tardanzas', width: 12 });
+
+      sheet.columns = columns;
+
+      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      sheet.getRow(1).fill = {
+        type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34A853' }
+      };
+
+      competencia.ficha.aprendices.forEach(aprendiz => {
+        const rowData = {
+          nombre: aprendiz.fullName,
+          documento: aprendiz.document
+        };
+
+        let presencias = 0;
+        let tardanzas = 0;
+
+        if (totalSesiones > 0) {
+          resultado.asistencias.forEach((sesion, idx) => {
+            const reg = sesion.registros.find(r => r.aprendizId === aprendiz.id);
+            if (reg?.presente) {
+              presencias++;
+              if (reg.tarde) {
+                tardanzas++;
+                rowData[`s${idx}`] = 'T';
+              } else {
+                rowData[`s${idx}`] = '✓';
+              }
+            } else {
+              rowData[`s${idx}`] = '✗';
+            }
+          });
+        }
+
+        rowData.total = presencias;
+        rowData.porcentaje = totalSesiones > 0 ? `${Math.round((presencias / totalSesiones) * 100)}%` : '0%';
+        rowData.tardanzas = tardanzas;
+
+        const row = sheet.addRow(rowData);
+
+        if (totalSesiones > 0) {
+          const pct = (presencias / totalSesiones) * 100;
+          const pctCell = row.getCell('porcentaje');
+          if (pct < 60) {
+            pctCell.font = { bold: true, color: { argb: 'FFEA4335' } };
+          } else if (pct < 80) {
+            pctCell.font = { bold: true, color: { argb: 'FFFBBC05' } };
+          } else {
+            pctCell.font = { bold: true, color: { argb: 'FF34A853' } };
+          }
+        }
+      });
+
+      sheet.addRow({});
+      sheet.addRow({
+        nombre: 'TOTAL SESIONES',
+        documento: totalSesiones.toString()
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `Reporte_${competencia.nombre.substring(0,20)}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al generar consolidado de competencia: ' + err.message });
+  }
+};
+
 module.exports = {
   exportAsistenciaFicha,
   exportSessionAsistencia,
   exportFichaInfo,
   exportFichaInfoPdf,
   exportAsistenciaRango,
-  exportReporteConsolidado
+  exportReporteConsolidado,
+  exportReporteCompetencia
 };
