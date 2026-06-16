@@ -466,3 +466,12 @@ model EventoRegistro {
 
   @@unique([eventoId, aprendizId])
 }
+
+model QrCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  payload   String   // JSON con asistenciaId / eventoId / instructorId
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

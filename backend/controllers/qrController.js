@@ -2,10 +2,66 @@ const prisma = require('../lib/prisma');
 const crypto = require('crypto');
 const { getCurrentColombiaTime } = require('../utils/timeService');
 
-// Almacén temporal de códigos QR activos (en producción usar Redis)
+// Tiempo de vida del QR en milisegundos (5 minutos para compensar latencia de Render)
+const QR_TTL_MS = 5 * 60 * 1000;
+
+// Fallback en memoria para cuando la DB no tenga tabla QR aún
 const activeQRCodes = new Map();
 
-// Generar código QR único para una sesión o evento
+// ── Helpers de persistencia ───────────────────────────────────────────────────
+// Intenta guardar en DB; si falla (tabla no existe) usa el Map en memoria
+async function saveQR(code, data) {
+  try {
+    await prisma.qrCode.create({
+      data: {
+        code,
+        payload: JSON.stringify(data),
+        expiresAt: new Date(Date.now() + QR_TTL_MS),
+        used: false
+      }
+    });
+  } catch {
+    // Tabla no existe todavía → usar memoria
+    activeQRCodes.set(code, { ...data, timestamp: Date.now() });
+    setTimeout(() => activeQRCodes.delete(code), QR_TTL_MS);
+  }
+}
+
+async function getQR(code) {
+  try {
+    const row = await prisma.qrCode.findUnique({ where: { code } });
+    if (!row) return null;
+    if (row.used || row.expiresAt < new Date()) return null;
+    return JSON.parse(row.payload);
+  } catch {
+    // Fallback memoria
+    const data = activeQRCodes.get(code);
+    if (!data) return null;
+    if (Date.now() - data.timestamp > QR_TTL_MS) {
+      activeQRCodes.delete(code);
+      return null;
+    }
+    return data;
+  }
+}
+
+async function markUsed(code) {
+  try {
+    await prisma.qrCode.update({ where: { code }, data: { used: true } });
+  } catch {
+    activeQRCodes.delete(code);
+  }
+}
+
+async function deleteQR(code) {
+  try {
+    await prisma.qrCode.delete({ where: { code } });
+  } catch {
+    activeQRCodes.delete(code);
+  }
+}
+
+// ── Generar código QR ─────────────────────────────────────────────────────────
 exports.generateQR = async (req, res) => {
   try {
     const { asistenciaId, eventoId } = req.body;
@@ -17,81 +73,49 @@ exports.generateQR = async (req, res) => {
         return res.status(404).json({ error: 'Evento no encontrado o no activo' });
       }
       const code = crypto.randomBytes(32).toString('hex');
-      const timestamp = Date.now();
-      activeQRCodes.set(code, { eventoId, instructorId, timestamp, used: false });
-      setTimeout(() => activeQRCodes.delete(code), 30000);
-      return res.json({ code, expiresIn: 30000 });
+      await saveQR(code, { eventoId, instructorId });
+      return res.json({ code, expiresIn: QR_TTL_MS });
     }
 
     // Verificar que la sesión existe y pertenece al instructor
     const session = await prisma.asistencia.findFirst({
-      where: {
-        id: asistenciaId,
-        instructorId,
-        activa: true
-      }
+      where: { id: asistenciaId, instructorId, activa: true }
     });
 
     if (!session) {
       return res.status(404).json({ error: 'Sesión no encontrada o no activa' });
     }
 
-    // Generar código único
     const code = crypto.randomBytes(32).toString('hex');
-    const timestamp = Date.now();
+    await saveQR(code, { asistenciaId, instructorId });
 
-    // Guardar en memoria (expira en 30 segundos)
-    activeQRCodes.set(code, {
-      asistenciaId,
-      instructorId,
-      timestamp,
-      used: false
-    });
-
-    // Limpiar códigos expirados
-    setTimeout(() => {
-      activeQRCodes.delete(code);
-    }, 30000);
-
-    res.json({ code, expiresIn: 30000 });
+    res.json({ code, expiresIn: QR_TTL_MS });
   } catch (error) {
     console.error('Error generating QR:', error);
     res.status(500).json({ error: 'Error al generar código QR' });
   }
 };
 
-// Validar y registrar asistencia por QR
+// ── Validar y registrar asistencia por QR ─────────────────────────────────────
 exports.validateQR = async (req, res) => {
   try {
     const { code } = req.body;
     const aprendizId = req.user.id;
 
-    // Verificar que el usuario es aprendiz
     if (req.user.userType !== 'aprendiz') {
       return res.status(403).json({ error: 'Solo aprendices pueden escanear QR' });
     }
 
-    // Verificar que el código existe y es válido
-    const qrData = activeQRCodes.get(code);
-    
+    const qrData = await getQR(code);
+
     if (!qrData) {
       return res.status(400).json({ error: 'Código QR inválido o expirado' });
     }
 
-    if (qrData.used) {
-      return res.status(400).json({ error: 'Este código ya fue usado' });
-    }
+    // Marcar como usado inmediatamente para evitar uso duplicado
+    await markUsed(code);
 
-    // Verificar que no haya expirado (30 segundos)
-    const now = Date.now();
-    if (now - qrData.timestamp > 30000) {
-      activeQRCodes.delete(code);
-      return res.status(400).json({ error: 'Código QR expirado' });
-    }
-
-    // Marcar como usado
-    qrData.used = true;
-
+    // ── Flujo evento ─────────────────────────────────────────────────────────
     if (qrData.eventoId) {
       const eventoFichas = await prisma.eventoFicha.findMany({ where: { eventoId: qrData.eventoId } });
       const fichasIds = eventoFichas.map(f => f.fichaId);
@@ -118,11 +142,11 @@ exports.validateQR = async (req, res) => {
           aprendiz: { fullName: user.fullName }
         });
       }
-      activeQRCodes.delete(code);
+      await deleteQR(code);
       return res.json({ success: true, message: 'Asistencia registrada correctamente', registro });
     }
 
-    // Verificar que el aprendiz pertenece a la ficha de la materia
+    // ── Flujo sesión normal ───────────────────────────────────────────────────
     const session = await prisma.asistencia.findFirst({
       where: { id: qrData.asistenciaId },
       include: {
@@ -130,11 +154,7 @@ exports.validateQR = async (req, res) => {
           include: {
             competencia: {
               include: {
-                ficha: {
-                  include: {
-                    aprendices: true
-                  }
-                }
+                ficha: { include: { aprendices: true } }
               }
             }
           }
@@ -151,22 +171,16 @@ exports.validateQR = async (req, res) => {
       return res.status(403).json({ error: 'No estás inscrito en esta materia' });
     }
 
-    // Verificar si ya está registrado
     const existing = await prisma.registroAsistencia.findFirst({
-      where: {
-        asistenciaId: qrData.asistenciaId,
-        aprendizId
-      }
+      where: { asistenciaId: qrData.asistenciaId, aprendizId }
     });
 
     if (existing) {
       return res.status(400).json({ error: 'Ya registraste tu asistencia' });
     }
 
-    // Obtener hora actual de Colombia
     const colombiaTime = await getCurrentColombiaTime();
 
-    // Registrar asistencia
     const registro = await prisma.registroAsistencia.create({
       data: {
         asistenciaId: qrData.asistenciaId,
@@ -177,16 +191,11 @@ exports.validateQR = async (req, res) => {
       },
       include: {
         aprendiz: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+          select: { id: true, fullName: true, email: true }
         }
       }
     });
 
-    // Emitir evento socket
     const io = req.app.get('io');
     if (io) {
       io.to(`session_${qrData.asistenciaId}`).emit('nuevaAsistencia', {
@@ -199,13 +208,12 @@ exports.validateQR = async (req, res) => {
       });
     }
 
-    // Eliminar el código usado
-    activeQRCodes.delete(code);
+    await deleteQR(code);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Asistencia registrada correctamente',
-      registro 
+      registro
     });
   } catch (error) {
     console.error('Error validating QR:', error);
@@ -213,29 +221,40 @@ exports.validateQR = async (req, res) => {
   }
 };
 
-// Obtener estado del QR (para polling del instructor)
+// ── Estado del QR ─────────────────────────────────────────────────────────────
 exports.getQRStatus = async (req, res) => {
   try {
     const { code } = req.params;
-    const qrData = activeQRCodes.get(code);
 
-    if (!qrData) {
+    // Intentar DB primero
+    let timeLeft = 0;
+    let used = false;
+    let valid = false;
+
+    try {
+      const row = await prisma.qrCode.findUnique({ where: { code } });
+      if (row && !row.used && row.expiresAt > new Date()) {
+        timeLeft = Math.floor((row.expiresAt.getTime() - Date.now()) / 1000);
+        used = row.used;
+        valid = true;
+      }
+    } catch {
+      // Fallback memoria
+      const data = activeQRCodes.get(code);
+      if (data) {
+        const elapsed = Date.now() - data.timestamp;
+        if (elapsed < QR_TTL_MS) {
+          timeLeft = Math.floor((QR_TTL_MS - elapsed) / 1000);
+          valid = true;
+        }
+      }
+    }
+
+    if (!valid) {
       return res.json({ valid: false, expired: true });
     }
 
-    const now = Date.now();
-    const timeLeft = 30000 - (now - qrData.timestamp);
-
-    if (timeLeft <= 0) {
-      activeQRCodes.delete(code);
-      return res.json({ valid: false, expired: true });
-    }
-
-    res.json({ 
-      valid: true, 
-      used: qrData.used,
-      timeLeft: Math.floor(timeLeft / 1000)
-    });
+    res.json({ valid: true, used, timeLeft });
   } catch (error) {
     console.error('Error getting QR status:', error);
     res.status(500).json({ error: 'Error al obtener estado del QR' });

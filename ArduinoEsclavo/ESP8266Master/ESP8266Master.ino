@@ -632,17 +632,16 @@ void loop() {
     mostrarLogo();
   }
 
-  // Consultar comandos al backend cada 1.5s (el Arduino hace POLL cada 400ms)
+  // Consultar comandos al backend cada 800ms (el Arduino hace POLL cada 600ms)
   static unsigned long lastCheck = 0;
-  if (millis() - lastCheck > 1500) {
+  if (millis() - lastCheck > 800) {
     lastCheck = millis();
     consultarComandos();
   }
 
   // Leer mensajes del Arduino
   if (arduinoSerial.available()) {
-    // Limpiar bytes basura antes de leer
-    delay(15);
+    arduinoSerial.setTimeout(200); // timeout corto para no bloquear el loop
     String msg = arduinoSerial.readStringUntil('\n');
     msg.trim();
     // Filtrar solo ASCII imprimible
@@ -687,7 +686,9 @@ void loop() {
       mostrarMensaje("NFC leido", uid, ok ? "Registrado!" : "Error envio");
 
     } else if (msg.startsWith("READ_FINGER:")) {
+      // Soporta con o sin espacio después de los dos puntos
       String id = msg.substring(12); id.trim();
+      if (id.length() == 0) id = "?";
       mostrarMensaje("Huella leida", "ID: " + id, "Enviando...");
       bool ok = enviarEvento("finger", id, online);
       mostrarMensaje("Huella leida", "ID: " + id, ok ? "Registrado!" : "Error envio");

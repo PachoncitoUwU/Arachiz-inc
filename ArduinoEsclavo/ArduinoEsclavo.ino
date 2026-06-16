@@ -39,6 +39,7 @@ void   enviarEvento(String msg);
 void   bridgeTone(int freq, unsigned long dur);
 void   procesarComando(String cmd);
 String pollESP();
+void   esperarRetiroDedo(unsigned long timeoutMs);
 
 // ── SETUP ─────────────────────────────────────────────────────────────────────
 void setup() {
@@ -55,7 +56,7 @@ void setup() {
   delay(100);
 
   Serial.println(F("\n========================================="));
-  Serial.println(F(" ARACHIZ - MODO ESCLAVO V10.2"));
+  Serial.println(F(" ARACHIZ - MODO ESCLAVO V10.3"));
   Serial.println(F("========================================="));
 
   Wire.begin();
@@ -83,15 +84,35 @@ void setup() {
 }
 
 // ── ENVIAR EVENTO ─────────────────────────────────────────────────────────────
+// NOTA: en modo WiFi el sonido ya se tocó ANTES de llamar esta función,
+// porque espSerial.listen() desactiva mySerial (SoftwareSerial exclusivo)
 void enviarEvento(String msg) {
   if (digitalRead(PIN_SWITCH) == LOW) {
     espSerial.listen();
-    delay(5);
+    delay(10);
     espSerial.println("EVT:" + msg);
+    // Esperar a que el ESP reciba todos los bytes (a 4800 baud, ~2ms/byte)
+    // "EVT:READ_FINGER:128\n" = ~22 bytes → ~46ms mínimo
+    delay(60);
     Serial.println("WiFi -> " + msg);
+    // Volver a escuchar el AS608 para no dejarlo huérfano
+    mySerial.listen();
   } else {
     Serial.println(msg);
   }
+}
+
+// ── ESPERAR RETIRO DE DEDO ────────────────────────────────────────────────────
+// Función auxiliar: siempre activa mySerial antes de preguntar al AS608
+void esperarRetiroDedo(unsigned long timeoutMs) {
+  unsigned long t0 = millis();
+  uint8_t estado;
+  do {
+    mySerial.listen();
+    delay(60);
+    estado = finger.getImage();
+  } while (estado != FINGERPRINT_NOFINGER && millis() - t0 < timeoutMs);
+  delay(120); // estabilización final del sensor
 }
 
 // ── POLL AL ESP ───────────────────────────────────────────────────────────────
@@ -100,7 +121,7 @@ String pollESP() {
   delay(5);
   espSerial.println("POLL");
   unsigned long t0 = millis();
-  while (millis() - t0 < 250) {
+  while (millis() - t0 < 300) {
     if (espSerial.available()) {
       delay(20);
       String r = espSerial.readStringUntil('\n');
@@ -109,18 +130,20 @@ String pollESP() {
       for (int i = 0; i < (int)r.length(); i++) {
         char c = r[i]; if (c >= 32 && c < 127) clean += c;
       }
+      mySerial.listen(); // restaurar escucha al AS608
       return (clean == "NONE") ? "" : clean;
     }
   }
+  mySerial.listen(); // restaurar escucha al AS608
   return "";
 }
 
 // ── LOOP PRINCIPAL ────────────────────────────────────────────────────────────
 // ORDEN CRÍTICO:
 //   1. Comandos USB   (inmediato, sin bloqueo)
-//   2. Huella         (PRIMERO: mySerial.listen() activo, sin competencia)
-//   3. Poll ESP       (solo WiFi, usa espSerial brevemente)
-//   4. NFC            (ÚLTIMO: I2C bloquea ~25ms, va después de la huella)
+//   2. Huella         (mySerial.listen() activo, SIN competencia con espSerial)
+//   3. Poll ESP       (solo WiFi, usa espSerial brevemente y restaura mySerial)
+//   4. NFC            (ÚLTIMO: I2C bloquea ~25ms)
 void loop() {
 
   // ── A. Comandos por USB ───────────────────────────────────────────────────
@@ -130,30 +153,38 @@ void loop() {
     procesarComando(cmd);
   }
 
-  // ── B. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
+  // ── B. Lectura Huella ────────────────────────────────────────────────────
   if (!enrollando && sesionActiva) {
-    mySerial.listen();          // ceder el SoftwareSerial al AS608
+    mySerial.listen();
     uint8_t imgResult = finger.getImage();
 
     if (imgResult == FINGERPRINT_OK) {
       Serial.println(F("[Huella] Dedo detectado, procesando..."));
+
       if (finger.image2Tz() == FINGERPRINT_OK) {
+
         if (finger.fingerFastSearch() == FINGERPRINT_OK) {
           int fid = finger.fingerID;
           Serial.print(F("[Huella] Match! ID=")); Serial.println(fid);
-          enviarEvento("READ_FINGER: " + String(fid));
+
+          // PRIMERO sonar (mySerial aún activo, bridgeTone no usa serial)
           sonidoHuella();
-          // Esperar a que el dedo se retire (evita doble lectura)
-          unsigned long t0 = millis();
-          mySerial.listen();
-          while (finger.getImage() != FINGERPRINT_NOFINGER && millis() - t0 < 3000) {
-            mySerial.listen();
-          }
+
+          // LUEGO enviar (en WiFi esto cambia el listen, por eso sonamos antes)
+          enviarEvento("READ_FINGER:" + String(fid));
+
+          // Esperar que el dedo se retire
+          esperarRetiroDedo(4000);
+
         } else {
-          Serial.println(F("[Huella] No reconocida (no registrada)"));
+          Serial.println(F("[Huella] No reconocida"));
+          sonidoError();
+          esperarRetiroDedo(3000);
         }
+
       } else {
         Serial.println(F("[Huella] Error convirtiendo imagen"));
+        esperarRetiroDedo(2000);
       }
     }
     // FINGERPRINT_NOFINGER es normal → no hacer nada
@@ -176,8 +207,8 @@ void loop() {
     uint8_t uid[7] = {0};
     uint8_t uidLen = 0;
     if (nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 25)) {
-      enviarEvento("READ_NFC: " + hexUID(uid, uidLen));
-      sonidoNFC();
+      sonidoNFC();                                    // sonar ANTES de enviar
+      enviarEvento("READ_NFC:" + hexUID(uid, uidLen));
       delay(400);
       nfc_hardware.SAMConfig();
     }
@@ -210,8 +241,8 @@ void procesarComando(String cmd) {
       bool ok = enrolar(idx);
       delay(100);
       enviarEvento(ok
-        ? "ENROLL_SUCCESS: " + String(idx)
-        : "ENROLL_ERROR: Cancelado o fallo");
+        ? "ENROLL_SUCCESS:" + String(idx)
+        : "ENROLL_ERROR:Cancelado o fallo");
       enrollando = false;
     }
 
@@ -253,10 +284,7 @@ bool enrolar(int id) {
   bridgeTone(1400, 100); delay(70); bridgeTone(1400, 100);
   Serial.println(F("QUITA EL DEDO"));
   delay(600);
-  t = millis();
-  mySerial.listen();
-  while (finger.getImage() != FINGERPRINT_NOFINGER && millis() - t < 8000);
-  delay(150);
+  esperarRetiroDedo(8000);
 
   // Captura 2
   sonidoEnrolamientoInicio();
