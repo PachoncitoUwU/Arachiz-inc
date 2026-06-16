@@ -10,9 +10,11 @@ import AprendizPerfilModal from '../../components/AprendizPerfilModal';
 import MateriaInfoModal from '../../components/MateriaInfoModal';
 import NotificacionesModal from '../../components/NotificacionesModal';
 import ImportModal from '../../components/ImportModal';
-import {
-  ArrowLeft, Users, BookOpen, Calendar, Copy, RefreshCw, Check, 
-  Download, Loader, Edit2, UserMinus, Fingerprint, Link, Clock, Plus, Star, Eye, EyeOff, Bell, QrCode, X, Upload, MessageSquare
+import { 
+  ArrowLeft, Users, BookOpen, Clock, Settings, UserPlus, 
+  Trash2, Mail, Edit2, Search, Filter, Shield, MoreVertical, 
+  CheckCircle2, AlertCircle, RefreshCw, X, Download, UserX, Star, HelpCircle,
+  Pin, Plus, ListChecks, MapPin, Building, Calendar, Copy, Fingerprint, Link, Eye, EyeOff, Bell, QrCode, Upload, MessageSquare, Ticket
 } from 'lucide-react';
 
 
@@ -94,6 +96,14 @@ export default function FichaDetalle() {
   const [modalNuevoResultado, setModalNuevoResultado] = useState({ open: false, competenciaId: null, nombre: '' });
   const [savingNuevoResultado, setSavingNuevoResultado] = useState(false);
 
+  // Estados para Unirse a Evento
+  const [showUnirseEventoModal, setShowUnirseEventoModal] = useState(false);
+  const [codigoEvento, setCodigoEvento] = useState('');
+  const [uniendoEvento, setUniendoEvento] = useState(false);
+
+  // Eventos de la ficha
+  const [eventosFicha, setEventosFicha] = useState([]);
+
   useEffect(() => {
     loadFicha();
   }, [id]);
@@ -125,6 +135,18 @@ export default function FichaDetalle() {
         }
         return prev;
       });
+
+      // Cargar eventos para el instructor
+      try {
+        const evRes = await fetchApi('/eventos?role=instructor');
+        const todosEventos = evRes.eventos || [];
+        const eventosDeEstaFicha = todosEventos.filter(ev => 
+          ev.estado === 'en_curso' && ev.fichas.some(f => f.fichaId === id)
+        );
+        setEventosFicha(eventosDeEstaFicha);
+      } catch (e) {
+        console.error("Error cargando eventos:", e);
+      }
     } catch (err) {
       showToast(err.message || 'Error al cargar la ficha', 'error');
       navigate('/instructor/fichas');
@@ -228,6 +250,28 @@ export default function FichaDetalle() {
       showToast(err.message, 'error');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleUnirseEvento = async (e) => {
+    e.preventDefault();
+    if (!codigoEvento.trim()) return;
+    try {
+      setUniendoEvento(true);
+      await fetchApi('/eventos/unir', {
+        method: 'POST',
+        body: JSON.stringify({
+          codigoInvitacion: codigoEvento.trim(),
+          fichasIds: [ficha.id]
+        })
+      });
+      showToast('Ficha unida al evento exitosamente', 'success');
+      setShowUnirseEventoModal(false);
+      setCodigoEvento('');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setUniendoEvento(false);
     }
   };
 
@@ -530,7 +574,6 @@ export default function FichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
-  // Filtrar materias
   const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
@@ -583,17 +626,42 @@ export default function FichaDetalle() {
   const maxMateriasEnUnDia = Math.max(...horariosPorDia.map(d => d.horarios.length), 1);
 
   return (
-    <div className="animate-fade-in">
-      {/* Header con botón de regreso */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/instructor/fichas')} 
-            className="btn-icon text-gray-400 hover:bg-gray-100"
-            title="Volver a fichas"
-          >
-            <ArrowLeft size={20} />
-          </button>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Botón volver */}
+      <button 
+        onClick={() => navigate('/instructor/fichas')}
+        className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+      >
+        <ArrowLeft size={20} />
+        Volver a Fichas
+      </button>
+
+      {/* Banner de Eventos Activos */}
+      {eventosFicha.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 right-0 p-4 opacity-20">
+            <Star size={100} />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-full">
+              <Star size={32} className="text-yellow-300" fill="currentColor" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold mb-1">¡Esta ficha está participando en un evento!</h2>
+              {eventosFicha.map(ev => (
+                <p key={ev.id} className="text-blue-100 font-medium">
+                  {ev.nombre} • Creado por {ev.creador?.fullName} • {new Date(ev.fechaHora).toLocaleString()}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header Ficha */}
+      <div className="card">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl  font-bold text-gray-900 dark:text-white  dark:text-white">Ficha {ficha.numero}</h1>
@@ -635,6 +703,14 @@ export default function FichaDetalle() {
               {exporting ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
               PDF
             </button>
+            <button 
+              onClick={() => setShowUnirseEventoModal(true)}
+              className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center gap-1 font-medium transition-colors border-l border-gray-200 dark:border-zinc-700"
+              title="Unirse a un Evento mediante código"
+            >
+              <Ticket size={16} />
+              Unirse a Evento
+            </button>
           </div>
           
           <button 
@@ -643,10 +719,11 @@ export default function FichaDetalle() {
             title="Salir de esta ficha"
           >
             <ArrowLeft size={16} />
-            Salir
+            Salir de ficha
           </button>
         </div>
       </div>
+    </div>
 
       {/* Estadísticas horizontales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4 mb-6">
@@ -1590,6 +1667,34 @@ export default function FichaDetalle() {
         cancelText="Cancelar"
         danger={true}
       />
+
+      {/* Modal Unirse a Evento */}
+      <Modal open={showUnirseEventoModal} onClose={() => setShowUnirseEventoModal(false)} title="Unirse a un Evento">
+        <form onSubmit={handleUnirseEvento} className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Ingresa el código de 6 caracteres del evento al que deseas unir esta ficha.
+          </p>
+          <div>
+            <input 
+              type="text" 
+              value={codigoEvento}
+              onChange={e => setCodigoEvento(e.target.value.toUpperCase())}
+              placeholder="Ej. 98F07A"
+              maxLength={6}
+              className="w-full border rounded-lg px-3 py-2 text-center uppercase tracking-widest font-mono text-xl dark:bg-gray-800 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setShowUnirseEventoModal(false)} className="btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" disabled={uniendoEvento || codigoEvento.length < 6} className="btn-primary flex items-center gap-2">
+              {uniendoEvento ? 'Uniéndose...' : 'Unirse al Evento'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

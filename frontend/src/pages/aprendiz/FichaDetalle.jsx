@@ -99,7 +99,7 @@ export default function AprendizFichaDetalle() {
       const data = await fetchApi('/eventos/aprendiz');
       if (data.eventos) {
         const activosParaFicha = data.eventos.filter(ev => 
-          ev.fichas.some(f => f.fichaId === id)
+          ev.estado === 'en_curso' && ev.fichas.some(f => f.fichaId === id)
         );
         setEventosFicha(activosParaFicha);
       }

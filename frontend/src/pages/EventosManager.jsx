@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Ticket, Plus, UserPlus, Calendar, Clock, ChevronRight, Download, Users } from 'lucide-react';
+import { Ticket, Plus, UserPlus, Calendar, Clock, ChevronRight, Download, Users, Search } from 'lucide-react';
 import Modal from '../components/Modal';
 import fetchApi from '../services/api';
 import EventoDetalle from './EventoDetalle';
@@ -29,6 +29,24 @@ export default function EventosManager() {
 
   const [codigoInvitacion, setCodigoInvitacion] = useState('');
   const [fichasAUnir, setFichasAUnir] = useState([]);
+  
+  // Estados para búsqueda y filtro
+  const [searchTerm, setSearchTerm] = useState('');
+  const [nivelFilter, setNivelFilter] = useState('');
+
+  const fichasFiltradas = fichasPropias.filter(f => {
+    const searchMatch = (f.numero + ' ' + f.nombre).toLowerCase().includes(searchTerm.toLowerCase());
+    const nivelMatch = nivelFilter ? f.nivel?.toLowerCase().includes(nivelFilter.toLowerCase()) : true;
+    return searchMatch && nivelMatch;
+  });
+
+  const toggleFichaSelection = (id, selectedIds, setSelectedIds) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(fId => fId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
 
   useEffect(() => {
     loadEventos();
@@ -107,7 +125,10 @@ export default function EventosManager() {
 
   const resetForms = () => {
     setNombre(''); setDescripcion(''); setFechaHora(''); setFichasIds([]);
-    setCodigoInvitacion(''); setFichasAUnir([]);
+    setCodigoInvitacion('');
+    setFichasAUnir([]);
+    setSearchTerm('');
+    setNivelFilter('');
   };
 
   const handleDescargarReporte = async (e, id, codigo) => {
@@ -180,9 +201,18 @@ export default function EventosManager() {
               className="card hover:border-blue-500 dark:hover:border-blue-500 cursor-pointer transition-all flex flex-col group"
             >
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate" title={ev.nombre}>
-                  {ev.nombre}
-                </h3>
+                <div className="flex flex-col gap-1 max-w-[70%]">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate" title={ev.nombre}>
+                    {ev.nombre}
+                  </h3>
+                  <span className={`w-max px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    ev.estado === 'programado' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' :
+                    ev.estado === 'en_curso' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                    'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                  }`}>
+                    {ev.estado === 'programado' ? 'Programado' : ev.estado === 'en_curso' ? 'En Curso' : 'Finalizado'}
+                  </span>
+                </div>
                 <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs px-2 py-1 rounded-full font-medium shrink-0">
                   Código: {ev.codigoInvitacion}
                 </span>
@@ -221,7 +251,7 @@ export default function EventosManager() {
       )}
 
       {/* Modal Crear */}
-      <Modal isOpen={showCrearModal} onClose={() => setShowCrearModal(false)} title="Crear Nuevo Evento">
+      <Modal open={showCrearModal} onClose={() => setShowCrearModal(false)} title="Crear Nuevo Evento">
         <form onSubmit={handleCrearEvento} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del Evento *</label>
@@ -237,12 +267,37 @@ export default function EventosManager() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Invitar Fichas (Opcional)</label>
-            <select multiple value={fichasIds} onChange={e=>setFichasIds(Array.from(e.target.selectedOptions, option => option.value))} className="input-field h-32">
-              {fichasPropias.map(f => (
-                <option key={f.id} value={f.id}>Ficha {f.numero} - {f.nombre}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">Mantén presionado Ctrl (o Cmd) para seleccionar varias.</p>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input type="text" placeholder="Buscar ficha..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="input-field pl-9 py-2" />
+                </div>
+                <select value={nivelFilter} onChange={e=>setNivelFilter(e.target.value)} className="input-field py-2 w-32">
+                  <option value="">Todos</option>
+                  <option value="tecnologo">Tecnólogo</option>
+                  <option value="tecnico">Técnico</option>
+                </select>
+              </div>
+              <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-1">
+                {fichasFiltradas.length === 0 && <p className="text-sm text-gray-500 text-center py-2">No se encontraron fichas</p>}
+                {fichasFiltradas.map(f => (
+                  <label key={f.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={fichasIds.includes(f.id)}
+                      onChange={() => toggleFichaSelection(f.id, fichasIds, setFichasIds)} 
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Ficha {f.numero}</p>
+                      <p className="text-xs text-gray-500">{f.nombre} • {f.nivel}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{fichasIds.length} fichas seleccionadas.</p>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button type="button" onClick={() => setShowCrearModal(false)} className="btn-secondary">Cancelar</button>
@@ -252,7 +307,7 @@ export default function EventosManager() {
       </Modal>
 
       {/* Modal Unir */}
-      <Modal isOpen={showUnirModal} onClose={() => setShowUnirModal(false)} title="Unir Fichas a un Evento">
+      <Modal open={showUnirModal} onClose={() => setShowUnirModal(false)} title="Unir Fichas a un Evento">
         <form onSubmit={handleUnirFicha} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código de Invitación *</label>
@@ -260,12 +315,37 @@ export default function EventosManager() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mis Fichas a unir *</label>
-            <select multiple value={fichasAUnir} onChange={e=>setFichasAUnir(Array.from(e.target.selectedOptions, option => option.value))} className="input-field h-32" required>
-              {fichasPropias.map(f => (
-                <option key={f.id} value={f.id}>Ficha {f.numero} - {f.nombre}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">Selecciona las fichas que participarán.</p>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input type="text" placeholder="Buscar ficha..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="input-field pl-9 py-2" />
+                </div>
+                <select value={nivelFilter} onChange={e=>setNivelFilter(e.target.value)} className="input-field py-2 w-32">
+                  <option value="">Todos</option>
+                  <option value="tecnologo">Tecnólogo</option>
+                  <option value="tecnico">Técnico</option>
+                </select>
+              </div>
+              <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-1">
+                {fichasFiltradas.length === 0 && <p className="text-sm text-gray-500 text-center py-2">No se encontraron fichas</p>}
+                {fichasFiltradas.map(f => (
+                  <label key={f.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={fichasAUnir.includes(f.id)}
+                      onChange={() => toggleFichaSelection(f.id, fichasAUnir, setFichasAUnir)} 
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Ficha {f.numero}</p>
+                      <p className="text-xs text-gray-500">{f.nombre} • {f.nivel}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{fichasAUnir.length} fichas seleccionadas.</p>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button type="button" onClick={() => setShowUnirModal(false)} className="btn-secondary">Cancelar</button>

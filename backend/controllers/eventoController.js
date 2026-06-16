@@ -210,6 +210,19 @@ const getEventoDetails = async (req, res) => {
               include: {
                 aprendices: {
                   select: { id: true, fullName: true, document: true, avatarUrl: true, nfcUid: true }
+                },
+                instructores: {
+                  include: { instructor: { select: { id: true, fullName: true, document: true } } }
+                },
+                instructorAdmin: { select: { id: true, fullName: true, document: true } },
+                competencias: {
+                  include: {
+                    resultados: {
+                      include: {
+                        instructor: { select: { id: true, fullName: true, document: true } }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -252,6 +265,49 @@ const getEventoDetails = async (req, res) => {
 
     const aprendicesList = Array.from(todosAprendicesMap.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
+    // Extraer todos los instructores
+    let todosInstructoresMap = new Map();
+    evento.fichas.forEach(f => {
+      // 1. Añadir instructorAdmin
+      if (f.ficha.instructorAdmin) {
+        if (!todosInstructoresMap.has(f.ficha.instructorAdmin.id)) {
+          todosInstructoresMap.set(f.ficha.instructorAdmin.id, {
+            ...f.ficha.instructorAdmin,
+            fichaNumero: f.ficha.numero
+          });
+        }
+      }
+      
+      // 2. Añadir de FichaInstructor
+      if (f.ficha.instructores) {
+        f.ficha.instructores.forEach(instRel => {
+          if (instRel.instructor && !todosInstructoresMap.has(instRel.instructor.id)) {
+            todosInstructoresMap.set(instRel.instructor.id, {
+              ...instRel.instructor,
+              fichaNumero: f.ficha.numero
+            });
+          }
+        });
+      }
+      
+      // 3. Añadir de Resultados de Aprendizaje
+      if (f.ficha.competencias) {
+        f.ficha.competencias.forEach(comp => {
+          if (comp.resultados) {
+            comp.resultados.forEach(res => {
+              if (res.instructor && !todosInstructoresMap.has(res.instructor.id)) {
+                todosInstructoresMap.set(res.instructor.id, {
+                  ...res.instructor,
+                  fichaNumero: f.ficha.numero
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+    const instructoresList = Array.from(todosInstructoresMap.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
+
     res.json({
       evento: {
         id: evento.id,
@@ -259,9 +315,11 @@ const getEventoDetails = async (req, res) => {
         descripcion: evento.descripcion,
         fechaHora: evento.fechaHora,
         codigoInvitacion: evento.codigoInvitacion,
+        estado: evento.estado,
         creador: evento.creador
       },
-      aprendices: aprendicesList
+      aprendices: aprendicesList,
+      instructores: instructoresList
     });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener detalles: ' + err.message });
@@ -273,7 +331,33 @@ const registrarAsistencia = async (req, res) => {
   try {
     const { id } = req.params; // Evento ID
     const { aprendizId, document, nfcUid, presente, metodo } = req.body;
-    
+
+    const evento = await prisma.evento.findUnique({ where: { id } });
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (evento.estado !== 'en_curso') {
+      return res.status(400).json({ error: 'La sesión de asistencia no está iniciada' });
+    }
+
+    const eventoFichas = await prisma.eventoFicha.findMany({
+      where: { eventoId: id }
+    });
+    const fichasIds = eventoFichas.map(f => f.fichaId);
+
+    if (req.user.userType === 'instructor' && evento.creadorId !== req.user.id) {
+      const instructorInFicha = await prisma.ficha.findFirst({
+        where: {
+          id: { in: fichasIds },
+          OR: [
+            { instructorAdminId: req.user.id },
+            { instructores: { some: { instructorId: req.user.id } } }
+          ]
+        }
+      });
+      if (!instructorInFicha) {
+        return res.status(403).json({ error: 'No estás autorizado para tomar asistencia en este evento' });
+      }
+    }
+
     let user;
 
     if (aprendizId) {
@@ -287,12 +371,6 @@ const registrarAsistencia = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'Aprendiz no encontrado' });
     }
-
-    // Validar que el aprendiz pertenezca a una ficha del evento
-    const eventoFichas = await prisma.eventoFicha.findMany({
-      where: { eventoId: id }
-    });
-    const fichasIds = eventoFichas.map(f => f.fichaId);
 
     const isInFicha = await prisma.ficha.findFirst({
       where: {
@@ -428,6 +506,48 @@ const getReporteEvento = async (req, res) => {
   }
 };
 
+const iniciarEvento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const evento = await prisma.evento.findUnique({ where: { id } });
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    if (req.user.userType !== 'administrador' && evento.creadorId !== req.user.id) {
+      return res.status(403).json({ error: 'Solo el administrador o creador puede iniciar el evento' });
+    }
+
+    const updated = await prisma.evento.update({
+      where: { id },
+      data: { estado: 'en_curso' }
+    });
+
+    res.json({ message: 'Evento iniciado', evento: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al iniciar evento: ' + err.message });
+  }
+};
+
+const finalizarEvento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const evento = await prisma.evento.findUnique({ where: { id } });
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    if (req.user.userType !== 'administrador' && evento.creadorId !== req.user.id) {
+      return res.status(403).json({ error: 'Solo el administrador o creador puede finalizar el evento' });
+    }
+
+    const updated = await prisma.evento.update({
+      where: { id },
+      data: { estado: 'finalizado' }
+    });
+
+    res.json({ message: 'Evento finalizado', evento: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al finalizar evento: ' + err.message });
+  }
+};
+
 module.exports = {
   getEventos,
   getEventosAprendiz,
@@ -435,5 +555,7 @@ module.exports = {
   unirFichasCodigo,
   getEventoDetails,
   registrarAsistencia,
-  getReporteEvento
+  getReporteEvento,
+  iniciarEvento,
+  finalizarEvento
 };
