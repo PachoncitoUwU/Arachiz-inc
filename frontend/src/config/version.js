@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.366';
+export const VERSION = '1.4.368';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.368',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.368',
+    changes: [
+      'chore: robust cors allowed origins handling and default to vercel URL'
+    ]
+  },
   {
     version: '1.4.366',
     date: '2026-06-16',
