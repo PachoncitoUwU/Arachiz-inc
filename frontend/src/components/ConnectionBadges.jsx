@@ -4,48 +4,72 @@ import fetchApi from '../services/api';
 
 /**
  * Muestra badges de conexión de hardware:
- * - Verde "Caja WiFi" cuando el ESP8266 está conectado por WiFi
- * - Verde "Conectado USB" cuando el Arduino está conectado por puerto COM
- * Solo se renderiza algo si al menos una conexión está activa.
+ * - Verde animado: ESP8266 (WiFi/NFC/Huella) conectado
+ * - Verde animado: Arduino conectado por USB/COM
+ * - Rojo: desconectado (siempre visible para que el instructor sepa el estado)
+ *
+ * Hace polling al backend cada 3s para detección rápida.
  */
 export default function ConnectionBadges() {
   const [status, setStatus] = useState({ usbConnected: false, espConnected: false });
+  const [loaded, setLoaded] = useState(false);
 
   const fetchStatus = async () => {
     try {
       const res = await fetchApi('/hardware/status');
-      setStatus({ usbConnected: res.usbConnected, espConnected: res.espConnected });
+      setStatus({ usbConnected: !!res.usbConnected, espConnected: !!res.espConnected });
     } catch {
-      // Si falla (sin backend local, etc.) no mostrar nada
-      setStatus({ usbConnected: false, espConnected: false });
+      // Si falla el fetch, dejar el estado anterior (no ocultar)
+    } finally {
+      setLoaded(true);
     }
   };
 
   useEffect(() => {
     fetchStatus();
-    // Polling cada 5 segundos — el ESP hace poll cada ~2s, así lo detectamos rápido
-    const interval = setInterval(fetchStatus, 5000);
+    // Polling cada 3 segundos — el ESP hace poll cada ~800ms, así lo detectamos rápido
+    const interval = setInterval(fetchStatus, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  if (!status.usbConnected && !status.espConnected) return null;
+  // No renderizar nada hasta tener la primera respuesta
+  if (!loaded) return null;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {status.espConnected && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-700 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <Wifi size={12} />
-          Caja conectada por WiFi
-        </span>
-      )}
-      {status.usbConnected && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-700 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <Usb size={12} />
-          Conectado por USB
-        </span>
-      )}
+      {/* Badge ESP8266 — NFC y Huella Digital vía WiFi */}
+      <span
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm transition-all duration-500 ${
+          status.espConnected
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-700'
+            : 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800'
+        }`}
+      >
+        <span
+          className={`w-2 h-2 rounded-full ${
+            status.espConnected ? 'bg-green-500 animate-pulse' : 'bg-red-400'
+          }`}
+        />
+        <Wifi size={12} />
+        {status.espConnected ? 'Caja WiFi online' : 'Caja WiFi offline'}
+      </span>
+
+      {/* Badge Arduino USB */}
+      <span
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm transition-all duration-500 ${
+          status.usbConnected
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-700'
+            : 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800'
+        }`}
+      >
+        <span
+          className={`w-2 h-2 rounded-full ${
+            status.usbConnected ? 'bg-green-500 animate-pulse' : 'bg-red-400'
+          }`}
+        />
+        <Usb size={12} />
+        {status.usbConnected ? 'USB conectado' : 'USB offline'}
+      </span>
     </div>
   );
 }

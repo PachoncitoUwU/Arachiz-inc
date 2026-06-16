@@ -28,7 +28,7 @@ DNSServer dnsServer;
 const byte DNS_PORT = 53;
 
 // --- BACKEND URLs ---
-const bool USE_RENDER_BACKEND = false; // Cambiar a true para usar la nube (Render)
+const bool USE_RENDER_BACKEND = true; // true = Render (producción/Vercel) | false = local
 
 const char* URL_RENDER_EVENT = "https://arachiz-backend.onrender.com/api/hardware/event";
 const char* URL_RENDER_CMD   = "https://arachiz-backend.onrender.com/api/hardware/commands";
@@ -496,30 +496,31 @@ bool enviarEvento(String type, String payload, bool online) {
   String body;
   serializeJson(doc, body);
 
+  // IMPORTANTE: declarar ambos clientes fuera del if/else para evitar
+  // destrucción prematura (bug de scope con HTTPClient)
   bool ok = false;
+  WiFiClientSecure secureClient;
+  WiFiClient plainClient;
+  HTTPClient http;
+
   if (online) {
-    WiFiClientSecure client;
-    client.setInsecure();
-    HTTPClient http;
-    http.begin(client, url);
+    secureClient.setInsecure();
+    http.begin(secureClient, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("x-hardware-key", API_KEY);
     http.setTimeout(10000);
     int code = http.POST(body);
     ok = (code == 200);
     Serial.println("POST Render -> " + String(code));
-    http.end();
   } else {
-    WiFiClient client;
-    HTTPClient http;
-    http.begin(client, url);
+    http.begin(plainClient, url);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("x-hardware-key", API_KEY);
     int code = http.POST(body);
     ok = (code == 200);
     Serial.println("POST Local -> " + String(code));
-    http.end();
   }
+  http.end();
   return ok;
 }
 
@@ -532,13 +533,15 @@ void consultarEstadoSesion() {
   // Construir URL de session-status desde la base de URL_RENDER_CMD
   url.replace("/commands", "/session-status");
 
+  // IMPORTANTE: declarar el cliente FUERA del if/else para que no se destruya
+  // antes de que http.GET() lo use (bug de scope)
+  WiFiClientSecure secureClient;
+  WiFiClient plainClient;
   if (USE_RENDER_BACKEND) {
-    WiFiClientSecure client;
-    client.setInsecure();
-    http.begin(client, url);
+    secureClient.setInsecure();
+    http.begin(secureClient, url);
   } else {
-    WiFiClient client;
-    http.begin(client, url);
+    http.begin(plainClient, url);
   }
 
   http.addHeader("x-hardware-key", API_KEY);
@@ -561,13 +564,15 @@ void consultarComandos() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
+  // IMPORTANTE: declarar el cliente FUERA del if/else para evitar destrucción
+  // prematura del objeto antes de que http.GET() lo use (bug de scope)
+  WiFiClientSecure secureClient;
+  WiFiClient plainClient;
   if (USE_RENDER_BACKEND) {
-    WiFiClientSecure client;
-    client.setInsecure();
-    http.begin(client, URL_RENDER_CMD);
+    secureClient.setInsecure();
+    http.begin(secureClient, URL_RENDER_CMD);
   } else {
-    WiFiClient client;
-    http.begin(client, URL_LOCAL_CMD);
+    http.begin(plainClient, URL_LOCAL_CMD);
   }
 
   http.addHeader("x-hardware-key", API_KEY);

@@ -236,11 +236,18 @@ export default function InstructorAsistencia() {
 
     socket.on('arduino_read_nfc', async (data) => {
       if (!sessionId) return;
+
+      // Verificar si el UID está vinculado a algún aprendiz de la sesión
+      let studentFound = null;
       setActiveSession(prev => {
         if (!prev) return prev;
         const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.nfcUid === data.uid);
         if (student) {
-          if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
+          studentFound = student;
+          if (prev.registros?.some(r => r.aprendizId === student.id)) {
+            showToast(`${student.fullName} ya registró asistencia`, 'info');
+            return prev;
+          }
           showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
           return {
             ...prev,
@@ -254,8 +261,12 @@ export default function InstructorAsistencia() {
             }]
           };
         }
+        // UID no encontrado en la sesión — avisar al instructor
+        showToast(`NFC no registrado: ${data.uid}. Vincúlalo en la ficha primero.`, 'error');
         return prev;
       });
+
+      if (!studentFound) return; // No mandar a BD si no encontramos al aprendiz en UI
 
       try {
         await fetchApi('/asistencias/hardware-register', {
@@ -263,18 +274,32 @@ export default function InstructorAsistencia() {
           body: JSON.stringify({ asistenciaId: sessionId, nfcUid: data.uid })
         });
       } catch (err) {
-        showToast(err.message, 'error');
-        // Opcional: Podríamos revertir la UI si falla en BD. Por simplicidad, se deja.
+        showToast(err.message || 'Error al registrar asistencia NFC', 'error');
+        // Revertir el registro optimista en UI
+        setActiveSession(prev => {
+          if (!prev || !studentFound) return prev;
+          return {
+            ...prev,
+            registros: prev.registros.filter(r => r.aprendizId !== studentFound.id || !r.id?.startsWith?.('temp-'))
+          };
+        });
       }
     });
 
     socket.on('arduino_read_finger', async (data) => {
       if (!sessionId) return;
+
+      // Verificar si el ID de huella está vinculado a algún aprendiz de la sesión
+      let studentFound = null;
       setActiveSession(prev => {
         if (!prev) return prev;
         const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.huellas?.includes(data.id));
         if (student) {
-          if (prev.registros?.some(r => r.aprendizId === student.id)) return prev;
+          studentFound = student;
+          if (prev.registros?.some(r => r.aprendizId === student.id)) {
+            showToast(`${student.fullName} ya registró asistencia`, 'info');
+            return prev;
+          }
           showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
           return {
             ...prev,
@@ -288,8 +313,12 @@ export default function InstructorAsistencia() {
             }]
           };
         }
+        // Huella no encontrada en la sesión — avisar al instructor
+        showToast(`Huella ID ${data.id} no registrada en esta ficha. Vincúlala primero.`, 'error');
         return prev;
       });
+
+      if (!studentFound) return; // No mandar a BD si no encontramos al aprendiz en UI
 
       try {
         await fetchApi('/asistencias/hardware-register', {
@@ -297,7 +326,15 @@ export default function InstructorAsistencia() {
           body: JSON.stringify({ asistenciaId: sessionId, huellaId: data.id })
         });
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast(err.message || 'Error al registrar asistencia por huella', 'error');
+        // Revertir el registro optimista en UI
+        setActiveSession(prev => {
+          if (!prev || !studentFound) return prev;
+          return {
+            ...prev,
+            registros: prev.registros.filter(r => r.aprendizId !== studentFound.id || !r.id?.startsWith?.('temp-'))
+          };
+        });
       }
     });
 
