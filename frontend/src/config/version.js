@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.404';
+export const VERSION = '1.4.406';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.406',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.406',
+    changes: [
+      'fix: sliders en modal sesion, badge WiFi y lectura huella Arduino'
+    ]
+  },
   {
     version: '1.4.404',
     date: '2026-06-16',
