@@ -182,7 +182,7 @@ export default function App() {
                 <Route path="configuracion" element={<Configuracion />} />
               </Route>
 
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             </Suspense>
           </AuthProvider>
