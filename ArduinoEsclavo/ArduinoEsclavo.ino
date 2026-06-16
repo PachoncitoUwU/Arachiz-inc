@@ -116,16 +116,50 @@ String pollESP() {
 }
 
 // ── LOOP PRINCIPAL ────────────────────────────────────────────────────────────
+// ORDEN CRÍTICO:
+//   1. Comandos USB   (inmediato, sin bloqueo)
+//   2. Huella         (PRIMERO: mySerial.listen() activo, sin competencia)
+//   3. Poll ESP       (solo WiFi, usa espSerial brevemente)
+//   4. NFC            (ÚLTIMO: I2C bloquea ~25ms, va después de la huella)
 void loop() {
 
-  // A. Comandos por USB
+  // ── A. Comandos por USB ───────────────────────────────────────────────────
   if (Serial.available() > 0) {
     String cmd = Serial.readStringUntil('\n');
     cmd.trim();
     procesarComando(cmd);
   }
 
-  // B. POLL al ESP (modo WiFi, no durante enrolamiento)
+  // ── B. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
+  if (!enrollando && sesionActiva) {
+    mySerial.listen();          // ceder el SoftwareSerial al AS608
+    uint8_t imgResult = finger.getImage();
+
+    if (imgResult == FINGERPRINT_OK) {
+      Serial.println(F("[Huella] Dedo detectado, procesando..."));
+      if (finger.image2Tz() == FINGERPRINT_OK) {
+        if (finger.fingerFastSearch() == FINGERPRINT_OK) {
+          int fid = finger.fingerID;
+          Serial.print(F("[Huella] Match! ID=")); Serial.println(fid);
+          enviarEvento("READ_FINGER: " + String(fid));
+          sonidoHuella();
+          // Esperar a que el dedo se retire (evita doble lectura)
+          unsigned long t0 = millis();
+          mySerial.listen();
+          while (finger.getImage() != FINGERPRINT_NOFINGER && millis() - t0 < 3000) {
+            mySerial.listen();
+          }
+        } else {
+          Serial.println(F("[Huella] No reconocida (no registrada)"));
+        }
+      } else {
+        Serial.println(F("[Huella] Error convirtiendo imagen"));
+      }
+    }
+    // FINGERPRINT_NOFINGER es normal → no hacer nada
+  }
+
+  // ── C. Poll al ESP (modo WiFi) ────────────────────────────────────────────
   if (!enrollando && digitalRead(PIN_SWITCH) == LOW) {
     if (millis() - lastPoll >= POLL_INTERVAL) {
       lastPoll = millis();
@@ -137,7 +171,7 @@ void loop() {
     }
   }
 
-  // C. Lectura NFC (no durante enrolamiento)
+  // ── D. Lectura NFC (VA AL FINAL — su timeout I2C bloquea el CPU ~25ms) ───
   if (!enrollando) {
     uint8_t uid[7] = {0};
     uint8_t uidLen = 0;
@@ -146,29 +180,6 @@ void loop() {
       sonidoNFC();
       delay(400);
       nfc_hardware.SAMConfig();
-    }
-  }
-
-  // D. Lectura Huella (solo con sesión activa)
-  if (!enrollando && sesionActiva) {
-    // Siempre activar mySerial antes de cualquier operación con el sensor
-    mySerial.listen();
-    delayMicroseconds(500);                // estabilización mínima
-    uint8_t imgResult = finger.getImage();
-    if (imgResult == FINGERPRINT_OK) {
-      mySerial.listen();                   // re-activar por si el stack cambió
-      if (finger.image2Tz() == FINGERPRINT_OK) {
-        mySerial.listen();
-        if (finger.fingerFastSearch() == FINGERPRINT_OK) {
-          int fid = finger.fingerID;
-          enviarEvento("READ_FINGER: " + String(fid));
-          sonidoHuella();
-          delay(500);
-          // Vaciar buffer para evitar lecturas fantasma
-          mySerial.listen();
-          while (mySerial.available()) mySerial.read();
-        }
-      }
     }
   }
 }
