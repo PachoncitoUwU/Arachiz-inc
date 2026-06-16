@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.424';
+export const VERSION = '1.4.427';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.427',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.427',
+    changes: [
+      'Merge branch main of https://github.com/PachoncitoUwU/Arachiz-inc',
+      'correo ojala melo'
+    ]
+  },
   {
     version: '1.4.424',
     date: '2026-06-16',
