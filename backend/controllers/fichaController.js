@@ -199,7 +199,7 @@ const getFichaById = async (req, res) => {
             }
           } 
         },
-        horarios: { include: { resultado: { select: { nombre: true, competencia: { select: { nombre: true } } } } } }
+        horarios: { include: { resultado: { select: { nombre: true, instructor: { select: { fullName: true } }, competencia: { select: { id: true, nombre: true } } } } } }
       }
     });
     

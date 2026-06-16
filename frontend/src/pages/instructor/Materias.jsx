@@ -306,13 +306,6 @@ export default function InstructorMaterias() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0 pr-4">
                           <p className="font-semibold text-sm text-gray-800 truncate">{m.nombre}</p>
-                          
-                          {/* Información de la ficha */}
-                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                            <BookOpen size={10}/>
-                            <span className="font-medium">Ficha {ficha.numero}</span>
-                            {ficha.nombre && <span className="truncate">· {ficha.nombre}</span>}
-                          </div>
                         </div>
                         <div className="flex-shrink-0">
                           <button 

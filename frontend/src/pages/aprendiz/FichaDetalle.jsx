@@ -219,6 +219,7 @@ export default function AprendizFichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
+  // Filtrar materias
   const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
@@ -232,20 +233,26 @@ export default function AprendizFichaDetalle() {
     }
     
     if (filterInstructor !== 'all') {
-      matches = matches && materia.instructorId === filterInstructor;
+      const hasInstructor = (materia.resultados || []).some(r => r.instructorId === filterInstructor);
+      matches = matches && hasInstructor;
     }
     
     return matches;
   });
 
-  const uniqueInstructors = [...new Set((ficha.competencias || []).map(m => m.instructorId))]
-    .map(id => {
-      const materia = ficha.competencias.find(m => m.instructorId === id);
-      return {
-        id,
-        name: materia?.instructor?.fullName || 'Desconocido'
-      };
+  const uniqueInstructorsMap = new Map();
+  (ficha.competencias || []).forEach(comp => {
+    (comp.resultados || []).forEach(res => {
+      if (res.instructorId && res.instructor) {
+        uniqueInstructorsMap.set(res.instructorId, res.instructor.fullName);
+      }
     });
+  });
+  
+  const uniqueInstructors = Array.from(uniqueInstructorsMap.entries()).map(([id, name]) => ({
+    id,
+    name
+  }));
 
   return (
     <div className="animate-fade-in">

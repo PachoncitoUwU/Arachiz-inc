@@ -388,6 +388,11 @@ const asignarInstructor = async (req, res) => {
           await crearConflicto(targetInstructorId, horario.dia, conflictos, userId);
         }
       }
+    } else {
+      // Si se desasigna al instructor (targetInstructorId es null), se eliminan los horarios de este resultado
+      await prisma.horario.deleteMany({
+        where: { resultadoId: id }
+      });
     }
 
     const updatedResultado = await prisma.resultadoAprendizaje.update({

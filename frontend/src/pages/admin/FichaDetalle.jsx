@@ -48,6 +48,7 @@ export default function FichaDetalle() {
     _setFicha(val);
   };
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showCode, setShowCode] = useState(false);
@@ -113,11 +114,25 @@ export default function FichaDetalle() {
     }
   }, [ficha, user]);
 
-  const loadFicha = async () => {
+  const loadFicha = async (showSkeleton = true) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
+      else setIsRefreshing(true);
       const data = await fetchApi(`/admin/fichas/${id}`);
       setFicha(data.ficha);
+      setSelectedCompetenciaView(prev => {
+        if (!prev) return prev;
+        const comps = data.ficha.competencias || [];
+        const updated = comps.find(c => c.id === prev.id);
+        if (updated) {
+          return {
+            ...updated,
+            instructor: updated.resultados?.[0]?.instructor || null,
+            instructorId: updated.resultados?.[0]?.instructorId || null
+          };
+        }
+        return prev;
+      });
     } catch (err) {
       console.error('Error cargando ficha:', err);
       showToast(err.message || 'Error al cargar la ficha', 'error');
@@ -126,7 +141,8 @@ export default function FichaDetalle() {
         setTimeout(() => navigate('/admin/fichas'), 2000);
       }
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
+      else setIsRefreshing(false);
     }
   };
 
@@ -277,10 +293,10 @@ export default function FichaDetalle() {
           tipo: formMateria.tipo
         })
       });
+      showToast('Competencia creada exitosamente', 'success');
+      await loadFicha(false);
       setModalMateria(false);
       setFormMateria({ nombre: '', tipo: 'Técnica' });
-      showToast('Competencia creada exitosamente', 'success');
-      loadFicha();
     } catch (err) {
       setErrorMateria(err.message);
     } finally {
@@ -617,6 +633,7 @@ export default function FichaDetalle() {
   }).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   // Filtrar materias
+  // Filtrar materias
   const filteredMaterias = (ficha.competencias || []).filter(materia => {
     let matches = true;
     
@@ -633,21 +650,27 @@ export default function FichaDetalle() {
     
     // Filtro de instructor
     if (filterInstructor !== 'all') {
-      matches = matches && materia.instructorId === filterInstructor;
+      const hasInstructor = (materia.resultados || []).some(r => r.instructorId === filterInstructor);
+      matches = matches && hasInstructor;
     }
     
     return matches;
   });
 
-  // Obtener instructores únicos para el filtro
-  const uniqueInstructors = [...new Set((ficha.competencias || []).map(m => m.instructorId))]
-    .map(id => {
-      const materia = ficha.competencias.find(m => m.instructorId === id);
-      return {
-        id,
-        name: materia?.instructor?.fullName || 'Desconocido'
-      };
+  // Obtener instructores únicos para el filtro a partir de los resultados
+  const uniqueInstructorsMap = new Map();
+  (ficha.competencias || []).forEach(comp => {
+    (comp.resultados || []).forEach(res => {
+      if (res.instructorId && res.instructor) {
+        uniqueInstructorsMap.set(res.instructorId, res.instructor.fullName);
+      }
     });
+  });
+  
+  const uniqueInstructors = Array.from(uniqueInstructorsMap.entries()).map(([id, name]) => ({
+    id,
+    name
+  }));
 
   // Agrupar horarios por día y filtrar días sin materias
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -926,7 +949,7 @@ export default function FichaDetalle() {
 
       {/* Tarjeta con pestañas: Aprendices y Materias */}
       <div className="card mb-6">
-        {/* Tabs */}
+        {/* Tabs y Acciones */}
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700 mb-4">
           <div className="flex flex-wrap gap-1 ">
             <button
@@ -974,20 +997,31 @@ export default function FichaDetalle() {
             </button>
           </div>
 
-          {/* Botón agregar materia */}
-          {activeTab === 'materias' && (isInstructor || isAdmin) && (
+          <div className="flex items-center gap-2 pb-2">
+            {/* Botón recargar listado */}
             <button 
-              onClick={() => {
-                setModalMateria(true);
-                setErrorMateria('');
-                setFormMateria({ nombre: '', tipo: 'Técnica' });
-              }}
-              className="btn-primary text-sm md:text-base  flex items-center gap-2 text-sm"
+              onClick={() => loadFicha(false)} 
+              className="btn-icon p-2 text-gray-500 hover:text-[#4285F4] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700"
+              title="Recargar ficha"
             >
-              <Plus size={16} />
-              Agregar
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
             </button>
-          )}
+
+            {/* Botón agregar materia */}
+            {activeTab === 'materias' && (isInstructor || isAdmin) && (
+              <button 
+                onClick={() => {
+                  setModalMateria(true);
+                  setErrorMateria('');
+                  setFormMateria({ nombre: '', tipo: 'Técnica' });
+                }}
+                className="btn-primary py-1.5 text-sm flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Agregar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Contenido de Aprendices */}
@@ -1297,7 +1331,13 @@ export default function FichaDetalle() {
                 </div>
                 <div className="flex flex-col gap-2 flex-1">
                   {diaData.horarios.map((horario, idx) => {
-                    const colorIdx = (ficha.materias || []).findIndex(m => m.id === horario.materiaId);
+                    const getHash = (str) => {
+                      if (!str) return 0;
+                      let hash = 0;
+                      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                      return Math.abs(hash);
+                    };
+                    const colorIdx = getHash(horario.materiaId || horario.id);
                     const bgColor = MATERIA_COLORS[colorIdx % MATERIA_COLORS.length];
                     
                     return (
@@ -1306,10 +1346,18 @@ export default function FichaDetalle() {
                         className="p-2.5 rounded-lg text-white flex-1 flex flex-col justify-center"
                         style={{ backgroundColor: bgColor }}
                       >
-                        <p className="text-xs font-bold mb-0.5 truncate">
+                        <p className="text-[10px] uppercase tracking-wider opacity-75 mb-0.5 truncate leading-tight">
+                          {horario.materia?.competencia?.nombre}
+                        </p>
+                        <p className="text-xs font-bold mb-1 truncate leading-tight">
                           {horario.materia?.nombre}
                         </p>
-                        <p className="text-xs opacity-90 font-mono">
+                        <p className="text-[10px] font-medium text-white/90 truncate flex items-center gap-1 mb-1.5">
+                          <Users size={10} />
+                          {horario.materia?.instructor?.fullName || 'Sin instructor'}
+                        </p>
+                        <p className="text-[10px] opacity-90 font-mono flex items-center gap-1">
+                          <Clock size={10} />
                           {horario.horaInicio} - {horario.horaFin}
                         </p>
                       </div>

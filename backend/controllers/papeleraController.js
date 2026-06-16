@@ -40,7 +40,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
             _count: {
               select: {
                 aprendices: true,
-                materias: true,
+                competencias: true,
                 instructores: true
               }
             }
@@ -60,27 +60,23 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
         };
         break;
         
-      case 'materia':
-        const materia = await prisma.materia.findUnique({
+      case 'competencia':
+        const competencia = await prisma.competencia.findUnique({
           where: { id: elementoId },
           include: {
-            instructor: { select: { id: true, fullName: true } },
             ficha: { select: { numero: true, nombre: true } },
             _count: {
               select: {
-                horarios: true,
-                asistencias: true
+                resultados: true
               }
             }
           }
         });
         datosOriginales = {
-          nombre: materia.nombre,
-          tipo: materia.tipo,
-          instructorId: materia.instructorId, // Necesario para recuperación
-          instructor: materia.instructor.fullName,
-          ficha: `${materia.ficha.numero} - ${materia.ficha.nombre}`,
-          contadores: materia._count
+          nombre: competencia.nombre,
+          tipo: competencia.tipo,
+          ficha: `${competencia.ficha.numero} - ${competencia.ficha.nombre}`,
+          contadores: competencia._count
         };
         break;
         
@@ -122,7 +118,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
         const horario = await prisma.horario.findUnique({
           where: { id: elementoId },
           include: {
-            materia: {
+            resultado: {
               select: {
                 id: true,
                 nombre: true,
@@ -135,9 +131,9 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           dia: horario.dia,
           horaInicio: horario.horaInicio,
           horaFin: horario.horaFin,
-          materiaId: horario.materiaId, // Necesario para recuperación
-          materia: horario.materia.nombre,
-          instructor: horario.materia.instructor.fullName
+          resultadoId: horario.resultadoId, // Necesario para recuperación
+          resultado: horario.resultado.nombre,
+          instructor: horario.resultado.instructor?.fullName || 'Sin instructor'
         };
         break;
         
@@ -146,7 +142,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           where: { id: elementoId },
           include: {
             aprendiz: { select: { fullName: true, document: true } },
-            materia: { select: { nombre: true } }
+            resultado: { select: { nombre: true } }
           }
         });
         datosOriginales = {
@@ -155,7 +151,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           estado: excusa.estado,
           aprendiz: excusa.aprendiz.fullName,
           documento: excusa.aprendiz.document,
-          materia: excusa.materia.nombre,
+          resultado: excusa.resultado.nombre,
           createdAt: excusa.createdAt
         };
         break;
@@ -287,46 +283,17 @@ const recuperarElemento = async (req, res) => {
         // Las fichas anteriores tampoco se pueden recuperar automáticamente
         return res.status(400).json({ error: 'Las fichas anteriores no se pueden recuperar automáticamente. El usuario debe volver a unirse a la ficha.' });
         
-      case 'materia':
+      case 'competencia':
         // Verificar que la ficha aún existe
         if (!item.ficha) {
-          return res.status(400).json({ error: 'No se puede recuperar la materia: la ficha ya no existe' });
+          return res.status(400).json({ error: 'No se puede recuperar la competencia: la ficha ya no existe' });
         }
         
-        // Para materias, necesitamos el instructorId de los datos originales
-        const instructorId = item.datosOriginales?.instructorId;
-        if (!instructorId) {
-          return res.status(400).json({ error: 'No se puede recuperar la materia: falta información del instructor' });
-        }
-        
-        // Verificar que el instructor aún existe y está en la ficha
-        const instructor = await prisma.user.findUnique({
-          where: { id: instructorId }
-        });
-        
-        if (!instructor) {
-          return res.status(400).json({ error: 'No se puede recuperar la materia: el instructor ya no existe' });
-        }
-        
-        const fichaInstructor = await prisma.fichaInstructor.findUnique({
-          where: {
-            fichaId_instructorId: {
-              fichaId: item.fichaId,
-              instructorId: instructorId
-            }
-          }
-        });
-        
-        if (!fichaInstructor) {
-          return res.status(400).json({ error: 'No se puede recuperar la materia: el instructor ya no pertenece a la ficha' });
-        }
-        
-        elementoRecuperado = await prisma.materia.create({
+        elementoRecuperado = await prisma.competencia.create({
           data: {
             nombre: item.datosOriginales.nombre,
             tipo: item.datosOriginales.tipo,
-            fichaId: item.fichaId,
-            instructorId: instructorId
+            fichaId: item.fichaId
           }
         });
         break;
@@ -404,19 +371,19 @@ const recuperarElemento = async (req, res) => {
           return res.status(400).json({ error: 'No se puede recuperar el horario: la ficha ya no existe' });
         }
         
-        // Para horarios, necesitamos la materiaId de los datos originales
-        const materiaId = item.datosOriginales?.materiaId;
-        if (!materiaId) {
-          return res.status(400).json({ error: 'No se puede recuperar el horario: falta información de la materia' });
+        // Para horarios, necesitamos el resultadoId de los datos originales
+        const resultadoId = item.datosOriginales?.resultadoId;
+        if (!resultadoId) {
+          return res.status(400).json({ error: 'No se puede recuperar el horario: falta información del resultado de aprendizaje' });
         }
         
-        // Verificar que la materia aún existe
-        const materia = await prisma.materia.findUnique({
-          where: { id: materiaId }
+        // Verificar que el resultado aún existe
+        const resultado = await prisma.resultadoAprendizaje.findUnique({
+          where: { id: resultadoId }
         });
         
-        if (!materia) {
-          return res.status(400).json({ error: 'No se puede recuperar el horario: la materia ya no existe' });
+        if (!resultado) {
+          return res.status(400).json({ error: 'No se puede recuperar el horario: el resultado de aprendizaje ya no existe' });
         }
         
         elementoRecuperado = await prisma.horario.create({
@@ -425,7 +392,7 @@ const recuperarElemento = async (req, res) => {
             horaInicio: item.datosOriginales.horaInicio,
             horaFin: item.datosOriginales.horaFin,
             fichaId: item.fichaId,
-            materiaId: materiaId
+            resultadoId: resultadoId
           }
         });
         break;

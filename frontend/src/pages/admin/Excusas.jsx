@@ -219,8 +219,8 @@ export default function AdminExcusas() {
         <div className="flex flex-wrap gap-2 ">
           <button
             onClick={() => setVistaActual('lista')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              vistaActual === 'lista' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              vistaActual === 'lista' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <FileText size={16} />
@@ -228,8 +228,8 @@ export default function AdminExcusas() {
           </button>
           <button
             onClick={() => setVistaActual('estadisticas')}
-            className={`btn-secondary flex-1 flex items-center justify-center gap-2 ${
-              vistaActual === 'estadisticas' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              vistaActual === 'estadisticas' ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             <BarChart3 size={16} />

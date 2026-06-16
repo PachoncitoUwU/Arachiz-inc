@@ -198,7 +198,7 @@ const getUserCompetencias = async (req, res) => {
   const userType = req.user.userType;
   try {
     if (userType === 'instructor') {
-      // Devuelve TODAS las competencias de las fichas del instructor (no solo donde tiene resultados a cargo)
+      // Devuelve SOLO las competencias donde el instructor tiene al menos un resultado a cargo
       const fichasInstructor = await prisma.fichaInstructor.findMany({
         where: { instructorId: userId },
         select: { fichaId: true }
@@ -209,10 +209,14 @@ const getUserCompetencias = async (req, res) => {
       if (fichaIds.length === 0) return res.json({ competencias: [] });
 
       const misCompetencias = await prisma.competencia.findMany({
-        where: { fichaId: { in: fichaIds } },
+        where: { 
+          fichaId: { in: fichaIds },
+          resultados: { some: { instructorId: userId } }
+        },
         include: {
           ficha: { select: { numero: true, id: true, nombre: true, nivel: true, jornada: true, instructorAdminId: true } },
           resultados: {
+            where: { instructorId: userId },
             include: {
               instructor: { select: { id: true, fullName: true } },
               horarios: true,
