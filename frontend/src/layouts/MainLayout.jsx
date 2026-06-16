@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, BookOpen, Clock, FileText,
   LogOut, Menu, X, Calendar, ChevronRight, GraduationCap,
   Settings, Moon, Sun, FolderOpen, BarChart3, Trash2, Search,
-  Database, Save, Activity, ClipboardList, Bell
+  Database, Save, Activity, ClipboardList, Bell, Ticket
 } from 'lucide-react';
 
 const INSTRUCTOR_LINKS = [
@@ -20,7 +20,7 @@ const INSTRUCTOR_LINKS = [
   { to: '/instructor/horario', icon: Calendar, labelKey: 'horario' },
   { to: '/instructor/asistencia', icon: Clock, labelKey: 'asistencia' },
   { to: '/instructor/excusas', icon: FileText, labelKey: 'excusas' },
-  { to: '/instructor/reportes', icon: BarChart3, labelKey: 'reportes' },
+  { to: '/instructor/eventos', icon: Ticket, labelKey: 'eventos' },
 ];
 
 const ADMIN_LINKS = [
@@ -30,6 +30,7 @@ const ADMIN_LINKS = [
   { to: '/admin/horarios', icon: Search, labelKey: 'horarios' },
   { to: '/admin/excusas', icon: FileText, labelKey: 'excusas' },
   { to: '/admin/reportes', icon: BarChart3, labelKey: 'reportes' },
+  { to: '/admin/eventos', icon: Ticket, labelKey: 'eventos' },
   { to: '/admin/papelera', icon: Trash2, labelKey: 'papelera' },
   { to: '/admin/auditoria', icon: ClipboardList, labelKey: 'auditoria' },
 ];

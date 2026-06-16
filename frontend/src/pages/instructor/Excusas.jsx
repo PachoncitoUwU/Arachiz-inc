@@ -221,7 +221,15 @@ export default function InstructorExcusas() {
       if (filtroEstado !== 'Todas') params.append('estado', filtroEstado);
       
       const d = await fetchApi(`/excusas?${params.toString()}`);
-      setExcusas(d.excusas);
+      const mapped = (d.excusas || []).map(excusa => ({
+        ...excusa,
+        materia: excusa.resultado ? {
+          nombre: `${excusa.resultado.competencia?.nombre || ''} - ${excusa.resultado.nombre}`,
+          ficha: excusa.resultado.competencia?.ficha || { numero: 'N/A' }
+        } : { nombre: 'N/A', ficha: { numero: 'N/A' } },
+        materiaId: excusa.resultadoId
+      }));
+      setExcusas(mapped);
     } catch (err) {
       console.error(err);
       showToast(err.message, 'error');
@@ -344,7 +352,7 @@ export default function InstructorExcusas() {
               value={filtroNombre} onChange={e => setFiltroNombre(e.target.value)} />
           </div>
           <div>
-            <label className="input-label">Materia</label>
+            <label className="input-label">Resultado de Aprendizaje</label>
             <select className="input-field" value={filtroMateria} onChange={e => setFiltroMateria(e.target.value)}>
               <option value="Todas">Todas</option>
               {materiasUnicas.map((m, i) => (
@@ -443,7 +451,7 @@ export default function InstructorExcusas() {
               {/* Información de la materia y ficha */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Materia</p>
+                  <p className="text-xs text-gray-500 font-medium mb-1">Resultado de Aprendizaje</p>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white ">{selected.materia.nombre}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">

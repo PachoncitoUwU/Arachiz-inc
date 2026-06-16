@@ -114,7 +114,7 @@ export default function AdminExcusas() {
       // Eliminar duplicados
       const instructoresMap = new Map();
       (data.instructores || []).forEach(item => {
-        if (!instructoresMap.has(item.instructor.id)) {
+        if (item && item.instructor && !instructoresMap.has(item.instructor.id)) {
           instructoresMap.set(item.instructor.id, item.instructor);
         }
       });
@@ -139,17 +139,29 @@ export default function AdminExcusas() {
       if (filtroFechaHasta) params.append('fechaHasta', filtroFechaHasta);
       
       const data = await fetchApi(`/admin/excusas?${params.toString()}`);
-      setExcusas(data.excusas || []);
+      
+      const mappedExcusas = (data.excusas || []).map(excusa => ({
+        ...excusa,
+        materia: excusa.resultado ? {
+          id: excusa.resultado.id,
+          nombre: `${excusa.resultado.competencia?.nombre || ''} - ${excusa.resultado.nombre}`,
+          instructor: excusa.resultado.instructor,
+          ficha: excusa.resultado.competencia?.ficha || { numero: 'N/A' }
+        } : { id: 'N/A', nombre: 'N/A', ficha: { numero: 'N/A' } },
+        materiaId: excusa.resultadoId
+      }));
+      
+      setExcusas(mappedExcusas);
       
       // Extraer materias y aprendices únicos para los filtros
       const materiasUnicas = new Map();
       const aprendicesUnicos = new Map();
       
-      (data.excusas || []).forEach(excusa => {
-        if (!materiasUnicas.has(excusa.materia.id)) {
+      mappedExcusas.forEach(excusa => {
+        if (excusa.materia && excusa.materia.id !== 'N/A' && !materiasUnicas.has(excusa.materia.id)) {
           materiasUnicas.set(excusa.materia.id, excusa.materia);
         }
-        if (!aprendicesUnicos.has(excusa.aprendiz.id)) {
+        if (excusa.aprendiz && !aprendicesUnicos.has(excusa.aprendiz.id)) {
           aprendicesUnicos.set(excusa.aprendiz.id, excusa.aprendiz);
         }
       });
@@ -306,15 +318,15 @@ export default function AdminExcusas() {
                 </select>
               </div>
 
-              {/* Materia */}
+              {/* Resultado de Aprendizaje */}
               <div>
-                <label className="input-label">Materia</label>
+                <label className="input-label">Resultado de Aprendizaje</label>
                 <select
                   value={filtroMateria}
                   onChange={(e) => setFiltroMateria(e.target.value)}
                   className="input-field"
                 >
-                  <option value="all">Todas las materias</option>
+                  <option value="all">Todos los resultados</option>
                   {materias.map(m => (
                     <option key={m.id} value={m.id}>
                       {m.nombre}
@@ -461,7 +473,7 @@ export default function AdminExcusas() {
                         Ficha
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                        Materia
+                        Resultado de Aprendizaje
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         Instructor
@@ -494,15 +506,15 @@ export default function AdminExcusas() {
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                  {excusa.aprendiz.fullName.charAt(0).toUpperCase()}
+                                  {excusa.aprendiz?.fullName?.charAt(0)?.toUpperCase() || '?'}
                                 </span>
                               </div>
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white  dark:text-gray-100 truncate">
-                                  {excusa.aprendiz.fullName}
+                                  {excusa.aprendiz?.fullName || 'Aprendiz Eliminado'}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {excusa.aprendiz.document}
+                                  {excusa.aprendiz?.document || 'N/A'}
                                 </p>
                               </div>
                             </div>
@@ -616,7 +628,7 @@ export default function AdminExcusas() {
               </div>
 
               <div>
-                <label className="input-label">Materia</label>
+                <label className="input-label">Resultado de Aprendizaje</label>
                 <select
                   value={filtroEstadisticas.materiaId}
                   onChange={(e) => setFiltroEstadisticas(p => ({ ...p, materiaId: e.target.value }))}
@@ -745,19 +757,19 @@ export default function AdminExcusas() {
                   )}
                 </div>
 
-                {/* Top Materias */}
+                {/* Top Resultados */}
                 <div className="card">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4 flex items-center gap-2">
                     <BookOpen size={16} />
-                    Top 5 Materias con Más Excusas
+                    Top 5 Resultados con Más Excusas
                   </h3>
-                  {estadisticas.topMaterias.length === 0 ? (
+                  {estadisticas.topResultados.length === 0 ? (
                     <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
                       No hay datos disponibles
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {estadisticas.topMaterias.map((materia, idx) => (
+                      {estadisticas.topResultados.map((materia, idx) => (
                         <div key={materia.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">

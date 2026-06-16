@@ -54,7 +54,7 @@ const InstructorMaterias    = lazy(() => import('./pages/instructor/Materias'));
 const InstructorHorario     = lazy(() => import('./pages/instructor/Horario'));
 const InstructorAsistencia  = lazy(() => import('./pages/instructor/Asistencia'));
 const InstructorExcusas     = lazy(() => import('./pages/instructor/Excusas'));
-const InstructorReportes    = lazy(() => import('./pages/instructor/Reportes'));
+const InstructorEventos     = lazy(() => import('./pages/instructor/Eventos'));
 
 // ── Admin ──────────────────────────────────────────────────────────────────────
 const AdminDashboard     = lazy(() => import('./pages/admin/Dashboard'));
@@ -64,6 +64,7 @@ const AdminUsuarios      = lazy(() => import('./pages/admin/Usuarios'));
 const AdminHorarios      = lazy(() => import('./pages/admin/Horarios'));
 const AdminExcusas       = lazy(() => import('./pages/admin/Excusas'));
 const AdminReportes      = lazy(() => import('./pages/admin/Reportes'));
+const AdminEventos       = lazy(() => import('./pages/admin/Eventos'));
 const AdminPapelera      = lazy(() => import('./pages/admin/Papelera'));
 const AdminConfiguracion = lazy(() => import('./pages/admin/Configuracion'));
 const AdminAuditoria     = lazy(() => import('./pages/admin/Auditoria'));
@@ -133,7 +134,7 @@ export default function App() {
                 <Route path="horario"        element={<InstructorHorario />} />
                 <Route path="asistencia"     element={<InstructorAsistencia />} />
                 <Route path="excusas"        element={<InstructorExcusas />} />
-                <Route path="reportes"       element={<InstructorReportes />} />
+                <Route path="eventos"        element={<InstructorEventos />} />
                 <Route path="configuracion"  element={<Configuracion />} />
                 <Route path="perfil"         element={<Perfil />} />
               </Route>
@@ -147,6 +148,7 @@ export default function App() {
                 <Route path="horarios"       element={<AdminHorarios />} />
                 <Route path="excusas"        element={<AdminExcusas />} />
                 <Route path="reportes"       element={<AdminReportes />} />
+                <Route path="eventos"        element={<AdminEventos />} />
                 <Route path="papelera"       element={<AdminPapelera />} />
                 <Route path="auditoria"      element={<AdminAuditoria />} />
                 <Route path="configuracion"  element={<AdminConfiguracion />} />

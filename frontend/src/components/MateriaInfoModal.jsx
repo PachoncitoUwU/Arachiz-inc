@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import fetchApi from '../services/api';
-import { BookOpen, User, Clock, Edit2, Trash2, Loader, UserPlus, UserMinus, EyeOff, Eye, UserCheck } from 'lucide-react';
+import { BookOpen, User, Clock, Edit2, Trash2, Loader, UserPlus, UserMinus, EyeOff, Eye, UserCheck, Download, Calendar, BarChart } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 export default function MateriaInfoModal({ 
   open, 
@@ -36,6 +37,12 @@ export default function MateriaInfoModal({
     action: null,
     type: null // 'delete', 'take', 'leave', 'evitar', 'volver', 'res_tomar', 'res_dejar', 'res_eliminar'
   });
+
+  const { showToast } = useToast();
+  const [downloading, setDownloading] = useState(false);
+  const [showReporteFechas, setShowReporteFechas] = useState(false);
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
 
   // Estado para gestión inline de resultados
   const [editingResultadoId, setEditingResultadoId] = useState(null);
@@ -257,10 +264,83 @@ export default function MateriaInfoModal({
         } catch (err) {
           setError(err.message || 'Error al dejar el cargo');
           setLeavingMateria(false);
+          setConfirmDialog({ open: false, action: null, type: null });
         }
       },
       type: 'leave'
     });
+  };
+
+  const handleDownloadReport = async (type) => {
+    try {
+      setDownloading(true);
+      setError('');
+      
+      let url = '';
+      let filename = '';
+      
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      
+      if (materia.competenciaId === undefined) {
+        // Es competencia
+        url = `${API_BASE}/export/competencia/${materia.id}/consolidado`;
+        filename = `Reporte_Competencia_${materia.nombre.substring(0,20)}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      } else {
+        // Es resultado
+        if (type === 'consolidado') {
+          url = `${API_BASE}/export/resultado/${materia.id}/consolidado`;
+          filename = `Consolidado_${materia.nombre.substring(0,20)}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        } else if (type === 'rango') {
+          const params = new URLSearchParams();
+          if (fechaDesde) params.append('desde', fechaDesde);
+          if (fechaHasta) params.append('hasta', fechaHasta);
+          url = `${API_BASE}/export/resultado/${materia.id}/rango?${params.toString()}`;
+          filename = `Asistencia_${materia.nombre.substring(0,20)}_${fechaDesde || 'inicio'}_${fechaHasta || 'fin'}.csv`;
+        }
+      }
+
+      showToast('Generando reporte...', 'info');
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al generar reporte');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      
+      // Try to get filename from content-disposition
+      const disposition = response.headers.get('content-disposition');
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) { 
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(a);
+
+      showToast('Reporte descargado exitosamente', 'success');
+      setShowReporteFechas(false);
+    } catch (err) {
+      setError(err.message || 'Error descargando reporte');
+      showToast('Error descargando reporte', 'error');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleEvitarMateria = async () => {
@@ -521,6 +601,81 @@ export default function MateriaInfoModal({
             {/* Botones de acción */}
             {(isCreatorOrAdmin || (!isAprendizView && currentUserId) || isAprendizView) && (
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-700  dark:border-gray-700">
+                {/* Botones de reporte para instructores y admins */}
+                {(!isAprendizView) && (
+                  <div className="flex flex-wrap gap-3">
+                    {materia.competenciaId === undefined ? (
+                      <button 
+                        onClick={() => handleDownloadReport('consolidado')}
+                        disabled={downloading}
+                        className="btn-secondary flex-1 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                      >
+                        {downloading ? (
+                          <Loader className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download size={16} />
+                        )}
+                        Descargar Reporte
+                      </button>
+                    ) : (
+                      <div className="w-full space-y-2">
+                        {!showReporteFechas ? (
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => handleDownloadReport('consolidado')}
+                              disabled={downloading}
+                              className="btn-secondary flex-1 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                            >
+                              {downloading ? <Loader className="w-4 h-4 animate-spin" /> : <BarChart size={16} />} Consolidado
+                            </button>
+                            <button 
+                              onClick={() => setShowReporteFechas(true)}
+                              className="btn-secondary flex-1 flex items-center justify-center gap-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
+                            >
+                              <Calendar size={16} /> Por Fechas
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Descargar reporte por fechas:</p>
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="date" 
+                                value={fechaDesde} 
+                                onChange={(e) => setFechaDesde(e.target.value)}
+                                className="input-field py-1.5 text-sm"
+                              />
+                              <span className="text-gray-500 text-sm">a</span>
+                              <input 
+                                type="date" 
+                                value={fechaHasta} 
+                                onChange={(e) => setFechaHasta(e.target.value)}
+                                className="input-field py-1.5 text-sm"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => handleDownloadReport('rango')}
+                                disabled={downloading}
+                                className="btn-primary flex-1 flex items-center justify-center gap-2 py-1.5 text-sm bg-green-600 hover:bg-green-700"
+                              >
+                                {downloading ? <Loader className="w-4 h-4 animate-spin" /> : <Download size={14} />}
+                                Descargar CSV
+                              </button>
+                              <button 
+                                onClick={() => setShowReporteFechas(false)}
+                                className="btn-secondary px-3 py-1.5 text-sm"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Botones para aprendices (evitar/volver a tomar materia) */}
                 {isAprendizView && (
                   <div className="flex flex-wrap gap-3 ">

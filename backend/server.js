@@ -36,6 +36,7 @@ const statsRoutes = require('./routes/statsRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const eventoRoutes = require('./routes/eventoRoutes');
 const SerialService = require('./utils/serialService');
 const { checkAndCloseExpiredSessions } = require('./controllers/asistenciaController');
 
@@ -137,6 +138,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/eventos', eventoRoutes);
 
 const serialService = new SerialService(io);
 app.set('serialService', serialService);

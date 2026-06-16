@@ -13,5 +13,6 @@ router.get('/ficha/:fichaId/info/pdf', exportController.exportFichaInfoPdf);
 router.get('/session/:sessionId/asistencia', exportController.exportSessionAsistencia);
 router.get('/resultado/:resultadoId/rango', exportController.exportAsistenciaRango);
 router.get('/resultado/:resultadoId/consolidado', exportController.exportReporteConsolidado);
+router.get('/competencia/:competenciaId/consolidado', exportController.exportReporteCompetencia);
 
 module.exports = router;
