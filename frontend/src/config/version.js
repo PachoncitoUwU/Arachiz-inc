@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.368';
+export const VERSION = '1.4.370';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.370',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.370',
+    changes: [
+      'fix: resolve prisma schema validation errors and update query relations to competency/results'
+    ]
+  },
   {
     version: '1.4.368',
     date: '2026-06-16',
