@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.382';
+export const VERSION = '1.4.384';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.384',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.384',
+    changes: [
+      'fix: sync presentacion-embed.html with latest slides from presentaciones/index.html'
+    ]
+  },
   {
     version: '1.4.382',
     date: '2026-06-16',
