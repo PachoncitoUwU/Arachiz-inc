@@ -871,18 +871,19 @@ export default function InstructorAsistencia() {
   };
 
   return (
-    <div className="animate-fade-in-up space-y-5">
-      <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} action={<ConnectionBadges />} />
+    <>
+      <div className="animate-fade-in-up space-y-5">
+        <PageHeader title="Asistencia" subtitle={activeSession ? "Sesión activa" : "Control de asistencia"} action={<ConnectionBadges />} />
 
-      {loading ? (
-        <div className="flex justify-center items-center py-16">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-[#34A853] border-t-transparent rounded-full animate-spin mx-auto mb-4"/>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando asistencia...</p>
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-[#34A853] border-t-transparent rounded-full animate-spin mx-auto mb-4"/>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Cargando asistencia...</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
+        ) : (
+          <>
       {/* Selector de materia y botón */}
       <div className="card-hover dark:bg-gray-900 dark:border-gray-800 transition-all duration-300 hover:shadow-xl animate-slide-in-down">
         <div className="flex flex-col sm:flex-row gap-4 items-end">
@@ -1392,6 +1393,9 @@ export default function InstructorAsistencia() {
           )}
         </div>
       )}
+          </>
+        )}
+      </div>
 
       {/* Modal QR */}
       {qrActive && activeSession && (
@@ -1922,8 +1926,6 @@ export default function InstructorAsistencia() {
           </div>
         </div>
       )}
-        </>
-      )}
-    </div>
+    </>
   );
 }
