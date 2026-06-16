@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from './Modal';
 import ConfirmModal from './ConfirmModal';
 import FaceCapture from './FaceCapture';
@@ -18,11 +18,13 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, data: null });
   const [deleting, setDeleting] = useState(false);
   const [connectionMode, setConnectionMode] = useState('usb'); // 'usb' | 'wifi'
+  const modeRef = useRef(null); // ref para evitar closure stale en socket listeners
 
   // Reiniciar estado
   useEffect(() => {
     if (open) {
       setMode(null);
+      modeRef.current = null;
       setStatus('idle');
       setMessage('');
       // Comprobar si ya tiene descriptor facial (length > 0)
@@ -38,7 +40,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     if (!open) return;
 
     const onNfc = async (data) => {
-      if (mode !== 'nfc' || status === 'success') return;
+      if (modeRef.current !== 'nfc') return;
       try {
         setStatus('waiting');
         await fetchApi('/serial/bind', {
@@ -46,18 +48,20 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
           body: JSON.stringify({ userId: aprendiz.id, nfcUid: data.uid })
         });
         showToast(`NFC vinculado: ${data.uid}`, 'success');
+        modeRef.current = null;
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
       } catch (err) {
         showToast(err.message || 'Error al vincular NFC', 'error');
+        modeRef.current = null;
         setMode(null);
         setStatus('idle');
       }
     };
 
     const onFingerSuccess = async (data) => {
-      if (mode !== 'fingerprint' || status === 'success') return;
+      if (modeRef.current !== 'fingerprint') return;
       try {
         await fetchApi('/serial/bind', {
           method: 'PUT',
@@ -66,19 +70,22 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         showToast(`Huella ID ${data.id} vinculada exitosamente`, 'success');
         if (!aprendiz.huellas) aprendiz.huellas = [];
         aprendiz.huellas.push(data.id);
+        modeRef.current = null;
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
       } catch (err) {
         showToast(err.message || 'Error al guardar huella en la BD', 'error');
+        modeRef.current = null;
         setMode(null);
         setStatus('idle');
       }
     };
 
     const onFingerError = (data) => {
-      if (mode !== 'fingerprint') return;
+      if (modeRef.current !== 'fingerprint') return;
       showToast(data.message || 'Error al registrar huella', 'error');
+      modeRef.current = null;
       setMode(null);
       setStatus('idle');
     };
@@ -92,15 +99,17 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       socket.off('arduino_enroll_success', onFingerSuccess);
       socket.off('arduino_enroll_error', onFingerError);
     };
-  }, [open, mode, status, aprendiz]);
+  }, [open, aprendiz]); // quitamos mode y status de las deps para evitar recrear listeners
 
   const startNfc = () => {
+    modeRef.current = 'nfc';
     setMode('nfc');
     setStatus('waiting');
     setMessage('Acerca la tarjeta o llavero NFC al lector...');
   };
 
   const startFingerprint = async () => {
+    modeRef.current = 'fingerprint';
     setMode('fingerprint');
     setStatus('waiting');
     const modeLabel = connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB';
@@ -113,12 +122,14 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       });
     } catch (err) {
       showToast(err.message || 'Error al iniciar enrolamiento', 'error');
+      modeRef.current = null;
       setMode(null);
       setStatus('idle');
     }
   };
 
   const startFace = () => {
+    modeRef.current = 'face';
     setMode('face');
     setStatus('waiting');
     setMessage('');

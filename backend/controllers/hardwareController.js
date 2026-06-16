@@ -2,6 +2,8 @@
 // igual que serialService.handleData() pero via HTTP
 
 // Cola de comandos pendientes para el ESP8266
+// NOTA: En producción (Render) el estado en memoria puede resetearse.
+// La ruta /session-status consulta directamente la BD para evitar este problema.
 let commandQueue = [];
 
 // Estado de sesión activa (sincronizado con el backend)
@@ -62,16 +64,32 @@ exports.queueCommand = (command) => {
 };
 
 // Estado actual de sesión (para que el ESP pueda consultarlo al reconectar)
-exports.getSessionStatus = (req, res) => {
-  res.json({ sessionActive });
+// Consulta la BD directamente para que funcione aunque el proceso se reinicie (Render)
+exports.getSessionStatus = async (req, res) => {
+  try {
+    const prisma = require('../lib/prisma');
+    const activeSession = await prisma.asistencia.findFirst({
+      where: { activa: true },
+      select: { id: true }
+    });
+    const active = !!activeSession;
+    sessionActive = active; // sincronizar variable en memoria también
+    res.json({ sessionActive: active });
+  } catch (err) {
+    // fallback a variable en memoria si falla la BD
+    res.json({ sessionActive });
+  }
 };
 
 exports.getHardwareStatus = (req, res) => {
   try {
     const serialService = req.app.get('serialService');
-    const usbConnected = serialService && typeof serialService.isConnected === 'function' ? serialService.isConnected() : false;
-    res.json({ usbConnected, wifiAvailable: true });
+    // isConnected es una propiedad booleana, NO una función
+    const usbConnected = serialService ? serialService.isConnected : false;
+    const espConnected = espLastSeen > 0 && (Date.now() - espLastSeen) < 20000;
+    res.json({ usbConnected, espConnected, wifiAvailable: true });
   } catch (error) {
-    res.json({ usbConnected: false, wifiAvailable: false });
+    res.json({ usbConnected: false, espConnected: false, wifiAvailable: false });
   }
 };
+

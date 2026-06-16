@@ -138,14 +138,15 @@ const createSession = async (req, res) => {
     newAsistencia.resultado.competencia.ficha.aprendices = newAsistencia.resultado.competencia.ficha.aprendices.filter(a => !evitadasIds.has(a.id));
     
     const serialService = req.app.get('serialService');
+    const hardwareController = require('./hardwareController');
 
-    // Notificar al hardware (USB o WiFi)
+    // Notificar al hardware por AMBOS canales (USB y WiFi)
+    // El Arduino solo procesa el que corresponde según el modo del switch
     if (serialService && serialService.isConnected) {
       serialService.sendCommand('SESSION ON');
-    } else {
-      const hardwareController = require('./hardwareController');
-      hardwareController.queueCommand('SESSION ON');
     }
+    // Siempre encolar para WiFi también (el ESP lo ignorará si no hay comando activo)
+    hardwareController.queueCommand('SESSION ON');
 
     const userIds = newAsistencia.resultado.competencia.ficha.aprendices.map(a => a.id);
     const resultadoName = newAsistencia.resultado.nombre;
@@ -574,14 +575,12 @@ const closeSessionById = async (id, io, serialService) => {
     }
   });
 
-  if (serialService) serialService.sendCommand('SESSION OFF');
+  if (serialService && serialService.isConnected) serialService.sendCommand('SESSION OFF');
   if (io) io.to(`session_${id}`).emit('sessionClosed', { id });
 
-  // Notificar al ESP por WiFi
-  if (!serialService || !serialService.isConnected) {
-    const hardwareController = require('./hardwareController');
-    hardwareController.queueCommand('SESSION OFF');
-  }
+  // Notificar al ESP por WiFi también (siempre, no solo si no hay USB)
+  const hardwareController = require('./hardwareController');
+  hardwareController.queueCommand('SESSION OFF');
 
   // Update Rachas de Asistencia
   try {

@@ -17,29 +17,37 @@ SoftwareSerial mySerial(2, 3);   // AS608 huella: RX=2, TX=3
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 SoftwareSerial espSerial(8, 9);  // ESP8266: RX=8, TX=9
 
+// IMPORTANTE: PIN_BUZZER debe ser pin PWM (3,5,6,9,10,11 en Uno/Nano)
+// tone() usa Timer2 y no bloquea interrupciones — a diferencia de bridgeTone()
 const int PIN_BUZZER  = 6;
 const int PIN_BUZZER2 = 5;
 const int PIN_SWITCH  = 7;  // LOW=WiFi | HIGH=USB
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
-bool sesionActiva = false;
-bool enrollando   = false;
-unsigned long lastPoll = 0;
+bool sesionActiva   = false;
+bool enrollando     = false;
+unsigned long lastPoll    = 0;
+unsigned long lastNFC     = 0;
+uint8_t       erroresSensor = 0;
+
 const unsigned long POLL_INTERVAL = 600;
+const unsigned long NFC_INTERVAL  = 200;
+const uint8_t       MAX_ERRORES   = 6;
 
 // ── PROTOTIPOS ────────────────────────────────────────────────────────────────
-void   sonidoNFC();
-void   sonidoHuella();
-void   sonidoEnrolamientoInicio();
-void   sonidoEnrolamientoOK();
-void   sonidoError();
-bool   enrolar(int id);
-String hexUID(uint8_t* uid, uint8_t len);
-void   enviarEvento(String msg);
-void   bridgeTone(int freq, unsigned long dur);
-void   procesarComando(String cmd);
-String pollESP();
-void   esperarRetiroDedo(unsigned long timeoutMs);
+void    sonidoNFC();
+void    sonidoHuella();
+void    sonidoEnrolamientoInicio();
+void    sonidoEnrolamientoOK();
+void    sonidoError();
+bool    enrolar(int id);
+String  hexUID(uint8_t* uid, uint8_t len);
+void    enviarEvento(String msg);
+void    procesarComando(String cmd);
+String  pollESP();
+void    esperarRetiroDedo(unsigned long timeoutMs);
+bool    reiniciarSensor();
+void    beep(int freq, int dur);   // wrapper de tone() no bloqueante
 
 // ── SETUP ─────────────────────────────────────────────────────────────────────
 void setup() {
@@ -50,18 +58,19 @@ void setup() {
 
   pinMode(PIN_BUZZER,  OUTPUT);
   pinMode(PIN_BUZZER2, OUTPUT);
+  digitalWrite(PIN_BUZZER, LOW);
   digitalWrite(PIN_BUZZER2, LOW);
   pinMode(PIN_SWITCH, INPUT_PULLUP);
 
-  delay(100);
+  delay(200);
 
   Serial.println(F("\n========================================="));
-  Serial.println(F(" ARACHIZ - MODO ESCLAVO V10.3"));
+  Serial.println(F(" ARACHIZ - MODO ESCLAVO V10.5"));
   Serial.println(F("========================================="));
 
   Wire.begin();
   nfc_hardware.begin();
-  delay(50);
+  delay(100);
   uint32_t ver = nfc_hardware.getFirmwareVersion();
   if (!ver) {
     Serial.println(F("ERROR: NFC no encontrado"));
@@ -72,9 +81,10 @@ void setup() {
 
   mySerial.listen();
   finger.begin(57600);
-  delay(50);
+  delay(100);
   if (finger.verifyPassword()) {
     Serial.println(F("Huella AS608 OK"));
+    erroresSensor = 0;
   } else {
     Serial.println(F("ERROR: Sensor huella no encontrado"));
   }
@@ -83,40 +93,93 @@ void setup() {
   Serial.println(F("========================================="));
 }
 
+// ── BEEP: usa tone() que NO bloquea interrupciones ───────────────────────────
+// tone() dispara el sonido en background usando Timer2.
+// La llamada retorna inmediatamente; noTone() lo para.
+// Para el buzzer bridge (A+ / A-), alternamos PIN_BUZZER2 manualmente
+// pero SOLO durante el delay posterior (ya no estamos hablando con el sensor).
+void beep(int freq, int dur) {
+  tone(PIN_BUZZER, freq, dur);
+  // PIN_BUZZER2 actúa como tierra del puente H — ponerlo LOW es suficiente
+  digitalWrite(PIN_BUZZER2, LOW);
+  delay(dur);           // delay DESPUÉS de que tone() ya está corriendo
+  noTone(PIN_BUZZER);
+  digitalWrite(PIN_BUZZER, LOW);
+}
+
+// ── SONIDOS ───────────────────────────────────────────────────────────────────
+void sonidoHuella() {
+  beep(900, 80); delay(25); beep(1200, 80); delay(25); beep(1600, 120);
+}
+void sonidoNFC() {
+  beep(1000, 120); delay(30); beep(1500, 120);
+}
+void sonidoEnrolamientoInicio() {
+  beep(800, 70); delay(40); beep(1100, 140);
+}
+void sonidoEnrolamientoOK() {
+  beep(1000, 90); delay(35); beep(1300, 90); delay(35);
+  beep(1600, 90); delay(35); beep(2000, 220);
+}
+void sonidoError() {
+  beep(300, 280); delay(60); beep(300, 280);
+}
+
+// ── REINICIAR SENSOR AS608 ────────────────────────────────────────────────────
+bool reiniciarSensor() {
+  Serial.println(F("[Huella] Reiniciando sensor..."));
+  mySerial.end();
+  delay(300);
+  mySerial.begin(57600);
+  mySerial.listen();
+  delay(300);
+  finger.begin(57600);
+  delay(150);
+  erroresSensor = 0;
+  if (finger.verifyPassword()) {
+    Serial.println(F("[Huella] OK tras reinicio"));
+    return true;
+  }
+  Serial.println(F("[Huella] No responde tras reinicio"));
+  return false;
+}
+
 // ── ENVIAR EVENTO ─────────────────────────────────────────────────────────────
-// NOTA: en modo WiFi el sonido ya se tocó ANTES de llamar esta función,
-// porque espSerial.listen() desactiva mySerial (SoftwareSerial exclusivo)
 void enviarEvento(String msg) {
   if (digitalRead(PIN_SWITCH) == LOW) {
+    while (espSerial.available()) espSerial.read(); // limpiar basura
     espSerial.listen();
     delay(10);
     espSerial.println("EVT:" + msg);
-    // Esperar a que el ESP reciba todos los bytes (a 4800 baud, ~2ms/byte)
-    // "EVT:READ_FINGER:128\n" = ~22 bytes → ~46ms mínimo
-    delay(60);
+    // A 4800 baud ~2.1ms/byte; "EVT:READ_FINGER:128\n" ~22 bytes = ~47ms
+    delay(80);
     Serial.println("WiFi -> " + msg);
-    // Volver a escuchar el AS608 para no dejarlo huérfano
     mySerial.listen();
+    delay(10);
   } else {
     Serial.println(msg);
   }
 }
 
 // ── ESPERAR RETIRO DE DEDO ────────────────────────────────────────────────────
-// Función auxiliar: siempre activa mySerial antes de preguntar al AS608
 void esperarRetiroDedo(unsigned long timeoutMs) {
   unsigned long t0 = millis();
   uint8_t estado;
   do {
     mySerial.listen();
-    delay(60);
+    delay(80);
     estado = finger.getImage();
+    if (estado == FINGERPRINT_PACKETRECIEVEERR) {
+      erroresSensor++;
+      break;
+    }
   } while (estado != FINGERPRINT_NOFINGER && millis() - t0 < timeoutMs);
-  delay(120); // estabilización final del sensor
+  delay(120);
 }
 
 // ── POLL AL ESP ───────────────────────────────────────────────────────────────
 String pollESP() {
+  while (espSerial.available()) espSerial.read();
   espSerial.listen();
   delay(5);
   espSerial.println("POLL");
@@ -130,20 +193,15 @@ String pollESP() {
       for (int i = 0; i < (int)r.length(); i++) {
         char c = r[i]; if (c >= 32 && c < 127) clean += c;
       }
-      mySerial.listen(); // restaurar escucha al AS608
+      mySerial.listen();
       return (clean == "NONE") ? "" : clean;
     }
   }
-  mySerial.listen(); // restaurar escucha al AS608
+  mySerial.listen();
   return "";
 }
 
 // ── LOOP PRINCIPAL ────────────────────────────────────────────────────────────
-// ORDEN CRÍTICO:
-//   1. Comandos USB   (inmediato, sin bloqueo)
-//   2. Huella         (mySerial.listen() activo, SIN competencia con espSerial)
-//   3. Poll ESP       (solo WiFi, usa espSerial brevemente y restaura mySerial)
-//   4. NFC            (ÚLTIMO: I2C bloquea ~25ms)
 void loop() {
 
   // ── A. Comandos por USB ───────────────────────────────────────────────────
@@ -153,41 +211,74 @@ void loop() {
     procesarComando(cmd);
   }
 
-  // ── B. Lectura Huella ────────────────────────────────────────────────────
-  if (!enrollando && sesionActiva) {
-    mySerial.listen();
+  // ── B. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
+  if (!enrollando) {
+    mySerial.listen();          // ceder el SoftwareSerial al AS608
+    delay(10);                  // Pequeña pausa para estabilizar el cambio de escucha
     uint8_t imgResult = finger.getImage();
 
     if (imgResult == FINGERPRINT_OK) {
-      Serial.println(F("[Huella] Dedo detectado, procesando..."));
+      erroresSensor = 0;
+      Serial.println(F("[Huella] Dedo detectado..."));
 
-      if (finger.image2Tz() == FINGERPRINT_OK) {
+      // image2Tz necesita mySerial activo — no poner nada entre listen y la llamada
+      mySerial.listen();
+      uint8_t tz = finger.image2Tz();
 
-        if (finger.fingerFastSearch() == FINGERPRINT_OK) {
+      if (tz == FINGERPRINT_OK) {
+        mySerial.listen();
+        uint8_t fs = finger.fingerFastSearch();
+
+        if (fs == FINGERPRINT_OK) {
           int fid = finger.fingerID;
           Serial.print(F("[Huella] Match! ID=")); Serial.println(fid);
 
-          // PRIMERO sonar (mySerial aún activo, bridgeTone no usa serial)
-          sonidoHuella();
-
-          // LUEGO enviar (en WiFi esto cambia el listen, por eso sonamos antes)
+          // Enviar primero (si WiFi, cambia espSerial.listen() internamente)
           enviarEvento("READ_FINGER:" + String(fid));
 
-          // Esperar que el dedo se retire
-          esperarRetiroDedo(4000);
+          // Sonido DESPUÉS del envío (tone() no bloquea interrupciones)
+          sonidoHuella();
 
-        } else {
+          // Esperar retiro
+          esperarRetiroDedo(5000);
+
+        } else if (fs == FINGERPRINT_NOTFOUND) {
           Serial.println(F("[Huella] No reconocida"));
           sonidoError();
           esperarRetiroDedo(3000);
+
+        } else {
+          Serial.print(F("[Huella] Err busqueda: ")); Serial.println(fs);
+          erroresSensor++;
+          esperarRetiroDedo(1000);
         }
 
+      } else if (tz == FINGERPRINT_IMAGEMESS) {
+        // Imagen borrosa — no contar como error del sensor
+        Serial.println(F("[Huella] Imagen borrosa"));
+        esperarRetiroDedo(1500);
+
       } else {
-        Serial.println(F("[Huella] Error convirtiendo imagen"));
-        esperarRetiroDedo(2000);
+        Serial.print(F("[Huella] Err image2Tz: ")); Serial.println(tz);
+        erroresSensor++;
+        esperarRetiroDedo(1000);
       }
+
+    } else if (imgResult == FINGERPRINT_NOFINGER) {
+      erroresSensor = 0; // sin dedo = estado limpio
+
+    } else if (imgResult == FINGERPRINT_PACKETRECIEVEERR) {
+      erroresSensor++;
+      Serial.print(F("[Huella] Err com (")); Serial.print(erroresSensor); Serial.println(F(")"));
+      delay(150);
+      if (erroresSensor >= MAX_ERRORES) reiniciarSensor();
+
+    } else {
+      // Otro código de error
+      erroresSensor++;
+      delay(100);
+      if (erroresSensor >= MAX_ERRORES) reiniciarSensor();
     }
-    // FINGERPRINT_NOFINGER es normal → no hacer nada
   }
 
   // ── C. Poll al ESP (modo WiFi) ────────────────────────────────────────────
@@ -202,15 +293,21 @@ void loop() {
     }
   }
 
-  // ── D. Lectura NFC (VA AL FINAL — su timeout I2C bloquea el CPU ~25ms) ───
-  if (!enrollando) {
+  // ── D. Lectura NFC (throttled + restaura mySerial después de I2C) ─────────
+  if (!enrollando && millis() - lastNFC >= NFC_INTERVAL) {
+    lastNFC = millis();
     uint8_t uid[7] = {0};
     uint8_t uidLen = 0;
-    if (nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 25)) {
-      sonidoNFC();                                    // sonar ANTES de enviar
+    bool found = nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 20);
+    // CRÍTICO: restaurar mySerial SIEMPRE después de I2C
+    mySerial.listen();
+    if (found) {
       enviarEvento("READ_NFC:" + hexUID(uid, uidLen));
+      sonidoNFC();
       delay(400);
       nfc_hardware.SAMConfig();
+      mySerial.listen();
+      lastNFC = millis();
     }
   }
 }
@@ -262,49 +359,57 @@ void procesarComando(String cmd) {
 bool enrolar(int id) {
   int p;
 
-  // Captura 1
   sonidoEnrolamientoInicio();
   Serial.println(F("[1/2] PON EL DEDO"));
   unsigned long t = millis();
   do {
     mySerial.listen();
+    delay(10);
     p = finger.getImage();
     if (millis() - t > 15000) { sonidoError(); return false; }
   } while (p != FINGERPRINT_OK);
 
+  mySerial.listen();
   p = finger.image2Tz(1);
   if (p != FINGERPRINT_OK) { sonidoError(); return false; }
 
+  // Verificar si la huella ya está registrada
   finger.getTemplateCount();
-  if (finger.templateCount > 0 && finger.fingerFastSearch() == FINGERPRINT_OK) {
-    Serial.println(F("Ya registrada"));
-    sonidoError(); delay(1500); return false;
+  if (finger.templateCount > 0) {
+    mySerial.listen();
+    if (finger.fingerFastSearch() == FINGERPRINT_OK) {
+      Serial.println(F("Ya registrada"));
+      sonidoError(); delay(1500); return false;
+    }
   }
 
-  bridgeTone(1400, 100); delay(70); bridgeTone(1400, 100);
+  beep(1400, 80); delay(50); beep(1400, 80);
   Serial.println(F("QUITA EL DEDO"));
-  delay(600);
+  delay(500);
   esperarRetiroDedo(8000);
 
-  // Captura 2
   sonidoEnrolamientoInicio();
   Serial.println(F("[2/2] PON EL MISMO DEDO"));
   t = millis();
   do {
     mySerial.listen();
+    delay(10);
     p = finger.getImage();
     if (millis() - t > 15000) { sonidoError(); return false; }
   } while (p != FINGERPRINT_OK);
 
+  mySerial.listen();
   p = finger.image2Tz(2);
   if (p != FINGERPRINT_OK) { sonidoError(); return false; }
 
+  mySerial.listen();
   p = finger.createModel();
   if (p != FINGERPRINT_OK) {
     Serial.println(F("No coinciden"));
     sonidoError(); delay(1000); return false;
   }
 
+  mySerial.listen();
   p = finger.storeModel(id);
   if (p == FINGERPRINT_OK) {
     Serial.println("Guardada ID " + String(id));
@@ -326,21 +431,3 @@ String hexUID(uint8_t* uid, uint8_t len) {
   s.toUpperCase();
   return s;
 }
-
-void bridgeTone(int freq, unsigned long dur) {
-  unsigned long per = 1000000UL / freq, half = per / 2;
-  unsigned long t0 = millis();
-  while (millis() - t0 < dur) {
-    digitalWrite(PIN_BUZZER, HIGH); digitalWrite(PIN_BUZZER2, LOW);
-    delayMicroseconds(half);
-    digitalWrite(PIN_BUZZER, LOW);  digitalWrite(PIN_BUZZER2, HIGH);
-    delayMicroseconds(half);
-  }
-  digitalWrite(PIN_BUZZER, LOW); digitalWrite(PIN_BUZZER2, LOW);
-}
-
-void sonidoNFC()               { bridgeTone(1000,180); delay(40); bridgeTone(1500,180); }
-void sonidoHuella()            { bridgeTone(900,130); delay(35); bridgeTone(1200,130); delay(35); bridgeTone(1600,180); }
-void sonidoEnrolamientoInicio(){ bridgeTone(800,90);  delay(55); bridgeTone(1100,180); }
-void sonidoEnrolamientoOK()    { bridgeTone(1000,110); delay(45); bridgeTone(1300,110); delay(45); bridgeTone(1600,110); delay(45); bridgeTone(2000,280); }
-void sonidoError()             { bridgeTone(320,320); delay(75); bridgeTone(320,320); }

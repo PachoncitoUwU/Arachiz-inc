@@ -28,10 +28,12 @@ DNSServer dnsServer;
 const byte DNS_PORT = 53;
 
 // --- BACKEND URLs ---
+const bool USE_RENDER_BACKEND = false; // Cambiar a true para usar la nube (Render)
+
 const char* URL_RENDER_EVENT = "https://arachiz-backend.onrender.com/api/hardware/event";
 const char* URL_RENDER_CMD   = "https://arachiz-backend.onrender.com/api/hardware/commands";
-const char* URL_LOCAL_EVENT  = "http://192.168.X.X:3000/api/hardware/event";
-const char* URL_LOCAL_CMD    = "http://192.168.X.X:3000/api/hardware/commands";
+const char* URL_LOCAL_EVENT  = "http://192.168.18.74:3000/api/hardware/event";
+const char* URL_LOCAL_CMD    = "http://192.168.18.74:3000/api/hardware/commands";
 const char* API_KEY          = "arachiz-esp-2024";
 
 // --- PANTALLA OLED ---
@@ -525,13 +527,20 @@ void consultarEstadoSesion() {
   // Al reconectar, sincroniza el estado de sesión con el backend
   if (WiFi.status() != WL_CONNECTED) return;
 
-  WiFiClientSecure client;
-  client.setInsecure();
   HTTPClient http;
-  String url = String(URL_RENDER_CMD);
+  String url = String(USE_RENDER_BACKEND ? URL_RENDER_CMD : URL_LOCAL_CMD);
   // Construir URL de session-status desde la base de URL_RENDER_CMD
   url.replace("/commands", "/session-status");
-  http.begin(client, url);
+
+  if (USE_RENDER_BACKEND) {
+    WiFiClientSecure client;
+    client.setInsecure();
+    http.begin(client, url);
+  } else {
+    WiFiClient client;
+    http.begin(client, url);
+  }
+
   http.addHeader("x-hardware-key", API_KEY);
   http.setTimeout(5000);
 
@@ -551,10 +560,16 @@ void consultarEstadoSesion() {
 void consultarComandos() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  WiFiClientSecure client;
-  client.setInsecure();
   HTTPClient http;
-  http.begin(client, URL_RENDER_CMD);
+  if (USE_RENDER_BACKEND) {
+    WiFiClientSecure client;
+    client.setInsecure();
+    http.begin(client, URL_RENDER_CMD);
+  } else {
+    WiFiClient client;
+    http.begin(client, URL_LOCAL_CMD);
+  }
+
   http.addHeader("x-hardware-key", API_KEY);
   http.setTimeout(8000);
   
@@ -677,7 +692,7 @@ void loop() {
     // Detectar modo desde el prefijo que manda el Arduino (compatibilidad)
     bool online = msg.startsWith("MODO:RENDER|");
     if (online) msg = msg.substring(12);
-    else online = true; // en modo WiFi siempre online
+    else online = USE_RENDER_BACKEND;
 
     if (msg.startsWith("READ_NFC:")) {
       String uid = msg.substring(9); uid.trim();

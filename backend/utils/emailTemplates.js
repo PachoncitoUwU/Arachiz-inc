@@ -1,29 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  Arachiz — Email Templates
-//  Colores Arachiz: Azul #3b82f6 · Verde #22c55e · Rojo #ef4444 · Amarillo #eab308
-//  Logo: Cloudinary CDN (siempre disponible en producción)
+//  Colores Arachiz: Azul #4285F4 · Verde #34A853 · Amarillo #FBBC05 · Rojo #EA4335
+//  Logo: Postimages CDN
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LOGO_URL =
-  'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
+  'https://i.postimg.cc/gkCtrcKc/Arachiz-Logo-PNG.png';
 
 // Ícono cuadrado de la PWA (la "A" de Arachiz que aparece en celulares)
 const APP_ICON_URL =
-  'https://res.cloudinary.com/dburlomxp/image/upload/v1780543271/ArachizLogoPNG_doyyps.png';
+  'https://i.postimg.cc/gkCtrcKc/Arachiz-Logo-PNG.png';
 
 // Cuatro colores de la barra de marca Arachiz
 const BRAND_BAR = `
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
     <tr>
-      <td width="25%" height="4" style="background:#3b82f6; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#22c55e; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#eab308; line-height:4px; font-size:4px;">&nbsp;</td>
-      <td width="25%" height="4" style="background:#ef4444; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#4285F4; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#34A853; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#FBBC05; line-height:4px; font-size:4px;">&nbsp;</td>
+      <td width="25%" height="4" style="background:#EA4335; line-height:4px; font-size:4px;">&nbsp;</td>
     </tr>
   </table>`;
 
 // ─── Plantilla base ───────────────────────────────────────────────────────────
-const base = (content, accentHex = '#3b82f6') => `<!DOCTYPE html>
+const base = (content, accentHex = '#4285F4') => `<!DOCTYPE html>
 <html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8"/>
