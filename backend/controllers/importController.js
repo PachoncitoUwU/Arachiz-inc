@@ -61,7 +61,11 @@ const importAprendices = async (req, res) => {
 
     const workbook = new ExcelJS.Workbook();
     if (req.file.originalname.endsWith('.csv')) {
-      await workbook.csv.read(req.file.buffer);
+      const { Readable } = require('stream');
+      const stream = new Readable();
+      stream.push(req.file.buffer);
+      stream.push(null);
+      await workbook.csv.read(stream);
     } else {
       await workbook.xlsx.load(req.file.buffer);
     }
@@ -224,7 +228,11 @@ const importCompetencias = async (req, res) => {
 
     const workbook = new ExcelJS.Workbook();
     if (req.file.originalname.endsWith('.csv')) {
-      await workbook.csv.read(req.file.buffer);
+      const { Readable } = require('stream');
+      const stream = new Readable();
+      stream.push(req.file.buffer);
+      stream.push(null);
+      await workbook.csv.read(stream);
     } else {
       await workbook.xlsx.load(req.file.buffer);
     }

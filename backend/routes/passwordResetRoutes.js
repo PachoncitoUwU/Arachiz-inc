@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const resetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
+  skip: (req) => req.method === 'OPTIONS',
   standardHeaders: true,
   legacyHeaders: false,
   // Handler personalizado para que el error incluya CORS headers
