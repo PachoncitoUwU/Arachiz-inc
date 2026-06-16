@@ -40,7 +40,7 @@ model User {
   reactionScore        ReactionScore?
   registros            RegistroAsistencia[]
   respuestasRapidas    RespuestaRapida[]      @relation("RespuestasRapidas")
-
+  
   snakeScore           SnakeScore?
   superUserLogs        SuperUserAuditLog[]    @relation("SuperUserLogs")
   towerScore           TowerScore?
@@ -48,16 +48,7 @@ model User {
   wordleScore          WordleScore?
   fichasApr            Ficha[]              @relation("Aprendices")
   resultadosEvitados   ResultadoEvitado[]
-  respuestasRapidas    RespuestaRapida[]    @relation("RespuestasRapidas")
-  papeleraEliminados   Papelera[]           @relation("EliminadoPor")
   historialCambios     HistorialCambios[]   @relation("UsuarioCambios")
-  conflictosInstructor ConflictoHorario[]   @relation("ConflictosInstructor")
-  conflictosCreados    ConflictoHorario[]   @relation("ConflictosCreados")
-  rachaAsistencia      Int                  @default(0)
-  pushSubscriptions    PushSubscription[]
-  mensajesEnviados     MensajeChat[]
-  superUserLogs        SuperUserAuditLog[]  @relation("SuperUserLogs")
-  notifications        Notification[]
 }
 
 model Ficha {
@@ -83,10 +74,7 @@ model Ficha {
   competencias      Competencia[]
   aprendices        User[]              @relation("Aprendices")
   papelera          Papelera[]          @relation("FichaPapelera")
-  historialCambios  HistorialCambios[]  @relation("FichaHistorial")
   mensajesChat      MensajeChat[]
-  papelera          Papelera[]         @relation("FichaPapelera")
-  aprendices        User[]             @relation("Aprendices")
 
   @@index([administradorId])
 }
@@ -431,27 +419,4 @@ model Notification {
   @@index([read])
 }
 
-model Materia {
-  id               String           @id(map: "Materia_pkey")
-  nombre           String
-  tipo             String
-  fichaId          String
-  instructorId     String?
-  asistencias      Asistencia[]
-  horarios         Horario[]
-  excusas          Excusa[]
-  ficha            Ficha            @relation(fields: [fichaId], references: [id], onDelete: Cascade, map: "Materia_fichaId_fkey")
-  instructor       User?            @relation("InstructorMaterias", fields: [instructorId], references: [id])
-  materiasEvitadas MateriaEvitada[]
-}
 
-model MateriaEvitada {
-  id         String   @id(map: "MateriaEvitada_pkey")
-  aprendizId String
-  materiaId  String
-  createdAt  DateTime @default(now())
-  aprendiz   User     @relation(fields: [aprendizId], references: [id], onDelete: Cascade, map: "MateriaEvitada_aprendizId_fkey")
-  materia    Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
-
-  @@unique([aprendizId, materiaId], map: "MateriaEvitada_aprendizId_materiaId_key")
-}

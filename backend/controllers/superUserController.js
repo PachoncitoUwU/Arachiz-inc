@@ -233,11 +233,18 @@ exports.getAllFichas = async (req, res) => {
       include: {
         administrador: { select: { fullName: true } },
         instructorAdmin: { select: { fullName: true } },
-        _count: { select: { aprendices: true, materias: true } }
+        _count: { select: { aprendices: true, competencias: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(fichas);
+    const mappedFichas = fichas.map(f => ({
+      ...f,
+      _count: {
+        aprendices: f._count.aprendices,
+        materias: f._count.competencias
+      }
+    }));
+    res.json(mappedFichas);
   } catch (error) {
     res.status(500).json({ error: 'Error obteniendo fichas' });
   }
@@ -251,12 +258,16 @@ exports.getFichaDetail = async (req, res) => {
         administrador: true,
         instructorAdmin: true,
         aprendices: true,
-        materias: true,
+        competencias: true,
         instructores: { include: { instructor: true } }
       }
     });
     if (!ficha) return res.status(404).json({ error: 'Ficha no encontrada' });
-    res.json(ficha);
+    const { competencias, ...rest } = ficha;
+    res.json({
+      ...rest,
+      materias: competencias
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error obteniendo detalle de ficha' });
   }
@@ -337,10 +348,9 @@ exports.deleteFichaPermanently = async (req, res) => {
 // ==========================================
 exports.getAllMaterias = async (req, res) => {
   try {
-    const materias = await prisma.materia.findMany({
+    const materias = await prisma.competencia.findMany({
       include: {
-        ficha: { select: { numero: true } },
-        instructor: { select: { fullName: true } }
+        ficha: { select: { numero: true } }
       }
     });
     res.json(materias);
@@ -351,9 +361,9 @@ exports.getAllMaterias = async (req, res) => {
 
 exports.getMateriaDetail = async (req, res) => {
   try {
-    const materia = await prisma.materia.findUnique({
+    const materia = await prisma.competencia.findUnique({
       where: { id: req.params.id },
-      include: { ficha: true, instructor: true, horarios: true, asistencias: true }
+      include: { ficha: true, resultados: { include: { horarios: true, asistencias: true } } }
     });
     res.json(materia);
   } catch (error) {
@@ -363,8 +373,15 @@ exports.getMateriaDetail = async (req, res) => {
 
 exports.createMateria = async (req, res) => {
   try {
-    const newMateria = await prisma.materia.create({ data: req.body });
-    await registrarLog(req, 'crear', 'Materia', newMateria.id, `Creó materia ${newMateria.nombre}`, null, newMateria);
+    const { nombre, tipo, fichaId } = req.body;
+    const newMateria = await prisma.competencia.create({
+      data: {
+        nombre,
+        tipo: tipo || 'Técnica',
+        fichaId
+      }
+    });
+    await registrarLog(req, 'crear', 'Competencia', newMateria.id, `Creó competencia ${newMateria.nombre}`, null, newMateria);
     res.json(newMateria);
   } catch (error) {
     res.status(500).json({ error: 'Error creando materia' });
@@ -373,12 +390,13 @@ exports.createMateria = async (req, res) => {
 
 exports.updateMateria = async (req, res) => {
   try {
-    const oldMat = await prisma.materia.findUnique({ where: { id: req.params.id } });
-    const newMat = await prisma.materia.update({
+    const { nombre, tipo } = req.body;
+    const oldMat = await prisma.competencia.findUnique({ where: { id: req.params.id } });
+    const newMat = await prisma.competencia.update({
       where: { id: req.params.id },
-      data: req.body
+      data: { nombre, tipo }
     });
-    await registrarLog(req, 'editar', 'Materia', req.params.id, `Editó materia ${newMat.nombre}`, oldMat, newMat);
+    await registrarLog(req, 'editar', 'Competencia', req.params.id, `Editó competencia ${newMat.nombre}`, oldMat, newMat);
     res.json(newMat);
   } catch (error) {
     res.status(500).json({ error: 'Error actualizando materia' });
@@ -386,18 +404,8 @@ exports.updateMateria = async (req, res) => {
 };
 
 exports.changeInstructorMateria = async (req, res) => {
-  try {
-    const { nuevoInstructorId } = req.body;
-    const oldMat = await prisma.materia.findUnique({ where: { id: req.params.id } });
-    const newMat = await prisma.materia.update({
-      where: { id: req.params.id },
-      data: { instructorId: nuevoInstructorId }
-    });
-    await registrarLog(req, 'cambiar_instructor', 'Materia', req.params.id, `Cambió instructor de ${newMat.nombre}`, { instructorId: oldMat.instructorId }, { instructorId: nuevoInstructorId });
-    res.json(newMat);
-  } catch (error) {
-    res.status(500).json({ error: 'Error cambiando instructor' });
-  }
+  // Las competencias ya no tienen instructor directo (están en Resultados de Aprendizaje)
+  res.status(501).json({ error: 'Las competencias no tienen instructor asignado directamente. Asígnelo a sus Resultados de Aprendizaje.' });
 };
 
 exports.deleteMateria = async (req, res) => {
@@ -406,9 +414,9 @@ exports.deleteMateria = async (req, res) => {
 
 exports.deleteMateriaPermanently = async (req, res) => {
   try {
-    const oldMat = await prisma.materia.findUnique({ where: { id: req.params.id } });
-    await prisma.materia.delete({ where: { id: req.params.id } });
-    await registrarLog(req, 'eliminar_permanente', 'Materia', req.params.id, `Eliminó materia ${oldMat?.nombre}`, oldMat, null);
+    const oldMat = await prisma.competencia.findUnique({ where: { id: req.params.id } });
+    await prisma.competencia.delete({ where: { id: req.params.id } });
+    await registrarLog(req, 'eliminar_permanente', 'Competencia', req.params.id, `Eliminó competencia ${oldMat?.nombre}`, oldMat, null);
     res.json({ message: 'Materia eliminada' });
   } catch (error) {
     res.status(500).json({ error: 'Error eliminando materia' });
@@ -422,8 +430,8 @@ exports.getAllTables = async (req, res) => {
   try {
     // List of models from Prisma based on schema
     const tables = [
-      'User', 'Ficha', 'FichaInstructor', 'Materia', 'Horario', 
-      'Asistencia', 'RegistroAsistencia', 'Excusa', 'MateriaEvitada',
+      'User', 'Ficha', 'FichaInstructor', 'Competencia', 'ResultadoAprendizaje', 'Horario', 
+      'Asistencia', 'RegistroAsistencia', 'Excusa', 'ResultadoEvitado',
       'SnakeScore', 'BreakoutScore', 'FlappyScore', 'TowerScore', 
       'ReactionScore', 'MemoryScore', 'WordleScore', 'SnakeSkin', 
       'UserSkin', 'SkinOrder', 'RespuestaRapida', 'Papelera', 
@@ -534,11 +542,30 @@ exports.getAllExcusas = async (req, res) => {
     const excusas = await prisma.excusa.findMany({
       include: {
         aprendiz: { select: { fullName: true, document: true } },
-        materia: { select: { nombre: true, ficha: { select: { numero: true } } } }
+        resultado: {
+          select: {
+            nombre: true,
+            competencia: {
+              select: {
+                ficha: {
+                  select: { numero: true }
+                }
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(excusas);
+    // Map to preserve client key name
+    const mappedExcusas = excusas.map(e => ({
+      ...e,
+      materia: e.resultado ? {
+        nombre: e.resultado.nombre,
+        ficha: e.resultado.competencia?.ficha || { numero: 'N/A' }
+      } : { nombre: 'N/A', ficha: { numero: 'N/A' } }
+    }));
+    res.json(mappedExcusas);
   } catch (error) {
     res.status(500).json({ error: 'Error obteniendo excusas' });
   }
@@ -590,16 +617,17 @@ exports.deleteExcusa = async (req, res) => {
 // ==========================================
 exports.createBackup = async (req, res) => {
   try {
-    const [usuarios, fichas, materias, asistencias] = await Promise.all([
+    const [usuarios, fichas, competencias, resultados, asistencias] = await Promise.all([
       prisma.user.findMany(),
       prisma.ficha.findMany(),
-      prisma.materia.findMany(),
+      prisma.competencia.findMany(),
+      prisma.resultadoAprendizaje.findMany(),
       prisma.asistencia.findMany()
     ]);
 
     const backupData = {
       timestamp: new Date().toISOString(),
-      data: { usuarios, fichas, materias, asistencias }
+      data: { usuarios, fichas, competencias, resultados, asistencias }
     };
 
     const buffer = Buffer.from(JSON.stringify(backupData, null, 2));

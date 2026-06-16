@@ -84,11 +84,15 @@ exports.validateQR = async (req, res) => {
     const session = await prisma.asistencia.findFirst({
       where: { id: qrData.asistenciaId },
       include: {
-        materia: {
+        resultado: {
           include: {
-            ficha: {
+            competencia: {
               include: {
-                aprendices: true
+                ficha: {
+                  include: {
+                    aprendices: true
+                  }
+                }
               }
             }
           }
@@ -100,7 +104,7 @@ exports.validateQR = async (req, res) => {
       return res.status(404).json({ error: 'Sesión no encontrada' });
     }
 
-    const isEnrolled = session.materia.ficha.aprendices.some(a => a.id === aprendizId);
+    const isEnrolled = session.resultado.competencia.ficha.aprendices.some(a => a.id === aprendizId);
     if (!isEnrolled) {
       return res.status(403).json({ error: 'No estás inscrito en esta materia' });
     }
