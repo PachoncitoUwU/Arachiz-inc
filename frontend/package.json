@@ -1,7 +1,7 @@
 {
   "name": "arachiz",
   "private": true,
-  "version": "1.4.422",
+  "version": "1.4.424",
   "type": "module",
   "scripts": {
     "dev": "vite",

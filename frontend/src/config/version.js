@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.422';
+export const VERSION = '1.4.424';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.424',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.424',
+    changes: [
+      'fix: lector de huellas, QR persistente en DB, mejoras hardware WiFi'
+    ]
+  },
   {
     version: '1.4.422',
     date: '2026-06-16',
