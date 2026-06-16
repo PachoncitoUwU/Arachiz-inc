@@ -26,7 +26,7 @@ export default function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-700  dark:border-gray-700">
