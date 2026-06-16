@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.370';
+export const VERSION = '1.4.373';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.373',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.373',
+    changes: [
+      'Merge branch main of https://github.com/PachoncitoUwU/Arachiz-inc',
+      'GOOGLE Melo'
+    ]
+  },
   {
     version: '1.4.370',
     date: '2026-06-16',
