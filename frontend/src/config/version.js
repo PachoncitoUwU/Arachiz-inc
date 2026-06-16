@@ -3,9 +3,19 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.388';
+export const VERSION = '1.4.392';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.392',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.392',
+    changes: [
+      'Fix: Corregir overlay de modales - eliminar barra blanca superior',
+      'Fix z-index header movil',
+      'Fix: Modales flotantes ahora cubren toda la pantalla'
+    ]
+  },
   {
     version: '1.4.388',
     date: '2026-06-16',
