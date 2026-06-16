@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { ArrowLeft, Users, Calendar, CheckCircle2, XCircle, Search, Ticket, Download, QrCode, ScanFace, FileText, Copy, Plus } from 'lucide-react';
 import fetchApi from '../services/api';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import FaceScannerModal from '../components/FaceScannerModal';
 import { io } from 'socket.io-client';
 
@@ -41,6 +42,9 @@ export default function EventoDetalle({ eventoId, onBack }) {
   // Para el escáner (emulación teclado o lector serial)
   const inputRef = useRef(null);
   const [scanInput, setScanInput] = useState('');
+
+  // Para confirmar finalizar
+  const [showConfirmFinalizar, setShowConfirmFinalizar] = useState(false);
 
   useEffect(() => {
     loadEvento();
@@ -254,13 +258,19 @@ export default function EventoDetalle({ eventoId, onBack }) {
     }
   };
 
-  const handleFinalizar = async () => {
-    if(!window.confirm('¿Estás seguro de finalizar el evento? Ya no se podrá registrar más asistencia.')) return;
+  const handleFinalizar = () => {
+    setShowConfirmFinalizar(true);
+  };
+
+  const confirmarFinalizar = async () => {
+    setShowConfirmFinalizar(false);
     try {
       setLoading(true);
       await fetchApi(`/eventos/${eventoId}/finalizar`, { method: 'POST' });
       showToast('Evento finalizado', 'success');
-      loadEvento();
+      // Actualizamos el estado local directamente para que la UI reaccione inmediatamente
+      setEvento(prev => ({ ...prev, estado: 'finalizado' }));
+      setLoading(false);
     } catch (err) {
       showToast(err.message, 'error');
       setLoading(false);
@@ -722,6 +732,17 @@ export default function EventoDetalle({ eventoId, onBack }) {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={showConfirmFinalizar}
+        onClose={() => setShowConfirmFinalizar(false)}
+        onConfirm={confirmarFinalizar}
+        title="Finalizar Evento"
+        message="¿Estás seguro de finalizar el evento? Ya no se podrá registrar más asistencia."
+        confirmText="Finalizar"
+        cancelText="Cancelar"
+        danger={true}
+      />
 
     </div>
   );

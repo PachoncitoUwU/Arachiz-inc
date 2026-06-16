@@ -54,6 +54,12 @@ if (!allowedOrigins.includes('https://arachiz.vercel.app')) {
 if (!allowedOrigins.includes('http://localhost:5173')) {
   allowedOrigins.push('http://localhost:5173');
 }
+if (!allowedOrigins.includes('http://localhost:5174')) {
+  allowedOrigins.push('http://localhost:5174');
+}
+if (!allowedOrigins.includes('http://localhost:5175')) {
+  allowedOrigins.push('http://localhost:5175');
+}
 
 const io = new Server(server, {
   cors: { origin: allowedOrigins, credentials: true }

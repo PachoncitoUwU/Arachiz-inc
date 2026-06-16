@@ -54,7 +54,7 @@ const enviarAPapelera = async (tipoElemento, elementoId, fichaId, eliminadoPor, 
           jornada: ficha.jornada,
           region: ficha.region,
           duracion: ficha.duracion,
-          lider: ficha.instructorAdmin.fullName,
+          lider: ficha.instructorAdmin?.fullName || 'Sin líder',
           administrador: ficha.administrador?.fullName,
           contadores: ficha._count
         };

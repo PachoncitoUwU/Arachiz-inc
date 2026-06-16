@@ -155,7 +155,10 @@ export default function EventosManager() {
     return (
       <EventoDetalle 
         eventoId={eventoSeleccionado} 
-        onBack={() => setEventoSeleccionado(null)} 
+        onBack={() => {
+          setEventoSeleccionado(null);
+          loadEventos();
+        }} 
       />
     );
   }

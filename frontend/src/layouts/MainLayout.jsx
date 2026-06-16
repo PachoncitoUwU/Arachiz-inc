@@ -199,6 +199,7 @@ export default function MainLayout({ allowedRoles }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user?.id && user?.userType === 'aprendiz') {
@@ -245,8 +246,6 @@ export default function MainLayout({ allowedRoles }) {
     setShowLogoutConfirm(false);
     logout();
   };
-
-  const navigate = useNavigate();
 
   const handleProfileClick = () => {
     // Navigate to dedicated profile page instead of modal
