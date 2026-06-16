@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.386';
+export const VERSION = '1.4.388';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.388',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.388',
+    changes: [
+      'fix: SW skipWaiting + auto-reload on chunk load error to fix stale cache redirects'
+    ]
+  },
   {
     version: '1.4.386',
     date: '2026-06-16',
