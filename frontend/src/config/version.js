@@ -3,9 +3,17 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.378';
+export const VERSION = '1.4.380';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.380',
+    date: '2026-06-16',
+    title: 'Actualización 1.4.380',
+    changes: [
+      'Mejoras modo mundialista y correcciones UI'
+    ]
+  },
   {
     version: '1.4.378',
     date: '2026-06-16',
