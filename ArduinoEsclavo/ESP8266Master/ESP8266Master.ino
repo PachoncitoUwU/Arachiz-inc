@@ -114,7 +114,7 @@ void mostrarLogo() {
   display.drawBitmap(0, 16, arachiz_logo, 128, 32, WHITE);
   display.display();
 }
-
+// nuevo cambio que ya compila en el ESP8266  
 void mostrarMensaje(String l1, String l2, String l3) {
   ultimoMensaje = millis();
   display.clearDisplay();
