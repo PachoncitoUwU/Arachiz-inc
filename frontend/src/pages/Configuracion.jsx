@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SerialConnect from '../components/SerialConnect';
+import HardwareDiagnostic from '../components/HardwareDiagnostic';
 import ReleaseNotesModal from '../components/ReleaseNotesModal';
 import { Moon, Sun, Globe, Bell, Shield, Palette, Loader, Usb, Info } from 'lucide-react';
 import { VERSION } from '../config/version';
@@ -1691,10 +1692,11 @@ export default function Configuracion() {
         )}
       </Section>
 
-      {/* Hardware — solo instructores */}
-      {user?.userType === 'instructor' && (
+      {/* Hardware — instructores y administradores */}
+      {(user?.userType === 'instructor' || user?.userType === 'administrador') && (
         <Section icon={Usb} title="Hardware / Arduino">
           <SerialConnect />
+          <HardwareDiagnostic />
         </Section>
       )}
 

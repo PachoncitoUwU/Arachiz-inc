@@ -4,14 +4,13 @@ void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 void wdt_init(void) { wdt_disable(); }
 
 #include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
+#include <Adafruit_PN532.h>
 #include <Adafruit_Fingerprint.h>
 #include <SoftwareSerial.h>
 
 // ── HARDWARE ──────────────────────────────────────────────────────────────────
-PN532_I2C pn532_i2c(Wire);
-PN532 nfc_hardware(pn532_i2c);
+// Adafruit_PN532 usando I2C por hardware (pines A4/A5 en Uno/Nano)
+Adafruit_PN532 nfc_hardware((uint8_t)0, (uint8_t)0);
 
 SoftwareSerial mySerial(2, 3);   // AS608 huella: RX=2, TX=3
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
@@ -26,6 +25,7 @@ const int PIN_SWITCH  = 7;  // LOW=WiFi | HIGH=USB
 // ── ESTADO ────────────────────────────────────────────────────────────────────
 bool sesionActiva   = false;
 bool enrollando     = false;
+bool modoTest       = false;
 unsigned long lastPoll    = 0;
 unsigned long lastNFC     = 0;
 uint8_t       erroresSensor = 0;
@@ -83,6 +83,12 @@ void setup() {
   mySerial.listen();
   finger.begin(57600);
   delay(100);
+  if (!finger.verifyPassword()) {
+    // Si no responde a 57600, probar a 9600 baudios (común en sensores con luz azul R307/AS608)
+    finger.begin(9600);
+    delay(100);
+  }
+
   if (finger.verifyPassword()) {
     Serial.println(F("Huella AS608 OK"));
     erroresSensor = 0;
@@ -212,50 +218,68 @@ void loop() {
     procesarComando(cmd);
   }
 
-  // ── B. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
+  // ── B. Poll al ESP (modo WiFi) ────────────────────────────────────────────
+  if (!enrollando && digitalRead(PIN_SWITCH) == LOW) {
+    if (millis() - lastPoll >= POLL_INTERVAL) {
+      lastPoll = millis();
+      String cmd = pollESP();
+      if (cmd.length() > 0) {
+        Serial.println("CMD:[" + cmd + "]");
+        procesarComando(cmd);
+      }
+    }
+  }
+
+  // ── C. RESTRICCIÓN DE REPOSO: SOLO LEER SI HAY SESIÓN, ENROLAMIENTO O TEST ──
+  bool lecturaPermitida = sesionActiva || enrollando || modoTest;
+  if (!lecturaPermitida) {
+    return; // En reposo: NO escanear ni emitir sonidos
+  }
+
+  // ── D. Lectura Huella (ANTES del NFC para evitar que I2C tape el SoftwareSerial)
   if (!enrollando) {
     mySerial.listen();          // ceder el SoftwareSerial al AS608
-    delay(5);                   // era 10ms → 5ms: suficiente para estabilizar
+    delay(5);                   // suficiente para estabilizar
     uint8_t imgResult = finger.getImage();
 
     if (imgResult == FINGERPRINT_OK) {
       erroresSensor = 0;
       Serial.println(F("[Huella] Dedo detectado..."));
 
-      // image2Tz necesita mySerial activo — no poner nada entre listen y la llamada
       mySerial.listen();
       uint8_t tz = finger.image2Tz();
 
       if (tz == FINGERPRINT_OK) {
-        mySerial.listen();
-        uint8_t fs = finger.fingerFastSearch();
-
-        if (fs == FINGERPRINT_OK) {
-          int fid = finger.fingerID;
-          Serial.print(F("[Huella] Match! ID=")); Serial.println(fid);
-
-          // Enviar primero (si WiFi, cambia espSerial.listen() internamente)
-          enviarEvento("READ_FINGER:" + String(fid));
-
-          // Sonido DESPUÉS del envío (tone() no bloquea interrupciones)
+        if (modoTest) {
+          // EN MODO DIAGNÓSTICO: CUALQUIER HUELLA DETECTADA ES ÉXITO
+          enviarEvento("READ_FINGER:TEST_OK");
           sonidoHuella();
-
-          // Esperar retiro
-          esperarRetiroDedo(5000);
-
-        } else if (fs == FINGERPRINT_NOTFOUND) {
-          Serial.println(F("[Huella] No reconocida"));
-          sonidoError();
           esperarRetiroDedo(3000);
-
         } else {
-          Serial.print(F("[Huella] Err busqueda: ")); Serial.println(fs);
-          erroresSensor++;
-          esperarRetiroDedo(1000);
+          // EN MODO NORMAL DE ASISTENCIA: BUSCAR MATCH EN BD DEL SENSOR
+          mySerial.listen();
+          uint8_t fs = finger.fingerFastSearch();
+
+          if (fs == FINGERPRINT_OK) {
+            int fid = finger.fingerID;
+            Serial.print(F("[Huella] Match! ID=")); Serial.println(fid);
+            enviarEvento("READ_FINGER:" + String(fid));
+            sonidoHuella();
+            esperarRetiroDedo(5000);
+
+          } else if (fs == FINGERPRINT_NOTFOUND) {
+            Serial.println(F("[Huella] No reconocida"));
+            sonidoError();
+            esperarRetiroDedo(3000);
+
+          } else {
+            Serial.print(F("[Huella] Err busqueda: ")); Serial.println(fs);
+            erroresSensor++;
+            esperarRetiroDedo(1000);
+          }
         }
 
       } else if (tz == FINGERPRINT_IMAGEMESS) {
-        // Imagen borrosa — no contar como error del sensor
         Serial.println(F("[Huella] Imagen borrosa"));
         esperarRetiroDedo(1500);
 
@@ -270,37 +294,22 @@ void loop() {
 
     } else if (imgResult == FINGERPRINT_PACKETRECIEVEERR) {
       erroresSensor++;
-      Serial.print(F("[Huella] Err com (")); Serial.print(erroresSensor); Serial.println(F(")"));
       delay(150);
       if (erroresSensor >= MAX_ERRORES) reiniciarSensor();
 
     } else {
-      // Otro código de error
       erroresSensor++;
       delay(100);
       if (erroresSensor >= MAX_ERRORES) reiniciarSensor();
     }
   }
 
-  // ── C. Poll al ESP (modo WiFi) ────────────────────────────────────────────
-  if (!enrollando && digitalRead(PIN_SWITCH) == LOW) {
-    if (millis() - lastPoll >= POLL_INTERVAL) {
-      lastPoll = millis();
-      String cmd = pollESP();
-      if (cmd.length() > 0) {
-        Serial.println("CMD:[" + cmd + "]");
-        procesarComando(cmd);
-      }
-    }
-  }
-
-  // ── D. Lectura NFC (throttled + restaura mySerial después de I2C) ─────────
+  // ── E. Lectura NFC (throttled + restaura mySerial después de I2C) ─────────
   if (!enrollando && millis() - lastNFC >= NFC_INTERVAL) {
     lastNFC = millis();
     uint8_t uid[7] = {0};
     uint8_t uidLen = 0;
-    bool found = nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 20);
-    // CRÍTICO: restaurar mySerial SIEMPRE después de I2C
+    bool found = nfc_hardware.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLen, 80);
     mySerial.listen();
     if (found) {
       enviarEvento("READ_NFC:" + hexUID(uid, uidLen));
@@ -324,6 +333,19 @@ void procesarComando(String cmd) {
   } else if (cmd == "SESSION OFF") {
     sesionActiva = false;
     Serial.println(F("Sesion INACTIVA"));
+
+  } else if (cmd == "TEST_MODE_ON") {
+    modoTest = true;
+    Serial.println(F("Modo TEST ACTIVO"));
+    sonidoEnrolamientoInicio();
+
+  } else if (cmd == "TEST_MODE_OFF") {
+    modoTest = false;
+    Serial.println(F("Modo TEST INACTIVO"));
+
+  } else if (cmd == "TEST_BUZZER") {
+    Serial.println(F("Prueba de BUZZER"));
+    sonidoEnrolamientoOK();
 
   } else if (cmd == "CLEAR_DB") {
     mySerial.listen();

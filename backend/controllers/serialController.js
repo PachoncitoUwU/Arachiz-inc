@@ -8,9 +8,12 @@ exports.getPorts = async (req, res) => {
   }
 };
 
-exports.getStatus = (req, res) => {
+exports.getStatus = async (req, res) => {
   try {
     const serialService = req.app.get('serialService');
+    if (serialService && !serialService.isConnected) {
+      await serialService.autoConnect();
+    }
     res.json({ connected: serialService ? serialService.isConnected : false });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener estado' });
@@ -179,4 +182,46 @@ exports.simulateEvent = (req, res) => {
   }
 
   res.json({ success: true, message: `Simulación enviada exitosamente: ${type}` });
+};
+
+exports.testBuzzer = async (req, res) => {
+  try {
+    const serialService = req.app.get('serialService');
+    const hardwareController = require('./hardwareController');
+    
+    if (serialService && !serialService.isConnected) {
+      await serialService.autoConnect();
+    }
+
+    if (serialService && serialService.isConnected) {
+      serialService.sendCommand('TEST_BUZZER');
+    } else {
+      hardwareController.queueCommand('TEST_BUZZER');
+    }
+    res.json({ success: true, message: 'Comando de prueba de audio enviado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error enviando prueba de audio' });
+  }
+};
+
+exports.setTestMode = async (req, res) => {
+  const { active } = req.body;
+  try {
+    const command = active ? 'TEST_MODE_ON' : 'TEST_MODE_OFF';
+    const serialService = req.app.get('serialService');
+    const hardwareController = require('./hardwareController');
+
+    if (serialService && !serialService.isConnected) {
+      await serialService.autoConnect();
+    }
+
+    if (serialService && serialService.isConnected) {
+      serialService.sendCommand(command);
+    } else {
+      hardwareController.queueCommand(command);
+    }
+    res.json({ success: true, message: `Modo test ${active ? 'activado' : 'desactivado'}` });
+  } catch (error) {
+    res.status(500).json({ error: 'Error cambiando modo de prueba' });
+  }
 };

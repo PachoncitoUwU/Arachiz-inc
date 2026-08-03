@@ -27,6 +27,9 @@ ESP8266WebServer server(80);
 DNSServer dnsServer;
 const byte DNS_PORT = 53;
 
+// --- MODO DE OPERACIÓN ---
+const bool MODO_SOLO_PANTALLA = true; // true = Apagar WiFi, ahorrar corriente y mostrar LOGO ARACHIZ | false = Modo WiFi web
+
 // --- BACKEND URLs ---
 const bool USE_RENDER_BACKEND = true; // true = Render (producción/Vercel) | false = local
 
@@ -40,7 +43,7 @@ const char* API_KEY          = "arachiz-esp-2024";
 // Esto elimina el handshake TLS (~300-600ms) en envíos consecutivos
 WiFiClientSecure persistentClient;
 
-// --- PANTALLA OLED ---
+// --- PANTALLA OLED INTEGRADA ---
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET    -1
@@ -615,12 +618,20 @@ void setup() {
 
   Wire.begin(OLED_SDA, OLED_SCL);
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    for(;;);
+    Serial.println(F("ADVERTENCIA: Pantalla OLED no encontrada. Continuando..."));
   }
 
   mostrarMensaje("ARACHIZ", "Iniciando...");
   delay(500);
   
+  // --- MODO SOLO PANTALLA (Ahorro de energía y visualización de logo) ---
+  if (MODO_SOLO_PANTALLA) {
+    WiFi.mode(WIFI_OFF); // Apaga la radiofrecuencia y baja consumo de 150mA a 15mA
+    Serial.println(F("Modo Solo Pantalla Activo: WiFi APAGADO"));
+    mostrarLogo();
+    return;
+  }
+
   // Cargar configuración WiFi desde EEPROM
   cargarConfigWiFi();
   
@@ -635,6 +646,39 @@ void setup() {
 }
 
 void loop() {
+  // --- A. MODO SOLO PANTALLA (Coprocesador gráfico sin WiFi) ---
+  if (MODO_SOLO_PANTALLA) {
+    // Volver al logo después de 3 segundos sin actividad
+    if (ultimoMensaje > 0 && millis() - ultimoMensaje > 3000) {
+      ultimoMensaje = 0;
+      mostrarLogo();
+    }
+
+    // Escuchar mensajes del Arduino por cable serial y mostrarlos por 3 segundos
+    if (arduinoSerial.available()) {
+      arduinoSerial.setTimeout(100);
+      String msg = arduinoSerial.readStringUntil('\n');
+      msg.trim();
+      if (msg.length() == 0 || msg == "POLL") return;
+
+      if (msg.startsWith("EVT:")) msg = msg.substring(4);
+      if (msg.startsWith("READ_NFC:")) {
+        String uid = msg.substring(9); uid.trim();
+        mostrarMensaje("NFC Detectado", uid, "ARACHIZ LOG");
+      } else if (msg.startsWith("READ_FINGER:")) {
+        String id = msg.substring(12); id.trim();
+        mostrarMensaje("Huella Leida", "ID: " + id, "ARACHIZ LOG");
+      } else if (msg.startsWith("ENROLL_SUCCESS:")) {
+        String id = msg.substring(15); id.trim();
+        mostrarMensaje("Enrolado OK!", "Huella ID: " + id);
+      } else if (msg.startsWith("ENROLL_ERROR:")) {
+        String err = msg.substring(13); err.trim();
+        mostrarMensaje("Error Enrol.", err);
+      }
+    }
+    return;
+  }
+
   // Si estamos en modo portal cautivo, manejar servidor web y DNS
   if (!wifiConfig.configured) {
     dnsServer.processNextRequest();

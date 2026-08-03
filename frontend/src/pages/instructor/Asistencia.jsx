@@ -54,6 +54,7 @@ export default function InstructorAsistencia() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [selectedFecha, setSelectedFecha] = useState(() => new Date().toISOString().split('T')[0]);
   const [facialScannerActive, setFacialScannerActive] = useState(false);
   const [qrActive, setQrActive] = useState(false);
@@ -236,105 +237,25 @@ export default function InstructorAsistencia() {
 
     socket.on('arduino_read_nfc', async (data) => {
       if (!sessionId) return;
-
-      // Verificar si el UID está vinculado a algún aprendiz de la sesión
-      let studentFound = null;
-      setActiveSession(prev => {
-        if (!prev) return prev;
-        const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.nfcUid === data.uid);
-        if (student) {
-          studentFound = student;
-          if (prev.registros?.some(r => r.aprendizId === student.id)) {
-            showToast(`${student.fullName} ya registró asistencia`, 'info');
-            return prev;
-          }
-          showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
-          return {
-            ...prev,
-            registros: [...(prev.registros || []), {
-              id: 'temp-' + Date.now(),
-              aprendizId: student.id,
-              aprendiz: student,
-              presente: true,
-              metodo: 'nfc',
-              timestamp: new Date().toISOString()
-            }]
-          };
-        }
-        // UID no encontrado en la sesión — avisar al instructor
-        showToast(`NFC no registrado: ${data.uid}. Vincúlalo en la ficha primero.`, 'error');
-        return prev;
-      });
-
-      if (!studentFound) return; // No mandar a BD si no encontramos al aprendiz en UI
-
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
           body: JSON.stringify({ asistenciaId: sessionId, nfcUid: data.uid })
         });
       } catch (err) {
-        showToast(err.message || 'Error al registrar asistencia NFC', 'error');
-        // Revertir el registro optimista en UI
-        setActiveSession(prev => {
-          if (!prev || !studentFound) return prev;
-          return {
-            ...prev,
-            registros: prev.registros.filter(r => r.aprendizId !== studentFound.id || !r.id?.startsWith?.('temp-'))
-          };
-        });
+        showToast(err.message || `Error con tarjeta NFC: ${data.uid}`, 'error');
       }
     });
 
     socket.on('arduino_read_finger', async (data) => {
       if (!sessionId) return;
-
-      // Verificar si el ID de huella está vinculado a algún aprendiz de la sesión
-      let studentFound = null;
-      setActiveSession(prev => {
-        if (!prev) return prev;
-        const student = prev.resultado?.competencia?.ficha?.aprendices?.find(a => a.huellas?.includes(data.id));
-        if (student) {
-          studentFound = student;
-          if (prev.registros?.some(r => r.aprendizId === student.id)) {
-            showToast(`${student.fullName} ya registró asistencia`, 'info');
-            return prev;
-          }
-          showToast(`Registrando asistencia de ${student.fullName}...`, 'success');
-          return {
-            ...prev,
-            registros: [...(prev.registros || []), {
-              id: 'temp-' + Date.now(),
-              aprendizId: student.id,
-              aprendiz: student,
-              presente: true,
-              metodo: 'huella',
-              timestamp: new Date().toISOString()
-            }]
-          };
-        }
-        // Huella no encontrada en la sesión — avisar al instructor
-        showToast(`Huella ID ${data.id} no registrada en esta ficha. Vincúlala primero.`, 'error');
-        return prev;
-      });
-
-      if (!studentFound) return; // No mandar a BD si no encontramos al aprendiz en UI
-
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
           body: JSON.stringify({ asistenciaId: sessionId, huellaId: data.id })
         });
       } catch (err) {
-        showToast(err.message || 'Error al registrar asistencia por huella', 'error');
-        // Revertir el registro optimista en UI
-        setActiveSession(prev => {
-          if (!prev || !studentFound) return prev;
-          return {
-            ...prev,
-            registros: prev.registros.filter(r => r.aprendizId !== studentFound.id || !r.id?.startsWith?.('temp-'))
-          };
-        });
+        showToast(err.message || `Error con huella ID: ${data.id}`, 'error');
       }
     });
 
@@ -373,13 +294,18 @@ export default function InstructorAsistencia() {
 
   const endSession = async () => {
     try {
+      setEnding(true);
       await fetchApi(`/asistencias/${activeSession.id}/finalizar`, { method: 'PUT' });
       socketRef.current?.disconnect();
       stopFacialScanner();
       setActiveSession(null);
       loadSessions();
       showToast('Sesión finalizada correctamente', 'success');
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { 
+      showToast(err.message, 'error'); 
+    } finally {
+      setEnding(false);
+    }
   };
 
   const exportSession = async (sessionId, fecha) => {
@@ -962,8 +888,17 @@ export default function InstructorAsistencia() {
             ) : (
               <button 
                 onClick={endSession} 
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-500 via-rose-500 to-rose-600 hover:from-red-600 hover:via-rose-600 hover:to-rose-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95">
-                <Square size={18}/> Finalizar Sesión
+                disabled={ending}
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-500 via-rose-500 to-rose-600 hover:from-red-600 hover:via-rose-600 hover:to-rose-700 text-white text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-red-500/50 transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                {ending ? (
+                  <>
+                    <RefreshCw size={18} className="animate-spin" /> Finalizando...
+                  </>
+                ) : (
+                  <>
+                    <Square size={18}/> Finalizar Sesión
+                  </>
+                )}
               </button>
             )}
           </div>

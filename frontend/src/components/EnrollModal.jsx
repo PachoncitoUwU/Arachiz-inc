@@ -20,7 +20,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const [connectionMode, setConnectionMode] = useState('usb'); // 'usb' | 'wifi'
   const modeRef = useRef(null); // ref para evitar closure stale en socket listeners
 
-  // Reiniciar estado
+  // Reiniciar estado y apagar lectura al cerrar
   useEffect(() => {
     if (open) {
       setMode(null);
@@ -29,10 +29,12 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       setMessage('');
       // Comprobar si ya tiene descriptor facial (length > 0)
       setHasFace(aprendiz?.faceDescriptor && aprendiz.faceDescriptor.length === 128);
-      // Detectar si hay conexión USB activa
-      fetchApi('/serial/status')
-        .then(res => setConnectionMode(res.connected ? 'usb' : 'wifi'))
-        .catch(() => setConnectionMode('wifi'));
+      // Priorizar siempre conexión USB en entorno de escritorio/desarrollo
+      setConnectionMode('usb');
+    } else {
+      if (modeRef.current === 'nfc') {
+        fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
+      }
     }
   }, [open, aprendiz]);
 
@@ -42,18 +44,21 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     const onNfc = async (data) => {
       if (modeRef.current !== 'nfc') return;
       try {
-        setStatus('waiting');
+        setStatus('saving');
+        setMessage('Guardando tarjeta NFC y actualizando...');
         await fetchApi('/serial/bind', {
           method: 'PUT',
           body: JSON.stringify({ userId: aprendiz.id, nfcUid: data.uid })
         });
         showToast(`NFC vinculado: ${data.uid}`, 'success');
+        await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         modeRef.current = null;
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
       } catch (err) {
         showToast(err.message || 'Error al vincular NFC', 'error');
+        await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         modeRef.current = null;
         setMode(null);
         setStatus('idle');
@@ -63,6 +68,8 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     const onFingerSuccess = async (data) => {
       if (modeRef.current !== 'fingerprint') return;
       try {
+        setStatus('saving');
+        setMessage('Huella capturada con éxito. Guardando y actualizando...');
         await fetchApi('/serial/bind', {
           method: 'PUT',
           body: JSON.stringify({ userId: aprendiz.id, huellaId: data.id })
@@ -101,11 +108,20 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     };
   }, [open, aprendiz]); // quitamos mode y status de las deps para evitar recrear listeners
 
-  const startNfc = () => {
+  const startNfc = async () => {
     modeRef.current = 'nfc';
     setMode('nfc');
     setStatus('waiting');
     setMessage('Acerca la tarjeta o llavero NFC al lector...');
+    try {
+      // Enviar comando para sacar a la caja del reposo y activar lectura NFC
+      await fetchApi('/serial/test/mode', {
+        method: 'POST',
+        body: JSON.stringify({ active: true })
+      });
+    } catch (err) {
+      showToast('No se pudo activar la escucha en el lector NFC', 'error');
+    }
   };
 
   const startFingerprint = async () => {
@@ -137,6 +153,8 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
 
   const handleFaceDescriptor = async (descriptor) => {
     try {
+      setStatus('saving');
+      setMessage('Guardando reconocimiento facial en la base de datos...');
       const descriptorArr = descriptorToArray(descriptor);
       await fetchApi(`/auth/face-descriptor-for/${aprendiz.id}`, {
         method: 'POST',
@@ -213,7 +231,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
             return;
           }
 
-          await fetchApi(`/admin/fichas/${fichaId}/aprendices/${aprendiz.id}/nfc`, {
+          await fetchApi(`/fichas/${fichaId}/aprendices/${aprendiz.id}/nfc`, {
             method: 'DELETE'
           });
           
@@ -230,9 +248,16 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     });
   };
 
+  const handleModalClose = () => {
+    if (modeRef.current === 'nfc') {
+      fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
+    }
+    onClose();
+  };
+
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Credenciales Biométricas" maxWidth="max-w-2xl">
+      <Modal open={open} onClose={handleModalClose} title="Credenciales Biométricas" maxWidth="max-w-2xl">
       <div className="space-y-4 text-center pb-2">
         {aprendiz && (
           <div className="mb-4 pb-4 border-b border-gray-100 dark:border-zinc-700">
@@ -372,6 +397,15 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
               </p>
             )}
             <p className="text-sm text-gray-400 mt-2">Esperando respuesta del Arduino...</p>
+          </div>
+        )}
+
+        {/* Guardando credencial en BD */}
+        {status === 'saving' && (
+          <div className="py-10 flex flex-col items-center justify-center animate-fade-in">
+            <Loader2 className="w-12 h-12 text-[#4285F4] animate-spin mb-4" />
+            <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{message || 'Guardando y actualizando...'}</p>
+            <p className="text-sm text-gray-400 mt-2">Sincronizando con la base de datos, por favor espera...</p>
           </div>
         )}
       </div>

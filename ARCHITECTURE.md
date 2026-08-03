@@ -95,3 +95,21 @@ El servidor sigue un patrón MVC (Modelo-Vista-Controlador) adaptado para APIs.
 4. La petición pasa por los **middlewares** (`/backend/middlewares/`) para autenticación.
 5. El **Controlador** (`/backend/controllers/`) procesa la solicitud, usando **Prisma** (`/backend/prisma/`) para interactuar con **Supabase** (Base de datos).
 6. La respuesta viaja de vuelta al Frontend, actualizando el **Estado Global** (en `/context/`) o el estado local del componente.
+
+---
+
+## 🔌 Integración y Diagnóstico de Hardware (Arduino Uno + Sensores)
+
+El sistema cuenta con un módulo de integración física (caja de asistencia) que puede funcionar en dos modos de comunicación:
+1. **Modo USB (Serie)**: Comunicación directa mediante el puerto COM (`SerialPort` en Node.js) a 9600 baudios.
+2. **Modo WiFi**: El módulo ESP8266 actúa como puente HTTP realizando solicitudes periódicas (polling) al Backend.
+
+### Características Clave del Subsistema de Hardware:
+- **Autoconexión Inteligente**: Al iniciar el backend o consultar el estado de conexión, `SerialService` detecta automáticamente dispositivos compatibles conectados por USB (puertos Arduino, CH340, FTDI) y abre la conexión sin necesidad de configuración manual.
+- **Sincronización de Estado (Reseteo Físico)**: Dado que el Arduino se reinicia al abrir la conexión serial, el backend espera 2 segundos tras la apertura del puerto y comprueba en la base de datos si hay alguna sesión de asistencia activa. De ser así, envía el comando `SESSION ON` para reanudar la lectura del sensor de inmediato.
+- **Control de Reposo**: Para evitar lecturas accidentales o ruidos, el Arduino mantiene los sensores inactivos en reposo. Solo realiza escaneos cuando una sesión de clase está activa (`SESSION ON`), en procesos de enrolamiento de credenciales (`ENROLL <id>`), o durante las pruebas diagnósticas (`TEST_MODE_ON`).
+- **Prueba Diagnóstica Local**: Permite a instructores y administradores validar de forma física la salud del hardware desde la sección de Configuración:
+  - **Prueba NFC**: Verifica la lectura del lector PN532 (emite sonido al aproximar una tarjeta sin mostrar el código UID en pantalla).
+  - **Prueba de Huella**: Detecta cualquier dedo sobre el cristal del lector AS608 y reporta su correcto escaneo de forma visual.
+  - **Prueba de Audio**: Envía el comando `TEST_BUZZER` para validar la respuesta del zumbador físico en la caja de asistencia.
+

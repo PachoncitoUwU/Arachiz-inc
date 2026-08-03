@@ -1,5 +1,6 @@
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
+const prisma = require('../lib/prisma');
 
 class SerialService {
   constructor(io) {
@@ -20,10 +21,41 @@ class SerialService {
     }
   }
 
+  // Intenta autoconectarse al puerto donde esté el Arduino
+  async autoConnect() {
+    if (this.isConnected) return true;
+    try {
+      const ports = await this.listPorts();
+      if (!ports || ports.length === 0) return false;
+
+      // Buscar puertos que coincidan con Arduino, CH340, FTDI o cualquier COM activo
+      const candidate = ports.find(p => {
+        const m = (p.manufacturer || '').toLowerCase();
+        const f = (p.friendlyName || '').toLowerCase();
+        const pnp = (p.pnpId || '').toLowerCase();
+        return m.includes('arduino') || m.includes('ch340') || m.includes('ftdi') ||
+               f.includes('arduino') || f.includes('ch340') || pnp.includes('usb');
+      }) || ports[0]; // Si hay algún puerto COM disponible, tomar el primero
+
+      if (candidate && candidate.path) {
+        console.log(`[SerialService] Autoconectando a puerto: ${candidate.path}`);
+        await this.connect(candidate.path);
+        return true;
+      }
+    } catch (err) {
+      console.log('[SerialService] Error en autoconexión:', err.message);
+    }
+    return false;
+  }
+
   // Conectar a un puerto específico
   async connect(path, baudRate = 9600) {
-    if (this.isConnected) {
-      this.disconnect();
+    if (this.port) {
+      try {
+        this.port.close();
+      } catch (e) {}
+      this.port = null;
+      this.isConnected = false;
     }
 
     return new Promise((resolve, reject) => {
@@ -32,14 +64,33 @@ class SerialService {
         this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
         this.port.on('open', () => {
-          console.log(`Puerto serie abierto en ${path}`);
+          console.log(`Puerto serie abierto exitosamente en ${path}`);
           this.isConnected = true;
           this.io.emit('serial_status', { status: 'connected', path });
+          
+          // Esperar 2 segundos a que termine de iniciar el Arduino tras el reset
+          setTimeout(async () => {
+            try {
+              const activeSession = await prisma.asistencia.findFirst({
+                where: { activa: true }
+              });
+              if (activeSession) {
+                console.log('[SerialService] Detectada sesión activa en BD. Sincronizando Arduino: SESSION ON');
+                this.sendCommand('SESSION ON');
+              } else {
+                console.log('[SerialService] Sincronizando Arduino: SESSION OFF');
+                this.sendCommand('SESSION OFF');
+              }
+            } catch (err) {
+              console.error('[SerialService] Error al sincronizar sesión activa:', err.message);
+            }
+          }, 2000);
+
           resolve({ success: true, message: `Conectado a ${path}` });
         });
 
         this.port.on('error', (err) => {
-          console.error('Error en puerto serie:', err.message);
+          console.error(`[SerialPort Error] ${path}:`, err.message);
           this.isConnected = false;
           this.io.emit('serial_status', { status: 'error', message: err.message });
           reject({ success: false, error: err.message });
@@ -95,8 +146,9 @@ class SerialService {
       this.io.emit('arduino_read_nfc', { uid });
     } 
     else if (data.startsWith('READ_FINGER:')) {
-      const id = data.split('READ_FINGER:')[1].trim();
-      this.io.emit('arduino_read_finger', { id: parseInt(id, 10) });
+      const raw = data.split('READ_FINGER:')[1].trim();
+      const id = raw === 'TEST_OK' ? 9999 : (parseInt(raw, 10) || 0);
+      this.io.emit('arduino_read_finger', { id });
     }
     else if (data.startsWith('ENROLL_SUCCESS:')) {
       const id = data.split('ENROLL_SUCCESS:')[1].trim();
