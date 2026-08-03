@@ -204,27 +204,37 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
     :root { --primary: #4285F4; --success: #34A853; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #f4f4f5; --text-muted: #a1a1aa; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 10%, rgba(66, 133, 244, 0.15) 0%, rgba(9, 9, 11, 0) 70%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--text); }
-    .container { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 36px; max-width: 420px; width: 100%; position: relative; overflow: hidden; }
-    .header { text-align: center; margin-bottom: 28px; }
+    .container { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 36px; max-width: 440px; width: 100%; position: relative; overflow: hidden; }
+    .header { text-align: center; margin-bottom: 24px; }
     .header h1 { font-size: 32px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(to right, #4285F4, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .header p { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
-    .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(52, 168, 83, 0.15); border: 1px solid rgba(52, 168, 83, 0.4); color: #4ae076; padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-bottom: 24px; width: 100%; justify-content: center; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-bottom: 24px; width: 100%; justify-content: center; }
     .form-group { margin-bottom: 20px; }
     .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     label { font-weight: 600; color: var(--text); font-size: 14px; }
-    .btn-scan { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 6px; }
+    .btn-scan { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 6px; }
     .btn-scan:hover { text-decoration: underline; }
-    select, input { width: 100%; padding: 13px 16px; background: #0e0e11; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; color: white; transition: all 0.2s; }
-    select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2); }
+    .network-list { max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; background: #0e0e11; margin-bottom: 10px; }
+    .network-item { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #1f1f23; transition: background 0.2s; font-size: 14px; color: #d4d4d8; }
+    .network-item:last-child { border-bottom: none; }
+    .network-item:hover { background: #18181b; color: white; }
+    .network-item.selected { background: rgba(66, 133, 244, 0.15); border-left: 4px solid var(--primary); font-weight: 600; color: white; }
+    .network-info { display: flex; align-items: center; gap: 8px; }
+    .signal-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .signal-strong { background: rgba(52, 168, 83, 0.2); color: #4ae076; }
+    .signal-med { background: rgba(250, 204, 21, 0.2); color: #fde047; }
+    .signal-weak { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+    input { width: 100%; padding: 13px 16px; background: #0e0e11; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; color: white; transition: all 0.2s; }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2); }
     .input-wrapper { position: relative; display: flex; align-items: center; }
-    .toggle-pass { position: absolute; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+    .toggle-pass { position: absolute; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; text-transform: uppercase; }
     .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(66, 133, 244, 0.4); transition: transform 0.2s, box-shadow 0.2s; margin-top: 8px; }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -5px rgba(66, 133, 244, 0.6); }
-    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { background: #3f3f46; color: #a1a1aa; cursor: not-allowed; box-shadow: none; transform: none; }
     .btn-reset { width: 100%; padding: 12px; background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 24px; transition: all 0.2s; }
     .btn-reset:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
     #manualInput { display: none; margin-top: 10px; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .alert-box { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 14px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; font-weight: 500; }
     .spinning { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
@@ -237,35 +247,42 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
     </div>
     
     <div class='badge'>
-      <span>⚡ Modo Inalámbrico • Hardware v440</span>
+      <span>Modo Inalámbrico • Hardware v440</span>
     </div>
+
+    <div id='alertBox' class='alert-box'></div>
     
-    <form action='/save' method='POST' id='wifiForm'>
+    <form id='wifiForm' onsubmit='guardarRed(event)'>
       <div class='form-group'>
         <div class='label-row'>
           <label>Red WiFi (SSID)</label>
-          <button type='button' class='btn-scan' onclick='escanearRedes()' id='scanBtn'>🔄 Escanear</button>
+          <button type='button' class='btn-scan' onclick='escanearRedes()' id='scanBtn'>
+            <svg class='spinning' style='display:none' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8'/><path d='M21 3v5h-5'/></svg>
+            <span>Escanear Redes</span>
+          </button>
         </div>
-        <select id='networkSelect' onchange='handleSelectChange()'>
-          <option value=''>Buscando redes en el aire...</option>
-        </select>
+        
+        <div id='networkList' class='network-list'>
+          <div class='network-item' style='justify-content:center; color: #a1a1aa;'>Buscando redes disponibles...</div>
+        </div>
+
         <input type='hidden' name='ssid' id='finalSsid' required>
-        <input type='text' id='manualInput' placeholder='Nombre de tu red oculta o manual' maxlength='63' oninput='updateManualSsid()'>
+        <input type='text' id='manualInput' placeholder='Nombre de la red oculta o manual' maxlength='63' oninput='updateManualSsid()'>
       </div>
       
       <div class='form-group'>
         <label>Contraseña</label>
         <div class='input-wrapper'>
-          <input type='password' name='password' id='wifiPassword' placeholder='Contraseña de tu red WiFi' required maxlength='63'>
-          <button type='button' class='toggle-pass' onclick='togglePassword()'>👁️</button>
+          <input type='password' name='password' id='wifiPassword' placeholder='Contraseña de acceso a la red' required maxlength='63'>
+          <button type='button' class='toggle-pass' onclick='togglePassword()'>Mostrar</button>
         </div>
       </div>
       
-      <button type='submit' class='btn-submit'>🚀 Conectar Caja a Internet</button>
+      <button type='submit' class='btn-submit' id='submitBtn'>Conectar Caja a Internet</button>
     </form>
     
-    <form action='/reset' method='POST' onsubmit="return confirm('¿Deseas borrar las contraseñas guardadas?');">
-      <button type='submit' class='btn-reset'>🗑️ Restablecer Configuración de Memoria</button>
+    <form action='/reset' method='POST' onsubmit="return confirm('¿Confirmas que deseas borrar la memoria del dispositivo?');">
+      <button type='submit' class='btn-reset'>Restablecer Configuración de Memoria</button>
     </form>
   </div>
 
@@ -273,21 +290,22 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
     function togglePassword() {
       const p = document.getElementById('wifiPassword');
       const btn = document.querySelector('.toggle-pass');
-      if (p.type === 'password') { p.type = 'text'; btn.innerText = '🙈'; }
-      else { p.type = 'password'; btn.innerText = '👁️'; }
+      if (p.type === 'password') { p.type = 'text'; btn.innerText = 'Ocultar'; }
+      else { p.type = 'password'; btn.innerText = 'Mostrar'; }
     }
 
-    function handleSelectChange() {
-      const sel = document.getElementById('networkSelect');
+    function selectNetwork(el, ssid) {
+      document.querySelectorAll('.network-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
       const man = document.getElementById('manualInput');
       const hid = document.getElementById('finalSsid');
-      if (sel.value === '__MANUAL__') {
+      if (ssid === '__MANUAL__') {
         man.style.display = 'block';
         man.focus();
         hid.value = man.value;
       } else {
         man.style.display = 'none';
-        hid.value = sel.value;
+        hid.value = ssid;
       }
     }
 
@@ -297,28 +315,104 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
 
     function escanearRedes() {
       const btn = document.getElementById('scanBtn');
-      const sel = document.getElementById('networkSelect');
-      btn.innerHTML = '<span class="spinning">🔄</span> Buscando...';
+      const list = document.getElementById('networkList');
+      const icon = btn.querySelector('svg');
+      const text = btn.querySelector('span');
+      
+      icon.style.display = 'inline-block';
+      text.innerText = 'Buscando...';
       btn.disabled = true;
 
       fetch('/scan')
         .then(r => r.json())
         .then(data => {
-          sel.innerHTML = '<option value="" disabled selected>— Selecciona una red detectada —</option>';
-          data.forEach(red => {
-            const icon = red.rssi > -65 ? '🟢' : (red.rssi > -78 ? '🟡' : '🟠');
-            const lock = red.enc ? '🔒' : '🔓';
-            sel.innerHTML += `<option value="${red.ssid}">${icon} ${lock} ${red.ssid} (${red.rssi} dBm)</option>`;
-          });
-          sel.innerHTML += '<option value="__MANUAL__">➕ Escribir red manual / oculta...</option>';
-          btn.innerHTML = '🔄 Actualizar';
+          list.innerHTML = '';
+          if (data.length === 0) {
+            list.innerHTML = "<div class='network-item' style='justify-content:center'>No se detectaron redes en el área</div>";
+          } else {
+            data.forEach(red => {
+              let signalClass = 'signal-weak';
+              let signalText = 'Débil';
+              if (red.rssi > -68) { signalClass = 'signal-strong'; signalText = 'Fuerte'; }
+              else if (red.rssi > -79) { signalClass = 'signal-med'; signalText = 'Media'; }
+              
+              const secText = red.enc ? 'Protegida' : 'Abierta';
+              
+              const div = document.createElement('div');
+              div.className = 'network-item';
+              div.onclick = () => selectNetwork(div, red.ssid);
+              div.innerHTML = `
+                <span>${red.ssid}</span>
+                <div class='network-info'>
+                  <span class='signal-badge ${signalClass}'>${signalText}</span>
+                  <span style='font-size:11px; color:#a1a1aa;'>${secText}</span>
+                </div>
+              `;
+              list.appendChild(div);
+            });
+          }
+          const manualDiv = document.createElement('div');
+          manualDiv.className = 'network-item';
+          manualDiv.style.color = '#60a5fa';
+          manualDiv.style.fontWeight = '600';
+          manualDiv.onclick = () => selectNetwork(manualDiv, '__MANUAL__');
+          manualDiv.innerHTML = "<span>+ Agregar red manual u oculta...</span>";
+          list.appendChild(manualDiv);
+          
+          icon.style.display = 'none';
+          text.innerText = 'Actualizar Redes';
           btn.disabled = false;
         })
         .catch(e => {
-          sel.innerHTML = '<option value="__MANUAL__">⚠️ Error escaneando - Escribe manual</option>';
-          btn.innerHTML = '🔄 Reintentar';
+          list.innerHTML = "<div class='network-item' style='color:#f87171'>Error al escanear. Intenta escribir el nombre manualmente.</div>";
+          icon.style.display = 'none';
+          text.innerText = 'Reintentar';
           btn.disabled = false;
-          handleSelectChange();
+        });
+    }
+
+    function guardarRed(e) {
+      e.preventDefault();
+      const form = document.getElementById('wifiForm');
+      const btn = document.getElementById('submitBtn');
+      const alert = document.getElementById('alertBox');
+      const ssid = document.getElementById('finalSsid').value;
+      const pass = document.getElementById('wifiPassword').value;
+      
+      if (!ssid) {
+        alert.innerText = "Por favor selecciona o escribe el nombre de una red WiFi.";
+        alert.style.display = 'block';
+        return;
+      }
+      
+      alert.style.display = 'none';
+      btn.disabled = true;
+      btn.innerText = "Verificando contraseña en la caja...";
+      
+      const params = new URLSearchParams();
+      params.append('ssid', ssid);
+      params.append('password', pass);
+
+      fetch('/save', { method: 'POST', body: params })
+        .then(async r => {
+          if (r.ok) {
+            const html = await r.text();
+            document.open();
+            document.write(html);
+            document.close();
+          } else {
+            const data = await r.json();
+            alert.innerText = data.message || "Contraseña incorrecta o red inalcanzable. Intenta nuevamente.";
+            alert.style.display = 'block';
+            btn.disabled = false;
+            btn.innerText = "Conectar Caja a Internet";
+          }
+        })
+        .catch(err => {
+          alert.innerText = "La conexión excedió el tiempo de espera. Verifica si el LED de la placa indica éxito.";
+          alert.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = "Reintentar Conexión";
         });
     }
 
@@ -339,21 +433,26 @@ const char HTML_SUCCESS[] PROGMEM = R"rawliteral(
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #09090b; background-image: radial-gradient(circle at 50% 10%, rgba(52, 168, 83, 0.2) 0%, rgba(9, 9, 11, 0) 70%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: #f4f4f5; }
     .container { background: #18181b; border: 1px solid #27272a; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 40px; max-width: 420px; width: 100%; text-align: center; }
-    .icon { font-size: 72px; margin-bottom: 24px; animation: bounce 1s ease infinite; }
+    .icon { margin-bottom: 24px; display: flex; justify-content: center; }
+    .icon svg { width: 72px; height: 72px; color: #4ae076; animation: scaleUp 0.5s ease-out; }
     h1 { color: #4ae076; font-size: 28px; font-weight: 800; margin-bottom: 12px; letter-spacing: 0.5px; }
     p { color: #a1a1aa; line-height: 1.6; font-size: 15px; margin-bottom: 8px; }
-    .info-box { background: rgba(52, 168, 83, 0.1); border: 1px solid rgba(52, 168, 83, 0.3); padding: 16px; border-radius: 12px; margin-top: 24px; font-size: 14px; color: #86efac; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .info-box { background: rgba(52, 168, 83, 0.1); border: 1px solid rgba(52, 168, 83, 0.3); padding: 16px; border-radius: 12px; margin-top: 24px; font-size: 15px; color: #86efac; font-weight: 500; }
+    @keyframes scaleUp { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
   <div class='container'>
-    <div class='icon'>🎉</div>
-    <h1>¡Credenciales Registradas!</h1>
-    <p>La placa ESP8266 está iniciando conexión con tu router.</p>
+    <div class='icon'>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+    </div>
+    <h1>Credenciales Registradas</h1>
+    <p>La caja Arachiz está iniciando conexión con tu router.</p>
     <p>Ya puedes cerrar esta pestaña en tu navegador.</p>
     <div class='info-box'>
-      ⚡ En cuanto enlacemos, el sistema conmutará tus huellas y chips a los servidores de Vercel/Render automáticamente.
+      puedes volver a conectarte a tu red, arachiz se encargará del resto...
     </div>
   </div>
 </body>
@@ -364,12 +463,10 @@ void iniciarPortalConfig() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP("ARACHIZ-CONFIG");
   
-  // Iniciar DNS Server para portal cautivo
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   
-  mostrarMensaje("MODO CONFIG", "WiFi: ARACHIZ", "IP: 192.168.4.1");
+  mostrarMensaje("CONFIGURAR", "CONEXION EN RED:", "ARACHIZ-CONFIG...");
   
-  // Endpoint para escanear redes WiFi dinámicamente y devolver JSON
   server.on("/scan", HTTP_GET, []() {
     int n = WiFi.scanNetworks();
     String json = "[";
@@ -381,7 +478,6 @@ void iniciarPortalConfig() {
     server.send(200, "application/json", json);
   });
 
-  // Capturar TODAS las peticiones y redirigir al portal
   server.onNotFound([]() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
@@ -390,15 +486,15 @@ void iniciarPortalConfig() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
   
-  server.on("/generate_204", HTTP_GET, []() {  // Android
+  server.on("/generate_204", HTTP_GET, []() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
   
-  server.on("/fwlink", HTTP_GET, []() {  // Windows
+  server.on("/fwlink", HTTP_GET, []() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
   
-  server.on("/hotspot-detect.html", HTTP_GET, []() {  // iOS
+  server.on("/hotspot-detect.html", HTTP_GET, []() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
   
@@ -406,42 +502,63 @@ void iniciarPortalConfig() {
     String ssid = server.arg("ssid");
     String password = server.arg("password");
     
-    Serial.println("Recibido SSID: " + ssid);
-    Serial.println("Recibido Pass: " + password);
+    Serial.println("Probando SSID: " + ssid);
     
-    if (ssid.length() > 0) {
-      mostrarMensaje("Guardando...", ssid);
+    if (ssid.length() == 0) {
+      server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Nombre de red requerido\"}");
+      return;
+    }
+
+    mostrarMensaje("PROBANDO WIFI", ssid, "Verificando...");
+    
+    // Prueba real de conexión en modo dual para no perder enlace con el móvil
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.begin(ssid, password);
+    
+    int intentos = 0;
+    while (WiFi.status() != WL_CONNECTED && intentos < 14) { // ~7 segundos de verificación
+      delay(500);
+      intentos++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("Conexión exitosa a WiFi!");
       guardarConfigWiFi(ssid, password);
+      mostrarLogo(); // Dibuja inmediatamente el logotipo oficial al triunfar
       server.send_P(200, "text/html", HTML_SUCCESS);
-      delay(2000);
-      Serial.println("Reiniciando ESP...");
+      delay(3000);
       ESP.restart();
     } else {
-      server.send(400, "text/plain", "SSID requerido");
+      Serial.println("Error: Contraseña incorrecta o red inalcanzable");
+      WiFi.disconnect();
+      WiFi.mode(WIFI_AP);
+      mostrarMensaje("ERROR DE RED", "CLAVE INCORRECTA", "INTENTA DE NUEVO");
+      delay(2500);
+      mostrarMensaje("CONFIGURAR", "CONEXION EN RED:", "ARACHIZ-CONFIG...");
+      server.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Contraseña incorrecta o red inalcanzable. Verifícala e intenta nuevamente.\"}");
     }
   });
   
   server.on("/reset", HTTP_POST, []() {
     borrarConfigWiFi();
-    server.send(200, "text/plain", "Configuracion borrada. Reiniciando...");
+    server.send(200, "text/plain", "Memoria restablecida con éxito. Reiniciando dispositivo...");
     delay(1000);
     ESP.restart();
   });
   
   server.begin();
   Serial.println("Portal cautivo iniciado en 192.168.4.1");
-  Serial.println("DNS Server activo");
 }
 
 void conectarWifi() {
   if (!wifiConfig.configured) {
-    mostrarMensaje("Sin config", "Iniciando", "portal WiFi...");
+    mostrarMensaje("CONFIGURAR", "CONEXION EN RED:", "ARACHIZ-CONFIG...");
     delay(1000);
     iniciarPortalConfig();
     return;
   }
   
-  mostrarMensaje("Conectando", "WiFi...", wifiConfig.ssid);
+  mostrarMensaje("CONECTANDO A:", wifiConfig.ssid, "Por favor espere...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiConfig.ssid, wifiConfig.password);
   
@@ -452,19 +569,15 @@ void conectarWifi() {
   }
   
   if (WiFi.status() == WL_CONNECTED) {
-    mostrarMensaje("WiFi OK", WiFi.localIP().toString(), "Listo!");
+    mostrarMensaje("CONEXION EXITOSA", WiFi.localIP().toString(), "Iniciando...");
     Serial.println("Conectado exitosamente!");
     delay(1500);
-    consultarEstadoSesion(); // Sincronizar estado de sesión al reconectar
+    mostrarLogo(); // Dibuja el logotipo en OLED tras conectar al WiFi
+    consultarEstadoSesion();
   } else {
-    mostrarMensaje("ERROR WiFi", "No conecta", "Mantener config");
+    mostrarMensaje("ERROR DE CONEXION", "WIFI INALCANZABLE", "MANTENIENDO CONFIG");
     Serial.println("ERROR: No se pudo conectar al WiFi");
-    Serial.println("SSID: " + String(wifiConfig.ssid));
-    Serial.println("Verifica nombre y password");
-    Serial.println("Presiona RESET para reintentar");
-    // NO borramos la config para poder diagnosticar
-    delay(5000);
-    // Volver al portal SIN borrar
+    delay(4000);
     wifiConfig.configured = false;
     iniciarPortalConfig();
   }
