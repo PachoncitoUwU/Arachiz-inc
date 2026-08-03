@@ -29,8 +29,10 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       setMessage('');
       // Comprobar si ya tiene descriptor facial (length > 0)
       setHasFace(aprendiz?.faceDescriptor && aprendiz.faceDescriptor.length === 128);
-      // Priorizar siempre conexión USB en entorno de escritorio/desarrollo
-      setConnectionMode('usb');
+      // Detectar automáticamente el modo de conexión del hardware (USB o WiFi)
+      fetchApi('/serial/status')
+        .then(res => setConnectionMode(res.connected ? 'usb' : 'wifi'))
+        .catch(() => setConnectionMode('wifi'));
     } else {
       if (modeRef.current === 'nfc') {
         fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});

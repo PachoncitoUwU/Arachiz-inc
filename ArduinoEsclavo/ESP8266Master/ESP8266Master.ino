@@ -28,7 +28,7 @@ DNSServer dnsServer;
 const byte DNS_PORT = 53;
 
 // --- MODO DE OPERACIÓN ---
-const bool MODO_SOLO_PANTALLA = true; // true = Apagar WiFi, ahorrar corriente y mostrar LOGO ARACHIZ | false = Modo WiFi web
+const bool MODO_SOLO_PANTALLA = false; // true = Apagar WiFi, ahorrar corriente y mostrar LOGO ARACHIZ | false = Modo WiFi web
 
 // --- BACKEND URLs ---
 const bool USE_RENDER_BACKEND = true; // true = Render (producción/Vercel) | false = local
@@ -199,132 +199,131 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
 <head>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>ARACHIZ - Config WiFi</title>
+  <title>ARACHIZ - Portal WiFi</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      padding: 40px;
-      max-width: 400px;
-      width: 100%;
-    }
-    .logo {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .logo h1 {
-      font-size: 32px;
-      color: #667eea;
-      font-weight: 800;
-      letter-spacing: 2px;
-    }
-    .logo p {
-      color: #666;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    input, select {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 16px;
-      transition: all 0.3s;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    button {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-    }
-    button:active {
-      transform: translateY(0);
-    }
-    .info {
-      background: #f0f4ff;
-      border-left: 4px solid #667eea;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #555;
-    }
-    .reset-btn {
-      background: #ff4757;
-      margin-top: 10px;
-      font-size: 14px;
-      padding: 10px;
-    }
-    .reset-btn:hover {
-      box-shadow: 0 10px 20px rgba(255, 71, 87, 0.3);
-    }
+    :root { --primary: #4285F4; --success: #34A853; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #f4f4f5; --text-muted: #a1a1aa; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 10%, rgba(66, 133, 244, 0.15) 0%, rgba(9, 9, 11, 0) 70%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--text); }
+    .container { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 36px; max-width: 420px; width: 100%; position: relative; overflow: hidden; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 { font-size: 32px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(to right, #4285F4, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(52, 168, 83, 0.15); border: 1px solid rgba(52, 168, 83, 0.4); color: #4ae076; padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-bottom: 24px; width: 100%; justify-content: center; }
+    .form-group { margin-bottom: 20px; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    label { font-weight: 600; color: var(--text); font-size: 14px; }
+    .btn-scan { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 6px; }
+    .btn-scan:hover { text-decoration: underline; }
+    select, input { width: 100%; padding: 13px 16px; background: #0e0e11; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; color: white; transition: all 0.2s; }
+    select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2); }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .toggle-pass { position: absolute; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+    .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(66, 133, 244, 0.4); transition: transform 0.2s, box-shadow 0.2s; margin-top: 8px; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -5px rgba(66, 133, 244, 0.6); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-reset { width: 100%; padding: 12px; background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 24px; transition: all 0.2s; }
+    .btn-reset:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+    #manualInput { display: none; margin-top: 10px; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .spinning { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class='container'>
-    <div class='logo'>
+    <div class='header'>
       <h1>ARACHIZ</h1>
-      <p>Configuración WiFi</p>
+      <p>Portal de Configuración</p>
     </div>
     
-    <div class='info'>
-      📡 Conecta el dispositivo a tu red WiFi para que funcione con el sistema de asistencia.
+    <div class='badge'>
+      <span>⚡ Modo Inalámbrico • Hardware v440</span>
     </div>
     
-    <form action='/save' method='POST'>
+    <form action='/save' method='POST' id='wifiForm'>
       <div class='form-group'>
-        <label>Red WiFi (SSID)</label>
-        <input type='text' name='ssid' placeholder='Nombre de tu WiFi' required maxlength='63'>
+        <div class='label-row'>
+          <label>Red WiFi (SSID)</label>
+          <button type='button' class='btn-scan' onclick='escanearRedes()' id='scanBtn'>🔄 Escanear</button>
+        </div>
+        <select id='networkSelect' onchange='handleSelectChange()'>
+          <option value=''>Buscando redes en el aire...</option>
+        </select>
+        <input type='hidden' name='ssid' id='finalSsid' required>
+        <input type='text' id='manualInput' placeholder='Nombre de tu red oculta o manual' maxlength='63' oninput='updateManualSsid()'>
       </div>
       
       <div class='form-group'>
         <label>Contraseña</label>
-        <input type='password' name='password' placeholder='Contraseña WiFi' required maxlength='63'>
+        <div class='input-wrapper'>
+          <input type='password' name='password' id='wifiPassword' placeholder='Contraseña de tu red WiFi' required maxlength='63'>
+          <button type='button' class='toggle-pass' onclick='togglePassword()'>👁️</button>
+        </div>
       </div>
       
-      <button type='submit'>💾 Guardar y Conectar</button>
+      <button type='submit' class='btn-submit'>🚀 Conectar Caja a Internet</button>
     </form>
     
-    <form action='/reset' method='POST'>
-      <button type='submit' class='reset-btn'>🔄 Borrar Configuración</button>
+    <form action='/reset' method='POST' onsubmit="return confirm('¿Deseas borrar las contraseñas guardadas?');">
+      <button type='submit' class='btn-reset'>🗑️ Restablecer Configuración de Memoria</button>
     </form>
   </div>
+
+  <script>
+    function togglePassword() {
+      const p = document.getElementById('wifiPassword');
+      const btn = document.querySelector('.toggle-pass');
+      if (p.type === 'password') { p.type = 'text'; btn.innerText = '🙈'; }
+      else { p.type = 'password'; btn.innerText = '👁️'; }
+    }
+
+    function handleSelectChange() {
+      const sel = document.getElementById('networkSelect');
+      const man = document.getElementById('manualInput');
+      const hid = document.getElementById('finalSsid');
+      if (sel.value === '__MANUAL__') {
+        man.style.display = 'block';
+        man.focus();
+        hid.value = man.value;
+      } else {
+        man.style.display = 'none';
+        hid.value = sel.value;
+      }
+    }
+
+    function updateManualSsid() {
+      document.getElementById('finalSsid').value = document.getElementById('manualInput').value;
+    }
+
+    function escanearRedes() {
+      const btn = document.getElementById('scanBtn');
+      const sel = document.getElementById('networkSelect');
+      btn.innerHTML = '<span class="spinning">🔄</span> Buscando...';
+      btn.disabled = true;
+
+      fetch('/scan')
+        .then(r => r.json())
+        .then(data => {
+          sel.innerHTML = '<option value="" disabled selected>— Selecciona una red detectada —</option>';
+          data.forEach(red => {
+            const icon = red.rssi > -65 ? '🟢' : (red.rssi > -78 ? '🟡' : '🟠');
+            const lock = red.enc ? '🔒' : '🔓';
+            sel.innerHTML += `<option value="${red.ssid}">${icon} ${lock} ${red.ssid} (${red.rssi} dBm)</option>`;
+          });
+          sel.innerHTML += '<option value="__MANUAL__">➕ Escribir red manual / oculta...</option>';
+          btn.innerHTML = '🔄 Actualizar';
+          btn.disabled = false;
+        })
+        .catch(e => {
+          sel.innerHTML = '<option value="__MANUAL__">⚠️ Error escaneando - Escribe manual</option>';
+          btn.innerHTML = '🔄 Reintentar';
+          btn.disabled = false;
+          handleSelectChange();
+        });
+    }
+
+    window.onload = escanearRedes;
+  </script>
 </body>
 </html>
 )rawliteral";
@@ -335,59 +334,26 @@ const char HTML_SUCCESS[] PROGMEM = R"rawliteral(
 <head>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>ARACHIZ - Éxito</title>
+  <title>ARACHIZ - Conectado</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      padding: 40px;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-    }
-    .success-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      color: #11998e;
-      font-size: 28px;
-      margin-bottom: 15px;
-    }
-    p {
-      color: #666;
-      line-height: 1.6;
-      margin-bottom: 10px;
-    }
-    .info {
-      background: #e8f5e9;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #2e7d32;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #09090b; background-image: radial-gradient(circle at 50% 10%, rgba(52, 168, 83, 0.2) 0%, rgba(9, 9, 11, 0) 70%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: #f4f4f5; }
+    .container { background: #18181b; border: 1px solid #27272a; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 40px; max-width: 420px; width: 100%; text-align: center; }
+    .icon { font-size: 72px; margin-bottom: 24px; animation: bounce 1s ease infinite; }
+    h1 { color: #4ae076; font-size: 28px; font-weight: 800; margin-bottom: 12px; letter-spacing: 0.5px; }
+    p { color: #a1a1aa; line-height: 1.6; font-size: 15px; margin-bottom: 8px; }
+    .info-box { background: rgba(52, 168, 83, 0.1); border: 1px solid rgba(52, 168, 83, 0.3); padding: 16px; border-radius: 12px; margin-top: 24px; font-size: 14px; color: #86efac; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   </style>
 </head>
 <body>
   <div class='container'>
-    <div class='success-icon'>✅</div>
-    <h1>¡Configuración Guardada!</h1>
-    <p>El dispositivo se está conectando a tu red WiFi.</p>
-    <p>Puedes cerrar esta ventana.</p>
-    <div class='info'>
-      El ESP8266 se reiniciará y se conectará automáticamente a tu red.
+    <div class='icon'>🎉</div>
+    <h1>¡Credenciales Registradas!</h1>
+    <p>La placa ESP8266 está iniciando conexión con tu router.</p>
+    <p>Ya puedes cerrar esta pestaña en tu navegador.</p>
+    <div class='info-box'>
+      ⚡ En cuanto enlacemos, el sistema conmutará tus huellas y chips a los servidores de Vercel/Render automáticamente.
     </div>
   </div>
 </body>
@@ -403,6 +369,18 @@ void iniciarPortalConfig() {
   
   mostrarMensaje("MODO CONFIG", "WiFi: ARACHIZ", "IP: 192.168.4.1");
   
+  // Endpoint para escanear redes WiFi dinámicamente y devolver JSON
+  server.on("/scan", HTTP_GET, []() {
+    int n = WiFi.scanNetworks();
+    String json = "[";
+    for (int i = 0; i < n; ++i) {
+      if (i > 0) json += ",";
+      json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" + String(WiFi.RSSI(i)) + ",\"enc\":" + String(WiFi.encryptionType(i) != ENC_TYPE_NONE ? "true" : "false") + "}";
+    }
+    json += "]";
+    server.send(200, "application/json", json);
+  });
+
   // Capturar TODAS las peticiones y redirigir al portal
   server.onNotFound([]() {
     server.send_P(200, "text/html", HTML_CONFIG);
