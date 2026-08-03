@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Fingerprint, ScanFace, QrCode, ShieldCheck } from 'lucide-react';
 import { useWorldCup } from '../context/WorldCupContext';
+import { VERSION } from '../config/version';
 
 export default function Landing() {
   const { worldCupMode } = useWorldCup();
@@ -33,6 +34,13 @@ export default function Landing() {
   return (
     <div className="h-screen bg-[#F5F5F5] dark:bg-zinc-950 relative overflow-hidden flex flex-col font-sans transition-colors duration-500">
       
+      {/* Indicador en vivo de despliegue en Vercel */}
+      <div className="absolute top-3 left-3 md:top-4 md:left-4 z-50">
+        <span className="px-3 py-1 bg-[#4285F4] text-white rounded-full font-extrabold text-xs md:text-sm shadow-lg shadow-blue-500/30 border border-blue-400 flex items-center gap-1.5 animate-pulse">
+          ⚡ v{VERSION}
+        </span>
+      </div>
+
       {/* Botón Sobre Nosotros - Esquina Superior Derecha */}
       <div className="absolute top-3 right-3 md:top-4 md:right-4 z-50">
         <Link 

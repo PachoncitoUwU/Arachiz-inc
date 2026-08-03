@@ -3,9 +3,20 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.439';
+export const VERSION = '1.4.440';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.440',
+    date: '2026-08-03',
+    title: 'Finalización del Modo USB & Prueba Diagnóstica del Hardware',
+    changes: [
+      '🔌 Modo USB 100% Completado: Operadora fluida por cable serie para desarrollo y registro local',
+      '🛠️ Prueba Diagnóstica de Hardware: Nuevo módulo en Configuración para verificar sensores y sonido',
+      '📐 Cableado y Electrónica Perfecta: Consolidada conexión física y pantalla OLED con Logo Arachiz',
+      '🎨 Mejoras UX en Enrolamiento: Nuevo spinner de carga y estado al vincular biometría en aprendices'
+    ]
+  },
   {
     version: '1.4.439',
     date: '2026-06-16',

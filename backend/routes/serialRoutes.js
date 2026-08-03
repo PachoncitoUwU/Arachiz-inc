@@ -12,5 +12,7 @@ router.delete('/finger', serialController.deleteFinger);
 router.get('/next-finger-id', serialController.nextFingerId);
 router.post('/simulate', serialController.simulateEvent);
 router.post('/clear-fingerprints', serialController.clearFingerprints);
+router.post('/test/buzzer', serialController.testBuzzer);
+router.post('/test/mode', serialController.setTestMode);
 
 module.exports = router;
