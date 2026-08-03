@@ -3,9 +3,19 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.446';
+export const VERSION = '1.4.450';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.450',
+    date: '2026-08-03',
+    title: 'Actualización 1.4.450',
+    changes: [
+      'arachiz-wifi',
+      'cambio pequeño',
+      'feat: portal wifi scrolleable con validacion en vivo y ping web'
+    ]
+  },
   {
     version: '1.4.446',
     date: '2026-08-03',
