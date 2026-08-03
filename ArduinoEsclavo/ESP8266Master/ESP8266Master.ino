@@ -27,6 +27,18 @@ ESP8266WebServer server(80);
 DNSServer dnsServer;
 const byte DNS_PORT = 53;
 
+// --- PROTOTIPOS DE FUNCIONES (Forward declarations para prevenir errores de compilación en C++) ---
+void mostrarLogo();
+void mostrarMensaje(String l1, String l2 = "", String l3 = "");
+void guardarConfigWiFi(String ssid, String password);
+void cargarConfigWiFi();
+void borrarConfigWiFi();
+void iniciarPortalConfig();
+void conectarWifi();
+bool enviarEvento(String type, String payload, bool online);
+void consultarEstadoSesion();
+void consultarComandos();
+
 // --- MODO DE OPERACIÓN ---
 const bool MODO_SOLO_PANTALLA = false; // true = Apagar WiFi, ahorrar corriente y mostrar LOGO ARACHIZ | false = Modo WiFi web
 
@@ -103,7 +115,7 @@ void mostrarLogo() {
   display.display();
 }
 
-void mostrarMensaje(String l1, String l2 = "", String l3 = "") {
+void mostrarMensaje(String l1, String l2, String l3) {
   ultimoMensaje = millis();
   display.clearDisplay();
   display.setTextSize(1);
