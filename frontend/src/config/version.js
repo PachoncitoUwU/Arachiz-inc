@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.453';
+export const VERSION = '1.4.456';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.456',
+    date: '2026-08-03',
+    title: 'Actualización 1.4.456',
+    changes: [
+      'arachiz-wifi',
+      'mas configuraciones para la red'
+    ]
+  },
   {
     version: '1.4.453',
     date: '2026-08-03',
