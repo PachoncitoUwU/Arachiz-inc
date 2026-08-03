@@ -9,6 +9,7 @@
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <EEPROM.h>
+#include "LogoPNG.h"
 
 // --- CONFIGURACIÓN WiFi (se guarda en EEPROM) ---
 #define EEPROM_SIZE 512
@@ -217,9 +218,10 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 10%, rgba(66, 133, 244, 0.15) 0%, rgba(9, 9, 11, 0) 70%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--text); }
     .container { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); padding: 36px; max-width: 440px; width: 100%; position: relative; overflow: hidden; }
-    .header { text-align: center; margin-bottom: 24px; }
-    .header h1 { font-size: 32px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(to right, #4285F4, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .header p { color: var(--text-muted); font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+    .logo-container { background: #000000; border: 1px solid #27272a; padding: 18px 24px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.9); }
+    .logo-img { max-height: 54px; width: auto; filter: invert(100%); display: block; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header p { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
     .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-bottom: 24px; width: 100%; justify-content: center; }
     .form-group { margin-bottom: 20px; }
     .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -253,8 +255,10 @@ const char HTML_CONFIG[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <div class='container'>
+    <div class='logo-container'>
+      <img src='/logo.png' alt='Arachiz Logo' class='logo-img'>
+    </div>
     <div class='header'>
-      <h1>ARACHIZ</h1>
       <p>Portal de Configuración</p>
     </div>
     
@@ -472,21 +476,33 @@ const char HTML_SUCCESS[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 void iniciarPortalConfig() {
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP("ARACHIZ-CONFIG");
+  // Configurar máxima sensibilidad de recepción para el escáner WiFi
+  WiFi.setSleepMode(WIFI_NONE_SLEEP); // Desactiva ahorro energético de radio para escanear con 100% de potencia
+  WiFi.mode(WIFI_AP_STA);             // Habilitar modo dual AP+STA para liberar el sintetizador del canal 1
+  WiFi.disconnect(true);              // Desvinculación limpia de intentos STA previos
   
+  WiFi.softAP("ARACHIZ-CONFIG");
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   
   mostrarMensaje("CONFIGURAR", "CONEXION EN RED:", "ARACHIZ-CONFIG...");
   
+  // Escaneo en segundo plano para inicializar la lista y evitar retardos
+  WiFi.scanNetworks(true, true);
+  
+  server.on("/logo.png", HTTP_GET, []() {
+    server.send_P(200, "image/png", (const char*)LOGO_PNG_DATA, LOGO_PNG_SIZE);
+  });
+  
   server.on("/scan", HTTP_GET, []() {
-    int n = WiFi.scanNetworks();
+    // Escaneo síncrono completo con soporte para redes ocultas y máxima cobertura 2.4 GHz
+    int n = WiFi.scanNetworks(false, true);
     String json = "[";
     for (int i = 0; i < n; ++i) {
       if (i > 0) json += ",";
       json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" + String(WiFi.RSSI(i)) + ",\"enc\":" + String(WiFi.encryptionType(i) != ENC_TYPE_NONE ? "true" : "false") + "}";
     }
     json += "]";
+    WiFi.scanDelete(); // Limpia la tabla RAM del driver para evitar desbordamientos entre búsquedas
     server.send(200, "application/json", json);
   });
 
