@@ -476,25 +476,27 @@ const char HTML_SUCCESS[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 void iniciarPortalConfig() {
-  // Configurar máxima sensibilidad de recepción para el escáner WiFi
-  WiFi.setSleepMode(WIFI_NONE_SLEEP); // Desactiva ahorro energético de radio para escanear con 100% de potencia
-  WiFi.mode(WIFI_AP_STA);             // Habilitar modo dual AP+STA para liberar el sintetizador del canal 1
+  // Configuración de estabilidad y sensibilidad para móviles iOS y Android
+  WiFi.setSleepMode(WIFI_NONE_SLEEP); // Desactiva ahorro energético de radio para máxima ganancia y respuesta DHCP inmediata
+  WiFi.mode(WIFI_AP_STA);             // Modo dual AP+STA sin iniciar escaneos de fondo en el arranque
   WiFi.disconnect(true);              // Desvinculación limpia de intentos STA previos
   
-  WiFi.softAP("ARACHIZ-CONFIG");
-  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+  // Configuración explícita de subred IP y DHCP para evitar rechazo por error de conexión en celulares
+  IPAddress apIP(192, 168, 4, 1);
+  IPAddress netMsk(255, 255, 255, 0);
+  WiFi.softAPConfig(apIP, apIP, netMsk);
+  WiFi.softAP("ARACHIZ-CONFIG", "", 1, 0, 4); // Canal 1, SSID visible, hasta 4 conexiones simultáneas
+  
+  dnsServer.start(DNS_PORT, "*", apIP);
   
   mostrarMensaje("CONFIGURAR", "CONEXION EN RED:", "ARACHIZ-CONFIG...");
-  
-  // Escaneo en segundo plano para inicializar la lista y evitar retardos
-  WiFi.scanNetworks(true, true);
   
   server.on("/logo.png", HTTP_GET, []() {
     server.send_P(200, "image/png", (const char*)LOGO_PNG_DATA, LOGO_PNG_SIZE);
   });
   
   server.on("/scan", HTTP_GET, []() {
-    // Escaneo síncrono completo con soporte para redes ocultas y máxima cobertura 2.4 GHz
+    // Escaneo síncrono solicitado por el usuario con soporte para redes ocultas y máxima cobertura 2.4 GHz
     int n = WiFi.scanNetworks(false, true);
     String json = "[";
     for (int i = 0; i < n; ++i) {
@@ -506,23 +508,17 @@ void iniciarPortalConfig() {
     server.send(200, "application/json", json);
   });
 
+  // Rutas explícitas de detección de portal cautivo para todos los sistemas operativos
+  server.on("/", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/generate_204", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/gen_204", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/connecttest.txt", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/fwlink", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/ncsi.txt", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/hotspot-detect.html", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+  server.on("/library/test/success.html", HTTP_GET, []() { server.send_P(200, "text/html", HTML_CONFIG); });
+
   server.onNotFound([]() {
-    server.send_P(200, "text/html", HTML_CONFIG);
-  });
-  
-  server.on("/", HTTP_GET, []() {
-    server.send_P(200, "text/html", HTML_CONFIG);
-  });
-  
-  server.on("/generate_204", HTTP_GET, []() {
-    server.send_P(200, "text/html", HTML_CONFIG);
-  });
-  
-  server.on("/fwlink", HTTP_GET, []() {
-    server.send_P(200, "text/html", HTML_CONFIG);
-  });
-  
-  server.on("/hotspot-detect.html", HTTP_GET, []() {
     server.send_P(200, "text/html", HTML_CONFIG);
   });
   
