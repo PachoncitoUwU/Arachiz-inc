@@ -3,9 +3,19 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.440';
+export const VERSION = '1.4.443';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.443',
+    date: '2026-08-03',
+    title: 'Actualización 1.4.443',
+    changes: [
+      'arachiz-wifi',
+      'feat: portal wifi con escaner de redes y badge vercel en portada',
+      'arachiz por usb funciona'
+    ]
+  },
   {
     version: '1.4.440',
     date: '2026-08-03',
