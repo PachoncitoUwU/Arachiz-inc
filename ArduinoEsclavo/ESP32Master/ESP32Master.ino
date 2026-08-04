@@ -663,9 +663,11 @@ void loop() {
     } else if (msg.startsWith("ENROLL_SUCCESS:")) {
       String id = msg.substring(15); id.trim();
       logEstado("REGISTRO OK", "Huella ID: " + id);
+      enviarLecturaBackend("ENROLL_SUCCESS", id);
     } else if (msg.startsWith("ENROLL_ERROR:")) {
       String err = msg.substring(13); err.trim();
       logEstado("ERROR REGISTRO", err);
+      enviarLecturaBackend("ENROLL_ERROR", err);
     }
   }
 }
