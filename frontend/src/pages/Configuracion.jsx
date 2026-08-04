@@ -5,6 +5,7 @@ import { useWorldCup } from '../context/WorldCupContext';
 import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
+import Modal from '../components/Modal';
 import SerialConnect from '../components/SerialConnect';
 import HardwareDiagnostic from '../components/HardwareDiagnostic';
 import ReleaseNotesModal from '../components/ReleaseNotesModal';
@@ -1544,6 +1545,25 @@ export default function Configuracion() {
     });
   };
 
+  // Easter egg: Lector USB/COM — 5 clicks en "Hardware / Arduino"
+  const [hwClicks, setHwClicks] = useState(0);
+  const [showSerialModal, setShowSerialModal] = useState(false);
+  const hwTimer = useRef(null);
+  const handleHwClick = () => {
+    if (showSerialModal) return;
+    setHwClicks(n => {
+      const next = n + 1;
+      if (next >= 5) {
+        setShowSerialModal(true);
+        clearTimeout(hwTimer.current);
+        return 0;
+      }
+      clearTimeout(hwTimer.current);
+      hwTimer.current = setTimeout(() => setHwClicks(0), 2000);
+      return next;
+    });
+  };
+
 
 
   // Botón oculto instructor — 10 clicks en el rol para borrar huellas
@@ -1694,8 +1714,14 @@ export default function Configuracion() {
 
       {/* Hardware — instructores y administradores */}
       {(user?.userType === 'instructor' || user?.userType === 'administrador') && (
-        <Section icon={Usb} title="Hardware / Arduino">
-          <SerialConnect />
+        <Section icon={Usb} title="Hardware / Arduino" onTitleClick={handleHwClick}>
+          {hwClicks > 0 && hwClicks < 5 && (
+            <div className="mb-3 text-center">
+              <p className="text-xs font-medium text-purple-500 animate-pulse">
+                🔌 {5 - hwClicks} {5 - hwClicks === 1 ? 'clic más para modo cableado USB...' : 'clics más...'}
+              </p>
+            </div>
+          )}
           <HardwareDiagnostic />
         </Section>
       )}
@@ -1743,6 +1769,15 @@ export default function Configuracion() {
       </div>
 
       <ReleaseNotesModal open={showReleaseNotes} onClose={() => setShowReleaseNotes(false)} />
+
+      <Modal open={showSerialModal} onClose={() => setShowSerialModal(false)} title="Conexión por Puerto COM (USB)">
+        <div className="py-2">
+          <p className="text-xs text-gray-500 mb-3">
+            Modo avanzado para diagnóstico local o conexión directa por cable USB al equipo.
+          </p>
+          <SerialConnect />
+        </div>
+      </Modal>
 
       <ConfirmDialog
         open={confirmDialog.open}

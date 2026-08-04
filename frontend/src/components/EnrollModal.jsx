@@ -9,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 import { bleService } from '../services/bleService';
 import { Fingerprint, CreditCard, CheckCircle2, AlertCircle, Loader2, ScanFace, Trash2 } from 'lucide-react';
 import { descriptorToArray } from '../utils/faceApi';
+import { audioFeedback } from '../utils/audioFeedback';
 
 export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const { showToast } = useToast();
@@ -54,11 +55,11 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         audioFeedback.playSuccessSound();
         showToast(`NFC vinculado: ${data.uid}`, 'success');
         await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
+        if (aprendiz) aprendiz.nfcUid = data.uid;
         modeRef.current = null;
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
-        setTimeout(() => onClose(), 600);
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al vincular NFC', 'error');
@@ -86,7 +87,6 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
-        setTimeout(() => onClose(), 600);
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al guardar huella en la BD', 'error');
@@ -192,7 +192,6 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       setMode(null);
       setStatus('idle');
       if (onUpdate) onUpdate();
-      setTimeout(() => onClose(), 600);
     } catch (err) {
       showToast(err.message || 'Error al guardar descriptor facial', 'error');
       setMode(null);
