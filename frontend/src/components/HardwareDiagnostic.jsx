@@ -4,6 +4,7 @@ import { socket } from '../services/socket';
 import fetchApi from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { bleService } from '../services/bleService';
+import { audioFeedback } from '../utils/audioFeedback';
 
 export default function HardwareDiagnostic() {
   const { showToast } = useToast();
@@ -23,10 +24,12 @@ export default function HardwareDiagnostic() {
       if (data.type === 'STATUS') {
         setBleConnected(data.payload === 'CONNECTED');
       } else if (data.type === 'RFID') {
+        audioFeedback.playNfcSound();
         setNfcResult(true);
         showToast(`¡NFC detectado por Bluetooth! ID: ${data.payload}`, 'success');
         stopTestMode();
       } else if (data.type === 'FINGERPRINT') {
+        audioFeedback.playSuccessSound();
         setFingerResult(true);
         showToast(`¡Huella detectada por Bluetooth! ID: ${data.payload}`, 'success');
         stopTestMode();
