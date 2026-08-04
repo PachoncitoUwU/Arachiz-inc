@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CreditCard, Fingerprint, Volume2, CheckCircle2, AlertCircle, RefreshCcw, XCircle, Wrench, Loader2 } from 'lucide-react';
+import { CreditCard, Fingerprint, Volume2, CheckCircle2, AlertCircle, RefreshCcw, XCircle, Wrench, Loader2, Bluetooth } from 'lucide-react';
 import { socket } from '../services/socket';
 import fetchApi from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { bleService } from '../services/bleService';
 
 export default function HardwareDiagnostic() {
   const { showToast } = useToast();
@@ -11,8 +12,46 @@ export default function HardwareDiagnostic() {
   const [fingerResult, setFingerResult] = useState(null); // true (éxito) | null
   const [buzzerState, setBuzzerState] = useState('idle'); // 'idle' | 'asked' | 'success'
   const [loading, setLoading] = useState(false);
+  const [bleLoading, setBleLoading] = useState(false);
+  const [bleConnected, setBleConnected] = useState(bleService.isConnected);
   const activeTestRef = useRef(null);
   const [socketConnected, setSocketConnected] = useState(socket.connected);
+
+  // Escuchar notificaciones del servicio Bluetooth BLE
+  useEffect(() => {
+    const unsubscribe = bleService.subscribe((data) => {
+      if (data.type === 'STATUS') {
+        setBleConnected(data.payload === 'CONNECTED');
+      } else if (data.type === 'RFID') {
+        setNfcResult(true);
+        showToast(`¡NFC detectado por Bluetooth! ID: ${data.payload}`, 'success');
+        stopTestMode();
+      } else if (data.type === 'FINGERPRINT') {
+        setFingerResult(true);
+        showToast(`¡Huella detectada por Bluetooth! ID: ${data.payload}`, 'success');
+        stopTestMode();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleToggleBle = async () => {
+    try {
+      setBleLoading(true);
+      if (bleConnected) {
+        await bleService.disconnect();
+        showToast('Bluetooth BLE desconectado', 'info');
+      } else {
+        await bleService.connect();
+        showToast('¡Caja Arachiz emparejada por Bluetooth!', 'success');
+      }
+    } catch (err) {
+      showToast(err.message || 'Error al conectar por Bluetooth', 'error');
+    } finally {
+      setBleLoading(false);
+    }
+  };
 
   // Monitorear y forzar conexión del socket
   useEffect(() => {
@@ -28,7 +67,6 @@ export default function HardwareDiagnostic() {
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
 
-    // Asegurarse de que esté conectado
     if (socket.connected) {
       setSocketConnected(true);
     } else {
@@ -132,6 +170,34 @@ export default function HardwareDiagnostic() {
             Prueba física de sensores de tarjeta, huella y altavoz sin consultar la base de datos.
           </p>
         </div>
+      </div>
+
+      {/* BANNER BLUETOOTH BLE (ESP32) */}
+      <div className="mb-5 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${bleConnected ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`} />
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+              <Bluetooth size={16} className="text-blue-500" />
+              Canal Inalámbrico Bluetooth BLE (ESP32)
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {bleConnected ? 'Conectado a la Caja Arachiz vía Bluetooth BLE' : 'Empareja tu portátil o móvil con un clic sin routers WiFi.'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleToggleBle}
+          disabled={bleLoading}
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 ${
+            bleConnected
+              ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/50 dark:text-red-300'
+              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+          }`}
+        >
+          {bleLoading ? <Loader2 size={14} className="animate-spin" /> : <Bluetooth size={14} />}
+          {bleConnected ? 'Desconectar BLE' : 'Conectar por Bluetooth (ESP32)'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
