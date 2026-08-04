@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.465';
+export const VERSION = '1.4.468';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.468',
+    date: '2026-08-04',
+    title: 'Actualización 1.4.468',
+    changes: [
+      'Merge pull request #70 from PachoncitoUwU/arachiz-wifi',
+      'actualizacion de sonidos y delay 2'
+    ]
+  },
   {
     version: '1.4.465',
     date: '2026-08-04',
