@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, LineChart, Line
 } from 'recharts';
 import fetchApi from '../../services/api';
+import { bleService } from '../../services/bleService';
 import PageHeader from '../../components/PageHeader';
 import ConnectionBadges from '../../components/ConnectionBadges';
 import EmptyState from '../../components/EmptyState';
@@ -235,31 +236,47 @@ export default function InstructorAsistencia() {
       });
     });
 
-    socket.on('arduino_read_nfc', async (data) => {
+    const handleHardwareNfc = async (uid) => {
       if (!sessionId) return;
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
-          body: JSON.stringify({ asistenciaId: sessionId, nfcUid: data.uid })
+          body: JSON.stringify({ asistenciaId: sessionId, nfcUid: uid })
         });
       } catch (err) {
-        showToast(err.message || `Error con tarjeta NFC: ${data.uid}`, 'error');
+        showToast(err.message || `Error con tarjeta NFC: ${uid}`, 'error');
       }
-    });
+    };
 
-    socket.on('arduino_read_finger', async (data) => {
+    const handleHardwareFinger = async (huellaId) => {
       if (!sessionId) return;
       try {
         await fetchApi('/asistencias/hardware-register', {
           method: 'POST',
-          body: JSON.stringify({ asistenciaId: sessionId, huellaId: data.id })
+          body: JSON.stringify({ asistenciaId: sessionId, huellaId })
         });
       } catch (err) {
-        showToast(err.message || `Error con huella ID: ${data.id}`, 'error');
+        showToast(err.message || `Error con huella ID: ${huellaId}`, 'error');
+      }
+    };
+
+    socket.on('arduino_read_nfc', (data) => handleHardwareNfc(data.uid));
+    socket.on('arduino_read_finger', (data) => handleHardwareFinger(data.id));
+
+    // Suscripción al canal Bluetooth BLE (ESP32)
+    const unsubscribeBle = bleService.subscribe((bleData) => {
+      if (bleData.type === 'RFID') {
+        handleHardwareNfc(bleData.payload);
+      } else if (bleData.type === 'FINGERPRINT') {
+        handleHardwareFinger(parseInt(bleData.payload));
       }
     });
 
-    socket.on('sessionClosed', () => { setActiveSession(null); loadSessions(); });
+    socket.on('sessionClosed', () => { 
+      setActiveSession(null); 
+      loadSessions(); 
+      unsubscribeBle();
+    });
     socketRef.current = socket;
   };
 

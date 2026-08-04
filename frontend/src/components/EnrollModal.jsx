@@ -6,6 +6,7 @@ import ConfirmDialog from './ConfirmDialog';
 import { socket } from '../services/socket';
 import fetchApi from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { bleService } from '../services/bleService';
 import { Fingerprint, CreditCard, CheckCircle2, AlertCircle, Loader2, ScanFace, Trash2 } from 'lucide-react';
 import { descriptorToArray } from '../utils/faceApi';
 
@@ -27,9 +28,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       modeRef.current = null;
       setStatus('idle');
       setMessage('');
-      // Comprobar si ya tiene descriptor facial (length > 0)
       setHasFace(aprendiz?.faceDescriptor && aprendiz.faceDescriptor.length === 128);
-      // Detectar automáticamente el modo de conexión del hardware (USB o WiFi)
       fetchApi('/serial/status')
         .then(res => setConnectionMode(res.connected ? 'usb' : 'wifi'))
         .catch(() => setConnectionMode('wifi'));
@@ -103,10 +102,20 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     socket.on('arduino_enroll_success', onFingerSuccess);
     socket.on('arduino_enroll_error', onFingerError);
 
+    // Escucha vía Bluetooth BLE
+    const unsubscribeBle = bleService.subscribe((bleData) => {
+      if (bleData.type === 'RFID') {
+        onNfc({ uid: bleData.payload });
+      } else if (bleData.type === 'FINGERPRINT') {
+        onFingerSuccess({ id: parseInt(bleData.payload) });
+      }
+    });
+
     return () => {
       socket.off('arduino_read_nfc', onNfc);
       socket.off('arduino_enroll_success', onFingerSuccess);
       socket.off('arduino_enroll_error', onFingerError);
+      unsubscribeBle();
     };
   }, [open, aprendiz]); // quitamos mode y status de las deps para evitar recrear listeners
 
