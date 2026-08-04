@@ -668,6 +668,10 @@ void loop() {
       String err = msg.substring(13); err.trim();
       logEstado("ERROR REGISTRO", err);
       enviarLecturaBackend("ENROLL_ERROR", err);
+    } else if (msg.startsWith("ENROLL_STEP:")) {
+      String step = msg.substring(12); step.trim();
+      logEstado("PASO REGISTRO", "Captura " + step + "/2 OK");
+      enviarLecturaBackend("ENROLL_STEP", step);
     }
   }
 }

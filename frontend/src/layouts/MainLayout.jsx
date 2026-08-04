@@ -60,6 +60,22 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
   const { settings, toggleDark, t } = useSettings();
   const { worldCupMode, toggleWorldCupMode } = useWorldCup();
 
+  const [hasActiveSession, setHasActiveSession] = useState(() => {
+    return localStorage.getItem('arachiz_active_session') === 'true';
+  });
+
+  useEffect(() => {
+    const handleSessionChange = () => {
+      setHasActiveSession(localStorage.getItem('arachiz_active_session') === 'true');
+    };
+    window.addEventListener('storage', handleSessionChange);
+    window.addEventListener('arachiz_session_update', handleSessionChange);
+    return () => {
+      window.removeEventListener('storage', handleSessionChange);
+      window.removeEventListener('arachiz_session_update', handleSessionChange);
+    };
+  }, []);
+
   const initials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
     : user?.email?.[0]?.toUpperCase() || '?';
@@ -139,8 +155,14 @@ function SidebarContent({ links, user, logout, onClose, configPath, onLogoutClic
             }
           >
             <Icon size={18} />
-            <span>{t('sidebar', labelKey)}</span>
-            <ChevronRight size={14} className="ml-auto opacity-30" />
+            <span className="flex-1 text-left">{t('sidebar', labelKey)}</span>
+            {labelKey === 'asistencia' && hasActiveSession && (
+              <span className="relative flex h-2.5 w-2.5 mx-1" title="Sesión activa">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              </span>
+            )}
+            <ChevronRight size={14} className="opacity-30" />
           </NavLink>
         ))}
       </nav>

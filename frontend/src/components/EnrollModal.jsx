@@ -20,6 +20,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, data: null });
   const [deleting, setDeleting] = useState(false);
   const [connectionMode, setConnectionMode] = useState('usb'); // 'usb' | 'wifi'
+  const [fingerStep, setFingerStep] = useState(0);
   const modeRef = useRef(null); // ref para evitar closure stale en socket listeners
 
   // Reiniciar estado y apagar lectura al cerrar
@@ -29,12 +30,16 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       modeRef.current = null;
       setStatus('idle');
       setMessage('');
+      setFingerStep(0);
       setHasFace(aprendiz?.faceDescriptor && aprendiz.faceDescriptor.length === 128);
       fetchApi('/serial/status')
         .then(res => setConnectionMode(res.connected ? 'usb' : 'wifi'))
         .catch(() => setConnectionMode('wifi'));
     } else {
-      if (modeRef.current === 'nfc') {
+      if (modeRef.current === 'nfc' || modeRef.current === 'fingerprint') {
+        if (bleService.isConnected) {
+          bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
+        }
         fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
       }
     }
@@ -54,6 +59,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         });
         audioFeedback.playSuccessSound();
         showToast(`NFC vinculado: ${data.uid}`, 'success');
+        if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
         await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         if (aprendiz) aprendiz.nfcUid = data.uid;
         modeRef.current = null;
@@ -63,6 +69,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al vincular NFC', 'error');
+        if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
         await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         modeRef.current = null;
         setMode(null);
@@ -73,6 +80,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     const onFingerSuccess = async (data) => {
       if (modeRef.current !== 'fingerprint') return;
       try {
+        setFingerStep(2);
         setStatus('saving');
         setMessage('Huella capturada con éxito. Guardando y actualizando...');
         await fetchApi('/serial/bind', {
@@ -81,18 +89,22 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         });
         audioFeedback.playSuccessSound();
         showToast(`Huella ID ${data.id} vinculada exitosamente`, 'success');
+        if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
         if (!aprendiz.huellas) aprendiz.huellas = [];
         aprendiz.huellas.push(data.id);
         modeRef.current = null;
         setMode(null);
         setStatus('idle');
+        setFingerStep(0);
         if (onUpdate) onUpdate();
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al guardar huella en la BD', 'error');
+        if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
         modeRef.current = null;
         setMode(null);
         setStatus('idle');
+        setFingerStep(0);
       }
     };
 
@@ -100,14 +112,25 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       if (modeRef.current !== 'fingerprint') return;
       audioFeedback.playErrorSound();
       showToast(data.message || 'Error al registrar huella', 'error');
+      if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
       modeRef.current = null;
       setMode(null);
       setStatus('idle');
+      setFingerStep(0);
+    };
+
+    const onFingerStep = (step) => {
+      if (modeRef.current !== 'fingerprint') return;
+      audioFeedback.playSuccessSound();
+      setFingerStep(1);
+      setMessage('¡Captura 1 lista! Retira tu dedo y vuelve a colocarlo para la 2ª captura.');
+      showToast('1/2 capturas completadas. Coloca de nuevo el mismo dedo.', 'info');
     };
 
     socket.on('arduino_read_nfc', onNfc);
     socket.on('arduino_enroll_success', onFingerSuccess);
     socket.on('arduino_enroll_error', onFingerError);
+    socket.on('arduino_enroll_step', onFingerStep);
 
     // Escucha vía Bluetooth BLE
     const unsubscribeBle = bleService.subscribe((bleData) => {
@@ -117,6 +140,8 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         onFingerSuccess({ id: parseInt(bleData.payload) });
       } else if (bleData.type === 'ENROLL_ERROR') {
         onFingerError({ message: bleData.payload });
+      } else if (bleData.type === 'ENROLL_STEP') {
+        onFingerStep(parseInt(bleData.payload));
       }
     });
 
@@ -124,6 +149,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       socket.off('arduino_read_nfc', onNfc);
       socket.off('arduino_enroll_success', onFingerSuccess);
       socket.off('arduino_enroll_error', onFingerError);
+      socket.off('arduino_enroll_step', onFingerStep);
       unsubscribeBle();
     };
   }, [open, aprendiz]); // quitamos mode y status de las deps para evitar recrear listeners
@@ -151,6 +177,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     modeRef.current = 'fingerprint';
     setMode('fingerprint');
     setStatus('waiting');
+    setFingerStep(0);
     const modeLabel = bleService.isConnected ? 'Bluetooth' : (connectionMode === 'wifi' ? 'WiFi' : 'USB');
     setMessage(`Sigue las instrucciones del lector — se harán 2 capturas [${modeLabel}]`);
     try {
@@ -276,7 +303,10 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
   };
 
   const handleModalClose = () => {
-    if (modeRef.current === 'nfc') {
+    if (modeRef.current === 'nfc' || modeRef.current === 'fingerprint') {
+      if (bleService.isConnected) {
+        bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
+      }
       fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
     }
     onClose();
@@ -411,18 +441,33 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
 
         {/* Esperando hardware */}
         {status === 'waiting' && mode !== 'face' && (
-          <div className="py-8 flex flex-col items-center justify-center animate-fade-in">
+          <div className="py-8 flex flex-col items-center justify-center animate-fade-in px-4">
             <div className="relative mb-6">
               {mode === 'nfc' ? <CreditCard size={48} className="text-[#4285F4] animate-pulse" /> : <Fingerprint size={48} className="text-purple-500 animate-pulse" />}
               <div className="absolute -inset-4 bg-blue-500/20 rounded-full animate-ping" />
             </div>
-            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 animate-pulse">{message}</p>
+            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 text-center">{message}</p>
+            
             {mode === 'fingerprint' && (
-              <p className="text-xs text-gray-400 mt-3 max-w-xs text-center">
-                El lector pedirá el dedo <strong>2 veces</strong>.<br/>
-                Captura 1 → retira → captura 2
-              </p>
+              <div className="my-4 p-3 bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl w-full max-w-sm shadow-sm">
+                <div className="flex items-center justify-between mb-2 text-xs font-bold text-blue-700 dark:text-blue-300">
+                  <span>Progreso de capturas:</span>
+                  <span className="px-2.5 py-0.5 bg-blue-600 text-white rounded-full font-mono">
+                    {fingerStep} / 2
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-zinc-700 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-full transition-all duration-500 rounded-full"
+                    style={{ width: fingerStep === 0 ? '10%' : fingerStep === 1 ? '50%' : '100%' }}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-2 text-left font-medium">
+                  {fingerStep === 0 ? '👉 Paso 1: Coloca el dedo en el sensor y espera al pitido.' : '👍 Paso 2: ¡1ª lista! Retira el dedo unos segundos y vuelve a colocarlo en el sensor.'}
+                </p>
+              </div>
             )}
+            
             <p className="text-sm text-gray-400 mt-2">Esperando respuesta del Arduino...</p>
           </div>
         )}

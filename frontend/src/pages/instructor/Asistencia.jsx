@@ -156,6 +156,16 @@ export default function InstructorAsistencia() {
     }
   }, [selectedMateria]);
 
+  // Sincronizar estado de sesión activa con el Sidebar (sin texto ni emojis, solo indicador)
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem('arachiz_active_session', 'true');
+    } else {
+      localStorage.removeItem('arachiz_active_session');
+    }
+    window.dispatchEvent(new Event('arachiz_session_update'));
+  }, [activeSession]);
+
   const loadSessions = async () => {
     if (!selectedMateria) return;
     try {
