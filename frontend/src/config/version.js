@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.459';
+export const VERSION = '1.4.462';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.462',
+    date: '2026-08-04',
+    title: 'Actualización 1.4.462',
+    changes: [
+      'arachiz-wifi',
+      'implementacion de la ESP32 prueba 2'
+    ]
+  },
   {
     version: '1.4.459',
     date: '2026-08-04',
