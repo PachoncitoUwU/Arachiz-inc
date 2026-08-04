@@ -339,9 +339,10 @@ void procesarComando(String cmd) {
     Serial.println(F("Modo TEST ACTIVO"));
     sonidoEnrolamientoInicio();
 
-  } else if (cmd == "TEST_MODE_OFF") {
+  } else if (cmd == "TEST_MODE_OFF" || cmd == "STANDBY") {
     modoTest = false;
-    Serial.println(F("Modo TEST INACTIVO"));
+    enrollando = false;
+    Serial.println(F("Modo TEST/ENROLL INACTIVO - Reposo"));
 
   } else if (cmd == "TEST_BUZZER") {
     Serial.println(F("Prueba de BUZZER"));
@@ -360,9 +361,9 @@ void procesarComando(String cmd) {
       mySerial.listen();
       bool ok = enrolar(idx);
       delay(100);
-      enviarEvento(ok
-        ? "ENROLL_SUCCESS:" + String(idx)
-        : "ENROLL_ERROR:Cancelado o fallo");
+      if (ok) {
+        enviarEvento("ENROLL_SUCCESS:" + String(idx));
+      }
       enrollando = false;
     }
 
@@ -389,12 +390,20 @@ bool enrolar(int id) {
     mySerial.listen();
     delay(10);
     p = finger.getImage();
-    if (millis() - t > 15000) { sonidoError(); return false; }
+    if (millis() - t > 15000) { 
+      sonidoError(); 
+      enviarEvento("ENROLL_ERROR:Tiempo agotado en la primera captura");
+      return false; 
+    }
   } while (p != FINGERPRINT_OK);
 
   mySerial.listen();
   p = finger.image2Tz(1);
-  if (p != FINGERPRINT_OK) { sonidoError(); return false; }
+  if (p != FINGERPRINT_OK) { 
+    sonidoError(); 
+    enviarEvento("ENROLL_ERROR:Error al procesar imagen de huella (1)");
+    return false; 
+  }
 
   // Verificar si la huella ya está registrada
   finger.getTemplateCount();
@@ -402,10 +411,12 @@ bool enrolar(int id) {
     mySerial.listen();
     if (finger.fingerFastSearch() == FINGERPRINT_OK) {
       Serial.println(F("Ya registrada"));
+      enviarEvento("ENROLL_ERROR:Esta huella ya existe en el sensor (ID " + String(finger.fingerID) + ")");
       sonidoError(); delay(1500); return false;
     }
   }
 
+  enviarEvento("ENROLL_STEP:1");
   beep(1400, 80); delay(50); beep(1400, 80);
   Serial.println(F("QUITA EL DEDO"));
   delay(500);
@@ -418,17 +429,26 @@ bool enrolar(int id) {
     mySerial.listen();
     delay(10);
     p = finger.getImage();
-    if (millis() - t > 15000) { sonidoError(); return false; }
+    if (millis() - t > 15000) { 
+      sonidoError(); 
+      enviarEvento("ENROLL_ERROR:Tiempo agotado en la segunda captura");
+      return false; 
+    }
   } while (p != FINGERPRINT_OK);
 
   mySerial.listen();
   p = finger.image2Tz(2);
-  if (p != FINGERPRINT_OK) { sonidoError(); return false; }
+  if (p != FINGERPRINT_OK) { 
+    sonidoError(); 
+    enviarEvento("ENROLL_ERROR:Error al procesar imagen de huella (2)");
+    return false; 
+  }
 
   mySerial.listen();
   p = finger.createModel();
   if (p != FINGERPRINT_OK) {
     Serial.println(F("No coinciden"));
+    enviarEvento("ENROLL_ERROR:La segunda captura no coincidió con la primera");
     sonidoError(); delay(1000); return false;
   }
 
@@ -439,6 +459,7 @@ bool enrolar(int id) {
     sonidoEnrolamientoOK();
     return true;
   }
+  enviarEvento("ENROLL_ERROR:No se pudo guardar la huella en memoria");
   sonidoError();
   return false;
 }

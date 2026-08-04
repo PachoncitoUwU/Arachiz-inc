@@ -1,4 +1,5 @@
 import React, { lazy as reactLazy, Suspense } from 'react';
+// Push 70: Mejoras en enrolamiento biométrico de huellas, reposo absoluto BLE/USB e indicador de sesión activa en Sidebar
 
 // Wrapper para evitar errores de chunks perdidos en Vercel (Failed to fetch dynamically imported module)
 const lazy = (componentImport) =>

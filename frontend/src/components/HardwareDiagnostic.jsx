@@ -36,7 +36,13 @@ export default function HardwareDiagnostic() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (activeTestRef.current) {
+        if (bleService.isConnected) bleService.sendCommand('TEST_MODE_OFF').catch(()=>{});
+        fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
+      }
+    };
   }, []);
 
   const handleToggleBle = async () => {
