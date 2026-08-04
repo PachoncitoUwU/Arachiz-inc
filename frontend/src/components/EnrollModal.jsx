@@ -51,6 +51,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
           method: 'PUT',
           body: JSON.stringify({ userId: aprendiz.id, nfcUid: data.uid })
         });
+        audioFeedback.playSuccessSound();
         showToast(`NFC vinculado: ${data.uid}`, 'success');
         await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         modeRef.current = null;
@@ -58,6 +59,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         setStatus('idle');
         if (onUpdate) onUpdate();
       } catch (err) {
+        audioFeedback.playErrorSound();
         showToast(err.message || 'Error al vincular NFC', 'error');
         await fetchApi('/serial/test/mode', { method: 'POST', body: JSON.stringify({ active: false }) }).catch(()=>{});
         modeRef.current = null;
@@ -75,6 +77,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
           method: 'PUT',
           body: JSON.stringify({ userId: aprendiz.id, huellaId: data.id })
         });
+        audioFeedback.playSuccessSound();
         showToast(`Huella ID ${data.id} vinculada exitosamente`, 'success');
         if (!aprendiz.huellas) aprendiz.huellas = [];
         aprendiz.huellas.push(data.id);
@@ -83,6 +86,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         setStatus('idle');
         if (onUpdate) onUpdate();
       } catch (err) {
+        audioFeedback.playErrorSound();
         showToast(err.message || 'Error al guardar huella en la BD', 'error');
         modeRef.current = null;
         setMode(null);
@@ -92,6 +96,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
 
     const onFingerError = (data) => {
       if (modeRef.current !== 'fingerprint') return;
+      audioFeedback.playErrorSound();
       showToast(data.message || 'Error al registrar huella', 'error');
       modeRef.current = null;
       setMode(null);

@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import fetchApi from '../../services/api';
 import { bleService } from '../../services/bleService';
+import { audioFeedback } from '../../utils/audioFeedback';
 import PageHeader from '../../components/PageHeader';
 import ConnectionBadges from '../../components/ConnectionBadges';
 import EmptyState from '../../components/EmptyState';
@@ -243,7 +244,9 @@ export default function InstructorAsistencia() {
           method: 'POST',
           body: JSON.stringify({ asistenciaId: sessionId, nfcUid: uid })
         });
+        audioFeedback.playSuccessSound();
       } catch (err) {
+        audioFeedback.playErrorSound();
         showToast(err.message || `Error con tarjeta NFC: ${uid}`, 'error');
       }
     };
@@ -255,7 +258,9 @@ export default function InstructorAsistencia() {
           method: 'POST',
           body: JSON.stringify({ asistenciaId: sessionId, huellaId })
         });
+        audioFeedback.playSuccessSound();
       } catch (err) {
+        audioFeedback.playErrorSound();
         showToast(err.message || `Error con huella ID: ${huellaId}`, 'error');
       }
     };

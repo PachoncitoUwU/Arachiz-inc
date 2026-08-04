@@ -90,7 +90,15 @@ exports.bindHardware = async (req, res) => {
 
   try {
     const data = {};
-    if (nfcUid) data.nfcUid = nfcUid;
+    if (nfcUid) {
+      const existingUser = await prisma.user.findFirst({
+        where: { nfcUid, id: { not: userId } }
+      });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Este chip NFC ya está registrado con otro usuario.' });
+      }
+      data.nfcUid = nfcUid;
+    }
 
     let user;
     if (huellaId !== undefined) {
