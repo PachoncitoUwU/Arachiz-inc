@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.471';
+export const VERSION = '1.4.474';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.474',
+    date: '2026-08-04',
+    title: 'Actualización 1.4.474',
+    changes: [
+      'arachiz-wifi',
+      'errores de enrolar huella y nfc'
+    ]
+  },
   {
     version: '1.4.471',
     date: '2026-08-04',
