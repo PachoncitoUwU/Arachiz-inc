@@ -1,75 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Usb, Activity } from 'lucide-react';
+import { Bluetooth, Usb } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { bleService } from '../services/bleService';
+import { useAuth } from '../context/AuthContext';
 import fetchApi from '../services/api';
 
 /**
- * Muestra badges de conexión y rendimiento de red:
- * - Estado de Caja WiFi (ESP8266)
- * - Latencia actual de red (Ping)
- * - Estado USB solo cuando se detecte conexión física activa en escritorio
+ * Muestra el estado de la conexión inalámbrica con la Caja Arachiz (ESP32) vía Bluetooth BLE
+ * y ofrece navegación rápida a Configuración cuando está desconectada.
  */
 export default function ConnectionBadges() {
-  const [status, setStatus] = useState({ usbConnected: false, espConnected: false });
-  const [ping, setPing] = useState(null);
-  const [loaded, setLoaded] = useState(false);
-
-  const fetchStatus = async () => {
-    const startTime = performance.now();
-    try {
-      const res = await fetchApi('/hardware/status');
-      const endTime = performance.now();
-      setPing(Math.round(endTime - startTime));
-      setStatus({ usbConnected: !!res.usbConnected, espConnected: !!res.espConnected });
-    } catch {
-      setPing(null);
-    } finally {
-      setLoaded(true);
-    }
-  };
+  const navigate = useNavigate();
+  const { user } = useAuth() || {};
+  const [bleConnected, setBleConnected] = useState(bleService.isConnected);
+  const [usbConnected, setUsbConnected] = useState(false);
 
   useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
-    return () => clearInterval(interval);
+    // Suscribirse al estado de Bluetooth BLE
+    const unsubscribe = bleService.subscribe((data) => {
+      if (data.type === 'STATUS') {
+        setBleConnected(data.payload === 'CONNECTED');
+      } else {
+        setBleConnected(bleService.isConnected);
+      }
+    });
+
+    // Opcional: comprobar silenciosamente el estado USB (para modo escritorio/local)
+    const checkUsb = () => {
+      fetchApi('/hardware/status')
+        .then((res) => setUsbConnected(!!res?.usbConnected))
+        .catch(() => setUsbConnected(false));
+    };
+    checkUsb();
+    const interval = setInterval(checkUsb, 10000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
-  if (!loaded) return null;
+  const configPath = user?.userType === 'administrador' ? '/admin/configuracion' : '/instructor/configuracion';
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Badge ESP8266 — Caja WiFi */}
-      <span
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm transition-all duration-500 ${
-          status.espConnected
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-700'
-            : 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800'
-        }`}
-      >
-        <span
-          className={`w-2 h-2 rounded-full ${
-            status.espConnected ? 'bg-green-500 animate-pulse' : 'bg-red-400'
-          }`}
-        />
-        <Wifi size={12} />
-        {status.espConnected ? 'Caja WiFi online' : 'Caja WiFi offline'}
-      </span>
+      {/* Estado Bluetooth BLE */}
+      {bleConnected ? (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-700">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <Bluetooth size={13} className="text-blue-600 dark:text-blue-400" />
+          Caja conectada al Bluetooth
+        </span>
+      ) : (
+        <>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <Bluetooth size={13} />
+            Caja desconectada del bluetooth
+          </span>
+          {(user?.userType === 'instructor' || user?.userType === 'administrador') && (
+            <button
+              onClick={() => navigate(configPath)}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 shadow-sm flex items-center gap-1"
+              title="Ir a Configuración para emparejar la caja por Bluetooth"
+            >
+              Conectar en Configuración →
+            </button>
+          )}
+        </>
+      )}
 
-      {/* Badge Ping de Red / Latencia al Servidor */}
-      <span
-        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm transition-all duration-500 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
-        title="Tiempo de respuesta del servidor web en milisegundos"
-      >
-        <span
-          className={`w-2 h-2 rounded-full ${
-            ping !== null ? (ping < 250 ? 'bg-green-500 animate-pulse' : 'bg-yellow-500') : 'bg-red-500'
-          }`}
-        />
-        <Activity size={12} className="text-zinc-500 dark:text-zinc-400" />
-        {ping !== null ? `Ping: ${ping} ms` : 'Ping desconectado'}
-      </span>
-
-      {/* Mostrar badge USB solo cuando esté conectado localmente en escritorio */}
-      {status.usbConnected && (
+      {/* Mostrar badge USB solo si hay una conexión por cable al puerto COM detectada localmente */}
+      {usbConnected && (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-700">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           <Usb size={12} />
