@@ -469,6 +469,7 @@ void iniciarServidorBLE() {
 }
 
 void procesarComandoBLE(String comando) {
+  comando.trim();
   if (comando.startsWith("WIFI_SETUP:")) {
     String datos = comando.substring(11);
     int idx = datos.indexOf('|');
@@ -488,6 +489,10 @@ void procesarComandoBLE(String comando) {
       pTxCharacteristic->setValue(estado.c_str());
       pTxCharacteristic->notify();
     }
+  } else {
+    // Reenviar cualquier comando de prueba (TEST_BUZZER, TEST_MODE_ON, etc.) al Arduino Uno
+    arduinoSerial.println(comando);
+    Serial.println("[BLE -> Arduino]: " + comando);
   }
 }
 

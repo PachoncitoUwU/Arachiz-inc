@@ -110,6 +110,17 @@ export default function HardwareDiagnostic() {
       setLoading(true);
       activeTestRef.current = testType;
       setActiveTest(testType);
+      
+      if (bleConnected) {
+        console.log(`[HardwareDiagnostic] [BLE] Activando modo diagnóstico ${testType.toUpperCase()}`);
+        await bleService.sendCommand('TEST_MODE_ON');
+        showToast(`Modo diagnóstico ${testType.toUpperCase()} activo por Bluetooth BLE`, 'info');
+        if (testType === 'nfc') setNfcResult(null);
+        if (testType === 'finger') setFingerResult(null);
+        return;
+      }
+
+      console.log(`[HardwareDiagnostic] [USB] Activando modo diagnóstico ${testType.toUpperCase()} vía HTTP/Serial`);
       await fetchApi('/serial/test/mode', {
         method: 'POST',
         body: JSON.stringify({ active: true })
@@ -129,18 +140,33 @@ export default function HardwareDiagnostic() {
     activeTestRef.current = null;
     setActiveTest(null);
     try {
+      if (bleConnected) {
+        console.log('[HardwareDiagnostic] [BLE] Desactivando modo diagnóstico');
+        await bleService.sendCommand('TEST_MODE_OFF');
+        return;
+      }
+      console.log('[HardwareDiagnostic] [USB] Desactivando modo diagnóstico vía HTTP/Serial');
       await fetchApi('/serial/test/mode', {
         method: 'POST',
         body: JSON.stringify({ active: false })
       });
     } catch (err) {
-      console.error(err);
+      console.error('[HardwareDiagnostic] Error al detener modo test:', err);
     }
   };
 
   const handleTestBuzzer = async () => {
     try {
       setLoading(true);
+      if (bleConnected) {
+        console.log('[HardwareDiagnostic] [BLE] Enviando comando TEST_BUZZER por Bluetooth BLE');
+        await bleService.sendCommand('TEST_BUZZER');
+        showToast('¡Comando de sonido emitido por Bluetooth BLE!', 'info');
+        setBuzzerState('asked');
+        setActiveTest('buzzer');
+        return;
+      }
+      console.log('[HardwareDiagnostic] [USB] Enviando comando TEST_BUZZER vía HTTP/Serial');
       await fetchApi('/serial/test/buzzer', { method: 'POST' });
       setBuzzerState('asked');
       setActiveTest('buzzer');
