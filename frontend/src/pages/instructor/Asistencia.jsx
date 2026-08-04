@@ -201,6 +201,9 @@ export default function InstructorAsistencia() {
       if (d.session) { 
         setActiveSession(d.session); 
         connectSocket(d.session.id); 
+        if (bleService.isConnected) {
+          bleService.sendCommand('SESSION ON').catch(() => {});
+        }
       } else {
         setActiveSession(null);
       }
@@ -303,10 +306,12 @@ export default function InstructorAsistencia() {
       // Respuesta rápida: mostrar sesión sin faceDescriptor para no bloquear
       setActiveSession({ ...d.asistencia, registros: [] });
       connectSocket(d.asistencia.id);
+      if (bleService.isConnected) {
+        bleService.sendCommand('SESSION ON').catch(() => {});
+      }
       showToast('Sesión iniciada', 'success');
       setShowConfigModal(false);
 
-      // Cargar datos completos con faceDescriptor en background (para reconocimiento facial)
       fetchApi(`/asistencias/resultado/${selectedMateria}/active`)
         .then(full => { if (full?.session) setActiveSession(full.session); })
         .catch(() => {});
@@ -317,6 +322,9 @@ export default function InstructorAsistencia() {
   const endSession = async () => {
     try {
       setEnding(true);
+      if (bleService.isConnected) {
+        bleService.sendCommand('SESSION OFF').catch(() => {});
+      }
       await fetchApi(`/asistencias/${activeSession.id}/finalizar`, { method: 'PUT' });
       socketRef.current?.disconnect();
       stopFacialScanner();

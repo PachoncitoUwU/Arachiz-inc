@@ -130,7 +130,10 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     setStatus('waiting');
     setMessage('Acerca la tarjeta o llavero NFC al lector...');
     try {
-      // Enviar comando para sacar a la caja del reposo y activar lectura NFC
+      if (bleService.isConnected) {
+        await bleService.sendCommand('TEST_MODE_ON');
+        return;
+      }
       await fetchApi('/serial/test/mode', {
         method: 'POST',
         body: JSON.stringify({ active: true })
@@ -144,10 +147,14 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     modeRef.current = 'fingerprint';
     setMode('fingerprint');
     setStatus('waiting');
-    const modeLabel = connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB';
+    const modeLabel = bleService.isConnected ? 'Bluetooth BLE' : (connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB');
     setMessage(`Sigue las instrucciones del lector — se harán 2 capturas [${modeLabel}]`);
     try {
       const { nextId } = await fetchApi('/serial/next-finger-id');
+      if (bleService.isConnected) {
+        await bleService.sendCommand(`ENROLL ${nextId}`);
+        return;
+      }
       await fetchApi('/serial/enroll/finger', {
         method: 'POST',
         body: JSON.stringify({ id: nextId, mode: connectionMode })
