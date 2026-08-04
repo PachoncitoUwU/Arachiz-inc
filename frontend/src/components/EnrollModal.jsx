@@ -58,6 +58,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
+        setTimeout(() => onClose(), 600);
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al vincular NFC', 'error');
@@ -85,6 +86,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
         setMode(null);
         setStatus('idle');
         if (onUpdate) onUpdate();
+        setTimeout(() => onClose(), 600);
       } catch (err) {
         audioFeedback.playErrorSound();
         showToast(err.message || 'Error al guardar huella en la BD', 'error');
@@ -111,8 +113,10 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     const unsubscribeBle = bleService.subscribe((bleData) => {
       if (bleData.type === 'RFID') {
         onNfc({ uid: bleData.payload });
-      } else if (bleData.type === 'FINGERPRINT') {
+      } else if (bleData.type === 'ENROLL_SUCCESS') {
         onFingerSuccess({ id: parseInt(bleData.payload) });
+      } else if (bleData.type === 'ENROLL_ERROR') {
+        onFingerError({ message: bleData.payload });
       }
     });
 
@@ -147,7 +151,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
     modeRef.current = 'fingerprint';
     setMode('fingerprint');
     setStatus('waiting');
-    const modeLabel = bleService.isConnected ? 'Bluetooth BLE' : (connectionMode === 'wifi' ? 'WiFi (ESP8266)' : 'USB');
+    const modeLabel = bleService.isConnected ? 'Bluetooth' : (connectionMode === 'wifi' ? 'WiFi' : 'USB');
     setMessage(`Sigue las instrucciones del lector — se harán 2 capturas [${modeLabel}]`);
     try {
       const { nextId } = await fetchApi('/serial/next-finger-id');
@@ -188,6 +192,7 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
       setMode(null);
       setStatus('idle');
       if (onUpdate) onUpdate();
+      setTimeout(() => onClose(), 600);
     } catch (err) {
       showToast(err.message || 'Error al guardar descriptor facial', 'error');
       setMode(null);
@@ -289,13 +294,13 @@ export default function EnrollModal({ open, onClose, aprendiz, onUpdate }) {
               <strong className="text-gray-900 dark:text-white">{aprendiz.fullName}</strong>
             </p>
             <div className="flex items-center justify-center gap-2 mt-2">
-              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
                 connectionMode === 'usb'
                   ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                   : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${connectionMode === 'usb' ? 'bg-blue-500' : 'bg-green-500'}`} />
-                {connectionMode === 'usb' ? '🔌 Lector USB conectado' : '📡 Modo WiFi (ESP8266)'}
+                {bleService.isConnected ? 'Modo Bluetooth' : (connectionMode === 'usb' ? 'Lector USB conectado' : 'Modo WiFi')}
               </span>
             </div>
           </div>
