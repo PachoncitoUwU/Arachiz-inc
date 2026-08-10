@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.480';
+export const VERSION = '1.4.483';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.483',
+    date: '2026-08-10',
+    title: 'Actualización 1.4.483',
+    changes: [
+      'Merge pull request #75 from PachoncitoUwU/cambios-metodos-web',
+      'Push 70: Enrolamiento biométrico de huellas, reposo absoluto de hardware BLE/USB, indicador de sesión activa y optimizaciones de código QR'
+    ]
+  },
   {
     version: '1.4.480',
     date: '2026-08-10',
