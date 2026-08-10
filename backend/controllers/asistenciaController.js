@@ -85,7 +85,7 @@ const createSession = async (req, res) => {
     const colombiaTime = await getCurrentColombiaTime();
     console.log(`[Asistencia] Creando sesión con fecha de Colombia: ${autoFecha}`);
 
-    const parsedLlegadaTarde = llegadaTarde !== undefined ? parseInt(llegadaTarde, 10) : 15;
+    const parsedLlegadaTarde = (llegadaTarde !== undefined && llegadaTarde !== null) ? parseInt(llegadaTarde, 10) : 999999;
     const parsedDuracion = duracion !== undefined ? parseInt(duracion, 10) : 120;
 
     // Crear la sesión
@@ -190,7 +190,8 @@ const getMyAttendance = async (req, res) => {
               resultado: {
                 select: {
                   nombre: true,
-                  competencia: { select: { nombre: true, tipo: true } }
+                  competencia: { select: { nombre: true, tipo: true } },
+                  instructor: { select: { fullName: true } }
                 }
               }
             }
@@ -567,9 +568,20 @@ const closeSessionById = async (id, io, serialService) => {
     }));
   }
 
+  let duracionRealMin = 120;
+  try {
+    const { getCurrentColombiaTime } = require('../utils/timeUtils'); // Assuming this exists or using new Date()
+    const now = new Date(); // fallback
+    const start = new Date(asistencia.timestamp);
+    const diff = now.getTime() - start.getTime();
+    duracionRealMin = Math.max(1, Math.round(diff / 60000));
+  } catch (e) {
+    console.error('Error calculando duracion real', e);
+  }
+
   const updatedAsistencia = await prisma.asistencia.update({
     where: { id },
-    data: { activa: false },
+    data: { activa: false, duracion: duracionRealMin },
     include: {
       registros: { include: { aprendiz: { select: { fullName: true, document: true } } } }
     }
@@ -1032,6 +1044,90 @@ const registerManualAttendance = async (req, res) => {
   }
 };
 
+const increaseTolerance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const session = await prisma.asistencia.findUnique({ where: { id } });
+    if (!session) return res.status(404).json({ error: 'Sesión no encontrada' });
+    if (!session.activa) return res.status(400).json({ error: 'Sesión inactiva' });
+
+    const newTolerance = (session.llegadaTarde || 0) + 5;
+    const updated = await prisma.asistencia.update({
+      where: { id },
+      data: { llegadaTarde: newTolerance }
+    });
+
+    const io = req.app.get('io');
+    if (io) io.to(`session_${id}`).emit('toleranciaActualizada', { llegadaTarde: newTolerance });
+
+    res.json({ message: 'Tolerancia aumentada', llegadaTarde: newTolerance });
+  } catch (err) {
+    console.error('Error aumentando tolerancia:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+};
+
+const registerManualBatch = async (req, res) => {
+  const { asistenciaId, aprendizIds } = req.body;
+  if (!asistenciaId || !aprendizIds || !Array.isArray(aprendizIds)) {
+    return res.status(400).json({ error: 'Datos inválidos' });
+  }
+
+  try {
+    const session = await prisma.asistencia.findUnique({ where: { id: asistenciaId } });
+    if (!session || !session.activa) return res.status(400).json({ error: 'Sesión no activa o no existe' });
+
+    const colombiaTime = await getCurrentColombiaTime();
+    const sessionStart = new Date(session.timestamp);
+    const registerTime = new Date(colombiaTime);
+    const diffMins = Math.floor((registerTime.getTime() - sessionStart.getTime()) / 60000);
+    const tarde = diffMins > (session.llegadaTarde || 15);
+
+    const io = req.app.get('io');
+    let registeredCount = 0;
+    const registros = [];
+
+    for (const aprendizId of aprendizIds) {
+      const existing = await prisma.registroAsistencia.findFirst({
+        where: { asistenciaId, aprendizId }
+      });
+      if (existing) continue;
+
+      const registro = await prisma.registroAsistencia.create({
+        data: {
+          presente: true,
+          metodo: 'manual',
+          timestamp: colombiaTime,
+          tarde: tarde,
+          asistencia: { connect: { id: asistenciaId } },
+          aprendiz: { connect: { id: aprendizId } }
+        },
+        include: { aprendiz: { select: { id: true, fullName: true, document: true, email: true } } }
+      });
+      
+      registros.push(registro);
+      registeredCount++;
+
+      if (io) {
+        io.to(`session_${asistenciaId}`).emit('nuevaAsistencia', {
+          id: registro.id,
+          aprendizId: registro.aprendizId,
+          aprendiz: registro.aprendiz,
+          presente: true,
+          metodo: 'manual',
+          timestamp: registro.timestamp,
+          tarde: registro.tarde
+        });
+      }
+    }
+
+    res.json({ message: `Registrados ${registeredCount} manualmente`, registros });
+  } catch (err) {
+    console.error('Error manual batch:', err);
+    res.status(500).json({ error: 'Error en registro manual batch' });
+  }
+};
+
 module.exports = { 
   createSession, 
   getSessionsByResultado, 
@@ -1045,5 +1141,7 @@ module.exports = {
   registerFacialAttendance, 
   registerFacialBatch, 
   registerManualAttendance, 
-  checkAndCloseExpiredSessions 
+  checkAndCloseExpiredSessions,
+  increaseTolerance,
+  registerManualBatch
 };

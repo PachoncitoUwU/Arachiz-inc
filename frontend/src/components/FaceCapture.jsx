@@ -32,9 +32,12 @@ export default function FaceCapture({
   const [detectedName, setDetectedName] = useState('');
   const [faceBox, setFaceBox] = useState(null); // { x, y, width, height }
   const [isCentered, setIsCentered] = useState(false);
+  const [showAdvice, setShowAdvice] = useState(true);
 
   // Cargar modelos + cámara
   useEffect(() => {
+    if (showAdvice) return;
+
     let cancelled = false;
 
     const init = async () => {
@@ -81,7 +84,7 @@ export default function FaceCapture({
       cancelled = true;
       stopAll();
     };
-  }, []);
+  }, [showAdvice, label]);
 
   const stopAll = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -193,6 +196,28 @@ export default function FaceCapture({
     detected:  'border-[#34A853]',
     error:     'border-red-400',
   }[status] || 'border-gray-300';
+
+  if (showAdvice) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-zinc-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-700 w-full min-h-[350px]">
+        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Camera size={32} className="text-blue-500" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          Consejo de Reconocimiento
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+          Recuerda buscar un fondo óptimo y no estar a contraluz para una mejor calidad de captura.
+        </p>
+        <button
+          onClick={() => setShowAdvice(false)}
+          className="px-8 py-3 rounded-xl bg-[#34A853] hover:bg-green-600 text-white font-bold transition-all shadow-lg shadow-[#34A853]/30"
+        >
+          Entendido
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-4">
