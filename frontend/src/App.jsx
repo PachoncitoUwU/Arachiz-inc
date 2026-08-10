@@ -2,8 +2,9 @@ import React, { lazy as reactLazy, Suspense } from 'react';
 // Push 70: Enrolamiento biométrico de huellas, reposo absoluto de hardware BLE/USB, indicador de sesión activa y optimizaciones de código QR
 
 // Wrapper para evitar errores de chunks perdidos en Vercel (Failed to fetch dynamically imported module)
-const lazy = (componentImport) =>
-  reactLazy(async () => {
+const lazy = (componentImport) => {
+  let retries = 0;
+  const load = async () => {
     const pageHasAlreadyBeenForceRefreshed = JSON.parse(
       window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
     );
@@ -12,14 +13,24 @@ const lazy = (componentImport) =>
       window.sessionStorage.setItem('page-has-been-force-refreshed', 'false');
       return component;
     } catch (error) {
+      if (retries < 2) {
+        retries++;
+        // Esperar brevemente antes de reintentar
+        await new Promise(res => setTimeout(res, 500));
+        return load();
+      }
       if (!pageHasAlreadyBeenForceRefreshed) {
         window.sessionStorage.setItem('page-has-been-force-refreshed', 'true');
         window.location.reload();
-        return { default: () => null }; // Evitar que tire el error visualmente mientras recarga
+        return { default: () => null };
       }
-      throw error;
+      // Si ya se recargó y sigue fallando, renderizar fallback visual
+      console.error('Error loading component after retries:', error);
+      return { default: () => <div className="p-8 text-center text-red-600">Error al cargar la página. Por favor, recarga.</div> };
     }
-  });
+  };
+  return reactLazy(load);
+};
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
