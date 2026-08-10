@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.483';
+export const VERSION = '1.4.486';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.486',
+    date: '2026-08-10',
+    title: 'Actualización 1.4.486',
+    changes: [
+      'Merge pull request #76 from PachoncitoUwU/cambios-metodos-web',
+      'fix: Mejor manejo de errores en carga lazy - reintentos y fallback UI'
+    ]
+  },
   {
     version: '1.4.483',
     date: '2026-08-10',
