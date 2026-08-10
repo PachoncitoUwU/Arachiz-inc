@@ -27,20 +27,42 @@ async function saveQR(code, data) {
   }
 }
 
-async function getQR(code) {
+// Reclamo atómico del código QR: Garantiza que solo UN aprendiz puede usar el QR (Anti Race-Condition)
+async function claimQR(code) {
+  if (!code) return null;
   try {
     const row = await prisma.qrCode.findUnique({ where: { code } });
-    if (!row) return null;
-    if (row.used || row.expiresAt < new Date()) return null;
+    if (!row || row.used || row.expiresAt < new Date()) {
+      return null;
+    }
+
+    // Actualización atómica en la base de datos: solo una consulta cambiará used de false a true
+    const updated = await prisma.qrCode.updateMany({
+      where: {
+        code,
+        used: false,
+        expiresAt: { gt: new Date() }
+      },
+      data: { used: true }
+    });
+
+    if (updated.count === 0) {
+      // El QR ya fue reclamado por otro aprendiz en el mismo milisegundo
+      return null;
+    }
+
     return JSON.parse(row.payload);
   } catch {
-    // Fallback memoria
+    // Fallback memoria si la tabla no existe aún
     const data = activeQRCodes.get(code);
-    if (!data) return null;
+    if (!data || data.used) return null;
     if (Date.now() - data.timestamp > QR_TTL_MS) {
       activeQRCodes.delete(code);
       return null;
     }
+    // Marcar de inmediato como usado
+    data.used = true;
+    activeQRCodes.set(code, data);
     return data;
   }
 }
@@ -72,7 +94,7 @@ exports.generateQR = async (req, res) => {
       if (!evento || evento.estado !== 'en_curso') {
         return res.status(404).json({ error: 'Evento no encontrado o no activo' });
       }
-      const code = crypto.randomBytes(32).toString('hex');
+      const code = crypto.randomBytes(16).toString('hex');
       await saveQR(code, { eventoId, instructorId });
       return res.json({ code, expiresIn: QR_TTL_MS });
     }
@@ -86,7 +108,7 @@ exports.generateQR = async (req, res) => {
       return res.status(404).json({ error: 'Sesión no encontrada o no activa' });
     }
 
-    const code = crypto.randomBytes(32).toString('hex');
+    const code = crypto.randomBytes(16).toString('hex');
     await saveQR(code, { asistenciaId, instructorId });
 
     res.json({ code, expiresIn: QR_TTL_MS });
@@ -106,14 +128,12 @@ exports.validateQR = async (req, res) => {
       return res.status(403).json({ error: 'Solo aprendices pueden escanear QR' });
     }
 
-    const qrData = await getQR(code);
+    // Reclamo atómico: solo el primer aprendiz que escanee obtendrá el objeto; los demás recibirán null
+    const qrData = await claimQR(code);
 
     if (!qrData) {
-      return res.status(400).json({ error: 'Código QR inválido o expirado' });
+      return res.status(400).json({ error: 'Este código QR ya fue escaneado por otro estudiante o ha expirado.' });
     }
-
-    // Marcar como usado inmediatamente para evitar uso duplicado
-    await markUsed(code);
 
     // ── Flujo evento ─────────────────────────────────────────────────────────
     if (qrData.eventoId) {

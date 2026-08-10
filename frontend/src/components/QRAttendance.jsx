@@ -69,20 +69,28 @@ export default function QRAttendance({ asistenciaId, onClose }) {
     };
   }, [asistenciaId]);
 
-  // Generar URL del QR
-  const qrUrl = qrCode ? `${window.location.origin}/scan-qr?code=${qrCode}` : '';
+  // Generar URL del QR (apuntando a Vercel en producción o si se prueba localmente para celulares externos)
+  const getAppOrigin = () => {
+    if (typeof window === 'undefined') return 'https://arachiz.vercel.app';
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')) {
+      return import.meta.env.VITE_PUBLIC_APP_URL || 'https://arachiz.vercel.app';
+    }
+    return window.location.origin;
+  };
+  const qrUrl = qrCode ? `${getAppOrigin()}/scan-qr?code=${qrCode}` : '';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-zinc-800  dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-4 md:p-6  animate-scale-in">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4">
+      <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl max-w-xs sm:max-w-sm w-full max-h-[90vh] overflow-y-auto p-4 sm:p-5 animate-scale-in">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-[#4285F4] flex items-center justify-center">
               <QrCode size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 dark:text-white  dark:text-white">Registro por QR</h2>
-              <p className="text-xs text-gray-400">Escanea para registrar asistencia</p>
+              <h2 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">Registro por QR</h2>
+              <p className="text-[11px] text-gray-400">1 uso por estudiante · Auto-rotación</p>
             </div>
           </div>
           <button onClick={onClose} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -91,20 +99,20 @@ export default function QRAttendance({ asistenciaId, onClose }) {
         </div>
 
         {loading && !qrCode ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <RefreshCw size={32} className="text-[#4285F4] animate-spin mb-3" />
-            <p className="text-sm text-gray-500">Generando código QR...</p>
+          <div className="flex flex-col items-center justify-center py-8">
+            <RefreshCw size={28} className="text-[#4285F4] animate-spin mb-2" />
+            <p className="text-xs text-gray-500">Generando código QR...</p>
           </div>
         ) : (
           <>
             {/* QR Code Display */}
-            <div className="relative bg-white dark:bg-zinc-800  p-4 md:p-6  rounded-2xl border-4 border-[#4285F4] mb-4">
+            <div className="relative bg-white dark:bg-zinc-800 p-3 rounded-2xl border-3 border-[#4285F4] mb-3 flex flex-col items-center justify-center">
               <div className="flex items-center justify-center">
                 {qrCode && (
                   <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=350x350&ecc=M&margin=1&data=${encodeURIComponent(qrUrl)}`}
                     alt="QR Code"
-                    className={`w-64 h-64 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
+                    className={`w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg bg-white p-2 shadow-inner transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
                   />
                 )}
               </div>
