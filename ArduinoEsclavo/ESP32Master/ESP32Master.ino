@@ -59,6 +59,7 @@ WiFiClientSecure persistentClient;
 HardwareSerial arduinoSerial(2);
 
 unsigned long ultimoMensaje = 0;
+String pendingCommand = ""; // Cola para garantizar entrega sincronizada con POLL de Arduino
 
 // --- PROTOTIPOS DE FUNCIONES EN C++ ---
 void logEstado(String l1, String l2 = "", String l3 = "");
@@ -490,9 +491,9 @@ void procesarComandoBLE(String comando) {
       pTxCharacteristic->notify();
     }
   } else {
-    // Reenviar cualquier comando de prueba (TEST_BUZZER, TEST_MODE_ON, etc.) al Arduino Uno
-    arduinoSerial.println(comando);
-    Serial.println("[BLE -> Arduino]: " + comando);
+    // Encolar comando para cuando el Arduino haga POLL y esté escuchando con SoftwareSerial
+    pendingCommand = comando;
+    Serial.println("[BLE -> Encolado POLL]: " + comando);
   }
 }
 
@@ -576,8 +577,8 @@ void consultarComandos() {
       if (doc["command"].is<String>()) {
         String comando = doc["command"].as<String>();
         if (comando != "NONE" && comando.length() > 0) {
-          arduinoSerial.println(comando);
-          Serial.println("[Comando -> Arduino]: " + comando);
+          pendingCommand = comando;
+          Serial.println("[Nube -> Encolado POLL]: " + comando);
         }
       }
     }
@@ -647,7 +648,21 @@ void loop() {
       if (c >= 32 && c < 127) limpio += c;
     }
     msg = limpio;
-    if (msg.length() == 0 || msg == "POLL") return;
+    if (msg.length() == 0) return;
+    
+    // El Arduino hace POLL preguntando si hay comandos pendientes en su ventana de escucha
+    if (msg == "POLL") {
+      if (pendingCommand.length() > 0) {
+        Serial.println("[POLL] -> " + pendingCommand);
+        delay(5);
+        arduinoSerial.println(pendingCommand);
+        pendingCommand = "";
+      } else {
+        delay(5);
+        arduinoSerial.println("NONE");
+      }
+      return;
+    }
 
     Serial.println("Arduino -> ESP32: " + msg);
     if (msg.startsWith("EVT:")) msg = msg.substring(4);

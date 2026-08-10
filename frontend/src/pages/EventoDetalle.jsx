@@ -648,9 +648,9 @@ export default function EventoDetalle({ eventoId, onBack }) {
           {qrCode ? (
             <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 relative">
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/scan-qr?code=${qrCode}`)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=350x350&ecc=M&margin=1&data=${encodeURIComponent(`${(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.')) ? (import.meta.env.VITE_PUBLIC_APP_URL || 'https://arachiz.vercel.app') : window.location.origin}/scan-qr?code=${qrCode}`)}`}
                 alt="QR Code"
-                className="w-64 h-64"
+                className="w-56 h-56 mx-auto object-contain bg-white p-2 rounded-xl shadow-inner"
               />
               <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
                 Se actualiza en {qrTimeLeft}s

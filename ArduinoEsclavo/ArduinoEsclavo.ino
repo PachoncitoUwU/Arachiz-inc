@@ -342,7 +342,8 @@ void procesarComando(String cmd) {
   } else if (cmd == "TEST_MODE_OFF" || cmd == "STANDBY") {
     modoTest = false;
     enrollando = false;
-    Serial.println(F("Modo TEST/ENROLL INACTIVO - Reposo"));
+    sesionActiva = false;
+    Serial.println(F("Modo TEST/ENROLL/SESION INACTIVO - Reposo Absoluto"));
 
   } else if (cmd == "TEST_BUZZER") {
     Serial.println(F("Prueba de BUZZER"));
