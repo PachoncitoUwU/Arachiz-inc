@@ -16,7 +16,9 @@ router.post('/registrar', roleMiddleware(['aprendiz']), asistenciaController.reg
 router.post('/hardware-register', roleMiddleware(['instructor']), asistenciaController.registerHardwareAttendance);
 router.post('/facial-register', roleMiddleware(['instructor']), asistenciaController.registerFacialAttendance);
 router.post('/facial-batch', roleMiddleware(['instructor']), asistenciaController.registerFacialBatch);
+router.post('/manual-batch', roleMiddleware(['instructor']), asistenciaController.registerManualBatch);
 router.post('/manual-register', roleMiddleware(['instructor']), asistenciaController.registerManualAttendance);
+router.put('/:id/tolerancia', roleMiddleware(['instructor']), asistenciaController.increaseTolerance);
 router.put('/:id/finalizar', roleMiddleware(['instructor']), asistenciaController.endSession);
 
 module.exports = router;

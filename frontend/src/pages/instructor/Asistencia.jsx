@@ -65,11 +65,17 @@ export default function InstructorAsistencia() {
   const [selectedSessionDetail, setSelectedSessionDetail] = useState(null);
   const socketRef = useRef(null);
 
+  // Estados para modal jerárquico de Resultados
+  const [showResultadoModal, setShowResultadoModal] = useState(false);
+  const [modalFicha, setModalFicha] = useState(null);
+  const [modalCompetencia, setModalCompetencia] = useState(null);
+  const [modalResultado, setModalResultado] = useState(null);
+
   // Configuración de sesión
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [tieneTolerancia, setTieneTolerancia] = useState(true);
   const [llegadaTarde, setLlegadaTarde] = useState(15);
-  const [duracion, setDuracion] = useState(120);
-  const [aula, setAula] = useState('');
+  const [isToleranciaPersonalizada, setIsToleranciaPersonalizada] = useState(false);
   const [descripcion, setDescripcion] = useState('');
 
   // Estados para hardware
@@ -80,6 +86,9 @@ export default function InstructorAsistencia() {
 
   // Estados para registro manual
   const [registering, setRegistering] = useState(new Set());
+  const [selectedAprendices, setSelectedAprendices] = useState(new Set());
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [showFacialAdvice, setShowFacialAdvice] = useState(false);
 
   // Estados para reconocimiento facial integrado
   const videoRef = useRef(null);
@@ -371,9 +380,7 @@ export default function InstructorAsistencia() {
         method: 'POST',
         body: JSON.stringify({ 
           resultadoId: selectedMateria,
-          llegadaTarde,
-          duracion,
-          aula,
+          llegadaTarde: tieneTolerancia ? llegadaTarde : null,
           descripcion
         })
       });
@@ -409,6 +416,19 @@ export default function InstructorAsistencia() {
       showToast(err.message, 'error'); 
     } finally {
       setEnding(false);
+    }
+  };
+
+  const increaseTolerance = async () => {
+    try {
+      await fetchApi(`/asistencias/${activeSession.id}/tolerancia`, { method: 'PUT' });
+      showToast('Tolerancia aumentada en 5 min', 'success');
+      setActiveSession(prev => ({
+        ...prev,
+        llegadaTarde: (prev.llegadaTarde || 0) + 5
+      }));
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   };
 
@@ -456,12 +476,16 @@ export default function InstructorAsistencia() {
   const porcentajeCompletado = totalAprendices > 0 ? Math.round((presentes / totalAprendices) * 100) : 0;
 
   // ─── Funciones de reconocimiento facial integrado ─────────────────────────
-  const startFacialScanner = async () => {
+  const handleStartFacialScannerClick = () => {
     if (facialScannerActive) {
       stopFacialScanner();
-      return;
+    } else {
+      setShowFacialAdvice(true);
     }
-    
+  };
+
+  const startFacialScanner = async () => {
+    setShowFacialAdvice(false);
     setFacialScannerActive(true);
     registeredRef.current = new Set((activeSession.registros || []).map(r => r.aprendizId));
     
@@ -483,6 +507,7 @@ export default function InstructorAsistencia() {
       setFaceReady(true);
       startFaceLoop();
       showToast('🎥 Reconocimiento facial activado', 'success');
+      showToast('💡 Consejo: Busca un fondo óptimo y evita la contraluz para mejor reconocimiento', 'info');
     } catch (err) {
       showToast('Error al iniciar cámara: ' + err.message, 'error');
       setFacialScannerActive(false);
@@ -873,80 +898,60 @@ export default function InstructorAsistencia() {
   };
 
   // ─── Registro Manual ───────────────────────────────────────────────────────
-  const registerManualStudent = async (aprendizId) => {
-    // Prevenir múltiples clicks
-    if (registering.has(aprendizId)) {
-      return;
-    }
-
-    // Prevenir registros duplicados
-    if (activeSession.registros?.some(r => r.aprendizId === aprendizId)) {
-      showToast('Este estudiante ya está registrado', 'error');
-      return;
-    }
-
-    // Marcar como registrando inmediatamente
-    setRegistering(prev => new Set([...prev, aprendizId]));
+  const handleManualBatchRegister = async () => {
+    if (selectedAprendices.size === 0) return;
+    
+    setRegistering(prev => new Set([...prev, ...selectedAprendices]));
 
     try {
-      const aprendiz = activeSession.resultado?.competencia?.ficha?.aprendices?.find(a => a.id === aprendizId);
-      
-      // Crear ID único para el registro temporal
-      const tempId = `temp-manual-${aprendizId}-${Date.now()}`;
-      
-      // Actualizar UI inmediatamente (optimistic update)
-      const tempRegistro = {
-        id: tempId,
-        aprendizId: aprendizId,
-        aprendiz: { fullName: aprendiz?.fullName },
-        presente: true,
-        metodo: 'manual',
-        timestamp: new Date().toISOString()
-      };
-
-      setActiveSession(prev => ({
-        ...prev,
-        registros: [...(prev.registros || []), tempRegistro]
-      }));
-
-      showToast(`✅ ${aprendiz?.fullName} registrado`, 'success');
-
-      // Enviar al servidor y obtener la respuesta para persistir datos del servidor
-      const serverRes = await fetchApi('/asistencias/manual-register', {
+      const aprendizIds = Array.from(selectedAprendices);
+      const serverRes = await fetchApi('/asistencias/manual-batch', {
         method: 'POST',
-        body: JSON.stringify({ 
-          asistenciaId: activeSession.id, 
-          aprendizId: aprendizId 
+        body: JSON.stringify({
+          asistenciaId: activeSession.id,
+          aprendizIds: aprendizIds
         })
       });
 
-      // Si llegamos aquí, el registro fue exitoso en el servidor
-      // Actualizar el registro temporal con datos reales del servidor
-      setActiveSession(prev => ({
-        ...prev,
-        registros: prev.registros?.map(r => 
-          r.id === tempId 
-            ? serverRes.registro
-            : r
-        ) || []
-      }));
+      showToast(`✅ ${serverRes.registros.length} estudiantes registrados`, 'success');
+      
+      setActiveSession(prev => {
+        const prevRegistros = prev.registros || [];
+        const nuevos = serverRes.registros.filter(nr => !prevRegistros.some(pr => pr.aprendizId === nr.aprendizId));
+        return {
+          ...prev,
+          registros: [...prevRegistros, ...nuevos]
+        };
+      });
 
+      setSelectedAprendices(new Set());
     } catch (err) {
-      // Revertir la UI si falla el servidor
-      setActiveSession(prev => ({
-        ...prev,
-        registros: prev.registros?.filter(r => r.id !== tempId) || []
-      }));
       showToast(`Error: ${err.message}`, 'error');
     } finally {
-      // Siempre remover del estado de registrando
       setTimeout(() => {
         setRegistering(prev => {
           const newSet = new Set(prev);
-          newSet.delete(aprendizId);
+          Array.from(selectedAprendices).forEach(id => newSet.delete(id));
           return newSet;
         });
-      }, 500); // Pequeño delay para evitar doble click
+      }, 500);
+    }
+  };
+
+  const toggleAprendizSelection = (aprendizId) => {
+    setSelectedAprendices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(aprendizId)) newSet.delete(aprendizId);
+      else newSet.add(aprendizId);
+      return newSet;
+    });
+  };
+
+  const handleCloseManualRegister = () => {
+    if (selectedAprendices.size > 0) {
+      setShowDiscardModal(true);
+    } else {
+      setManualRegisterOpen(false);
     }
   };
 
@@ -969,13 +974,22 @@ export default function InstructorAsistencia() {
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1">
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              Selecciona una Competencia / Resultado
+              {activeSession ? 'Registrando asistencia del resultado de aprendizaje:' : 'Selecciona una Competencia / Resultado'}
             </label>
-            <select 
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-zinc-700  dark:border-gray-700 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] transition-all hover:border-gray-300 dark:hover:border-gray-600"
-              value={selectedMateria}
-              onChange={e => setSelectedMateria(e.target.value)}
-              disabled={!!activeSession || competencias.length === 0}>
+            <button
+              onClick={() => {
+                if (!activeSession && competencias.length > 0) {
+                  setModalFicha(null); setModalCompetencia(null); setModalResultado(null);
+                  setShowResultadoModal(true);
+                }
+              }}
+              className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all flex items-center justify-between ${
+                activeSession || competencias.length === 0
+                  ? 'border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 cursor-not-allowed opacity-70'
+                  : 'border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer'
+              }`}
+              disabled={!!activeSession || competencias.length === 0}
+            >
               {(() => {
                 const resultadosDisponibles = competencias.flatMap(comp => 
                   (comp.resultados || []).map(res => ({
@@ -984,15 +998,20 @@ export default function InstructorAsistencia() {
                     fichaNumero: comp.ficha?.numero
                   }))
                 );
-                return resultadosDisponibles.length === 0
-                  ? <option>Sin resultados disponibles</option>
-                  : resultadosDisponibles.map(r => (
-                      <option key={r.id} value={r.id}>
-                        {r.nombre} ({r.competenciaNombre}) – Ficha {r.fichaNumero}
-                      </option>
-                    ));
+                if (resultadosDisponibles.length === 0) return <span className="text-gray-500">Sin resultados disponibles</span>;
+                const sel = resultadosDisponibles.find(r => r.id === selectedMateria);
+                if (!sel) return <span className="text-gray-500">Seleccionar resultado de aprendizaje...</span>;
+                return (
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{sel.nombre}</span>
+                    <span className="text-xs text-gray-500">{sel.competenciaNombre} – Ficha {sel.fichaNumero}</span>
+                  </div>
+                );
               })()}
-            </select>
+              <div className="text-gray-400">
+                <BookOpen size={20} />
+              </div>
+            </button>
           </div>
           <div>
             {!activeSession ? (
@@ -1072,74 +1091,60 @@ export default function InstructorAsistencia() {
           {/* Detalles de configuración de la sesión activa */}
           <div className="bg-white dark:bg-zinc-800 /40 dark:bg-gray-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/20 dark:border-gray-800/60 shadow-sm flex flex-wrap gap-4 items-center justify-between animate-fade-in-up">
             <div className="flex flex-wrap gap-x-6 gap-y-3">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                <Clock size={14} className="text-yellow-500" />
-                Tolerancia Tarde: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.llegadaTarde} min</strong>
-              </span>
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                <Hourglass size={14} className="text-blue-500" />
-                Duración: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.duracion} min</strong>
-              </span>
-              {activeSession.aula && (
+              {activeSession.llegadaTarde != null && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                  <MapPin size={14} className="text-emerald-500" />
-                  Aula: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.aula}</strong>
+                  <Clock size={14} className="text-yellow-500" />
+                  Tolerancia Tarde: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.llegadaTarde} min</strong>
                 </span>
               )}
               {activeSession.descripcion && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
                   <BookOpen size={14} className="text-purple-500" />
-                  Tema: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.descripcion}</strong>
+                  Descripción: <strong className="text-gray-900 dark:text-white  dark:text-white">{activeSession.descripcion}</strong>
                 </span>
               )}
             </div>
-            {activeSession.timestamp && (
-              <div className="flex items-center gap-2 text-xs font-bold bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full border border-green-500/20 shadow-sm">
-                <Activity size={12} className="animate-pulse" />
-                <span>Tiempo transcurrido: <Timer startTime={activeSession.timestamp} /></span>
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2  sm:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Users size={24} className="text-gray-600 dark:text-gray-400" />
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-4 border-l-4 border-l-gray-400 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '100ms' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users size={20} className="text-gray-600 dark:text-gray-400" />
                 </div>
               </div>
-              <p className="text-2xl md:text-3xl  font-bold text-gray-900 dark:text-white  dark:text-white mb-1">{totalAprendices}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white  dark:text-white mb-0.5">{totalAprendices}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
             </div>
 
-            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-green-500 shadow-sm hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-4 border-l-4 border-l-green-500 shadow-sm hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <p className="text-2xl md:text-3xl  font-bold text-green-600 dark:text-green-400 mb-1 animate-pulse-number">{presentes}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Presentes</p>
+              <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400 mb-0.5 animate-pulse-number">{presentes}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Presentes</p>
             </div>
 
-            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '300ms' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Clock size={24} className="text-yellow-600 dark:text-yellow-400" />
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-4 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '300ms' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock size={20} className="text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
-              <p className="text-2xl md:text-3xl  font-bold text-yellow-600 dark:text-yellow-400 mb-1">{pendientes}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Ausentes</p>
+              <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-0.5">{pendientes}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Ausentes</p>
             </div>
 
-            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-5 border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '400ms' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
+            <div className="bg-white dark:bg-zinc-800  dark:bg-gray-800 rounded-2xl p-4 border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 animate-fade-in-up group" style={{ animationDelay: '400ms' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Activity size={20} className="text-blue-600 dark:text-blue-400 animate-pulse" />
                 </div>
               </div>
-              <p className="text-2xl md:text-3xl  font-bold text-blue-600 dark:text-blue-400 mb-1">{porcentajeCompletado}%</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Completado</p>
+              <p className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-0.5"><Timer startTime={activeSession.timestamp} /></p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Tiempo Transcurrido</p>
             </div>
           </div>
 
@@ -1157,7 +1162,7 @@ export default function InstructorAsistencia() {
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reconocimiento Facial</h3>
                 </div>
                 <button 
-                  onClick={startFacialScanner}
+                  onClick={handleStartFacialScannerClick}
                   className={`px-4 py-2 rounded-xl text-white text-sm font-semibold transition-all shadow-md flex items-center gap-2 transform hover:scale-105 active:scale-95 ${
                     facialScannerActive 
                       ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 hover:shadow-red-500/50' 
@@ -1554,7 +1559,7 @@ export default function InstructorAsistencia() {
                   <p className="text-xs text-gray-400">Haz clic en un estudiante para registrar su asistencia</p>
                 </div>
               </div>
-              <button onClick={() => setManualRegisterOpen(false)} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hover:rotate-90">
+              <button onClick={handleCloseManualRegister} className="btn-icon hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hover:rotate-90">
                 <X size={18} />
               </button>
             </div>
@@ -1582,35 +1587,43 @@ export default function InstructorAsistencia() {
                         {pendingStudents.length} estudiante{pendingStudents.length !== 1 ? 's' : ''} pendiente{pendingStudents.length !== 1 ? 's' : ''}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Clock size={12} />
-                        <span>Click para registrar</span>
+                        <CheckCircle size={12} />
+                        <span>Selecciona para registrar en lote</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto custom-scrollbar">
                       {pendingStudents.map((student, i) => {
                         const isRegistering = registering.has(student.id);
+                        const isSelected = selectedAprendices.has(student.id);
                         return (
                           <button
                             key={student.id}
-                            onClick={() => !isRegistering && registerManualStudent(student.id)}
+                            onClick={() => !isRegistering && toggleAprendizSelection(student.id)}
                             disabled={isRegistering}
-                            className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all transform text-left animate-scale-in ${
+                            className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all transform text-left animate-scale-in relative ${
                               isRegistering 
                                 ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 cursor-not-allowed opacity-75 scale-95'
-                                : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 border-transparent hover:border-purple-200 dark:hover:border-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95'
+                                : isSelected
+                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400 dark:border-purple-600 shadow-md scale-[1.02]'
+                                : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 border-transparent hover:border-purple-200 dark:hover:border-purple-700 hover:scale-[1.02] hover:shadow-lg active:scale-95'
                             }`}
                             style={{ 
-                              animationDelay: `${i * 50}ms`,
+                              animationDelay: `${i * 30}ms`,
                               pointerEvents: isRegistering ? 'none' : 'auto'
                             }}>
+                            
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md transition-all ${
                               isRegistering 
                                 ? 'bg-gradient-to-br from-green-400 to-emerald-500 animate-pulse-glow'
+                                : isSelected 
+                                ? 'bg-gradient-to-br from-purple-500 to-indigo-600'
                                 : 'bg-gradient-to-br from-purple-400 to-pink-500 group-hover:scale-110'
                             } overflow-hidden`}>
                               {isRegistering ? (
-                                <CheckCircle size={20} />
+                                <RefreshCw size={20} className="animate-spin" />
+                              ) : isSelected ? (
+                                <CheckCircle size={24} />
                               ) : student.avatarUrl ? (
                                 <img src={student.avatarUrl} alt={student.fullName} className="w-full h-full object-cover" />
                               ) : (
@@ -1622,21 +1635,26 @@ export default function InstructorAsistencia() {
                                 {student.fullName}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {isRegistering ? '✓ Registrando...' : (student.email || 'Clic para registrar')}
+                                {isRegistering ? 'Registrando...' : (student.email || 'Clic para seleccionar')}
                               </p>
                             </div>
-                            {isRegistering ? (
-                              <div className="flex items-center gap-1">
-                                <RefreshCw size={16} className="text-green-500 animate-spin" />
-                                <CheckCircle size={16} className="text-green-500" />
-                              </div>
-                            ) : (
-                              <UserPlus size={18} className="text-purple-500 opacity-60 group-hover:opacity-100 transition-opacity" />
-                            )}
                           </button>
                         );
                       })}
                     </div>
+                    
+                    {/* Botón flotante para registrar lote */}
+                    {selectedAprendices.size > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end animate-fade-in-up">
+                        <button
+                          onClick={handleManualBatchRegister}
+                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg shadow-purple-500/30 flex items-center gap-2 transform transition-all hover:scale-105 active:scale-95"
+                        >
+                          <CheckCircle size={18} />
+                          Registrar {selectedAprendices.size} seleccionados
+                        </button>
+                      </div>
+                    )}
                   </>
                 );
               })()}
@@ -1921,96 +1939,88 @@ export default function InstructorAsistencia() {
             </div>
 
             {/* Formulario */}
-            <div className="relative p-4 md:p-6  space-y-5">
-              {/* Sliders de Tiempo de Tolerancia y Duración */}
-              <div className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-gray-200 dark:border-zinc-700  dark:hover:border-gray-600 transition-colors">
+            <div className="relative p-4 md:p-6 space-y-5">
+              
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 cursor-pointer" onClick={() => setTieneTolerancia(!tieneTolerancia)}>
+                  <Clock size={16} className="text-yellow-500" />
+                  ¿Tener en cuenta llegada tarde?
+                </label>
+                <button 
+                  onClick={() => setTieneTolerancia(!tieneTolerancia)}
+                  className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${tieneTolerancia ? 'bg-[#34A853]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full transition-transform absolute shadow-sm ${tieneTolerancia ? 'translate-x-7' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {tieneTolerancia && (
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700 hover:border-gray-200 dark:hover:border-gray-600 transition-colors animate-fade-in-up">
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Clock size={14} className="text-yellow-500" />
-                      Tolerancia de llegada tarde
+                      Tolerancia
                     </label>
                     <span className="text-xs font-extrabold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-1 rounded-lg border border-yellow-200 dark:border-yellow-800">
                       {llegadaTarde} min
                     </span>
                   </div>
-                  {/* Slider */}
-                  <input
-                    type="range"
-                    min="1"
-                    max="60"
-                    step="1"
-                    value={Math.min(llegadaTarde, 60)}
-                    onChange={e => setLlegadaTarde(parseInt(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
-                    style={{ accentColor: '#FBBC05' }}
-                  />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      max="420"
-                      value={llegadaTarde}
-                      onChange={e => {
-                        const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
-                        setLlegadaTarde(val);
-                      }}
-                      className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition-all"
-                    />
-                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos</span>
+                  
+                  {/* Cuadritos de sugerencias */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[10, 15, 20].map(val => (
+                      <button
+                        key={val}
+                        onClick={() => { setLlegadaTarde(val); setIsToleranciaPersonalizada(false); }}
+                        className={`py-2 rounded-xl text-sm font-bold border transition-all ${
+                          !isToleranciaPersonalizada && llegadaTarde === val 
+                            ? 'bg-yellow-100 dark:bg-yellow-900/40 border-yellow-400 text-yellow-700 dark:text-yellow-400 shadow-sm' 
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-yellow-300'
+                        }`}
+                      >
+                        {val} min
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setIsToleranciaPersonalizada(true)}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                        isToleranciaPersonalizada 
+                          ? 'bg-yellow-100 dark:bg-yellow-900/40 border-yellow-400 text-yellow-700 dark:text-yellow-400 shadow-sm' 
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-yellow-300'
+                      }`}
+                    >
+                      Personalizada
+                    </button>
                   </div>
-                </div>
 
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-zinc-700  dark:border-gray-700 hover:border-gray-200 dark:border-zinc-700  dark:hover:border-gray-600 transition-colors">
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Hourglass size={14} className="text-[#34A853]" />
-                      Duración de la Clase
-                    </label>
-                    <span className="text-xs font-extrabold text-[#34A853] bg-green-100 dark:bg-green-900/30 px-2.5 py-1 rounded-lg border border-green-200 dark:border-green-800">
-                      {Math.floor(duracion / 60)}h {duracion % 60 > 0 ? `${duracion % 60}m` : ''}
-                    </span>
-                  </div>
-                  {/* Slider (máx visual 240 min = 4h, el input acepta hasta 420) */}
-                  <input
-                    type="range"
-                    min="30"
-                    max="240"
-                    step="10"
-                    value={Math.min(duracion, 240)}
-                    onChange={e => setDuracion(parseInt(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
-                    style={{ accentColor: '#34A853' }}
-                  />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      max="420"
-                      value={duracion}
-                      onChange={e => {
-                        const val = Math.min(420, Math.max(1, parseInt(e.target.value) || 1));
-                        setDuracion(val);
-                      }}
-                      className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/40 focus:border-[#34A853] transition-all"
-                    />
-                    <span className="text-xs text-gray-400 dark:text-gray-500">minutos</span>
-                  </div>
+                  {isToleranciaPersonalizada && (
+                    <div className="flex items-center gap-2 animate-fade-in">
+                      <input
+                        type="number"
+                        min="1"
+                        max="420"
+                        value={llegadaTarde}
+                        onChange={e => setLlegadaTarde(Math.min(420, Math.max(1, parseInt(e.target.value) || 1)))}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition-all"
+                        placeholder="Minutos"
+                      />
+                      <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">minutos</span>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* Input de Ambiente de Formación */}
+              {/* Input de Descripción */}
               <div>
                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MapPin size={14} className="text-[#34A853]" />
-                  Ambiente de Formación / Aula
+                  <BookOpen size={14} className="text-[#34A853]" />
+                  Descripción (Opcional)
                 </label>
                 <input 
                   type="text" 
-                  placeholder="Ej. Ambiente 104, Laboratorio 3..." 
-                  value={aula} 
-                  onChange={e => setAula(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700  dark:border-gray-600 bg-white dark:bg-zinc-800  dark:bg-gray-800 text-gray-900 dark:text-white  dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  placeholder="Ej. Clase práctica, repaso general..." 
+                  value={descripcion} 
+                  onChange={e => setDescripcion(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#34A853]/30 focus:border-[#34A853] transition-all placeholder:text-gray-400"
                 />
               </div>
 
@@ -2031,6 +2041,183 @@ export default function InstructorAsistencia() {
                   {starting ? 'Iniciando...' : 'Iniciar Sesión'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Jerárquico para Resultado de Aprendizaje */}
+      {showResultadoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
+            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-800/50">
+              <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <BookOpen size={18} className="text-[#34A853]" />
+                Seleccionar Resultado de Aprendizaje
+              </h3>
+              <button onClick={() => setShowResultadoModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-4 flex flex-col md:flex-row gap-4 min-h-[400px]">
+              {/* Columna 1: Fichas */}
+              <div className="flex-1 border border-gray-100 dark:border-zinc-700 rounded-xl flex flex-col bg-gray-50/50 dark:bg-zinc-800/30">
+                <div className="p-3 border-b border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-t-xl font-bold text-sm text-gray-700 dark:text-gray-300">
+                  1. Fichas
+                </div>
+                <div className="p-2 overflow-y-auto flex-1 space-y-2">
+                  {(() => {
+                    const uniqueFichas = [];
+                    const fichasMap = new Map();
+                    competencias.forEach(comp => {
+                      if (comp.ficha && !fichasMap.has(comp.ficha.id)) {
+                        fichasMap.set(comp.ficha.id, comp.ficha);
+                        uniqueFichas.push(comp.ficha);
+                      }
+                    });
+                    return uniqueFichas.map(f => (
+                      <div 
+                        key={f.id} 
+                        onClick={() => { setModalFicha(f); setModalCompetencia(null); setModalResultado(null); }}
+                        className={`p-3 rounded-lg cursor-pointer border transition-all ${modalFicha?.id === f.id ? 'border-[#34A853] bg-green-50 dark:bg-green-900/20' : 'border-transparent hover:bg-white dark:hover:bg-zinc-800'}`}
+                      >
+                        <p className="font-bold text-gray-800 dark:text-gray-100">{f.numero}</p>
+                        <p className="text-xs text-gray-500 line-clamp-1">{f.nombre}</p>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Columna 2: Competencias */}
+              <div className="flex-1 border border-gray-100 dark:border-zinc-700 rounded-xl flex flex-col bg-gray-50/50 dark:bg-zinc-800/30">
+                <div className="p-3 border-b border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-t-xl font-bold text-sm text-gray-700 dark:text-gray-300">
+                  2. Competencias
+                </div>
+                <div className="p-2 overflow-y-auto flex-1 space-y-2">
+                  {!modalFicha ? (
+                    <p className="text-sm text-gray-400 text-center p-4">Selecciona una ficha primero</p>
+                  ) : (
+                    competencias.filter(c => c.ficha?.id === modalFicha.id).map(c => (
+                      <div 
+                        key={c.id} 
+                        onClick={() => { setModalCompetencia(c); setModalResultado(null); }}
+                        className={`p-3 rounded-lg cursor-pointer border transition-all ${modalCompetencia?.id === c.id ? 'border-[#34A853] bg-green-50 dark:bg-green-900/20' : 'border-transparent hover:bg-white dark:hover:bg-zinc-800'}`}
+                      >
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">{c.nombre}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Columna 3: Resultados */}
+              <div className="flex-1 border border-gray-100 dark:border-zinc-700 rounded-xl flex flex-col bg-gray-50/50 dark:bg-zinc-800/30">
+                <div className="p-3 border-b border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-t-xl font-bold text-sm text-gray-700 dark:text-gray-300">
+                  3. Resultados de Aprendizaje
+                </div>
+                <div className="p-2 overflow-y-auto flex-1 space-y-2">
+                  {!modalCompetencia ? (
+                    <p className="text-sm text-gray-400 text-center p-4">Selecciona una competencia</p>
+                  ) : (
+                    modalCompetencia.resultados?.map(r => (
+                      <div 
+                        key={r.id} 
+                        onClick={() => setModalResultado(r)}
+                        className={`p-3 rounded-lg cursor-pointer border transition-all ${modalResultado?.id === r.id ? 'border-[#34A853] bg-green-50 dark:bg-green-900/20' : 'border-transparent hover:bg-white dark:hover:bg-zinc-800'}`}
+                      >
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">{r.nombre}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex justify-end gap-3">
+              <button 
+                onClick={() => setShowResultadoModal(false)}
+                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                disabled={!modalResultado}
+                onClick={() => {
+                  setSelectedMateria(modalResultado.id);
+                  setShowResultadoModal(false);
+                }}
+                className="px-6 py-2 rounded-xl bg-[#34A853] hover:bg-green-600 text-white text-sm font-bold shadow-lg shadow-[#34A853]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Seleccionar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación de Descarte */}
+      {showDiscardModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-200 dark:border-zinc-800 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <X size={32} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              ¿Descartar selección?
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Tienes {selectedAprendices.size} aprendiz(ces) seleccionado(s). Si cierras ahora, no se registrará su asistencia.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDiscardModal(false);
+                  setSelectedAprendices(new Set());
+                  setManualRegisterOpen(false);
+                }}
+                className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-bold transition-all"
+              >
+                Sí, descartar
+              </button>
+              <button
+                onClick={() => setShowDiscardModal(false)}
+                className="flex-1 py-3 rounded-xl bg-[#34A853] hover:bg-green-600 text-white font-bold transition-all shadow-lg shadow-[#34A853]/30"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Consejo para Reconocimiento Facial */}
+      {showFacialAdvice && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-200 dark:border-zinc-800 text-center">
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Camera size={32} className="text-blue-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Consejo de Reconocimiento
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Recuerda buscar un fondo óptimo y no estar a contraluz para una mejor calidad de reconocimiento.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowFacialAdvice(false)}
+                className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-bold transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={startFacialScanner}
+                className="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all shadow-lg shadow-blue-500/30"
+              >
+                Entendido
+              </button>
             </div>
           </div>
         </div>

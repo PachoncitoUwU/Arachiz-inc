@@ -129,7 +129,7 @@ export default function QRScanner({ onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999]">
-      <div className="relative w-full h-full max-w-lg">
+      <div className="relative w-full h-full">
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/80 to-transparent">
           <div className="flex items-center justify-between">
@@ -142,7 +142,7 @@ export default function QRScanner({ onClose, onSuccess }) {
                 <p className="text-xs text-gray-300">Apunta al código QR</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white dark:bg-zinc-800 /20 flex items-center justify-center transition-colors">
+            <button onClick={onClose} className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white dark:bg-zinc-800/20 flex items-center justify-center transition-colors">
               <X size={18} className="text-white" />
             </button>
           </div>
@@ -163,22 +163,8 @@ export default function QRScanner({ onClose, onSuccess }) {
         {/* Overlay de escaneo */}
         {scanning && !success && !error && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative">
-              {/* Marco de escaneo */}
-              <div className="w-64 h-64 border-4 border-[#4285F4] rounded-2xl relative">
-                {/* Esquinas animadas */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-2xl" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-2xl" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-2xl" />
-                
-                {/* Línea de escaneo */}
-                <div className="absolute inset-x-0 top-0 h-1 bg-[#4285F4] animate-scan" />
-              </div>
-              
-              <p className="text-white text-center mt-4 text-sm font-medium">
-                Buscando código QR...
-              </p>
+            <div className="w-56 h-56 border-4 border-white rounded-lg flex items-center justify-center">
+              {/* <span className="text-white text-sm">Apunta al QR</span> */}
             </div>
           </div>
         )}
@@ -212,9 +198,9 @@ export default function QRScanner({ onClose, onSuccess }) {
 
         {/* Instructions */}
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6  bg-gradient-to-t from-black/80 to-transparent">
-          <div className="bg-white dark:bg-zinc-800 /10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/10 dark:bg-zinc-800/10 backdrop-blur-sm rounded-xl p-4">
             <p className="text-white text-sm text-center">
-              Coloca el código QR dentro del marco
+                Apunta la cámara al código QR del instructor
             </p>
           </div>
         </div>
