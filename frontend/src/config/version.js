@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.477';
+export const VERSION = '1.4.480';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.480',
+    date: '2026-08-10',
+    title: 'Actualización 1.4.480',
+    changes: [
+      'cambios-metodos-web',
+      'cambios en el scan qr'
+    ]
+  },
   {
     version: '1.4.477',
     date: '2026-08-04',
