@@ -3,9 +3,18 @@
  * Se actualiza con cada cambio importante del sistema
  */
 
-export const VERSION = '1.4.486';
+export const VERSION = '1.4.489';
 
 export const RELEASE_NOTES = [
+  {
+    version: '1.4.489',
+    date: '2026-08-10',
+    title: 'Actualización 1.4.489',
+    changes: [
+      'cambios-metodos-web',
+      'Push 80: Registro manual por lotes, botón de aumento de tolerancia, confirmación de descarte y consejos en escáner facial'
+    ]
+  },
   {
     version: '1.4.486',
     date: '2026-08-10',
