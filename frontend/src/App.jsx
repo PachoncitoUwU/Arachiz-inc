@@ -108,7 +108,7 @@ export default function App() {
       {/* Indicador Global del Número del Push */}
       <div className="fixed top-2 left-2 z-[9999] pointer-events-none">
         <span className="px-2.5 py-1 bg-[#4285F4] text-white rounded-md font-extrabold text-xs shadow-xl border border-white/20">
-          60
+          70
         </span>
       </div>
       <BrowserRouter>
